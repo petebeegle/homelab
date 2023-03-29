@@ -1,0 +1,61 @@
+version: "3.8"
+
+services:
+  traefik:
+    image: traefik:latest
+    ports:
+      - 80:80
+      - 8080:8080
+      - 443:443
+    env_file:
+      - .env
+    environment:
+      - CF_DNS_API_TOKEN_FILE=/run/secrets/cloudflare_dns_api_token
+    secrets:
+      - cloudflare_dns_api_token
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./letsencrypt:/letsencrypt
+    command:
+      - --api.dashboard=true
+      - --api.debug=true
+      - --log.level=DEBUG
+
+      - --providers.docker=true
+      - --providers.docker.swarmmode=true
+      - --providers.docker.exposedbydefault=false
+
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+
+      - --certificatesresolvers.primary.acme.email=${EMAIL}
+      - --certificatesresolvers.primary.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.primary.acme.dnschallenge=true
+      - --certificatesresolvers.primary.acme.dnschallenge.provider=cloudflare
+      - --certificatesresolvers.primary.acme.dnschallenge.resolvers=1.1.1.1:53,1.0.0.1:53
+    deploy:
+      placement:
+        constraints:
+          - "node.role == manager"
+      labels:
+        - traefik.enable=true
+
+        - traefik.http.middlewares.http-to-https.redirectscheme.scheme=https
+        - traefik.http.middlewares.http-to-https.redirectscheme.permanent=true
+
+        - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
+        - traefik.http.routers.http-catchall.entrypoints=web
+        - traefik.http.routers.http-catchall.middlewares=http-to-https
+      
+        - traefik.http.routers.dashboard.rule=Host(`traefik.${DOMAIN}`)
+        - traefik.http.routers.dashboard.service=api@internal
+        - traefik.http.routers.dashboard.entrypoints=websecure
+        - traefik.http.routers.dashboard.tls.certresolver=primary
+        - traefik.http.routers.dashboard.tls.domains[0].sans=*.${DOMAIN}
+
+        # needed for swarm only
+        - traefik.http.services.dummy-svc.loadbalancer.server.port=1111
+
+secrets:
+  cloudflare_dns_api_token:
+    file: .cf_dns_api_token.secret
