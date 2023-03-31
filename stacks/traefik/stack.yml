@@ -28,7 +28,7 @@ services:
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443
 
-      - --certificatesresolvers.primary.acme.email=${EMAIL}
+      - --certificatesresolvers.primary.acme.email=${STACK_TRAEFIK_EMAIL}
       - --certificatesresolvers.primary.acme.storage=/letsencrypt/acme.json
       - --certificatesresolvers.primary.acme.dnschallenge=true
       - --certificatesresolvers.primary.acme.dnschallenge.provider=cloudflare
@@ -47,11 +47,11 @@ services:
         - traefik.http.routers.http-catchall.entrypoints=web
         - traefik.http.routers.http-catchall.middlewares=http-to-https
       
-        - traefik.http.routers.dashboard.rule=Host(`traefik.${DOMAIN}`)
+        - traefik.http.routers.dashboard.rule=Host(`traefik.${STACK_TRAEFIK_DOMAIN}`)
         - traefik.http.routers.dashboard.service=api@internal
         - traefik.http.routers.dashboard.entrypoints=websecure
         - traefik.http.routers.dashboard.tls.certresolver=primary
-        - traefik.http.routers.dashboard.tls.domains[0].sans=*.${DOMAIN}
+        - traefik.http.routers.dashboard.tls.domains[0].sans=*.${STACK_TRAEFIK_DOMAIN}
 
         # needed for swarm only
         - traefik.http.services.dummy-svc.loadbalancer.server.port=1111
