@@ -19,7 +19,7 @@ chmod -R 600 letsencrypt
 docker stack deploy -c stack.yml traefik
 
 # confirm
-curl -v https://traefik.lab.petebeegle.com
+curl -v https://traefik.example.com
 ```
 
 ### Configurations
