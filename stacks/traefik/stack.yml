@@ -36,12 +36,15 @@ services:
       - --certificatesresolvers.primary.acme.dnschallenge=true
       - --certificatesresolvers.primary.acme.dnschallenge.provider=cloudflare
       - --certificatesresolvers.primary.acme.dnschallenge.resolvers=1.1.1.1:53,1.0.0.1:53
+    networks:
+      - proxy
     deploy:
       placement:
         constraints:
           - "node.role == manager"
       labels:
         - traefik.enable=true
+        - traefik.docker.network=proxy
 
         - traefik.http.middlewares.http-to-https.redirectscheme.scheme=https
         - traefik.http.middlewares.http-to-https.redirectscheme.permanent=true
@@ -63,3 +66,6 @@ services:
 secrets:
   cloudflare_dns_api_token:
     file: .cf_dns_api_token.secret
+networks:
+  proxy:
+    external: true

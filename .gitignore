@@ -37,3 +37,6 @@ terraform.rc
 #traefik
 *.secret
 letsencrypt
+
+# homepage
+stacks/homepage/config/*

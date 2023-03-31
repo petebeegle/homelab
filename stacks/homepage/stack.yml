@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  homepage:
+    image: ghcr.io/benphelps/homepage:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./config:/app/config
+    networks:
+      - proxy
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=proxy
+
+        - traefik.http.routers.homepage.rule=Host(`homepage.${STACK_HOMEPAGE_DOMAIN}`)
+        - traefik.http.routers.homepage.entrypoints=websecure
+        - traefik.http.routers.homepage.tls.certresolver=primary
+        - traefik.http.routers.homepage.tls.domains[0].main=${STACK_HOMEPAGE_DOMAIN}
+        - traefik.http.routers.homepage.tls.domains[0].sans=*.${STACK_HOMEPAGE_DOMAIN}
+        - traefik.http.routers.service=homepage
+        
+        - traefik.http.services.homepage.loadbalancer.server.port=3000
+networks:
+  proxy:
+    external: true
