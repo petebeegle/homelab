@@ -1,0 +1,19 @@
+http:
+  routers:
+    unifi-gateway:
+      rule: Host(`unifi.{{env "STACK_TRAEFIK_DOMAIN"}}`)
+      service: unifi-gateway
+      tls:
+        certresolver: primary
+        domains:
+          - sans: '*.{{env "STACK_TRAEFIK_DOMAIN"}}'
+  services:
+    unifi-gateway:
+      loadBalancer:
+        servers:
+          - url: https://192.168.1.1/
+        serversTransport: unifi-gateway-transport
+  
+  serversTransports:
+    unifi-gateway-transport:
+      insecureSkipVerify: true

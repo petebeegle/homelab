@@ -15,7 +15,8 @@ services:
       - cloudflare_dns_api_token
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./letsencrypt:/letsencrypt
+      - ./letsencrypt:/letsencrypt:rw
+      - ./config:/etc/traefik/config:ro
     command:
       - --api.dashboard=true
       - --api.debug=true
@@ -24,6 +25,8 @@ services:
       - --providers.docker=true
       - --providers.docker.swarmmode=true
       - --providers.docker.exposedbydefault=false
+
+      - --providers.file.directory=/etc/traefik/config
 
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443
@@ -51,6 +54,7 @@ services:
         - traefik.http.routers.dashboard.service=api@internal
         - traefik.http.routers.dashboard.entrypoints=websecure
         - traefik.http.routers.dashboard.tls.certresolver=primary
+        - traefik.http.routers.dashboard.tls.domains[0].main=${STACK_TRAEFIK_DOMAIN}
         - traefik.http.routers.dashboard.tls.domains[0].sans=*.${STACK_TRAEFIK_DOMAIN}
 
         # needed for swarm only
