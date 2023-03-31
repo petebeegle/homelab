@@ -1,0 +1,19 @@
+http:
+  routers:
+    modem:
+      rule: Host(`modem.{{env "STACK_TRAEFIK_DOMAIN"}}`)
+      service: modem
+      tls:
+        certresolver: primary
+        domains:
+          - sans: '*.{{env "STACK_TRAEFIK_DOMAIN"}}'
+  services:
+    modem:
+      loadBalancer:
+        servers:
+          - url: https://192.168.100.1/
+        serversTransport: modem-transport
+  
+  serversTransports:
+    modem-transport:
+      insecureSkipVerify: true
