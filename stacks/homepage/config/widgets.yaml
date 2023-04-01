@@ -1,0 +1,14 @@
+---
+# For configuration options and examples, please see:
+# https://gethomepage.dev/en/configs/widgets
+
+- unifi_console:
+    url: "https://unifi.{{HOMEPAGE_VAR_DOMAIN}}"
+    username: {{HOMEPAGE_FILE_UNIFI_CONSOLE_USR}}
+    password: {{HOMEPAGE_FILE_UNIFI_CONSOLE_PWD}}
+
+- resources:
+    cpu: true
+    memory: true
+    expanded: true
+    disk: /

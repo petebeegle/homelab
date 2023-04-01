@@ -1,0 +1,25 @@
+---
+# For configuration options and examples, please see:
+# https://gethomepage.dev/en/configs/services
+
+- services:
+    - proxmox:
+        href: https://192.168.1.28:8006
+        widget:
+            type: proxmox
+            url: https://192.168.1.28:8006
+            username: {{HOMEPAGE_FILE_PVE_USR}}
+            password: {{HOMEPAGE_FILE_PVE_PWD}}
+    - traefik:
+        href: https://traefik.{{HOMEPAGE_VAR_DOMAIN}}
+        widget:
+            type: traefik
+            url: http://traefik.{{HOMEPAGE_VAR_DOMAIN}}
+            # username: username # optional
+            # password: password # optional
+    - truenas:
+        href: http://192.168.1.186
+        widget:
+            type: truenas
+            url: http://192.168.1.186
+            key: {{HOMEPAGE_FILE_TRUENAS_API_KEY}}
