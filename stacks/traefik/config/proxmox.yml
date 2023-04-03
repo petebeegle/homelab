@@ -1,0 +1,42 @@
+http:
+  routers:
+    pve:
+      rule: Host(`pve.{{env "STACK_TRAEFIK_DOMAIN"}}`) || Host(`proxmox.{{env "STACK_TRAEFIK_DOMAIN"}}`)
+      service: pve
+      tls:
+        certresolver: primary
+        domains:
+          - sans: '*.{{env "STACK_TRAEFIK_DOMAIN"}}'
+    pve02:
+      rule: Host(`pve02.{{env "STACK_TRAEFIK_DOMAIN"}}`)
+      service: pve02
+      tls:
+        certresolver: primary
+        domains:
+          - sans: '*.{{env "STACK_TRAEFIK_DOMAIN"}}'
+    pve03:
+      rule: Host(`pve03.{{env "STACK_TRAEFIK_DOMAIN"}}`)
+      service: pve03
+      tls:
+        certresolver: primary
+        domains:
+          - sans: '*.{{env "STACK_TRAEFIK_DOMAIN"}}'
+  services:
+    pve:
+      loadBalancer:
+        servers:
+          - url: https://192.168.1.28:8006/
+        serversTransport: proxmox-transport
+    pve02:
+      loadBalancer:
+        servers:
+          - url: https://192.168.1.29:8006/
+        serversTransport: proxmox-transport  
+    pve03:
+      loadBalancer:
+        servers:
+          - url: https://192.168.1.30:8006/
+        serversTransport: proxmox-transport  
+  serversTransports:
+    proxmox-transport:
+      insecureSkipVerify: true
