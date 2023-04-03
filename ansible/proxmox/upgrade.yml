@@ -1,0 +1,6 @@
+- hosts:
+    - all
+  roles:
+    - upgrade
+  remote_user: root
+  become: false

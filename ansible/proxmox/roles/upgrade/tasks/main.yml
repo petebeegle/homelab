@@ -1,0 +1,18 @@
+- name: ensure sources.list
+  ansible.builtin.copy:
+    src: ../files/sources.list
+    dest: /etc/apt/sources.list
+    owner: root
+    mode: '0644'
+- name: ensure pve-enterprise.list
+  ansible.builtin.copy:
+    src: ../files/pve-enterprise.list
+    dest: /etc/apt/sources.list.d/pve-enterprise.list
+    owner: root
+    mode: '0644'
+- name: update cache
+  ansible.builtin.apt:
+    update_cache: yes
+- name: upgrade OS
+  ansible.builtin.apt:
+    upgrade: dist
