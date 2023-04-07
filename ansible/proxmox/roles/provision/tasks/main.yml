@@ -1,0 +1,10 @@
+- name: add user
+  ansible.builtin.user:
+    name: vscode
+    group: root
+    state: present
+- name: add ssh
+  ansible.posix.authorized_key:
+    user: vscode
+    state: present
+    key: "{{ lookup('file', '/home/vscode/.ssh/id_ed25519.pub') }}"

@@ -1,14 +1,21 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/debian
 {
-    "name": "Docker outside of Docker",
-    "image": "mcr.microsoft.com/devcontainers/base:bullseye",
-    "features": {
-        "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
-        "ghcr.io/devcontainers/features/terraform:1": {},
-        "ghcr.io/devcontainers-contrib/features/ansible:2": {}
-    },
-    "remoteEnv": {
-        "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
+	"name": "Debian",
+	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+	"image": "mcr.microsoft.com/devcontainers/base:bullseye",
+	"features": {
+		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+		"ghcr.io/devcontainers/features/terraform:1": {},
+		"ghcr.io/devcontainers-contrib/features/ansible:2": {}
 	},
+	"remoteEnv": {
+		"LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
+	},
+	"containerEnv": {
+		"ANSIBLE_HOST_KEY_CHECKING": "false"
+	},
+	"postStartCommand": "sudo apt update && sudo apt install sshpass",
 	"customizations": {
 		"vscode": {
 			"extensions": [

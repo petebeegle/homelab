@@ -1,5 +1,4 @@
-- hosts:
-    - all
+- hosts: proxmox
   roles:
     - upgrade
   remote_user: root

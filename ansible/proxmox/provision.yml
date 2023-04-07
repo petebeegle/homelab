@@ -1,0 +1,5 @@
+- hosts: proxmox
+  become: false
+  remote_user: root
+  roles:
+    - provision
