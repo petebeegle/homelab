@@ -1,0 +1,19 @@
+http:
+  routers:
+    truenas:
+      rule: Host(`truenas.{{env "STACK_TRAEFIK_DOMAIN"}}`)
+      service: truenas
+      tls:
+        certresolver: primary
+        domains:
+          - sans: '*.{{env "STACK_TRAEFIK_DOMAIN"}}'
+  services:
+    truenas:
+      loadBalancer:
+        servers:
+          - url: https://192.168.1.66/
+        serversTransport: truenas-transport
+  
+  serversTransports:
+    truenas-transport:
+      insecureSkipVerify: true
