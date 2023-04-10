@@ -1,0 +1,18 @@
+- name: Update apt packages
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+    upgrade: full
+
+- name: Install packages
+  ansible.builtin.package:
+    name:
+    - unzip
+    - wget
+    - curl
+    - git
+    - python3
+    - python3-pip
+    - ca-certificates
+    - gnupg
+    state: present

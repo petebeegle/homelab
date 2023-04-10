@@ -1,12 +1,12 @@
 - name: ensure sources.list
   ansible.builtin.copy:
-    src: ../files/sources.list
+    src: ./files/sources.list
     dest: /etc/apt/sources.list
     owner: root
     mode: '0644'
 - name: ensure pve-enterprise.list
   ansible.builtin.copy:
-    src: ../files/pve-enterprise.list
+    src: ./files/pve-enterprise.list
     dest: /etc/apt/sources.list.d/pve-enterprise.list
     owner: root
     mode: '0644'
@@ -16,3 +16,8 @@
 - name: upgrade OS
   ansible.builtin.apt:
     upgrade: dist
+- name: disable proxmox subscription popup
+  ansible.builtin.replace:
+    path: /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
+    regexp: '^(.*)Ext\.Msg\.show\(\{(.*)$\n^(.*)No valid subscription(.*)$'
+    replace: '\1void({\2\n\3No valid subscription\4'

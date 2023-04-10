@@ -1,0 +1,9 @@
+- name: Setup swarm
+  hosts: swarm
+  become: true
+
+  tasks:
+  - name: Update server and install essential packages
+    ansible.builtin.include_tasks: ../tasks/essential.yml
+  - name: Install docker
+    ansible.builtin.include_tasks: ../tasks/docker.yml

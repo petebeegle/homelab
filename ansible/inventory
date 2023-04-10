@@ -1,3 +1,7 @@
+[swarm]
+swarm-worker1 ansible_ssh_host=192.168.1.236
+swarm-worker2 ansible_ssh_host=192.168.1.165
+
 [proxmox]
 pve ansible_ssh_host=192.168.1.28
 pve02 ansible_ssh_host=192.168.1.29
