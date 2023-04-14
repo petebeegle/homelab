@@ -1,8 +1,7 @@
-1. Create a vault:
 ```sh
 # create a vault (all or specific group)
-ansible-vault create group_vars/all/vault.yml
+ansible-vault create inventories/swarm/group_vars/all/vault.yml
 
 # run playbook
-ansible-playbook playbooks/swarm.yml --ask-vault-pass
+ansible-playbook site.yml --ask-vault-pass
 ```

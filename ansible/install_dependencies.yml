@@ -1,0 +1,8 @@
+---
+- name: Install system dependencies
+  hosts: all
+  become: true
+
+  roles:
+    - role: roles/install-essential
+    - role: roles/install-docker

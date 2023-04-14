@@ -1,7 +1,0 @@
-- name: Setup Proxmox
-  hosts: proxmox
-  become: true
-
-  tasks:
-  - name: Update server and install essential packages
-    ansible.builtin.include_tasks: tasks/upgrade-proxmox.yml
