@@ -1,0 +1,16 @@
+---
+- name: Setup swarm cluster
+  hosts: managers
+  become: true
+
+  tasks:
+    - include_role:
+        name: swarm-init
+
+- name: Join swarm cluster
+  hosts: workers
+  become: true
+
+  tasks:
+    - include_role:
+        name: swarm-join

@@ -1,0 +1,14 @@
+- name: Initialize the cluster using docker swarm
+  community.docker.docker_swarm:
+    state: present
+- name: get join command
+  shell: 'docker swarm join-token worker | grep join'
+  register: join_command_raw
+- name: set join command
+  set_fact:
+    join_command: '{{ join_command_raw.stdout_lines[0] }}'
+    cacheable: true
+- name: Create proxy network
+  community.docker.docker_network:
+    name: proxy
+    driver: overlay

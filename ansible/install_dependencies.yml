@@ -3,6 +3,8 @@
   hosts: all
   become: true
 
-  roles:
-    - role: roles/install-essential
-    - role: roles/install-docker
+  tasks:
+    - include_role:
+        name: install-essential
+    - include_role:
+        name: install-docker

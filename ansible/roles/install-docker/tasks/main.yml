@@ -15,6 +15,10 @@
     - containerd.io
     - docker-buildx-plugin
     - docker-compose-plugin
+- name: Install docker python sdk
+  ansible.builtin.pip:
+    name:
+    - docker
 - name: Ensure docker is active
   ansible.builtin.service:
     name: docker
