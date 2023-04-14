@@ -1,0 +1,31 @@
+- name: Ensure folders exist
+  ansible.builtin.file:
+    path: /lab/traefik
+    state: directory
+
+- name: Copy files
+  ansible.builtin.copy:
+    src: files/
+    dest: /lab/traefik/
+- name: Ensure letsencrypt volume exists
+  ansible.builtin.file:
+    path: /lab/traefik/letsencrypt
+    state: directory
+    mode: '0644'
+- name: test
+  debug:
+    var: domain
+- name: Create secrets
+  community.docker.docker_secret:
+    name: cf_dns_api_token
+    data: "{{ cf_dns_api_token }}"
+    state: present
+- name: Deploy traefik
+  community.docker.docker_stack:
+    state: present
+    name: traefik
+    compose:
+      -  /lab/traefik/docker-compose.yml
+  environment:
+    STACK_TRAEFIK_DOMAIN: "{{ domain }}"
+    STACK_TRAEFIK_EMAIL: "{{ email }}"

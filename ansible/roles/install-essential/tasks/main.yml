@@ -16,3 +16,10 @@
     - ca-certificates
     - gnupg
     state: present
+- name: Install python dependencies
+  ansible.builtin.pip:
+    name:
+    - docker
+    - jsondiff
+    - pyyaml
+    state: present

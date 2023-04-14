@@ -7,12 +7,8 @@ services:
       - 80:80
       - 8080:8080
       - 443:443
-    env_file:
-      - .env
     environment:
-      - CF_DNS_API_TOKEN_FILE=/run/secrets/cloudflare_dns_api_token
-    secrets:
-      - cloudflare_dns_api_token
+      - CF_DNS_API_TOKEN_FILE=/run/secrets/cf_dns_api_token
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./letsencrypt:/letsencrypt:rw
@@ -52,7 +48,7 @@ services:
         - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
         - traefik.http.routers.http-catchall.entrypoints=web
         - traefik.http.routers.http-catchall.middlewares=http-to-https
-      
+
         - traefik.http.routers.dashboard.rule=Host(`traefik.${STACK_TRAEFIK_DOMAIN}`)
         - traefik.http.routers.dashboard.service=api@internal
         - traefik.http.routers.dashboard.entrypoints=websecure
@@ -63,9 +59,6 @@ services:
         # needed for swarm only
         - traefik.http.services.dummy-svc.loadbalancer.server.port=1111
 
-secrets:
-  cloudflare_dns_api_token:
-    file: .cf_dns_api_token.secret
 networks:
   proxy:
     external: true

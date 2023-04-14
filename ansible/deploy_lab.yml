@@ -1,0 +1,8 @@
+---
+- name: Deploy manager scoped services
+  hosts: managers
+  become: true
+
+  tasks:
+    - include_role:
+        name: traefik
