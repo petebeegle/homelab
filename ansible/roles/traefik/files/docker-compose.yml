@@ -9,10 +9,13 @@ services:
       - 443:443
     environment:
       - CF_DNS_API_TOKEN_FILE=/run/secrets/cf_dns_api_token
+      - STACK_TRAEFIK_DOMAIN=${STACK_TRAEFIK_DOMAIN}
+    secrets:
+      - cf_dns_api_token
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./letsencrypt:/letsencrypt:rw
-      - ./config:/etc/traefik/config:ro
+      - /lab/traefik/letsencrypt:/letsencrypt:rw
+      - /lab/traefik/config:/etc/traefik/config:ro
     command:
       - --api.dashboard=true
       - --api.debug=true
@@ -61,4 +64,7 @@ services:
 
 networks:
   proxy:
+    external: true
+secrets:
+  cf_dns_api_token:
     external: true

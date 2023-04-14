@@ -2,7 +2,6 @@
   ansible.builtin.file:
     path: /lab/traefik
     state: directory
-
 - name: Copy files
   ansible.builtin.copy:
     src: files/
@@ -12,9 +11,6 @@
     path: /lab/traefik/letsencrypt
     state: directory
     mode: '0644'
-- name: test
-  debug:
-    var: domain
 - name: Create secrets
   community.docker.docker_secret:
     name: cf_dns_api_token

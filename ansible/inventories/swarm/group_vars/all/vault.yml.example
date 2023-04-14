@@ -1,0 +1,13 @@
+Below is an example `vault.yml`:
+```yml
+---
+username: ex_user
+ssh_private_key_file: ~/.ssh/swarm_key
+ansible_become_pass: ex_pass
+
+domain: example.com
+email: example@example.com
+
+# stack secrets
+cf_dns_api_token: secret-token
+```
