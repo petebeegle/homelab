@@ -4,7 +4,9 @@
   become: true
 
   tasks:
-    - include_role:
-        name: install-essential
-    - include_role:
-        name: install-docker
+    - name: Install essential dependencies
+      ansible.builtin.include_role:
+        name: install_essential
+    - name: Install docker
+      ansible.builtin.include_role:
+        name: install_docker

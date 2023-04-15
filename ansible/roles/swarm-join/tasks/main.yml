@@ -1,5 +1,0 @@
-- name: join cluster
-  shell: "{{ hostvars['swarm-manager1'].join_command }} >> node_joined.txt"
-  args:
-    chdir: $HOME
-    creates: node_joined.txt

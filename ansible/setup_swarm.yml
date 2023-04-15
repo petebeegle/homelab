@@ -1,16 +1,14 @@
 ---
 - name: Setup swarm cluster
-  hosts: managers
+  hosts: all
   become: true
 
   tasks:
-    - include_role:
-        name: swarm-init
-
-- name: Join swarm cluster
-  hosts: workers
-  become: true
-
-  tasks:
-    - include_role:
-        name: swarm-join
+    - name: Create swarm
+      ansible.builtin.include_role:
+        name: swarm_init
+      when: "'managers' in group_names"
+    - name: Join swarm
+      ansible.builtin.include_role:
+        name: swarm_join
+      when: "'workers' in group_names"

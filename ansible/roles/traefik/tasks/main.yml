@@ -2,10 +2,12 @@
   ansible.builtin.file:
     path: /lab/traefik
     state: directory
+    mode: '0644'
 - name: Copy files
   ansible.builtin.copy:
     src: files/
     dest: /lab/traefik/
+    mode: '0644'
 - name: Ensure letsencrypt volume exists
   ansible.builtin.file:
     path: /lab/traefik/letsencrypt
@@ -21,7 +23,7 @@
     state: present
     name: traefik
     compose:
-      -  /lab/traefik/docker-compose.yml
+      - /lab/traefik/docker-compose.yml
   environment:
     STACK_TRAEFIK_DOMAIN: "{{ domain }}"
     STACK_TRAEFIK_EMAIL: "{{ email }}"

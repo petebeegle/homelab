@@ -4,5 +4,6 @@
   become: true
 
   tasks:
-    - include_role:
+    - name: Deploy traefik
+      ansible.builtin.include_role:
         name: traefik

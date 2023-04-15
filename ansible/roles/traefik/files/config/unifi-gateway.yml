@@ -13,7 +13,7 @@ http:
         servers:
           - url: https://192.168.1.1/
         serversTransport: unifi-gateway-transport
-  
+
   serversTransports:
     unifi-gateway-transport:
       insecureSkipVerify: true

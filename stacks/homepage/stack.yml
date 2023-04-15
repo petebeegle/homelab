@@ -32,7 +32,7 @@ services:
         - traefik.http.routers.homepage.tls.domains[0].main=${STACK_HOMEPAGE_DOMAIN}
         - traefik.http.routers.homepage.tls.domains[0].sans=*.${STACK_HOMEPAGE_DOMAIN}
         - traefik.http.routers.service=homepage
-        
+
         - traefik.http.services.homepage.loadbalancer.server.port=3000
 secrets:
   unifi_console_usr:

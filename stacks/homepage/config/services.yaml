@@ -4,17 +4,17 @@
 
 - services:
     - proxmox:
-        href: https://proxmox.{{HOMEPAGE_VAR_DOMAIN}}
+        href: "https://proxmox.{{HOMEPAGE_VAR_DOMAIN}}"
         widget:
             type: proxmox
             url: https://proxmox.{{HOMEPAGE_VAR_DOMAIN}}
-            username: {{HOMEPAGE_FILE_PVE_USR}}
-            password: {{HOMEPAGE_FILE_PVE_PWD}}
+            username: "{{HOMEPAGE_FILE_PVE_USR}}"
+            password: "{{HOMEPAGE_FILE_PVE_PWD}}"
     - traefik:
-        href: https://traefik.{{HOMEPAGE_VAR_DOMAIN}}
+        href: "https://traefik.{{HOMEPAGE_VAR_DOMAIN}}"
         widget:
             type: traefik
-            url: http://traefik.{{HOMEPAGE_VAR_DOMAIN}}
+            url: "http://traefik.{{HOMEPAGE_VAR_DOMAIN}}"
             # username: username # optional
             # password: password # optional
     - truenas:
@@ -22,4 +22,4 @@
         widget:
             type: truenas
             url: http://192.168.1.186
-            key: {{HOMEPAGE_FILE_TRUENAS_API_KEY}}
+            key: "{{HOMEPAGE_FILE_TRUENAS_API_KEY}}"

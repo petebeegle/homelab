@@ -1,0 +1,6 @@
+---
+# Configuration for [ansible-lint](https://ansible-lint.readthedocs.io/configuring/#configuration-file)
+use_default_rules: true
+parseable: true
+quiet: false
+verbosity: 0

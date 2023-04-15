@@ -7,19 +7,19 @@
 - name: Install packages
   ansible.builtin.package:
     name:
-    - unzip
-    - wget
-    - curl
-    - git
-    - python3
-    - python3-pip
-    - ca-certificates
-    - gnupg
+      - unzip
+      - wget
+      - curl
+      - git
+      - python3
+      - python3-pip
+      - ca-certificates
+      - gnupg
     state: present
 - name: Install python dependencies
   ansible.builtin.pip:
     name:
-    - docker
-    - jsondiff
-    - pyyaml
+      - docker
+      - jsondiff
+      - pyyaml
     state: present

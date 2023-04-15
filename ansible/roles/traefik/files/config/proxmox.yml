@@ -31,12 +31,12 @@ http:
       loadBalancer:
         servers:
           - url: https://192.168.1.29:8006/
-        serversTransport: proxmox-transport  
+        serversTransport: proxmox-transport
     pve03:
       loadBalancer:
         servers:
           - url: https://192.168.1.30:8006/
-        serversTransport: proxmox-transport  
+        serversTransport: proxmox-transport
   serversTransports:
     proxmox-transport:
       insecureSkipVerify: true
