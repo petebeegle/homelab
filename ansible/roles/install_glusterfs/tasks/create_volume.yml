@@ -2,34 +2,13 @@
 - name: Check that volume exists
   ansible.builtin.stat:
     path: "/glusterfs/bricks/{{ inventory_hostname }}/brick"
-  register: glustervolume
+  notify:
+    - Probe peers
+    - Create volume
+    - Secure volume
+    - Start volume
 - name: Create directory
   ansible.builtin.file:
     path: "/glusterfs/bricks/{{ inventory_hostname }}/brick"
     state: directory
     mode: '0644'
-- name: Probe peers
-  when: "not glustervolume.stat.exists and inventory_hostname == groups.gluster_nodes[0]"
-  ansible.builtin.command: gluster peer probe {{ item }}
-  loop: "{{ groups.workers }}"
-  changed_when: false
-- name: Create volume
-  when: "not glustervolume.stat.exists and inventory_hostname == groups.gluster_nodes[0]"
-  ansible.builtin.command: >
-    gluster volume create gfs replica 3 \
-    {{ groups.gluster_nodes[0] }}:/glusterfs/bricks/{{ groups.gluster_nodes[0] }}/brick \
-    {{ groups.gluster_nodes[0] }}:/glusterfs/bricks/{{ groups.gluster_nodes[0] }}/brick \
-    {{ groups.gluster_nodes[1] }}:/glusterfs/bricks/{{ groups.gluster_nodes[1] }}/brick \
-    force
-  changed_when: false
-- name: Secure Gluster Volume (on first node)
-  when: inventory_hostname == groups.gluster_nodes[0]
-  ansible.builtin.command: >
-    gluster volume set gfs auth.allow  \
-    {{ groups['gluster_nodes'][0] }},{{ groups['gluster_nodes'][1] }},{{ groups['gluster_nodes'][2] }}
-  changed_when: false
-
-- name: Start volume
-  when: "not glustervolume.stat.exists and inventory_hostname == groups.gluster_nodes[0]"
-  ansible.builtin.command: gluster volume start gfs
-  changed_when: false
