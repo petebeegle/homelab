@@ -10,12 +10,3 @@
     - name: Install docker
       ansible.builtin.include_role:
         name: install_docker
-
-- name: Configure glusterfs
-  hosts: gluster_nodes
-  become: true
-
-  tasks:
-    - name: Install glusterfs
-      ansible.builtin.include_role:
-        name: install_glusterfs

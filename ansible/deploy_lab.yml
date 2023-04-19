@@ -1,4 +1,13 @@
 ---
+- name: Configure glusterfs
+  hosts: gluster_nodes
+  become: true
+
+  tasks:
+    - name: Install glusterfs
+      ansible.builtin.include_role:
+        name: install_glusterfs
+
 - name: Deploy manager scoped services
   hosts: managers
   become: true
