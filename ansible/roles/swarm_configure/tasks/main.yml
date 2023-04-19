@@ -1,0 +1,8 @@
+---
+- name: Make sure an entry in /etc/hosts exists
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: "^{{ item }}"
+    line: "{{ hostvars[item].ansible_host }} {{ item }}"
+    state: present
+  with_items: "{{ play_hosts }}"

@@ -3,7 +3,6 @@
     update_cache: true
     cache_valid_time: 3600
     upgrade: full
-
 - name: Install packages
   ansible.builtin.package:
     name:

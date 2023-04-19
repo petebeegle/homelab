@@ -12,3 +12,6 @@
       ansible.builtin.include_role:
         name: swarm_join
       when: "'workers' in group_names"
+    - name: Configure swarm
+      ansible.builtin.include_role:
+        name: swarm_configure

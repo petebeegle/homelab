@@ -1,0 +1,7 @@
+---
+- name: Mount XFS
+  ansible.builtin.import_tasks: xfs.yml
+- name: Install Glusterfs
+  ansible.builtin.import_tasks: install.yml
+- name: Create volume
+  ansible.builtin.import_tasks: create_volume.yml

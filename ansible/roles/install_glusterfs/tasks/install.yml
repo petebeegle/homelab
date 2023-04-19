@@ -1,0 +1,24 @@
+---
+- name: Add glusterfs repository
+  block:
+    - name: Add gpg key
+      ansible.builtin.apt_key:
+        url: https://download.gluster.org/pub/gluster/glusterfs/9/rsa.pub
+    - name: Add gluster repository
+      ansible.builtin.apt_repository:
+        repo: deb https://download.gluster.org/pub/gluster/glusterfs/LATEST/Debian/11/amd64/apt bullseye main
+        state: present
+- name: Install glusterfs
+  ansible.builtin.apt:
+    name:
+      - glusterfs-server
+      - glusterfs-client
+      - glusterfs-common
+    state: present
+- name: Ensure glusterfs is active
+  ansible.builtin.service:
+    name: glusterd
+    state: started
+    enabled: true
+  notify:
+    - Reboot system
