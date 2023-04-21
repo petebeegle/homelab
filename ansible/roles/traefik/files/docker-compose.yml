@@ -14,8 +14,8 @@ services:
       - cf_dns_api_token
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /glusterfs/brick/traefik/letsencrypt:/letsencrypt:rw
-      - /glusterfs/brick/traefik/config:/etc/traefik/config:ro
+      - /swarm/volumes/traefik/letsencrypt:/letsencrypt:rw
+      - /swarm/volumes/traefik/config:/etc/traefik/config:ro
     command:
       - --api.dashboard=true
       - --api.debug=true

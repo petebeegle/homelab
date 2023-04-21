@@ -1,11 +1,7 @@
 ---
-- name: Check that volume exists
-  ansible.builtin.stat:
-    path: "/glusterfs/brick"
-  register: gluster
-- name: Create directory
+- name: Create swarm volume
   ansible.builtin.file:
-    path: "/glusterfs/brick"
+    path: "/swarm/volumes"
     state: directory
     mode: '0644'
 - name: Probe peers
@@ -17,18 +13,22 @@
   when: not gluster.stat.exists and inventory_hostname == groups.gluster_nodes[0]
   ansible.builtin.command: >
     gluster volume create {{ volume_name }} replica 3 \
-    {{ groups.gluster_nodes[0] }}:/glusterfs/brick \
-    {{ groups.gluster_nodes[1] }}:/glusterfs/brick \
-    {{ groups.gluster_nodes[2] }}:/glusterfs/brick \
+    {{ groups.gluster_nodes | map('regex_replace', '$', ':/gluster/data') | join('m') }} \
     force
   changed_when: false
 - name: Secure volume
   when: not gluster.stat.exists and inventory_hostname == groups.gluster_nodes[0]
   ansible.builtin.command: >
     gluster volume set {{ volume_name }} auth.allow  \
-    {{ groups.gluster_nodes[0] }},{{ groups.gluster_nodes[1] }},{{ groups.gluster_nodes[2] }}
+    {{ groups.gluster_nodes | join(',') }}
   changed_when: false
 - name: Start volume
   when: not gluster.stat.exists and inventory_hostname == groups.gluster_nodes[0]
   ansible.builtin.command: gluster volume start {{ volume_name }}
   changed_when: false
+- name: Mount gluster
+  ansible.posix.mount:
+    path: /swarm/volumes
+    src: localhost:/{{ volume_name }}
+    fstype: glusterfs
+    state: mounted

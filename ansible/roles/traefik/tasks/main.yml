@@ -1,16 +1,16 @@
 - name: Ensure folders exist
   ansible.builtin.file:
-    path: /glusterfs/brick/traefik
+    path: /swarm/volumes/traefik
     state: directory
     mode: '0644'
 - name: Copy files
   ansible.builtin.copy:
     src: files/
-    dest: /glusterfs/brick/traefik/
+    dest: /swarm/volumes/traefik/
     mode: '0644'
 - name: Ensure letsencrypt volume exists
   ansible.builtin.file:
-    path: /glusterfs/brick/traefik/letsencrypt
+    path: /swarm/volumes/traefik/letsencrypt
     state: directory
     mode: '0644'
 - name: Create secrets
@@ -23,7 +23,7 @@
     state: present
     name: traefik
     compose:
-      - /glusterfs/brick/traefik/docker-compose.yml
+      - /swarm/volumes/traefik/docker-compose.yml
   environment:
     STACK_TRAEFIK_DOMAIN: "{{ domain }}"
     STACK_TRAEFIK_EMAIL: "{{ email }}"

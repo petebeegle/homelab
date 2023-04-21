@@ -1,7 +1,11 @@
 ---
+- name: Check that volume exists
+  ansible.builtin.stat:
+    path: "/gluster/data"
+  register: gluster
 - name: Create gluster directory
   ansible.builtin.file:
-    path: /glusterfs/bricks/{{ inventory_hostname }}
+    path: /gluster/data
     state: directory
     mode: '0644'
 - name: Create XFS filesystem
@@ -11,7 +15,7 @@
     opts: -i size=512
 - name: Mount XFS volume
   ansible.posix.mount:
-    path: /glusterfs/bricks/{{ inventory_hostname }}
+    path: /gluster/data
     src: "/dev/disk/by-id/{{ hdd_device_id }}"
     fstype: xfs
     state: mounted
