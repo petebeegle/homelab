@@ -14,10 +14,7 @@
     state: directory
     mode: '0644'
 - name: Create secrets
-  community.docker.docker_secret:
-    name: cf_dns_api_token
-    data: "{{ cf_dns_api_token }}"
-    state: present
+  ansible.builtin.import_tasks: secrets.yml
 - name: Deploy traefik
   community.docker.docker_stack:
     state: present

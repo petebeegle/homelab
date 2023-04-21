@@ -9,16 +9,14 @@ services:
         - HOMEPAGE_VAR_DOMAIN=${STACK_HOMEPAGE_DOMAIN}
         - HOMEPAGE_FILE_PVE_USR=/run/secrets/pve_usr
         - HOMEPAGE_FILE_PVE_PWD=/run/secrets/pve_pwd
-        - HOMEPAGE_FILE_TRUENAS_API_KEY=/run/secrets/truenas_api_key
     secrets:
         - unifi_console_pwd
         - unifi_console_usr
         - pve_usr
         - pve_pwd
-        - truenas_api_key
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./config:/app/config
+      - /swarm/volumes/homepage/config:/app/config
     networks:
       - proxy
     deploy:
@@ -34,17 +32,15 @@ services:
         - traefik.http.routers.service=homepage
 
         - traefik.http.services.homepage.loadbalancer.server.port=3000
-secrets:
-  unifi_console_usr:
-    file: .unifi_console_usr.secret
-  unifi_console_pwd:
-    file: .unifi_console_pwd.secret
-  pve_usr:
-    file: .pve_usr.secret
-  pve_pwd:
-    file: .pve_pwd.secret
-  truenas_api_key:
-    file: .truenas_api_key.secret
 networks:
   proxy:
+    external: true
+secrets:
+  unifi_console_usr:
+    external: true
+  unifi_console_pwd:
+    external: true
+  pve_usr:
+    external: true
+  pve_pwd:
     external: true

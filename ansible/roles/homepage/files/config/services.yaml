@@ -17,9 +17,3 @@
             url: "http://traefik.{{HOMEPAGE_VAR_DOMAIN}}"
             # username: username # optional
             # password: password # optional
-    - truenas:
-        href: http://192.168.1.186
-        widget:
-            type: truenas
-            url: http://192.168.1.186
-            key: "{{HOMEPAGE_FILE_TRUENAS_API_KEY}}"

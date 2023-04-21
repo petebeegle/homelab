@@ -1,0 +1,20 @@
+- name: Ensure folders exist
+  ansible.builtin.file:
+    path: /swarm/volumes/homepage
+    state: directory
+    mode: '0644'
+- name: Copy files
+  ansible.builtin.copy:
+    src: files/
+    dest: /swarm/volumes/homepage/
+    mode: '0644'
+- name: Create secrets
+  ansible.builtin.import_tasks: secrets.yml
+- name: Deploy homepage
+  community.docker.docker_stack:
+    state: present
+    name: homepage
+    compose:
+      - /swarm/volumes/homepage/docker-compose.yml
+  environment:
+    STACK_HOMEPAGE_DOMAIN: "{{ domain }}"

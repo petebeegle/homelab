@@ -8,7 +8,7 @@
       ansible.builtin.include_role:
         name: install_glusterfs
 
-- name: Deploy manager scoped services
+- name: Deploy services
   hosts: managers
   become: true
 
@@ -16,3 +16,6 @@
     - name: Deploy traefik
       ansible.builtin.include_role:
         name: traefik
+    - name: Deploy homepage
+      ansible.builtin.include_role:
+        name: homepage
