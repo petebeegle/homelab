@@ -1,13 +1,4 @@
 ---
-- name: Configure glusterfs
-  hosts: gluster_nodes
-  become: true
-
-  tasks:
-    - name: Install glusterfs
-      ansible.builtin.include_role:
-        name: install_glusterfs
-
 - name: Deploy services
   hosts: managers
   become: true
@@ -15,10 +6,10 @@
   tasks:
     - name: Deploy traefik
       ansible.builtin.include_role:
-        name: traefik
+        name: container_traefik
     - name: Deploy homepage
       ansible.builtin.include_role:
-        name: homepage
+        name: container_homepage
     - name: Deploy portainer
       ansible.builtin.include_role:
-        name: portainer
+        name: container_portainer

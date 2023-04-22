@@ -41,3 +41,4 @@ terraform.rc
 *.secret
 letsencrypt
 vault.yml
+*.pwd

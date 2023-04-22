@@ -1,4 +1,4 @@
 ---
 - ansible.builtin.import_playbook: install_dependencies.yml
-- ansible.builtin.import_playbook: setup_swarm.yml
-- ansible.builtin.import_playbook: deploy_lab.yml
+- ansible.builtin.import_playbook: swarm_setup.yml
+- ansible.builtin.import_playbook: swarm_deploy.yml
