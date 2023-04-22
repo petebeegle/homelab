@@ -1,0 +1,23 @@
+- name: Ensure folders exist
+  ansible.builtin.file:
+    path: /swarm/volumes/portainer
+    state: directory
+    mode: '0644'
+- name: Ensure folders exist
+  ansible.builtin.file:
+    path: /swarm/volumes/portainer-agent
+    state: directory
+    mode: '0644'
+- name: Copy files
+  ansible.builtin.copy:
+    src: files/
+    dest: /swarm/volumes/portainer/
+    mode: '0644'
+- name: Deploy portainer
+  community.docker.docker_stack:
+    state: present
+    name: portainer
+    compose:
+      - /swarm/volumes/portainer/docker-compose.yml
+  environment:
+    STACK_DOMAIN: "{{ domain }}"

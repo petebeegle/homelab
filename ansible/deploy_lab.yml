@@ -19,3 +19,6 @@
     - name: Deploy homepage
       ansible.builtin.include_role:
         name: homepage
+    - name: Deploy portainer
+      ansible.builtin.include_role:
+        name: portainer

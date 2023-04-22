@@ -1,0 +1,35 @@
+services:
+  agent:
+    image: portainer/agent
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /swarm/volumes/portainer-agent:/var/lib/docker/volumes
+    networks:
+      - proxy
+    deploy:
+      mode: global
+
+  portainer:
+    image: portainer/portainer
+    command: -H tcp://tasks.agent:9001 --tlsskipverify
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /swarm/volumes/portainer:/data
+    networks:
+      - proxy
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.portainer.rule=Host(`portainer.${STACK_DOMAIN}`)
+        - traefik.http.services.portainer.loadbalancer.server.port=9000
+        - traefik.http.routers.portainer.entrypoints=websecure
+        - traefik.http.routers.portainer.tls=true
+        - traefik.http.routers.portainer.tls.certresolver=leresolver
+      mode: replicated
+      placement:
+        constraints:
+          - "node.role == manager"
+
+networks:
+  proxy:
+    external: true
