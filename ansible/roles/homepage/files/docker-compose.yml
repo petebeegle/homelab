@@ -9,11 +9,13 @@ services:
         - HOMEPAGE_VAR_DOMAIN=${STACK_HOMEPAGE_DOMAIN}
         - HOMEPAGE_FILE_PVE_USR=/run/secrets/pve_usr
         - HOMEPAGE_FILE_PVE_PWD=/run/secrets/pve_pwd
+        - HOMEPAGE_FILE_PORTAINER_APIKEY=/run/secrets/portainer_apikey
     secrets:
         - unifi_console_pwd
         - unifi_console_usr
         - pve_usr
         - pve_pwd
+        - portainer_apikey
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /swarm/volumes/homepage/config:/app/config
@@ -43,4 +45,6 @@ secrets:
   pve_usr:
     external: true
   pve_pwd:
+    external: true
+  portainer_apikey:
     external: true

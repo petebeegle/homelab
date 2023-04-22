@@ -2,6 +2,11 @@
 # For configuration options and examples, please see:
 # https://gethomepage.dev/en/configs/settings
 
-providers:
-  openweathermap: openweathermapapikey
-  weatherapi: weatherapiapikey
+layout:
+    servers:
+        style: row
+        columns: 3
+quicklaunch:
+    searchDescriptions: true
+    hideInternetSearch: true
+    hideVisitURL: true

@@ -2,7 +2,12 @@
 # For configuration options and examples, please see:
 # https://gethomepage.dev/en/configs/bookmarks
 
-- Developer:
-    - Source:
-        - abbr: GH
-          href: https://github.com/petebeegle/homelab
+- resources:
+    - modem:
+      - abbr: MO
+        href: "https://modem.{{HOMEPAGE_VAR_DOMAIN}}"
+
+- developer:
+    - source:
+      - abbr: GH
+        href: https://github.com/petebeegle/homelab
