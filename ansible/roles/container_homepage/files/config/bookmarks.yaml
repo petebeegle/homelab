@@ -4,10 +4,10 @@
 
 - resources:
     - modem:
-      - abbr: MO
-        href: "https://modem.{{HOMEPAGE_VAR_DOMAIN}}"
+        - abbr: MO
+          href: "https://modem.{{HOMEPAGE_VAR_DOMAIN}}"
 
 - developer:
     - source:
-      - abbr: GH
-        href: https://github.com/petebeegle/homelab
+        - abbr: GH
+          href: https://github.com/petebeegle/homelab

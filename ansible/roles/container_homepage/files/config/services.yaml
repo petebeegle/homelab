@@ -3,52 +3,52 @@
 # https://gethomepage.dev/en/configs/services
 
 - servers:
-    - pve:
-        icon: proxmox
-        description: "primary proxmox cluster node"
-        href: "https://proxmox.{{HOMEPAGE_VAR_DOMAIN}}"
-        ping: "https://proxmox.{{HOMEPAGE_VAR_DOMAIN}}"
-        widget:
-            type: proxmox
-            url: "https://proxmox.{{HOMEPAGE_VAR_DOMAIN}}"
-            username: "{{HOMEPAGE_FILE_PVE_USR}}"
-            password: "{{HOMEPAGE_FILE_PVE_PWD}}"
-    - pve02:
-        icon: proxmox
-        description: "second proxmox cluster node"
-        href: "https://pve02.{{HOMEPAGE_VAR_DOMAIN}}"
-        ping: "https://pve02.{{HOMEPAGE_VAR_DOMAIN}}"
-        widget:
-            type: proxmox
-            url: "https://pve02.{{HOMEPAGE_VAR_DOMAIN}}"
-            username: "{{HOMEPAGE_FILE_PVE_USR}}"
-            password: "{{HOMEPAGE_FILE_PVE_PWD}}"
-            fields: ["resources.cpu", "resources.mem"]
-    - pve03:
-        icon: proxmox
-        description: "third proxmox cluster node"
-        href: "https://pve03.{{HOMEPAGE_VAR_DOMAIN}}"
-        ping: "https://pve03.{{HOMEPAGE_VAR_DOMAIN}}"
-        widget:
-            type: proxmox
-            url: "https://pve03.{{HOMEPAGE_VAR_DOMAIN}}"
-            username: "{{HOMEPAGE_FILE_PVE_USR}}"
-            password: "{{HOMEPAGE_FILE_PVE_PWD}}"
-            fields: ["resources.cpu", "resources.mem"]
+      - pve:
+            icon: proxmox
+            description: "primary proxmox cluster node"
+            href: "https://proxmox.{{HOMEPAGE_VAR_DOMAIN}}"
+            ping: "https://proxmox.{{HOMEPAGE_VAR_DOMAIN}}"
+            widget:
+                type: proxmox
+                url: "https://proxmox.{{HOMEPAGE_VAR_DOMAIN}}"
+                username: "{{HOMEPAGE_FILE_PVE_USR}}"
+                password: "{{HOMEPAGE_FILE_PVE_PWD}}"
+      - pve02:
+            icon: proxmox
+            description: "second proxmox cluster node"
+            href: "https://pve02.{{HOMEPAGE_VAR_DOMAIN}}"
+            ping: "https://pve02.{{HOMEPAGE_VAR_DOMAIN}}"
+            widget:
+                type: proxmox
+                url: "https://pve02.{{HOMEPAGE_VAR_DOMAIN}}"
+                username: "{{HOMEPAGE_FILE_PVE_USR}}"
+                password: "{{HOMEPAGE_FILE_PVE_PWD}}"
+                fields: ["resources.cpu", "resources.mem"]
+      - pve03:
+            icon: proxmox
+            description: "third proxmox cluster node"
+            href: "https://pve03.{{HOMEPAGE_VAR_DOMAIN}}"
+            ping: "https://pve03.{{HOMEPAGE_VAR_DOMAIN}}"
+            widget:
+                type: proxmox
+                url: "https://pve03.{{HOMEPAGE_VAR_DOMAIN}}"
+                username: "{{HOMEPAGE_FILE_PVE_USR}}"
+                password: "{{HOMEPAGE_FILE_PVE_PWD}}"
+                fields: ["resources.cpu", "resources.mem"]
 - management:
-    - traefik:
-        icon: traefik
-        href: "https://traefik.{{HOMEPAGE_VAR_DOMAIN}}"
-        ping: "https://traefik.{{HOMEPAGE_VAR_DOMAIN}}"
-        widget:
-            type: traefik
-            url: "http://traefik.{{HOMEPAGE_VAR_DOMAIN}}"
-    - portainer:
-        icon: portainer
-        href: "https://portainer.{{HOMEPAGE_VAR_DOMAIN}}"
-        ping: "https://portainer.{{HOMEPAGE_VAR_DOMAIN}}"
-        widget:
-            type: portainer
-            env: 2
-            url: "https://portainer.{{HOMEPAGE_VAR_DOMAIN}}"
-            key: "{{HOMEPAGE_FILE_PORTAINER_APIKEY}}"
+      - traefik:
+            icon: traefik
+            href: "https://traefik.{{HOMEPAGE_VAR_DOMAIN}}"
+            ping: "https://traefik.{{HOMEPAGE_VAR_DOMAIN}}"
+            widget:
+                type: traefik
+                url: "http://traefik.{{HOMEPAGE_VAR_DOMAIN}}"
+      - portainer:
+            icon: portainer
+            href: "https://portainer.{{HOMEPAGE_VAR_DOMAIN}}"
+            ping: "https://portainer.{{HOMEPAGE_VAR_DOMAIN}}"
+            widget:
+                type: portainer
+                env: 2
+                url: "https://portainer.{{HOMEPAGE_VAR_DOMAIN}}"
+                key: "{{HOMEPAGE_FILE_PORTAINER_APIKEY}}"

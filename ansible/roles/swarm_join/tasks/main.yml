@@ -1,5 +1,6 @@
 - name: Join cluster
-  ansible.builtin.shell: "{{ hostvars['swarm-manager1'].join_command }} >> node_joined.txt"
-  args:
-    chdir: $HOME
-    creates: node_joined.txt
+  community.docker.docker_swarm:
+    state: join
+    join_token: "{{ hostvars['swarm-manager1'].join_tokens.Worker }}"
+    remote_addrs:
+      - "{{ hostvars['swarm-manager1'].ansible_host }}"

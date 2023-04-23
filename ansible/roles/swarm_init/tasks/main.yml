@@ -1,17 +1,10 @@
 - name: Initialize the cluster using docker swarm
   community.docker.docker_swarm:
     state: present
-- name: Get join command
-  ansible.builtin.shell: |
-    set -o pipefail
-    docker swarm join-token worker | grep join
-  args:
-    executable: /bin/bash
-  register: join_command_raw
-  changed_when: join_command_raw.rc != 0
-- name: Set join command
+  register: swarm
+- name: Cache join tokens
   ansible.builtin.set_fact:
-    join_command: '{{ join_command_raw.stdout_lines[0] }}'
+    join_tokens: "{{ swarm.swarm_facts.JoinTokens }}"
     cacheable: true
 - name: Create proxy network
   community.docker.docker_network:
