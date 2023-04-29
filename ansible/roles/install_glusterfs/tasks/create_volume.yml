@@ -3,9 +3,9 @@
   ansible.builtin.file:
     path: "/swarm/volumes"
     state: directory
-    mode: '0644'
+    mode: "0644"
 - name: Probe peers
-  when: not gluster.stat.exists and inventory_hostname == groups.gluster_nodes[0]
+  when: inventory_hostname == groups.gluster_nodes[0]
   ansible.builtin.command: gluster peer probe {{ item }}
   loop: "{{ groups.workers }}"
   changed_when: false
@@ -13,11 +13,11 @@
   when: not gluster.stat.exists and inventory_hostname == groups.gluster_nodes[0]
   ansible.builtin.command: >
     gluster volume create {{ volume_name }} replica 3 \
-    {{ groups.gluster_nodes | map('regex_replace', '$', ':/gluster/data') | join('m') }} \
+    {{ groups.gluster_nodes | map('regex_replace', '$', ':/gluster/data') | join(' ') }} \
     force
   changed_when: false
 - name: Secure volume
-  when: not gluster.stat.exists and inventory_hostname == groups.gluster_nodes[0]
+  when: inventory_hostname == groups.gluster_nodes[0]
   ansible.builtin.command: >
     gluster volume set {{ volume_name }} auth.allow  \
     {{ groups.gluster_nodes | join(',') }}

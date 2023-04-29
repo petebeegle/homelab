@@ -29,9 +29,8 @@
   notify:
     - Reboot system
 - name: Make sure an entry in /etc/hosts exists
-  ansible.builtin.lineinfile:
+  ansible.builtin.replace:
     path: /etc/hosts
     regexp: "^{{ item }}"
-    line: "{{ hostvars[item].ansible_host }} {{ item }}"
-    state: present
+    replace: "{{ hostvars[item].ansible_host }} {{ item }}"
   with_items: "{{ play_hosts }}"

@@ -4,18 +4,18 @@ services:
   homepage:
     image: ghcr.io/benphelps/homepage:main
     environment:
-        - HOMEPAGE_FILE_UNIFI_CONSOLE_USR=/run/secrets/unifi_console_usr
-        - HOMEPAGE_FILE_UNIFI_CONSOLE_PWD=/run/secrets/unifi_console_pwd
-        - HOMEPAGE_VAR_DOMAIN=${STACK_HOMEPAGE_DOMAIN}
-        - HOMEPAGE_FILE_PVE_USR=/run/secrets/pve_usr
-        - HOMEPAGE_FILE_PVE_PWD=/run/secrets/pve_pwd
-        - HOMEPAGE_FILE_PORTAINER_APIKEY=/run/secrets/portainer_apikey
+      - HOMEPAGE_FILE_UNIFI_CONSOLE_USR=/run/secrets/unifi_console_usr
+      - HOMEPAGE_FILE_UNIFI_CONSOLE_PWD=/run/secrets/unifi_console_pwd
+      - HOMEPAGE_VAR_DOMAIN=${STACK_HOMEPAGE_DOMAIN}
+      - HOMEPAGE_FILE_PVE_USR=/run/secrets/pve_usr
+      - HOMEPAGE_FILE_PVE_PWD=/run/secrets/pve_pwd
+      - HOMEPAGE_FILE_PORTAINER_APIKEY=/run/secrets/portainer_apikey
     secrets:
-        - unifi_console_pwd
-        - unifi_console_usr
-        - pve_usr
-        - pve_pwd
-        - portainer_apikey
+      - unifi_console_pwd
+      - unifi_console_usr
+      - pve_usr
+      - pve_pwd
+      - portainer_apikey
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /swarm/volumes/homepage/config:/app/config
