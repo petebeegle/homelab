@@ -1,0 +1,30 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/debian
+{
+  "name": "Debian",
+  // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+  "image": "mcr.microsoft.com/devcontainers/base:bullseye",
+  "features": {
+    "ghcr.io/devcontainers-contrib/features/ansible:2": {},
+    "ghcr.io/devcontainers-contrib/features/yamllint:2": {},
+    "ghcr.io/devcontainers-contrib/features/pipx-package": {
+      "package": "ansible-lint"
+    }
+  },
+  "mounts": [
+    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh/lab,target=/home/vscode/.ssh,type=bind,consistency=cached"
+  ],
+  "containerEnv": {
+    "ANSIBLE_CONFIG": "/workspaces/homelab/ansible/ansible.cfg"
+  },
+  "remoteUser": "vscode",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "redhat.ansible",
+        "EditorConfig.EditorConfig"
+      ]
+    }
+  },
+  "postCreateCommand": ".devcontainer/postCreateCommand.sh"
+}
