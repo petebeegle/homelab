@@ -1,0 +1,13 @@
+---
+- name: Ensure sources.list
+  ansible.builtin.copy:
+    src: ./files/sources.list
+    dest: /etc/apt/sources.list
+    owner: root
+    mode: '0644'
+- name: Ensure pve-enterprise.list
+  ansible.builtin.copy:
+    src: ./files/pve-enterprise.list
+    dest: /etc/apt/sources.list.d/pve-enterprise.list
+    owner: root
+    mode: '0644'

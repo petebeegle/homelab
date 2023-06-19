@@ -12,5 +12,7 @@
   ansible.builtin.user:
     state: present
     name: "{{ user_name }}"
-    group: "{{ group_name }}"
+    groups:
+      - "{{ group_name }}"
+      - root
     generate_ssh_key: true

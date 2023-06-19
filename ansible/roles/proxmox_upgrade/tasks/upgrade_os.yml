@@ -1,0 +1,5 @@
+---
+- name: Upgrade OS
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: dist

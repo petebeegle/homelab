@@ -1,0 +1,7 @@
+---
+- name: Ensure apt repositories exist
+  ansible.builtin.import_tasks: ensure_repositories.yml
+- name: Upgrade proxmox
+  ansible.builtin.import_tasks: upgrade_os.yml
+- name: Disable subscription warning
+  ansible.builtin.import_tasks: disable_subscription.yml

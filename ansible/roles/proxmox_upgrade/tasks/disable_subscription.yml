@@ -1,0 +1,6 @@
+---
+- name: Remove popup
+  ansible.builtin.replace:
+    path: /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
+    regexp: '^(.*)Ext\.Msg\.show\(\{(.*)$\n^(.*)No valid subscription(.*)$'
+    replace: '\1void({\2\n\3No valid subscription\4'

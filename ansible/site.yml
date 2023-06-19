@@ -1,4 +1,5 @@
 ---
-- ansible.builtin.import_playbook: install_dependencies.yml
-- ansible.builtin.import_playbook: swarm_setup.yml
-- ansible.builtin.import_playbook: swarm_deploy.yml
+- name: Upsert user
+  ansible.builtin.import_playbook: user_manage.yml
+- name: Update Proxmox Nodes
+  ansible.builtin.import_playbook: proxmox_manage.yml

@@ -1,0 +1,8 @@
+---
+- name: Manage Proxmox Nodes
+  hosts: proxmox
+  remote_user: root
+  tasks:
+    - name: Upgrade Proxmox
+      ansible.builtin.include_role:
+        name: proxmox_upgrade
