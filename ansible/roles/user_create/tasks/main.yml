@@ -1,0 +1,7 @@
+---
+- name: Create group
+  ansible.builtin.import_tasks: create_group.yml
+- name: Create user
+  ansible.builtin.import_tasks: create_user.yml
+- name: Create SSH Keys
+  ansible.builtin.import_tasks: create_keys.yml

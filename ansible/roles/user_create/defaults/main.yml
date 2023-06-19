@@ -1,0 +1,4 @@
+---
+ssh_algorithm: ed25519
+user_name: vscode
+group_name: vscode

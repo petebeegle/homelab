@@ -1,0 +1,16 @@
+---
+- name: Create local user
+  delegate_to: 127.0.0.1
+  remote_user: root
+  ansible.builtin.user:
+    state: present
+    name: "{{ user_name }}"
+    group: "{{ group_name }}"
+    generate_ssh_key: true
+- name: Create remote user
+  register: user
+  ansible.builtin.user:
+    state: present
+    name: "{{ user_name }}"
+    group: "{{ group_name }}"
+    generate_ssh_key: true

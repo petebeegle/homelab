@@ -1,0 +1,16 @@
+---
+- name: Manage User
+  hosts: all
+  remote_user: root
+  vars:
+    # Expects one of "create" or "delete"
+    manage: "create"
+  tasks:
+    - name: Create user, group and SSH Keys
+      when: manage == "create"
+      ansible.builtin.include_role:
+        name: user_create
+    - name: Delete user
+      when: manage == "delete"
+      ansible.builtin.include_role:
+        name: user_delete

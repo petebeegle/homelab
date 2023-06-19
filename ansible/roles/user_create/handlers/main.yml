@@ -1,0 +1,6 @@
+---
+- name: Clean temp/user folder
+  delegate_to: 127.0.0.1
+  ansible.builtin.file:
+    state: absent
+    path: "/tmp/{{ user_name }}"

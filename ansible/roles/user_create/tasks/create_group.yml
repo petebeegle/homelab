@@ -1,0 +1,23 @@
+---
+- name: Ensure local groups exist
+  delegate_to: 127.0.0.1
+  ansible.builtin.group:
+    state: present
+    name: "{{ group_name }}"
+- name: Ensure groups exist
+  register: group
+  ansible.builtin.group:
+    state: present
+    name: "{{ group_name }}"
+- name: Create a /etc/sudoers.d entry if it does not exist
+  register: sudoer
+  ansible.builtin.file:
+    state: touch
+    path: "/etc/sudoers.d/{{ group.name }}"
+    mode: "0440"
+- name: Ensure group has permissions
+  ansible.builtin.lineinfile:
+    state: present
+    dest: "{{ sudoer.dest }}"
+    regex: '^%{{ group.name }}'
+    line: '%{{ group.name }} ALL=(ALL) NOPASSWD: ALL'

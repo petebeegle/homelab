@@ -1,0 +1,30 @@
+---
+- name: Ensure local temp folder exists
+  delegate_to: 127.0.0.1
+  ansible.builtin.file:
+    path: "/tmp/{{ user_name }}"
+    state: directory
+    mode: "0777"
+- name: Generate SSH Key
+  delegate_to: 127.0.0.1
+  community.crypto.openssh_keypair:
+    state: present
+    path: "/tmp/{{ user_name }}/id_{{ ssh_algorithm }}"
+    type: "{{ ssh_algorithm }}"
+    mode: "0777"
+- name: Copy SSH Keys
+  delegate_to: 127.0.0.1
+  with_items:
+    - "id_{{ ssh_algorithm }}"
+    - "id_{{ ssh_algorithm }}.pub"
+  ansible.builtin.copy:
+    src: "/tmp/{{ user_name }}/{{ item }}"
+    dest: "{{ user.home }}/.ssh/{{ item }}"
+    mode: "0600"
+- name: Set authorized keys for user
+  notify:
+    - Clean temp/user folder
+  ansible.posix.authorized_key:
+    state: present
+    user: "{{ user.name }}"
+    key: "{{ lookup('file', user.home + '/.ssh/id_' + ssh_algorithm + '.pub') }}"
