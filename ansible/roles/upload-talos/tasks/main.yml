@@ -1,0 +1,7 @@
+---
+- name: Copy ISO to remote server
+  ansible.builtin.copy:
+    src: "{{ out_dir }}/metal-amd64.iso"
+    dest: /var/lib/vz/template/iso
+    mode: "0644"
+  become: true

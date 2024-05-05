@@ -1,0 +1,13 @@
+---
+# .ansible-lint
+warn_list:  # list of warnings
+  - experimental  # all rules tagged as experimental
+
+skip_list:  # list of rules to skip
+  - '204'  # Lines should be no more than 160 chars
+  - '301'  # Commands should not change things if nothing needs doing
+
+exclude_paths:  # list of paths to exclude
+  - .git/
+  - .venv/
+  - tests/
