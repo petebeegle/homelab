@@ -1,0 +1,23 @@
+---
+- name: Include secrets
+  ansible.builtin.include_vars: secrets.yml
+- name: Convert list of host names to Terraform variable
+  ansible.builtin.set_fact:
+    target_nodes: "{{ groups['proxmox'] | join(',') }}"
+- name: Initialize Terraform
+  ansible.builtin.command: terraform init
+  args: &chdir
+    chdir: "{{ project.directory }}/terraform"
+  environment:
+    PM_API_TOKEN_ID: "{{ api_token_id }}"
+    PM_API_TOKEN_SECRET: "{{ api_token_secret }}"
+- name: Provision Talos VM
+  ansible.builtin.command: |
+    terraform apply -auto-approve \
+    -var "iso_name={{ talos_iso.dest | basename }}" \
+    -var "target_nodes={{ target_nodes }}" -no-color -compact-warnings
+  args: *chdir
+  environment:
+    PM_API_TOKEN_ID: "{{ api_token_id }}"
+    PM_API_TOKEN_SECRET: "{{ api_token_secret }}"
+    PM_API_URL: "{{ provision_vm_proxmox_api_url }}"

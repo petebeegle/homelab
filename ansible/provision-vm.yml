@@ -1,0 +1,9 @@
+---
+- name: Download Talos OS
+  hosts: self
+  roles:
+    - download_talos
+- name: Provision Talos VM
+  hosts: self
+  roles:
+    - provision_vm

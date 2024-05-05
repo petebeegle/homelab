@@ -1,0 +1,5 @@
+---
+- name: Create k8s cluster
+  hosts: self
+  roles:
+    - create_k8s_cluster

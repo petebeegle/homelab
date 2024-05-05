@@ -1,0 +1,15 @@
+---
+- name: Download Talos OS
+  ansible.builtin.get_url:
+    url: https://github.com/siderolabs/talos/releases/download/{{ talos_version }}/metal-amd64.iso
+    dest: "{{ download_talos_out_dir }}/{{ download_talos_iso_name }}"
+    mode: "0644"
+  become: true
+  register: talos_iso
+- name: Copy ISO to remote server
+  ansible.builtin.copy:
+    src: "{{ talos_iso.dest }}"
+    dest: /var/lib/vz/template/iso
+    mode: "0644"
+  delegate_to: "{{ item }}"
+  with_items: "{{ groups['proxmox'] }}"

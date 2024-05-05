@@ -1,0 +1,3 @@
+---
+download_talos_out_dir: "{{ project.directory }}/out"
+download_talos_iso_name: talos-{{ talos_version }}-metal-amd64.iso

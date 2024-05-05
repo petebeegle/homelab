@@ -1,0 +1,23 @@
+---
+- name: Check if directory exists
+  ansible.builtin.stat:
+    path: "{{ create_k8s_cluster_out_dir }}"
+  register: out_dir_stat
+- name: Create machine config for Talos
+  ansible.builtin.command: |
+    talosctl gen config {{ create_k8s_cluster_cluster_name }} \
+    https://{{ control_plane_ip }}:6443 \
+    --output-dir={{ create_k8s_cluster_out_dir }}
+  when: not out_dir_stat.stat.exists
+- name: Create control plane
+  ansible.builtin.command: talosctl apply-config --insecure \ --nodes {{ control_plane_ip }} \ --file {{ create_k8s_cluster_out_dir }}/controlplane.yaml
+- name: Create worker nodes
+  ansible.builtin.command: talosctl apply-config --insecure \ --nodes {{ item }} \ --file {{ create_k8s_cluster_out_dir }}/worker.yaml
+  loop: "{{ worker_ips.split(',') }}"
+- name: Wait for a minute
+  ansible.builtin.pause:
+    minutes: 3
+- name: Bootstrap etcd
+  ansible.builtin.command: talosctl bootstrap -e {{ control_plane_ip }} -n {{ control_plane_ip }}
+  environment:
+    TALOSCONFIG: "{{ create_k8s_cluster_out_dir }}/talosconfig"

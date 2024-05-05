@@ -1,9 +1,0 @@
----
-- name: Run install script
-  ansible.builtin.command: sh "{{ out_dir }}/install.sh"
-  become: true
-
-- name: Check talosctl
-  ansible.builtin.command: talosctl version
-  register: result
-  failed_when: result.rc != 0
