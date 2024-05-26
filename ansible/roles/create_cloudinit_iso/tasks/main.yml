@@ -1,0 +1,18 @@
+---
+- name: Update apt cache and install packages
+  ansible.builtin.apt:
+    update_cache: true
+    name:
+      - libguestfs-tools
+      - linux-image-generic
+    state: present
+  become: true
+- name: Download cloud image
+  ansible.builtin.get_url:
+    url: https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img
+    dest: "{{ lookup('ansible.builtin.env', 'WORKSPACE_FOLDER') }}/out/focal-server-cloudimg-amd64.img"
+    mode: "0664"
+  register: cloud_image
+  notify:
+    - Customize image
+    - Upload image

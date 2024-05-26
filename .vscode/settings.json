@@ -1,0 +1,6 @@
+{
+  "editor.formatOnSave": true,
+  "files.associations": {
+    "**/ansible/inventory/hosts": "ini"
+  }
+}

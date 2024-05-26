@@ -1,0 +1,17 @@
+---
+- name: Install QEMU Guest Agent
+  ansible.builtin.command:
+    cmd: sudo virt-customize -a {{ cloud_image.dest }} --install qemu-guest-agent
+  become: true
+  environment:
+    LIBGUESTFS_DEBUG: "1"
+    LIBGUESTFS_TRACE: "1"
+  listen: Customize image
+- name: Copy ISO to remote server
+  ansible.builtin.copy:
+    src: "{{ cloud_image.dest }}"
+    dest: /var/lib/vz/template/iso
+    mode: "0644"
+  delegate_to: "{{ item }}"
+  with_items: "{{ groups['proxmox'] }}"
+  listen: Upload image

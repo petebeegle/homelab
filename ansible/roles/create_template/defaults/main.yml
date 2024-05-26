@@ -1,0 +1,5 @@
+---
+create_template_name: cloudinit-template
+create_template_id: 9000
+create_template_memory: 8
+create_template_cores: 2

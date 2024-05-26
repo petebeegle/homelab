@@ -1,0 +1,6 @@
+repos:
+  - repo: https://github.com/ansible/ansible-lint
+    rev: v24.5.0
+    hooks:
+      - id: ansible-lint
+        files: \.(yaml|yml)$  # Only run on .yml or .yaml files

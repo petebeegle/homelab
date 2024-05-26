@@ -1,0 +1,15 @@
+---
+- name: Create ISO
+  hosts: self
+  roles:
+    - create_cloudinit_iso
+- name: Create Template
+  hosts: proxmox
+  become_user: root
+  become: true
+  become_method: ansible.builtin.su
+  become_flags: "-"
+  vars_files:
+    - secrets.yml
+  roles:
+    - create_template
