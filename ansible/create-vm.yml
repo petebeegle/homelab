@@ -1,0 +1,14 @@
+---
+- name: Create VM
+  hosts: self
+  vars_files:
+    - secrets.yml
+  vars_prompt:
+    - name: number_of_instances
+      prompt: Number of instances to create
+      private: false
+    - name: template_name
+      prompt: Template name to clone
+      private: false
+  roles:
+    - create_vm

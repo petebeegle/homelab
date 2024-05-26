@@ -1,0 +1,2 @@
+---
+create_vm_proxmox_api_url: https://{{ hostvars['pve01']['ansible_host'] }}:8006/api2/json
