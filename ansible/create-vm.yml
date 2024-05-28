@@ -12,3 +12,11 @@
       private: false
   roles:
     - create_vm
+- name: Install K8s
+  hosts: kubernetes
+  vars_files:
+    - secrets.yml
+  become: true
+  remote_user: ubuntu
+  roles:
+    - install_k8s_dependencies

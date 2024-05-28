@@ -18,3 +18,6 @@
     PM_API_TOKEN_ID: "{{ api_token_id }}"
     PM_API_TOKEN_SECRET: "{{ api_token_secret }}"
     PM_API_URL: "{{ create_vm_proxmox_api_url }}"
+- name: Wait for VMs to come online
+  ansible.builtin.pause:
+    seconds: 20

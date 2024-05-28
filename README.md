@@ -22,6 +22,14 @@ ansible-vault encrypt secrets.yml
 
 ## Playbook Reference
 
+### create-cluster
+Create a kubernetes cluster and assign workers.
+
+#### Usage
+```sh
+ansible-playbook ansible/create-cluster.yml
+```
+
 ### create-ubuntu-template
 Create a VM template in proxmox based on ubuntu-2004.
 

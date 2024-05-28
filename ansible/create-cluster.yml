@@ -1,0 +1,34 @@
+---
+- name: Create K8s cluster
+  hosts: kubernetes_masters
+  vars_files:
+    - secrets.yml
+  become: true
+  remote_user: ubuntu
+  roles:
+    - init_cluster
+- name: Configure Join Commands on Master Node
+  hosts: kubernetes_masters
+  remote_user: ubuntu
+  become: true
+  tasks:
+    - name: Retrieve Join Command
+      ansible.builtin.command: kubeadm token create --print-join-command
+      register: join_command_raw
+    - name: Set Join Command
+      ansible.builtin.set_fact:
+        join_command: "{{ join_command_raw.stdout_lines[0] }}"
+- name: Join Worker Nodes
+  hosts: kubernetes_nodes
+  remote_user: ubuntu
+  become: true
+  tasks:
+    - name: Enable TCP port 6443 (On Master) is able to connect from Worker
+      ansible.builtin.wait_for:
+        host: "{{ item }}"
+        port: "6443"
+        timeout: "1"
+      with_items: "{{ groups['kubernetes_masters'] }}"
+    - name: Join worker to cluster
+      ansible.builtin.command: "{{ hostvars[item].join_command }}"
+      with_items: "{{ groups['kubernetes_masters'] }}"
