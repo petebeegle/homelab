@@ -65,3 +65,19 @@ ansible-playbook ansible/create-vm.yml -e number_of_instances=3 -e template_name
 | `create_vm_proxmox_api_url` | `https://host:8006/api2/json` | API endpoint to operate against |
 | `create_vm_ssh_key`* | null | SSH Key to configure for the VM |
 > *: `create_vm_ssh_key` is set in `secrets.yml`.
+
+## Troubleshooting
+
+### Manually deleting a VM
+You can manually delete a VM by following the below steps:
+
+First `ssh` into a proxmox node and shutdown, then destroy the VM.
+```sh
+qm shutdown $VMID
+qm destroy $VMID
+```
+
+Finally, on the host machine, clear the VM from your known_hosts.
+```sh
+ssh-keygen -f "/home/vscode/.ssh/known_hosts" -R "$HOST"
+```
