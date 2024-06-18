@@ -1,0 +1,10 @@
+# Default values for generate_talos_configs
+---
+# Cluster name to generate a configuration for
+generate_talos_configs_cluster_name: {}
+# Control plane endpoint to generate a configuration for
+generate_talos_configs_control_plane_endpoint: {}
+# Output directory for generated Talos configurations
+generate_talos_configs_out_dir: {}
+# List of k8s control planes to generate Talos configurations for
+generate_talos_configs_k8s_control_planes: []

@@ -1,9 +1,9 @@
-out/*
+.out
 *.tfstate
 *.tfstate.backup
 *.tfvars
 .terraform/
 
 # ansible-vault
-secrets.yml
+**/vault.yml
 .vault_pass

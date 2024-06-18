@@ -1,0 +1,22 @@
+---
+- name: Validate source
+  ansible.builtin.assert:
+    that:
+      - upload_iso_src is string
+      - upload_iso_src is defined
+    fail_msg: "'upload_iso_src' must be a string."
+    success_msg: "'upload_iso_src' is valid."
+- name: Validate file name
+  ansible.builtin.assert:
+    that:
+      - upload_iso_filename is string
+      - upload_iso_filename is defined
+    fail_msg: "'upload_iso_filename' must be a string."
+    success_msg: "'upload_iso_filename' is valid."
+- name: Validate destination folder
+  ansible.builtin.assert:
+    that:
+      - upload_iso_dest is string
+      - upload_iso_dest is defined
+    fail_msg: "'upload_iso_dest' must be a string."
+    success_msg: "'upload_iso_dest' is valid."

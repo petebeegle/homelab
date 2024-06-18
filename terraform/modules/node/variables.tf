@@ -1,5 +1,5 @@
 variable "target_node" {
-  description = "VM target node"
+  description = "Target proxmox node to deploy to"
   type        = string
 }
 
@@ -8,19 +8,18 @@ variable "ssh_key" {
   type        = string
 }
 
-variable "number_of_instances" {
-  description = "Number of instances to create"
-  type        = number
-  default     = 1
+variable "ip_config" {
+  description = "IP configuration for the VM"
+  type        = string
 }
 
-variable "vm_id_prefix" {
-  description = "VM ID prefix"
-  type        = number
-}
-
-variable "template_name" {
-  description = "Name of the template to clone"
+variable "gateway" {
+  description = "Gateway for the VM"
   type        = string
 
+}
+
+variable "image" {
+  description = "Image to use for the VM"
+  type        = string
 }

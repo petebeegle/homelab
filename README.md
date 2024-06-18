@@ -3,65 +3,85 @@
 ## Prerequisites
 1. an ansible user provisioned in proxmox
 2. an api token provisioned in proxmox
-
-### Create a vault
-
-Create a new file for your vault password. 
-Update values as needed prior to encrypting.
-
-```sh
-cd ansible
-echo "replace-me" > .vault_pass
-cp secrets.yml.example secrets.yml
-ansible-vault encrypt secrets.yml
-```
+3. NFS for storing our ISO's (`truenas-nfs` in proxmox)
 
 ## Quickstart
+### From Zero to Cluster
 
-🚧
-
-## Playbook Reference
-
-### create-cluster
-Create a kubernetes cluster and assign workers.
-
-#### Usage
+Create and bootstrap a talos vm with the following playbooks:
 ```sh
-ansible-playbook ansible/create-cluster.yml
+# Get the ISO and upload it to our NAS
+ansible-playbook ansible/playbooks/upload_talos_iso.yml
+# Create the VMs
+ansible-playbook ansible/playbooks/provision_talos_cluster.yml
+# Bootstrap talos
+ansible-playbook ansible/playbooks/bootstrap.yml
 ```
 
-### create-ubuntu-template
-Create a VM template in proxmox based on ubuntu-2004.
+### Getting Your Kubeconfig
+
+Once the cluster is bootstrapped, you can get your `kubeconfig` by running
+```sh
+talosctl kubeconfig $HOME/.kube/config
+```
+
+## Playbooks
+
+### bootstrap
+Creates a kubernetes cluster.
 
 #### Usage
 ```sh
-ansible-playbook ansible/create-ubuntu-template.yml
+ansible-playbook ansible/playbooks/bootstrap.yml
+```
+
+#### Variable Reference
+| Variable | Default Value | Description |
+|:---------|:-------------|:-------------|
+|`bootstrap_cluster_name`|`"{{ talos.cluster_name }}"`|Name for the cluster|
+|`bootstrap_control_plane_endpoint`|`"{{ talos.control_plane.endpoint }}"`|Endpoint of the main initial control plane being bootstrapped|
+|`bootstrap_control_plane_ips`|`"{{ groups['k8s_control_planes'] }}"`|Control Plane IPs to bootstrap|
+|`bootstrap_worker_ips`|`"{{ groups['k8s_workers'] }}"`|Worker IPs to bootstrap|
+
+### provision_talos_cluster
+Creates a series of VMs in proxmox running talos. 
+
+This will create a VM for each provided static IP in `provision_cluster_ips`.
+
+#### Usage
+```sh
+ansible-playbook ansible/playbooks/provision_talos_cluster.yml
 ```
 
 #### Variable Reference
 
 | Variable | Default Value | Description |
-|:----------|:-------------|:---------------|
-| `create_template_name`     | `cloudinit-template` | Template name |
-| `create_template_id`     | `9000` | Template Id |
-| `create_template_memory`     | `8` | Amount of memory for template in GB |
-| `create_template_cores`     | `2` | Number of cores to provision to the template |
+|:---------|:-------------|:-------------|
+|`provision_cluster_image_name`|`"{{ talos.image_src }}{{ talos.image_name }}"`|Image name to use when creating the VMs|
+|`provision_cluster_proxmox_token_id`|`"{{ proxmox.token_id }}"`|Api token id for authenticating with proxmox|
+|`provision_cluster_proxmox_token_secret`|`"{{ proxmox.token_secret }}"`|Api token secret for authenticating with proxmox|
+|`provision_cluster_proxmox_api_url`|`"{{ proxmox.api_url }}"`|Proxmox api url|
+|`provision_cluster_ssh_proxmox_private_key`|`"{{ ssh.proxmox_private_key }}"`|SSH Key to provide to the provisioned VMs|
+|`provision_cluster_networking_gateway_ip`|`"{{ networking.gateway_ip }}"`|Gateway IP for the VMs|
+|`provision_cluster_ips`|`"{{ groups.k8s }}"`|IP addresses of the VMs to create|
+|`provision_cluster_operation`|`"apply"`|Whether to create or destroy the cluster. Can be `apply` or `destroy`|
 
-
-### create-vm
-Create one or more VMs for a given template.
+### upload_talos_iso
+Downloads a talos ISO and uploads it to the NAS.
 
 #### Usage
 ```sh
-ansible-playbook ansible/create-vm.yml -e number_of_instances=3 -e template_name=cloudinit-template
+ansible-playbook ansible/playbooks/upload_talos_iso.yml
 ```
 
 #### Variable Reference
 
-| Variable | Default Value | Description |
-|:----------|:-------------|:---------------|
-| `number_of_instances`     | null | Number of instances to create |
-| `template_name`     | null | Name of the template to clone |
-| `create_vm_proxmox_api_url` | `https://host:8006/api2/json` | API endpoint to operate against |
-| `create_vm_ssh_key`* | null | SSH Key to configure for the VM |
-> *: `create_vm_ssh_key` is set in `secrets.yml`.
+| Variable |Default Value | Description |
+|:---------|:-------------|:------------|
+|`download_iso_download_url`|`"{{ talos.download_url }}"`|Location to download the iso from|
+|`download_iso_out_dir`|`"{{ local.out_dir }}"`|Location to download the iso to|
+|`download_iso_image_name`|`"{{ talos.image_name }}"`|Name to give the image|
+|`upload_iso_src`|`"{{ hostvars['localhost']['download_iso_cloud_image_dest'] }}"`|Source file to upload. Should include the absolute path|
+|`upload_iso_dest`|`/mnt/pool/proxmox-data/template/iso`|Location to upload the file to on the remote host|
+|`upload_iso_filename`|`"{{ talos.image_name }}"`|Filename of the file being uploaded|
+

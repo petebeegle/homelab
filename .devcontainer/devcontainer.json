@@ -2,11 +2,8 @@
   "name": "Ubuntu",
   "dockerFile": "Dockerfile",
   "features": {
-    "ghcr.io/devcontainers-contrib/features/ansible:2": {},
-    "ghcr.io/hspaans/devcontainer-features/ansible-lint:1": {},
     "ghcr.io/devcontainers-contrib/features/kubectl-asdf:2": {},
     "ghcr.io/devcontainers/features/terraform:1": {},
-    "ghcr.io/devcontainers-contrib/features/pre-commit:2": {}
   },
   "customizations": {
     "vscode": {
@@ -23,7 +20,8 @@
   },
   "containerEnv": {
     "ANSIBLE_CONFIG": "${containerWorkspaceFolder}/ansible/ansible.cfg",
-    "WORKSPACE_FOLDER": "${containerWorkspaceFolder}"
+    "WORKSPACE_FOLDER": "${containerWorkspaceFolder}",
+    "TALOSCONFIG": "${containerWorkspaceFolder}/.out/talosconfig",
   },
   "postStartCommand": "pre-commit install"
 }

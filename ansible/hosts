@@ -1,0 +1,18 @@
+[nas]
+192.168.3.3 ansible_ssh_user=ansible ansible_port=2200
+
+[pve01]
+192.168.3.2
+
+[proxmox:children]
+pve01
+
+[k8s_control_planes]
+192.168.3.60
+
+[k8s_workers]
+192.168.3.61
+
+[k8s:children]
+k8s_control_planes
+k8s_workers
