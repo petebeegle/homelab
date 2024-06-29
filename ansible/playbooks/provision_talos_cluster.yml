@@ -1,0 +1,16 @@
+# This playbook is used to provision a Talos cluster using the provision-cluster role.
+---
+- name: Configure Nodes
+  hosts: localhost
+  connection: local
+  roles:
+    - role: provision_cluster
+      vars:
+        provision_cluster_operation: apply
+        provision_cluster_image_name: "{{ talos.image_src }}{{ talos.image_name }}"
+        provision_cluster_proxmox_token_id: "{{ proxmox.token_id }}"
+        provision_cluster_proxmox_token_secret: "{{ proxmox.token_secret }}"
+        provision_cluster_proxmox_api_url: "{{ proxmox.api_url }}"
+        provision_cluster_ssh_proxmox_private_key: "{{ ssh.proxmox_private_key }}"
+        provision_cluster_networking_gateway_ip: "{{ networking.gateway_ip }}"
+        provision_cluster_ips: "{{ groups.k8s }}"

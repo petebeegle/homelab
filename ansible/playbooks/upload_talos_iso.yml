@@ -1,0 +1,18 @@
+# Download the Talos iso image and upload it to the NAS server
+---
+- name: Download talos iso
+  hosts: localhost
+  connection: local
+  roles:
+    - role: download_iso
+      vars:
+        download_iso_download_url: "{{ talos.download_url }}"
+        download_iso_out_dir: "{{ local.out_dir }}"
+        download_iso_image_name: "{{ talos.image_name }}"
+- name: Upload talos iso
+  hosts: nas
+  roles:
+    - role: upload_iso
+      vars:
+        upload_iso_src: "{{ hostvars['localhost']['download_iso_cloud_image_dest'] }}"
+        upload_iso_filename: "{{ talos.image_name }}"

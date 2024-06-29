@@ -1,0 +1,14 @@
+# Generate talos configs locally
+---
+- name: Include validation tasks
+  ansible.builtin.import_tasks: validate.yml
+
+- name: Generate talos machine configuration
+  ansible.builtin.shell: |
+    talosctl gen config {{ generate_talos_configs_cluster_name }} {{ generate_talos_configs_control_plane_endpoint }} \
+      --output-dir={{ generate_talos_configs_out_dir }} --force
+  register: gen_config_output
+- name: Update talosconfig endpoints and nodes
+  ansible.builtin.shell: |
+    talosctl config endpoint {{ generate_talos_configs_k8s_control_planes | join(' ') }}
+    talosctl config node {{ generate_talos_configs_k8s_control_planes | join(' ') }}

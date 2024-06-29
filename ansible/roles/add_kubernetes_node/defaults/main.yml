@@ -1,0 +1,10 @@
+---
+# Define the node type to add.
+# Options are: controlplane, worker
+# Default is "worker"
+add_kubernetes_node_type: worker
+# Define the nodes to add by IP address
+# Default is an empty list
+add_kubernetes_node_ips: []
+# Define the directory where the Talos configuration files are stored
+add_kubernetes_node_config_dir: {}
