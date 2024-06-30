@@ -46,11 +46,13 @@ ansible-playbook ansible/playbooks/bootstrap.yml
 ### provision_talos_cluster
 Creates a series of VMs in proxmox running talos. 
 
+This playbook also reads any existing state and stop already configured VMs prior to applying any TF changes. This ensures that the terraform does not hang due to a failure to shutdown the VM for any reason.
+
 This will create a VM for each provided static IP in `provision_cluster_ips`.
 
 #### Usage
 ```sh
-ansible-playbook ansible/playbooks/provision_talos_cluster.yml
+ansible-playbook ansible/playbooks/provision_talos_cluster.yml --ask-vault-pass
 ```
 
 #### Variable Reference
