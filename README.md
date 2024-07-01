@@ -5,8 +5,9 @@
 2. an api token provisioned in proxmox
 3. NFS for storing our ISO's (`truenas-nfs` in proxmox)
 
-## Quickstart
-### From Zero to Cluster
+## Quickstart*
+> may not be quick
+### 1. From Zero to Cluster
 
 Create and bootstrap a talos vm with the following playbooks:
 ```sh
@@ -18,11 +19,19 @@ ansible-playbook ansible/playbooks/provision_talos_cluster.yml
 ansible-playbook ansible/playbooks/bootstrap.yml
 ```
 
-### Getting Your Kubeconfig
+### 2. Getting Your Kubeconfig
 
 Once the cluster is bootstrapped, you can get your `kubeconfig` by running
 ```sh
 talosctl kubeconfig $HOME/.kube/config
+```
+
+### 3. Configuring Kubernetes
+
+Upon grabbing your `kubeconfig`, you can set up kubernetes as follows:
+```sh
+# Install K8s essentials (load-balancer, csi, calico)
+ansible-playbook ansible/playbook/kubernetes_essentials.yml
 ```
 
 ## Playbooks

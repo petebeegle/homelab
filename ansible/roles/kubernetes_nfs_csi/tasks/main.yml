@@ -1,0 +1,22 @@
+---
+- name: Include validation tasks
+  ansible.builtin.import_tasks: validate.yml
+
+- name: Download NFS CSI driver installation script
+  ansible.builtin.get_url:
+    url: https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/{{ kubernetes_nfs_csi_version }}/deploy/install-driver.sh
+    dest: /tmp/install-driver.sh
+    mode: "0755"
+- name: Execute NFS CSI driver installation script
+  ansible.builtin.shell: /tmp/install-driver.sh {{ kubernetes_nfs_csi_version }} --
+  args:
+    executable: /bin/bash
+- name: Create NFS CSI storage class
+  block:
+    - name: Create storage class
+      ansible.builtin.template:
+        src: files/storageclass.yml
+        dest: /tmp/storageclass.yml
+        mode: "0644"
+    - name: Apply storage class
+      ansible.builtin.command: kubectl apply -f /tmp/storageclass.yml

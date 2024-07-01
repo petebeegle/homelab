@@ -20,6 +20,18 @@ talos:
   control_plane:
     # Endpoint for the control plane
     endpoint: https://192.168.3.60:6443
+
+# Kubernetes configurations
+kubernetes:
+  # The NFS server to use for the NFS CSI driver
+  nfs_share: /mnt/pool/k8s-data
+  # The version of the NFS CSI driver to use
+  # see: https://github.com/kubernetes-csi/csi-driver-nfs/blob/master/README.md
+  nfs_csi_version: v4.7.0
+  # The version of the Calico CNI plugin to use
+  calico_version: v3.28.0
+  # The CIDR to use for the Calico network
+  calico_cidr: 10.244.0.0/16
 # Networking configurations
 networking:
   # The network interface to use for the VMs

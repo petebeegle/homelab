@@ -5,8 +5,7 @@
   connection: local
   tasks:
     - name: Query Terraform output
-      ansible.builtin.shell: |
-        terraform -chdir={{ lookup('ansible.builtin.env', 'WORKSPACE_FOLDER') }}/terraform output -json
+      ansible.builtin.shell: terraform -chdir lookup('ansible.builtin.env', 'WORKSPACE_FOLDER') }}/terraform output -json
       register: terraform_output
     - name: Set provision_talos_cluster_terraform_output fact
       ansible.builtin.set_fact:
