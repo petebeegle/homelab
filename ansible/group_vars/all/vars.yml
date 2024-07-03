@@ -30,8 +30,13 @@ kubernetes:
   nfs_csi_version: v4.7.0
   # The version of the Calico CNI plugin to use
   calico_version: v3.28.0
+  # The version of the MetalLB load balancer to use
+  metallb_version: v0.14.5
+  # The address pool to use for the MetalLB load balancer
+  address_pool: 192.168.3.200/27 # .193-.222
   # The CIDR to use for the Calico network
   calico_cidr: 10.244.0.0/16
+
 # Networking configurations
 networking:
   # The network interface to use for the VMs

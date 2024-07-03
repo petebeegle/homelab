@@ -8,6 +8,8 @@
     kubernetes_essentials_nfs_share: "{{ kubernetes.nfs_share }}"
     kubernetes_essentials_calico_version: "{{ kubernetes.calico_version }}"
     kubernetes_essentials_calico_cidr: "{{ kubernetes.calico_cidr }}"
+    kubernetes_essentials_metallb_version: "{{ kubernetes.metallb_version }}"
+    kubernetes_essentials_metallb_address_pool: "{{ kubernetes.address_pool }}"
   roles:
     - role: kubernetes_nfs_csi
       vars:
@@ -18,3 +20,7 @@
       vars:
         kubernetes_calico_version: "{{ kubernetes_essentials_calico_version }}"
         kubernetes_calico_cidr: "{{ kubernetes_essentials_calico_cidr }}"
+    - role: kubernetes_metallb
+      vars:
+        kubernetes_metallb_version: "{{ kubernetes_essentials_metallb_version }}"
+        kubernetes_metallb_address_pool: "{{ kubernetes_essentials_metallb_address_pool }}"

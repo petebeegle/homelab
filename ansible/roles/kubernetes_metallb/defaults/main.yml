@@ -1,0 +1,7 @@
+---
+# Kubernetes Metallb version
+# see: https://metallb.io/release-notes/
+kubernetes_metallb_version: {}
+# Kubernetes Metallb address pool
+# Can be a range or IP math if you're spicy
+kubernetes_metallb_address_pool: {}
