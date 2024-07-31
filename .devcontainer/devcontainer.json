@@ -1,27 +1,22 @@
 {
-  "name": "Ubuntu",
-  "dockerFile": "Dockerfile",
-  "features": {
-    "ghcr.io/devcontainers-contrib/features/kubectl-asdf:2": {},
-    "ghcr.io/devcontainers/features/terraform:1": {},
-  },
-  "customizations": {
-    "vscode": {
-      "extensions": [
-        "vscoss.vscode-ansible",
-        "exiasr.ansible-lint",
-        "github.copilot",
-        "github.copilot-chat",
-        "1password.1password",
-        "HashiCorp.terraform",
-        "EditorConfig.EditorConfig"
-      ]
-    }
-  },
-  "containerEnv": {
-    "ANSIBLE_CONFIG": "${containerWorkspaceFolder}/ansible/ansible.cfg",
-    "WORKSPACE_FOLDER": "${containerWorkspaceFolder}",
-    "TALOSCONFIG": "${containerWorkspaceFolder}/.out/talosconfig",
-  },
-  "postStartCommand": "pre-commit install"
+    "name": "Ubuntu",
+    "dockerFile": "Dockerfile",
+    "features": {
+        "ghcr.io/devcontainers-contrib/features/kubectl-asdf:2": {},
+        "ghcr.io/devcontainers/features/terraform:1": {},
+        "ghcr.io/devcontainers-contrib/features/terraform-docs:1": {},
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "vscoss.vscode-ansible",
+                "exiasr.ansible-lint",
+                "github.copilot",
+                "github.copilot-chat",
+                "1password.1password",
+                "HashiCorp.terraform",
+                "EditorConfig.EditorConfig"
+            ]
+        }
+    },
 }

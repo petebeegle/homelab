@@ -1,25 +1,29 @@
+variable "iso_filename" {
+  description = "The filename of the ISO image to use for the VM"
+  type        = string
+}
+
+variable "ipconfig0" {
+  description = "The IP configuration for the VM"
+  type        = string
+}
+
 variable "target_node" {
-  description = "Target proxmox node to deploy to"
-  type        = string
-}
-
-variable "ssh_key" {
-  description = "SSH key to use for the VM"
-  type        = string
-}
-
-variable "ip_config" {
-  description = "IP configuration for the VM"
-  type        = string
-}
-
-variable "gateway" {
-  description = "Gateway for the VM"
+  description = "The target proxmox node for the VM"
   type        = string
 
+  validation {
+    condition     = can(regex("pve0[1-3]", var.target_node))
+    error_message = "Invalid target_node value. It should be one of pve01, pve02, or pve03."
+  }
 }
 
-variable "image" {
-  description = "Image to use for the VM"
+variable "id" {
+  description = "The ID of the VM"
+  type        = number
+}
+
+variable "file_ready" {
+  description = "The filename of the ISO image to use for the VM"
   type        = string
 }

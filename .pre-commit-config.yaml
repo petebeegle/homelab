@@ -5,3 +5,8 @@ repos:
     hooks:
       - id: ansible-lint
         files: \.(yaml|yml)$ # Only run on .yml or .yaml files
+  - repo: https://github.com/terraform-docs/terraform-docs
+    rev: "v0.18.0"
+    hooks:
+      - id: terraform-docs-go
+        args: ["--output-file", "README.md", "--output-mode", "inject", "--recursive", "./terraform"]
