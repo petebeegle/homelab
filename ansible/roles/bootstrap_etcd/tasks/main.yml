@@ -1,9 +1,0 @@
----
-- name: Bootstrap Etcd
-  ansible.builtin.command: talosctl bootstrap
-- name: Wait for Talos to report a healthy cluster
-  ansible.builtin.command: talosctl health
-  register: result
-  until: result.rc == 0
-  retries: 30
-  delay: 10

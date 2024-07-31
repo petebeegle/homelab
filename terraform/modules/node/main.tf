@@ -1,18 +1,3 @@
-terraform {
-  required_providers {
-    proxmox = {
-      source  = "Telmate/proxmox"
-      version = "3.0.1-rc2"
-    }
-  }
-}
-
-locals {
-  tags = [
-    "talos",
-  ]
-}
-
 resource "random_pet" "name" {
   length = 2
 }
@@ -22,15 +7,14 @@ resource "proxmox_vm_qemu" "vm" {
 
   target_node = var.target_node
 
-
-  agent    = 1
-  os_type  = "cloud-init"
-  onboot   = true
-  cores    = 2
-  cpu      = "x86-64-v2-AES"
-  memory   = 8192
-  boot     = "c"
-  bootdisk = "scsi0"
+  vmid    = var.id
+  agent   = 1
+  os_type = "cloud-init"
+  onboot  = true
+  cores   = 2
+  cpu     = "x86-64-v2-AES"
+  memory  = 8192
+  boot    = "order=scsi0;net0"
 
   network {
     model  = "virtio"
@@ -42,7 +26,7 @@ resource "proxmox_vm_qemu" "vm" {
     scsi {
       scsi0 {
         cdrom {
-          iso = var.image
+          iso = "truenas-nfs:iso/${var.iso_filename}"
         }
       }
       scsi1 {
@@ -62,32 +46,23 @@ resource "proxmox_vm_qemu" "vm" {
     }
   }
 
-  sshkeys = <<EOF
-  ${var.ssh_key}
-  EOF
-
-  ipconfig0 = "ip=${var.ip_config}/24,gw=${var.gateway}"
+  ipconfig0 = var.ipconfig0
 
   desc = <<EOF
-    Created At: ${timestamp()}
+    Updated At: ${timestamp()}
     Managed By: Terraform
   EOF
-  tags = join(",", local.tags)
-}
+  tags = "kubernetes"
 
+  lifecycle {
+    ignore_changes = [desc]
+  }
 
+  timeouts {
+    create = "2m"
+    update = "2m"
+    delete = "2m"
+  }
 
-output "name" {
-  value       = proxmox_vm_qemu.vm.name
-  description = "Name of the created virtual machine"
-}
-
-output "id" {
-  value       = proxmox_vm_qemu.vm.id
-  description = "Id of the created virtual machine"
-}
-
-output "ip" {
-  value       = proxmox_vm_qemu.vm.default_ipv4_address
-  description = "IP address of the created virtual machine"
+  depends_on = [var.file_ready]
 }

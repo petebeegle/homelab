@@ -1,17 +1,48 @@
-variable "ssh_key" {
-  description = "SSH key to use for the VM"
+variable "nas_ip" {
+  description = "IP address of the NAS"
   type        = string
+  default     = "192.168.3.3"
 }
 
-variable "network_config" {
-  description = "Network configurations for the kubernetes cluster"
+variable "nas_user" {
+  description = "User to connect to the NAS"
+  type        = string
+  default     = "ansible"
+}
+
+variable "nas_port" {
+  description = "Port to connect to the NAS"
+  type        = string
+  default     = "2200"
+}
+
+variable "node_data" {
   type = object({
-    gateway = string
-    ips     = set(string)
+    controlplanes = map(object({
+      node = string
+      id   = number
+    }))
+    workers = map(object({
+      node = string
+      id   = number
+    }))
   })
-}
-
-variable "image" {
-  description = "Image to use for the VM"
-  type        = string
+  default = {
+    controlplanes = {
+      "192.168.3.60" = {
+        node = "pve01"
+        id   = 102
+      }
+    },
+    workers = {
+      "192.168.3.61" = {
+        node = "pve01"
+        id   = 103
+      },
+      "192.168.3.62" = {
+        node = "pve02"
+        id   = 200
+      }
+    }
+  }
 }

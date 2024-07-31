@@ -1,8 +1,0 @@
----
-# Location to download the iso from
-# This url is built from the wysiwyg at https://factory.talos.dev
-download_iso_download_url: {}
-# The directory where the output files will be stored
-download_iso_out_dir: {}
-# The name of the Talos image to create
-download_iso_image_name: {}

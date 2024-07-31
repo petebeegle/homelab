@@ -4,6 +4,4 @@
 *.tfvars
 .terraform/
 
-# ansible-vault
-**/vault.yml
-.vault_pass
+terraform.tfvars
