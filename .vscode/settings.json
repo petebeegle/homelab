@@ -1,7 +1,3 @@
 {
   "editor.formatOnSave": true,
-  "files.associations": {
-    "**/ansible/hosts": "ini",
-    "**/ansible/group_vars/*": "yaml",
-  }
 }

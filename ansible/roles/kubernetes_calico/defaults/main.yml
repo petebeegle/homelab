@@ -1,5 +1,0 @@
----
-# Pod CIDR for Calico
-kubernetes_calico_cidr: {}
-# Calico version to install
-kubernetes_calico_version: {}

@@ -1,8 +1,0 @@
----
-# NFS CSI version to install
-# https://github.com/kubernetes-csi/csi-driver-nfs/tree/master
-kubernetes_nfs_csi_version: {}
-# NFS server to use
-kubernetes_nfs_csi_server: {}
-# NFS share to use
-kubernetes_nfs_csi_share: {}
