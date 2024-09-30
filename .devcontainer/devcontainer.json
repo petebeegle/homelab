@@ -27,6 +27,7 @@
         "HashiCorp.terraform",
         "EditorConfig.EditorConfig"
       ]
-    }
-  }
+    },
+  },
+  "postStartCommand": "mkdir -p ~/.kube && terraform -chdir=terraform output -raw kubeconfig > ~/.kube/config && chmod 600 ~/.kube/config"
 }
