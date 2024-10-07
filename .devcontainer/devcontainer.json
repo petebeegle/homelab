@@ -2,11 +2,19 @@
   "name": "Ubuntu",
   "image": "mcr.microsoft.com/devcontainers/base:jammy",
   "features": {
-    "ghcr.io/devcontainers-contrib/features/kubectl-asdf:2": {},
-    "ghcr.io/devcontainers/features/terraform:1": {},
+    "ghcr.io/petebeegle/devcontainer-features/kubectl:1": {},
+    "ghcr.io/petebeegle/devcontainer-features/flux:1": {},
+    "ghcr.io/devcontainers/features/terraform:1.3.7": {
+      "terragrunt": "none"
+    },
     "ghcr.io/devcontainers-contrib/features/terraform-docs:1": {},
     "ghcr.io/devcontainers-contrib/features/pre-commit:2": {},
     "ghcr.io/petebeegle/devcontainer-features/talosctl:1": {},
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
+      "version": "none",
+      "helm": "latest",
+      "minikube": "none"
+    }
   },
   "customizations": {
     "vscode": {
@@ -17,8 +25,10 @@
         "github.copilot-chat",
         "1password.1password",
         "HashiCorp.terraform",
-        "EditorConfig.EditorConfig"
+        "EditorConfig.EditorConfig",
+        "Weaveworks.vscode-gitops-tools"
       ]
-    }
+    },
   },
+  "postStartCommand": "mkdir -p ~/.kube && terraform -chdir=terraform output -raw kubeconfig > ~/.kube/config && chmod 600 ~/.kube/config"
 }
