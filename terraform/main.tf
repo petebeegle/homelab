@@ -69,6 +69,18 @@ resource "talos_machine_configuration_apply" "controlplane" {
   client_configuration        = talos_machine_secrets.this.client_configuration
   machine_configuration_input = data.talos_machine_configuration.controlplane.machine_configuration
   node                        = each.key
+  config_patches = [yamlencode({
+    cluster = {
+      network = {
+        cni = {
+          name = "none"
+        }
+      }
+      proxy = {
+        disabled = true
+      }
+    }
+  })]
 }
 
 resource "talos_machine_configuration_apply" "worker" {
@@ -84,14 +96,4 @@ resource "talos_machine_bootstrap" "this" {
 
   client_configuration = talos_machine_secrets.this.client_configuration
   node                 = local.controlplanes_nodes[0]
-}
-
-resource "talos_cluster_kubeconfig" "this" {
-  depends_on           = [talos_machine_bootstrap.this]
-  client_configuration = talos_machine_secrets.this.client_configuration
-  node                 = local.controlplanes_nodes[0]
-
-  provisioner "local-exec" {
-    command = "mkdir -p ~/.kube && echo '${talos_cluster_kubeconfig.this.kubeconfig_raw}' > ~/.kube/config"
-  }
 }
