@@ -25,7 +25,8 @@
         "github.copilot-chat",
         "1password.1password",
         "HashiCorp.terraform",
-        "EditorConfig.EditorConfig"
+        "EditorConfig.EditorConfig",
+        "Weaveworks.vscode-gitops-tools"
       ]
     },
   },
