@@ -1,7 +1,7 @@
 # Homelab
 
 ## Prerequisites
-1. an ansible user provisioned in proxmox
+1. a user provisioned in proxmox
 2. an api token provisioned in proxmox
 3. NFS for storing our ISO's (`truenas-nfs` in proxmox)
     - I used TrueNAS Scale and created a pool called `proxmox-data`, cause I'm not creative at all.
