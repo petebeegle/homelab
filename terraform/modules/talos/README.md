@@ -3,14 +3,14 @@
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_talos"></a> [talos](#requirement\_talos) | 0.6.0-alpha.1 |
+| <a name="requirement_talos"></a> [talos](#requirement\_talos) | 0.6.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
 | <a name="provider_null"></a> [null](#provider\_null) | n/a |
-| <a name="provider_talos"></a> [talos](#provider\_talos) | 0.6.0-alpha.1 |
+| <a name="provider_talos"></a> [talos](#provider\_talos) | 0.6.0 |
 
 ## Modules
 
@@ -21,7 +21,7 @@ No modules.
 | Name | Type |
 |------|------|
 | [null_resource.this](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
-| [talos_image_factory_urls.this](https://registry.terraform.io/providers/siderolabs/talos/0.6.0-alpha.1/docs/data-sources/image_factory_urls) | data source |
+| [talos_image_factory_urls.this](https://registry.terraform.io/providers/siderolabs/talos/0.6.0/docs/data-sources/image_factory_urls) | data source |
 
 ## Inputs
 

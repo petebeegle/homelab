@@ -46,3 +46,8 @@ variable "node_data" {
     }
   }
 }
+
+variable "github_slug" {
+  description = "Slug of the GitHub repository"
+  type        = string
+}
