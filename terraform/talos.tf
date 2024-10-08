@@ -97,3 +97,8 @@ resource "talos_machine_bootstrap" "this" {
   client_configuration = talos_machine_secrets.this.client_configuration
   node                 = local.controlplanes_nodes[0]
 }
+
+output "talosconfig" {
+  value     = data.talos_client_configuration.this.talos_config
+  sensitive = true
+}
