@@ -1,0 +1,9 @@
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  namespace: kube-system
+  name: l2-advertisement
+spec:
+  ipAddressPools:
+    - ip-pool
