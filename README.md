@@ -26,6 +26,19 @@ terraform init
 terraform apply -auto-approve
 ```
 
+### 3. Bootstrap flux [optional]
+```sh
+export GITHUB_USER=petebeegle
+export GITHUB_TOKEN=github_pat_token
+flux bootstrap github \
+    --owner=$GITHUB_USER \
+    --repository=homelab \
+    --branch=main \
+    --path=./kubernetes/clusters/production \
+    --personal
+
+```
+
 ## Docs for Nerds
 - [Main Module](./terraform/README.md)
     - [Create Node](./terraform/modules/node/README.md)
