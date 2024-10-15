@@ -12,7 +12,7 @@ spec:
       chart: cert-manager
       sourceRef:
         kind: HelmRepository
-        name: jetstack
+        name: cert-manager
         namespace: kube-system
       version: "v1.16.1"
   values:

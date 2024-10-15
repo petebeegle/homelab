@@ -17,3 +17,4 @@ spec:
     - name: metallb
     - name: cilium
     - name: cert-manager
+    - name: traefik
