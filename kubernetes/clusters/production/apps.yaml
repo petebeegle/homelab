@@ -16,3 +16,4 @@ spec:
   dependsOn:
     - name: metallb
     - name: cilium
+    - name: cert-manager
