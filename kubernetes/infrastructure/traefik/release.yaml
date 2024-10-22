@@ -22,9 +22,19 @@ spec:
       kubernetesIngress:
         enabled: false
     gateway:
+      enabled: true
+      annotations:
+        cert-manager.io/issuer: selfsigned-issuer
       listeners:
         web:
           namespacePolicy: All
+        websecure:
+          namespacePolicy: All
+          hostname: whoami.docker.localhost
+          port: 8443
+          protocol: HTTPS
+          certificateRefs:
+            - name: whoami-tls
     ingressRoute:
       dashboard:
         enabled: true
