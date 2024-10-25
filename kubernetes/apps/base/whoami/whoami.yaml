@@ -53,7 +53,7 @@ spec:
     - name: traefik-gateway
       namespace: kube-system
   hostnames:
-    - whoami.docker.localhost
+    - whoami.lab.petebeegle.com
   rules:
     - matches:
         - path:

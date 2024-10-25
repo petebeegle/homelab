@@ -30,7 +30,7 @@ spec:
           namespacePolicy: All
         websecure:
           namespacePolicy: All
-          hostname: whoami.docker.localhost
+          hostname: "*.lab.petebeegle.com"
           port: 8443
           protocol: HTTPS
           certificateRefs:
