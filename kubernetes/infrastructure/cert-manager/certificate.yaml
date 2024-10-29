@@ -1,0 +1,14 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-lab-petebeegle-com
+  namespace: kube-system
+spec:
+  secretName: wildcard-lab-petebeegle-com-tls
+  dnsNames:
+    - "lab.petebeegle.com"
+    - "*.lab.petebeegle.com"
+  issuerRef:
+    name: cloudflare
+    kind: Issuer

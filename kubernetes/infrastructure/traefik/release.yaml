@@ -24,7 +24,7 @@ spec:
     gateway:
       enabled: true
       annotations:
-        cert-manager.io/issuer: selfsigned-issuer
+        cert-manager.io/issuer: cloudflare
       listeners:
         web:
           namespacePolicy: All
@@ -34,7 +34,7 @@ spec:
           port: 8443
           protocol: HTTPS
           certificateRefs:
-            - name: whoami-tls
+            - name: wildcard-lab-petebeegle-com-tls
     ingressRoute:
       dashboard:
         enabled: true

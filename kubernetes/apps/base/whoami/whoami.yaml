@@ -64,12 +64,3 @@ spec:
         - name: whoami
           port: 80
           weight: 1
-
----
-apiVersion: cert-manager.io/v1
-kind: Issuer
-metadata:
-  name: selfsigned-issuer
-  namespace: kube-system
-spec:
-  selfSigned: {}
