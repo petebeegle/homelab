@@ -6,3 +6,4 @@ resources:
   - release.yaml
   - issuer.yaml
   - certificate.yaml
+  - secret.yaml

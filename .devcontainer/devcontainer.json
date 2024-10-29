@@ -10,10 +10,13 @@
     "ghcr.io/devcontainers-contrib/features/terraform-docs:1": {},
     "ghcr.io/devcontainers-contrib/features/pre-commit:2": {},
     "ghcr.io/petebeegle/devcontainer-features/talosctl:1": {},
-    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
-      "version": "latest",
-      "helm": "latest",
-      "minikube": "none"
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {},
+    "ghcr.io/devcontainers/features/terraform:1": {},
+    "ghcr.io/devcontainers-extra/features/sops:1": {},
+    "ghcr.io/devcontainers-extra/features/apt-get-packages:1": {
+      "packages": [
+        "gnupg2"
+      ]
     }
   },
   "customizations": {
@@ -30,5 +33,8 @@
       ]
     },
   },
+  "mounts": [
+    "source=${localEnv:USERPROFILE}/AppData/Roaming/gnupg,target=/home/vscode/.gnupg,type=bind"
+  ],
   "postStartCommand": "mkdir -p ~/.kube && terraform -chdir=terraform output -raw kubeconfig > ~/.kube/config && chmod 600 ~/.kube/config"
 }
