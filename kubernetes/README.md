@@ -28,6 +28,34 @@ kubernetes
 └── README.md # You are here
 ```
 
+## Creating Secrets
+For reference: [SOPS](https://github.com/getsops/sops)
+
+```shell
+gpg --list-secret-keys "${KEY_NAME}"
+```
+
+Update the `.sops.yaml` configuration to reference this fingerprint for relevant secrets.
+
+
+### Configure for flux
+```shell
+sudo gpg --export-secret-keys --armor "<fingerprint>" |
+  kubectl create secret generic sops-gpg \
+  --namespace=flux-system \
+  --from-file=sops.asc=/dev/stdin
+```
+
+### Working with secrets
+
+```shell
+# Encrpyt a kubernetes secret
+sops -i -e secret.yaml
+
+# Decrypt a secret
+sops secret.yaml
+```
+
 ## Helpful commands for people with small memories
 
 ```sh
