@@ -24,7 +24,7 @@ cd terraform
 terraform init
 
 # live más
-terraform apply -auto-approve
+terraform apply -auto-approve -var="bootstrap_new_cluster=true"
 ```
 
 ### 3. Bootstrap flux

@@ -64,7 +64,9 @@ resource "helm_release" "cilium" {
 }
 
 data "talos_cluster_health" "pre_network" {
-  depends_on             = [talos_machine_bootstrap.this]
+  count      = var.bootstrap_new_cluster ? 1 : 0
+  depends_on = [talos_machine_bootstrap.this]
+
   client_configuration   = data.talos_client_configuration.this.client_configuration
   control_plane_nodes    = local.controlplanes_nodes
   worker_nodes           = [for k, v in var.node_data.workers : k]
@@ -73,7 +75,8 @@ data "talos_cluster_health" "pre_network" {
 }
 
 data "talos_cluster_health" "this" {
-  depends_on           = [helm_release.cilium]
+  depends_on = [helm_release.cilium]
+
   client_configuration = data.talos_client_configuration.this.client_configuration
   control_plane_nodes  = local.controlplanes_nodes
   worker_nodes         = [for k, v in var.node_data.workers : k]

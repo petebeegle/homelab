@@ -16,6 +16,12 @@ variable "nas_port" {
   default     = "2200"
 }
 
+variable "bootstrap_new_cluster" {
+  description = "Bootstrap a new cluster"
+  type        = bool
+  default     = false
+}
+
 variable "node_data" {
   type = object({
     controlplanes = map(object({
