@@ -27,3 +27,13 @@ variable "file_ready" {
   description = "The filename of the ISO image to use for the VM"
   type        = string
 }
+
+variable "memory" {
+  description = "The memory size of the VM"
+  type        = number
+}
+
+variable "cores" {
+  description = "The number of cores for the VM"
+  type        = number
+}

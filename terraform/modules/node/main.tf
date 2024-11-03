@@ -11,9 +11,9 @@ resource "proxmox_vm_qemu" "vm" {
   agent   = 1
   os_type = "cloud-init"
   onboot  = true
-  cores   = 2
+  cores   = var.cores
   cpu     = "x86-64-v2-AES"
-  memory  = 8192
+  memory  = var.memory
   boot    = "order=scsi0;net0"
 
   network {

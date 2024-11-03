@@ -26,6 +26,8 @@ module "controlplane_nodes" {
   iso_filename = module.talos_iso.filename
   target_node  = each.value.node
   id           = each.value.id
+  memory       = each.value.memory
+  cores        = each.value.cores
 
   file_ready = module.talos_iso.id
 }
@@ -38,6 +40,8 @@ module "worker_nodes" {
   iso_filename = module.talos_iso.filename
   target_node  = each.value.node
   id           = each.value.id
+  memory       = each.value.memory
+  cores        = each.value.cores
 
   file_ready = module.talos_iso.id
 }
