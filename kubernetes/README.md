@@ -29,21 +29,17 @@ kubernetes
 ```
 
 ## Creating Secrets
-For reference: [SOPS](https://github.com/getsops/sops)
-
-```shell
-gpg --list-secret-keys "${KEY_NAME}"
-```
+For reference: [SOPS](https://github.com/getsops/sops), [age](https://github.com/FiloSottile/age)
 
 Update the `.sops.yaml` configuration to reference this fingerprint for relevant secrets.
 
 
 ### Configure for flux
 ```shell
-sudo gpg --export-secret-keys --armor "<fingerprint>" |
-  kubectl create secret generic sops-gpg \
+cat ~/.config/sops/age/keys.agekey |
+  kubectl create secret generic sops-age \
   --namespace=flux-system \
-  --from-file=sops.asc=/dev/stdin
+  --from-file=keys.agekey=/dev/stdin
 ```
 
 ### Working with secrets

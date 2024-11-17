@@ -12,18 +12,11 @@
     "ghcr.io/petebeegle/devcontainer-features/talosctl:1": {},
     "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {},
     "ghcr.io/devcontainers/features/terraform:1": {},
-    "ghcr.io/devcontainers-extra/features/sops:1": {},
-    "ghcr.io/devcontainers-extra/features/apt-get-packages:1": {
-      "packages": [
-        "gnupg2"
-      ]
-    }
+    "ghcr.io/devcontainers-extra/features/sops:1": {}
   },
   "customizations": {
     "vscode": {
       "extensions": [
-        "vscoss.vscode-ansible",
-        "exiasr.ansible-lint",
         "github.copilot",
         "github.copilot-chat",
         "1password.1password",
@@ -34,7 +27,7 @@
     },
   },
   "mounts": [
-    "source=${localEnv:USERPROFILE}/AppData/Roaming/gnupg,target=/home/vscode/.gnupg,type=bind"
+    "source=${localEnv:HOME}/.config/sops/age,target=/home/vscode/.config/sops/age,type=bind,consistency=cached"
   ],
   "postStartCommand": "mkdir -p ~/.kube && terraform -chdir=terraform output -raw kubeconfig > ~/.kube/config && chmod 600 ~/.kube/config"
 }

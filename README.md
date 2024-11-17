@@ -46,20 +46,7 @@ flux bootstrap github \
 
 ### 4. Secrets
 
-This one is a PITA. When initially bootstrapping a cluster, we need to create a gpg key (or use an existing one) and add it to the cluster as a secret for flux to use for decryption.
-
-We use [sops](https://github.com/getsops/sops) for encryption/decryption.
-
-```shell
-# Get your fingerprint
-gpg --list-secret-keys ${KEY_NAME}
-
-# Export into a secret
-gpg --export-secret-keys --armor ${FINGERPRINT} |
-  kubectl create secret generic sops-gpg \
-  --namespace=flux-system \
-  --from-file=sops.asc=/dev/stdin
-```
+For detailed instructions on managing secrets, refer to [Working with Secrets](./kubernetes/README.md#working-with-secrets).
 
 ## Terraform Docs for Nerds
 - [Main Module](./terraform/README.md)

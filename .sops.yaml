@@ -2,5 +2,5 @@
 creation_rules:
   - path_regex: secret.yaml
     encrypted_regex: ^(data|stringData)$
-    pgp: >-
-      7A41DE1F8AAAD0633D417023C1C34DCAA29E8C2C
+    age: >-
+      age1g4erccmqr8znqmhszfyq425l6dt9thq7vmllrn7z9yjfaug3putqlgs4ry
