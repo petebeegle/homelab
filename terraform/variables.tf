@@ -51,12 +51,13 @@ variable "node_data" {
         memory = 8192
         cores  = 2
       },
-      "192.168.3.64" = {
-        node   = "pve03"
-        id     = 300
-        memory = 8192
-        cores  = 2
-      }
+      # Release issue
+      #   "192.168.3.64" = {
+      #     node   = "pve03"
+      #     id     = 300
+      #     memory = 8192
+      #     cores  = 2
+      #   }
     },
     workers = {
       "192.168.3.61" = {
@@ -71,12 +72,13 @@ variable "node_data" {
         memory = 16384
         cores  = 2
       },
-      "192.168.3.65" = {
-        node   = "pve03"
-        id     = 301
-        memory = 16384
-        cores  = 2
-      }
+      # Release issue
+      #   "192.168.3.65" = {
+      #     node   = "pve03"
+      #     id     = 301
+      #     memory = 16384
+      #     cores  = 2
+      #   }
     }
   }
 }
