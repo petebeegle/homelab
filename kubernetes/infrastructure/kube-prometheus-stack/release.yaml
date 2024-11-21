@@ -39,4 +39,4 @@ spec:
           matchLabels:
             app.kubernetes.io/component: monitoring
     grafana:
-      defaultDashboardsEnabled: false
+      defaultDashboardsEnabled: true
