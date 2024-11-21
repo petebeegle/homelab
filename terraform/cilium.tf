@@ -1,5 +1,6 @@
 resource "helm_release" "cilium" {
   depends_on = [data.talos_cluster_health.pre_network]
+  count      = var.bootstrap_new_cluster ? 1 : 0
 
   name       = "cilium"
   repository = "https://helm.cilium.io/"
@@ -76,6 +77,7 @@ data "talos_cluster_health" "pre_network" {
 
 data "talos_cluster_health" "this" {
   depends_on = [helm_release.cilium]
+  count      = var.bootstrap_new_cluster ? 1 : 0
 
   client_configuration = data.talos_client_configuration.this.client_configuration
   control_plane_nodes  = local.controlplanes_nodes

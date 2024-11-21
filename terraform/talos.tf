@@ -10,7 +10,7 @@ locals {
 module "talos_iso" {
   source = "./modules/talos"
 
-  talos_version = "v1.7.5"
+  talos_version = "v1.8.3"
 
   destination_user = var.nas_user
   destination_host = var.nas_ip
