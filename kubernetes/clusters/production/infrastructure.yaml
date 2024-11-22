@@ -6,7 +6,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 10m0s
-  path: ./kubernetes/infrastructure/cilium
+  path: ./kubernetes/infrastructure/controllers/cilium
   prune: true
   sourceRef:
     kind: GitRepository
@@ -19,8 +19,25 @@ metadata:
   namespace: flux-system
 spec:
   interval: 10m0s
-  path: ./kubernetes/infrastructure/metallb
+  path: ./kubernetes/infrastructure/controllers/metallb
   prune: true
+  wait: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: metallb-configs
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: metallb
+  interval: 10m0s
+  path: ./kubernetes/infrastructure/configs/metallb
+  prune: true
+  wait: true
   sourceRef:
     kind: GitRepository
     name: flux-system
@@ -31,9 +48,12 @@ metadata:
   name: cert-manager
   namespace: flux-system
 spec:
+  dependsOn:
+    - name: metallb-configs
   interval: 10m0s
-  path: ./kubernetes/infrastructure/cert-manager
+  path: ./kubernetes/infrastructure/controllers/cert-manager
   prune: true
+  wait: true
   sourceRef:
     kind: GitRepository
     name: flux-system
@@ -45,11 +65,28 @@ spec:
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: traefik
+  name: certs
   namespace: flux-system
 spec:
   interval: 10m0s
-  path: ./kubernetes/infrastructure/traefik
+  dependsOn:
+    - name: cert-manager
+  path: ./kubernetes/infrastructure/configs/certs
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: traefik
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: certs
+  interval: 10m0s
+  path: ./kubernetes/infrastructure/controllers/traefik
   prune: true
   sourceRef:
     kind: GitRepository
@@ -61,8 +98,10 @@ metadata:
   name: kube-prometheus-stack
   namespace: flux-system
 spec:
+  dependsOn:
+    - name: traefik
   interval: 10m0s
-  path: ./kubernetes/infrastructure/kube-prometheus-stack
+  path: ./kubernetes/infrastructure/controllers/kube-prometheus-stack
   prune: true
   sourceRef:
     kind: GitRepository
@@ -79,7 +118,9 @@ metadata:
   namespace: flux-system
 spec:
   interval: 10m0s
-  path: ./kubernetes/infrastructure/loki-stack
+  dependsOn:
+    - name: kube-prometheus-stack
+  path: ./kubernetes/infrastructure/controllers/loki-stack
   prune: true
   sourceRef:
     kind: GitRepository

@@ -18,3 +18,5 @@ spec:
     - name: cilium
     - name: cert-manager
     - name: traefik
+    - name: kube-prometheus-stack
+    - name: loki-stack

@@ -5,5 +5,3 @@ resources:
   - secret.yaml
   - repository.yaml
   - release.yaml
-  - issuer.yaml
-  - certificate.yaml

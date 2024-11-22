@@ -5,10 +5,10 @@ metadata:
   name: wildcard-lab-petebeegle-com
   namespace: kube-system
 spec:
-  secretName: wildcard-lab-petebeegle-com-tls
+  secretName: wildcard-lab-petebeegle-com
   dnsNames:
     - "lab.petebeegle.com"
     - "*.lab.petebeegle.com"
   issuerRef:
     name: cloudflare
-    kind: Issuer
+    kind: ClusterIssuer

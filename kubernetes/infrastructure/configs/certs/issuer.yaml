@@ -1,9 +1,8 @@
 ---
 apiVersion: cert-manager.io/v1
-kind: Issuer
+kind: ClusterIssuer
 metadata:
   name: cloudflare
-  namespace: kube-system
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
@@ -15,4 +14,8 @@ spec:
           cloudflare:
             apiTokenSecretRef:
               name: cloudflare
-              key: api-token
+              key: token
+        selector:
+          dnsZones:
+            - "lab.petebeegle.com"
+            - "*.lab.petebeegle.com"

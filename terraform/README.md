@@ -3,9 +3,6 @@
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_flux"></a> [flux](#requirement\_flux) | 1.4.0 |
-| <a name="requirement_github"></a> [github](#requirement\_github) | 6.3.0 |
-| <a name="requirement_helm"></a> [helm](#requirement\_helm) | 2.15.0 |
 | <a name="requirement_proxmox"></a> [proxmox](#requirement\_proxmox) | 3.0.1-rc3 |
 | <a name="requirement_talos"></a> [talos](#requirement\_talos) | 0.6.0 |
 
@@ -13,9 +10,7 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_flux"></a> [flux](#provider\_flux) | 1.4.0 |
-| <a name="provider_github"></a> [github](#provider\_github) | 6.3.0 |
-| <a name="provider_helm"></a> [helm](#provider\_helm) | 2.15.0 |
+| <a name="provider_null"></a> [null](#provider\_null) | 3.2.3 |
 | <a name="provider_talos"></a> [talos](#provider\_talos) | 0.6.0 |
 
 ## Modules
@@ -30,16 +25,14 @@
 
 | Name | Type |
 |------|------|
-| [flux_bootstrap_git.this](https://registry.terraform.io/providers/fluxcd/flux/1.4.0/docs/resources/bootstrap_git) | resource |
-| [helm_release.cilium](https://registry.terraform.io/providers/hashicorp/helm/2.15.0/docs/resources/release) | resource |
+| [null_resource.bootstrap_script](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
+| [null_resource.talos_config](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [talos_cluster_kubeconfig.this](https://registry.terraform.io/providers/siderolabs/talos/0.6.0/docs/resources/cluster_kubeconfig) | resource |
 | [talos_machine_bootstrap.this](https://registry.terraform.io/providers/siderolabs/talos/0.6.0/docs/resources/machine_bootstrap) | resource |
 | [talos_machine_configuration_apply.controlplane](https://registry.terraform.io/providers/siderolabs/talos/0.6.0/docs/resources/machine_configuration_apply) | resource |
 | [talos_machine_configuration_apply.worker](https://registry.terraform.io/providers/siderolabs/talos/0.6.0/docs/resources/machine_configuration_apply) | resource |
 | [talos_machine_secrets.this](https://registry.terraform.io/providers/siderolabs/talos/0.6.0/docs/resources/machine_secrets) | resource |
-| [github_repository.this](https://registry.terraform.io/providers/integrations/github/6.3.0/docs/data-sources/repository) | data source |
 | [talos_client_configuration.this](https://registry.terraform.io/providers/siderolabs/talos/0.6.0/docs/data-sources/client_configuration) | data source |
-| [talos_cluster_health.pre_network](https://registry.terraform.io/providers/siderolabs/talos/0.6.0/docs/data-sources/cluster_health) | data source |
 | [talos_cluster_health.this](https://registry.terraform.io/providers/siderolabs/talos/0.6.0/docs/data-sources/cluster_health) | data source |
 | [talos_machine_configuration.controlplane](https://registry.terraform.io/providers/siderolabs/talos/0.6.0/docs/data-sources/machine_configuration) | data source |
 | [talos_machine_configuration.worker](https://registry.terraform.io/providers/siderolabs/talos/0.6.0/docs/data-sources/machine_configuration) | data source |
@@ -48,12 +41,12 @@
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_github_pat"></a> [github\_pat](#input\_github\_pat) | n/a | `any` | n/a | yes |
-| <a name="input_github_slug"></a> [github\_slug](#input\_github\_slug) | Slug of the GitHub repository | `string` | `"petebeegle/homelab"` | no |
+| <a name="input_github_token"></a> [github\_token](#input\_github\_token) | GitHub token to use for the bootstrap script | `string` | n/a | yes |
+| <a name="input_github_user"></a> [github\_user](#input\_github\_user) | GitHub user to use for the bootstrap script | `string` | n/a | yes |
 | <a name="input_nas_ip"></a> [nas\_ip](#input\_nas\_ip) | IP address of the NAS | `string` | `"192.168.3.3"` | no |
 | <a name="input_nas_port"></a> [nas\_port](#input\_nas\_port) | Port to connect to the NAS | `string` | `"2200"` | no |
 | <a name="input_nas_user"></a> [nas\_user](#input\_nas\_user) | User to connect to the NAS | `string` | `"ansible"` | no |
-| <a name="input_node_data"></a> [node\_data](#input\_node\_data) | n/a | <pre>object({<br/>    controlplanes = map(object({<br/>      node = string<br/>      id   = number<br/>    }))<br/>    workers = map(object({<br/>      node = string<br/>      id   = number<br/>    }))<br/>  })</pre> | <pre>{<br/>  "controlplanes": {<br/>    "192.168.3.60": {<br/>      "id": 102,<br/>      "node": "pve01"<br/>    }<br/>  },<br/>  "workers": {<br/>    "192.168.3.61": {<br/>      "id": 103,<br/>      "node": "pve01"<br/>    },<br/>    "192.168.3.62": {<br/>      "id": 200,<br/>      "node": "pve02"<br/>    }<br/>  }<br/>}</pre> | no |
+| <a name="input_node_data"></a> [node\_data](#input\_node\_data) | n/a | <pre>object({<br/>    controlplanes = map(object({<br/>      node   = string<br/>      id     = number<br/>      memory = number<br/>      cores  = number<br/>    }))<br/>    workers = map(object({<br/>      node   = string<br/>      id     = number<br/>      memory = number<br/>      cores  = number<br/>    }))<br/>  })</pre> | <pre>{<br/>  "controlplanes": {<br/>    "192.168.3.60": {<br/>      "cores": 2,<br/>      "id": 102,<br/>      "memory": 8192,<br/>      "node": "pve01"<br/>    },<br/>    "192.168.3.63": {<br/>      "cores": 2,<br/>      "id": 201,<br/>      "memory": 8192,<br/>      "node": "pve02"<br/>    },<br/>    "192.168.3.64": {<br/>      "cores": 2,<br/>      "id": 300,<br/>      "memory": 8192,<br/>      "node": "pve03"<br/>    }<br/>  },<br/>  "workers": {<br/>    "192.168.3.61": {<br/>      "cores": 2,<br/>      "id": 103,<br/>      "memory": 16384,<br/>      "node": "pve01"<br/>    },<br/>    "192.168.3.62": {<br/>      "cores": 2,<br/>      "id": 200,<br/>      "memory": 16384,<br/>      "node": "pve02"<br/>    },<br/>    "192.168.3.65": {<br/>      "cores": 2,<br/>      "id": 301,<br/>      "memory": 16384,<br/>      "node": "pve03"<br/>    }<br/>  }<br/>}</pre> | no |
 | <a name="input_pm_api_token_id"></a> [pm\_api\_token\_id](#input\_pm\_api\_token\_id) | n/a | `any` | n/a | yes |
 | <a name="input_pm_api_token_secret"></a> [pm\_api\_token\_secret](#input\_pm\_api\_token\_secret) | n/a | `any` | n/a | yes |
 | <a name="input_pm_api_url"></a> [pm\_api\_url](#input\_pm\_api\_url) | n/a | `any` | n/a | yes |

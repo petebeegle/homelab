@@ -34,7 +34,7 @@ spec:
           port: 8443
           protocol: HTTPS
           certificateRefs:
-            - name: wildcard-lab-petebeegle-com-tls
+            - name: wildcard-lab-petebeegle-com
     ingressRoute:
       dashboard:
         enabled: true
