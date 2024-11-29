@@ -38,5 +38,8 @@ spec:
         podMonitorSelector:
           matchLabels:
             app.kubernetes.io/component: monitoring
+        serviceMonitorSelector:
+          matchLabels:
+            app.kubernetes.io/component: metrics
     grafana:
       defaultDashboardsEnabled: true

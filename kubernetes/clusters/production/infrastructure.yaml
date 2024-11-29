@@ -85,6 +85,7 @@ metadata:
 spec:
   dependsOn:
     - name: certs
+    - name: kube-prometheus-stack
   interval: 10m0s
   path: ./kubernetes/infrastructure/controllers/traefik
   prune: true
@@ -99,7 +100,7 @@ metadata:
   namespace: flux-system
 spec:
   dependsOn:
-    - name: traefik
+    - name: certs
   interval: 10m0s
   path: ./kubernetes/infrastructure/controllers/kube-prometheus-stack
   prune: true
