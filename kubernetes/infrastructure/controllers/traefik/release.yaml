@@ -17,6 +17,8 @@ spec:
       version: "v32.1.1"
   # https://github.com/traefik/traefik-helm-chart/blob/master/traefik/VALUES.md
   values:
+    deployment:
+      replicas: 3
     providers:
       kubernetesGateway:
         enabled: true
