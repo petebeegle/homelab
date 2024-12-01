@@ -1,3 +1,11 @@
 {
   "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "modificationsIfAvailable",
+  "[yaml]": {
+    "editor.formatOnSave": true,
+    "editor.formatOnSaveMode": "modificationsIfAvailable",
+    "files.exclude": {
+      "**/secrets.yaml": true
+    }
+  }
 }
