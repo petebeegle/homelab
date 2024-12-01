@@ -52,6 +52,27 @@ sops -i -e secret.yaml
 sops secret.yaml
 ```
 
+## Depdendency Management
+
+I use renovate, it runs as a cronjob in the `renovate` namespace.
+
+You can run it manually as well if you need:
+```sh
+kubectl create job --from=cronjob.batch/renovate renovate-manual-run -n renovate
+```
+
+Run it locally with dry-run enabled:
+```sh
+docker run \
+    --rm \
+    -e LOG_LEVEL="debug" \
+    -e RENOVATE_CONFIG="$(cat renovate.json)" \
+    renovate/renovate:39.42.4 \
+    --token "$TOKEN" \
+    --dry-run="true" \
+    petebeegle/homelab
+```
+
 ## Helpful commands for people with small memories
 
 ```sh
