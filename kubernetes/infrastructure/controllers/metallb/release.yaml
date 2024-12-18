@@ -14,4 +14,4 @@ spec:
         kind: HelmRepository
         name: metallb
         namespace: kube-system
-      version: "v0.14.8"
+      version: "0.14.9"
