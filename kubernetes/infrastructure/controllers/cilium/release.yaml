@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: cilium
         namespace: kube-system
-      version: "1.16.4"
+      version: "1.16.5"
   values:
     ipam:
       mode: kubernetes
