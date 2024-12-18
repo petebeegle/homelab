@@ -6,6 +6,7 @@ resources:
   - namespace.yaml
   - repository.yaml
   - release.yaml
+  - graphite-exporter.yaml
 configMapGenerator:
   - name: flux-kube-state-metrics-config
     files:
