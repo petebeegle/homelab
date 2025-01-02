@@ -47,40 +47,70 @@ spec:
       prometheus:
         monitor:
           relabelings:
-          - action: replace
-            sourceLabels: [__meta_kubernetes_pod_node_name]
-            targetLabel: nodename
+            - action: replace
+              sourceLabels: [__meta_kubernetes_pod_node_name]
+              targetLabel: nodename
     grafana:
       defaultDashboardsEnabled: false
       dashboardProviders:
         dashboardproviders.yaml:
           apiVersion: 1
           providers:
-          - name: 'grafana-dashboards-kubernetes'
-            orgId: 1
-            folder: 'Kubernetes'
-            type: file
-            disableDeletion: true
-            editable: true
-            options:
-              path: /var/lib/grafana/dashboards/grafana-dashboards-kubernetes
+            - name: "grafana-dashboards-kubernetes"
+              orgId: 1
+              folder: "Kubernetes"
+              type: file
+              disableDeletion: true
+              editable: true
+              options:
+                path: /var/lib/grafana/dashboards/grafana-dashboards-kubernetes
+            - name: "flux-cd-dashboards"
+              orgId: 1
+              folder: "Flux CD"
+              type: file
+              disableDeletion: true
+              editable: true
+              options:
+                path: /var/lib/grafana/dashboards/flux-cd-dashboards
+            - name: "traefik-dashboards"
+              orgId: 1
+              folder: "Traefik"
+              type: file
+              disableDeletion: true
+              editable: true
+              options:
+                path: /var/lib/grafana/dashboards/traefik-dashboards
       dashboards:
         grafana-dashboards-kubernetes:
           k8s-system-api-server:
             url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-system-api-server.json
-            token: ''
+            token: ""
           k8s-system-coredns:
             url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-system-coredns.json
-            token: ''
+            token: ""
           k8s-views-global:
             url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-views-global.json
-            token: ''
+            token: ""
           k8s-views-namespaces:
             url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-views-namespaces.json
-            token: ''
+            token: ""
           k8s-views-nodes:
             url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-views-nodes.json
-            token: ''
+            token: ""
           k8s-views-pods:
             url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-views-pods.json
-            token: ''
+            token: ""
+        flux-cd-dashboards:
+          cluster:
+            url: https://raw.githubusercontent.com/fluxcd/flux2-monitoring-example/refs/heads/main/monitoring/configs/dashboards/cluster.json
+            token: ""
+          control-plane:
+            url: https://raw.githubusercontent.com/fluxcd/flux2-monitoring-example/refs/heads/main/monitoring/configs/dashboards/control-plane.json
+            token: ""
+          logs:
+            url: https://raw.githubusercontent.com/fluxcd/flux2-monitoring-example/refs/heads/main/monitoring/configs/dashboards/logs.json
+            token: ""
+        traefik-dashboards:
+          traefik-kubernetes:
+            url: https://raw.githubusercontent.com/traefik/traefik/refs/heads/master/contrib/grafana/traefik-kubernetes.json
+            token: ""
