@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: monitoring
 resources:
   - namespace.yaml
+  - secret.yaml
   - repository.yaml
   - release.yaml
 configMapGenerator:

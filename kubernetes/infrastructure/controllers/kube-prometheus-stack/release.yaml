@@ -51,6 +51,8 @@ spec:
               sourceLabels: [__meta_kubernetes_pod_node_name]
               targetLabel: nodename
     grafana:
+      admin:
+        existingSecret: grafana-credentials
       defaultDashboardsEnabled: false
       dashboardProviders:
         dashboardproviders.yaml:
