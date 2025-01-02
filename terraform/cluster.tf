@@ -44,12 +44,6 @@ resource "talos_cluster_kubeconfig" "this" {
   depends_on           = [talos_machine_bootstrap.this]
   client_configuration = talos_machine_secrets.this.client_configuration
   node                 = local.controlplanes_nodes[0]
-
-  provisioner "local-exec" {
-    command = templatefile("${path.module}/scripts/kubeconfig-install.sh", {
-      kubeconfig = talos_cluster_kubeconfig.this.kubeconfig_raw
-    })
-  }
 }
 
 resource "null_resource" "bootstrap_script" {
@@ -65,6 +59,20 @@ resource "null_resource" "bootstrap_script" {
   }
 }
 
+resource "null_resource" "kube_config" {
+  depends_on = [talos_cluster_kubeconfig.this]
+
+  provisioner "local-exec" {
+    command = templatefile("${path.module}/scripts/kubeconfig-install.sh", {
+      kubeconfig = talos_cluster_kubeconfig.this.kubeconfig_raw
+    })
+  }
+
+  triggers = {
+    always_run = "${timestamp()}"
+  }
+}
+
 resource "null_resource" "talos_config" {
   depends_on = [data.talos_client_configuration.this]
 
@@ -72,6 +80,10 @@ resource "null_resource" "talos_config" {
     command = templatefile("${path.module}/scripts/talosconfig-install.sh", {
       talosconfig = data.talos_client_configuration.this.talos_config
     })
+  }
+
+  triggers = {
+    always_run = "${timestamp()}"
   }
 }
 

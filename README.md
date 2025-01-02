@@ -31,7 +31,45 @@ terraform init
 # live más
 terraform apply -auto-approve
 ```
-> ℹ️ Terraform will wait until the cluster is healthy before proceeding to bootstrap flux. This may take up to 10 minutes as it configures cilium via a `batch.job`.
+
+## Upgrader? I hardly know her!
+### 1. Upgrade Talos OS
+First, we want to upgrade talos os.
+```sh
+# get internal-ip addresses of all nodes in the cluster
+kubectl get nodes -o wide
+
+# recommended to do this manual, what are we crazy? Get {NODE} from the above list, boss
+talosctl upgrade --nodes {NODE} \
+      --image ghcr.io/siderolabs/installer:v1.9.1
+```
+> See: [Upgrading Talos](https://www.talos.dev/latest/talos-guides/upgrading-talos/) 
+
+### 2. Upgrade K8s
+Once we've upgraded talos, we can upgrade k8s. 
+
+First we need to ensure that our talos client matches the talos server version, otherwise the 
+k8s target versio may not exist. To resolve this, we can simply rebuild our developer environment 
+without the build cache.
+
+If we rebuilt the developer environment, we may need to re-hydrate our `talosconfig` and `kubeconfig`:
+```sh
+# live más-er
+terraform apply -auto-approve
+```
+
+Finally, we can upgrade k8s:
+
+```sh
+# verify the client version
+talosctl version
+
+# upgrade k8s, only the control plane node is needed
+# use --dry-run to see what's up
+talosctl --nodes {CONTROL_PLANE_NODE} upgrade-k8s --to 1.32.0
+```
+> See: [Upgrading K8s](https://www.talos.dev/v1.9/kubernetes-guides/upgrading-kubernetes/)
+
 
 ## Terraform Docs for Nerds
 - [Main Module](./terraform/README.md)

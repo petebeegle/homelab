@@ -25,6 +25,9 @@ metadata:
   namespace: kube-system
 spec:
   backoffLimit: 10
+  selector:
+    matchLabels:
+      app: cilium-install
   template:
     metadata:
       labels:
