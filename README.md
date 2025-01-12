@@ -3,8 +3,7 @@
 ## Prerequisites
 1. A user provisioned in proxmox
 2. An api token provisioned in proxmox
-3. NFS for storing our ISO's (`truenas-nfs` in proxmox)
-    - I used TrueNAS Scale and created a pool called `proxmox-data`, cause I'm not creative at all.
+3. NFS for storing our ISO's (`nfs` in proxmox)
 4. A Github Personal Access Token (PAT) for authenticating with fluxcd
     - Should be able to read/write the repository
 5. An [age](./kubernetes/README.md#creating-secrets) secret stored at `~/.config/sops/age/keys.agekey`
@@ -69,6 +68,11 @@ talosctl version
 talosctl --nodes {CONTROL_PLANE_NODE} upgrade-k8s --to 1.32.0
 ```
 > See: [Upgrading K8s](https://www.talos.dev/v1.9/kubernetes-guides/upgrading-kubernetes/)
+
+---
+## Appendices
+Random things that have caused me suffering:
+- [Configure NFS With Proxmox](./runbooks/configure_nfs_with_proxmox.md)
 
 
 ## Terraform Docs for Nerds

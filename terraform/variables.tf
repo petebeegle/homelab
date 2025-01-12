@@ -1,19 +1,11 @@
-variable "nas_ip" {
-  description = "IP address of the NAS"
+variable "destination_host" {
+  description = "IP address of the destination host"
   type        = string
-  default     = "192.168.3.3"
 }
 
-variable "nas_user" {
-  description = "User to connect to the NAS"
+variable "destination_user" {
+  description = "User to connect to the destination host"
   type        = string
-  default     = "ansible"
-}
-
-variable "nas_port" {
-  description = "Port to connect to the NAS"
-  type        = string
-  default     = "2200"
 }
 
 variable "node_data" {

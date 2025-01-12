@@ -19,13 +19,12 @@ resource "null_resource" "this" {
 
   provisioner "file" {
     source      = "/tmp/talos-disk.iso"
-    destination = "/mnt/pool/proxmox-data/template/iso/talos-${data.talos_image_factory_urls.this.talos_version}-${data.talos_image_factory_urls.this.platform}-${data.talos_image_factory_urls.this.architecture}.iso"
+    destination = "/mnt/pve/nfs/template/iso/talos-${data.talos_image_factory_urls.this.talos_version}-${data.talos_image_factory_urls.this.platform}-${data.talos_image_factory_urls.this.architecture}.iso"
 
     connection {
       type    = "ssh"
-      user    = var.destination_user
       host    = var.destination_host
-      port    = var.destination_port
+      user    = var.destination_user
       timeout = "30s"
     }
   }

@@ -37,7 +37,7 @@ resource "talos_machine_configuration_apply" "controlplane" {
       }
       inlineManifests = [
         {
-          name     = "cilium-install"
+          name     = "cilium"
           contents = file("${path.module}/scripts/cilium-install.yaml")
         }
       ]

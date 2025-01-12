@@ -18,7 +18,3 @@ variable "destination_host" {
   type        = string
 }
 
-variable "destination_port" {
-  description = "Port to connect to"
-  type        = number
-}

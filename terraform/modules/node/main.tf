@@ -26,7 +26,7 @@ resource "proxmox_vm_qemu" "vm" {
     scsi {
       scsi0 {
         cdrom {
-          iso = "truenas-nfs:iso/${var.iso_filename}"
+          iso = "nfs:iso/${var.iso_filename}"
         }
       }
       scsi1 {

@@ -10,11 +10,10 @@ locals {
 module "talos_iso" {
   source = "./modules/talos"
 
-  talos_version = "v1.8.3"
+  talos_version = "v1.9.1"
 
-  destination_user = var.nas_user
-  destination_host = var.nas_ip
-  destination_port = var.nas_port
+  destination_host = var.destination_host
+  destination_user = var.destination_user
 }
 
 resource "talos_machine_secrets" "this" {}
