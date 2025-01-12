@@ -18,8 +18,6 @@ spec:
   wait: true
   timeout: 5m0s
   dependsOn:
-    - name: metallb
-    - name: cilium
     - name: cert-manager
     - name: traefik
     - name: kube-prometheus-stack

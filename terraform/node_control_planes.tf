@@ -39,6 +39,10 @@ resource "talos_machine_configuration_apply" "controlplane" {
         {
           name     = "cilium"
           contents = data.helm_template.cilium.manifest
+        },
+        {
+            name = "loadbalancer"
+            contents = file("${path.module}/scripts/loadbalancer.yaml")
         }
       ]
     }

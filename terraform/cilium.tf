@@ -1,13 +1,13 @@
 data "helm_template" "cilium" {
-  name       = "cilium"
-  repository = "https://helm.cilium.io/"
-  chart      = "cilium"
-  version    = "1.16.5"
-  namespace  = "kube-system"
+  name         = "cilium"
+  repository   = "https://helm.cilium.io/"
+  chart        = "cilium"
+  version      = "1.16.5"
+  namespace    = "kube-system"
   kube_version = "v1.31.0" # version to use for .Compatibilies.KubeVersion
 
   set {
-    name = "enableCriticalPriorityClass"
+    name  = "enableCriticalPriorityClass"
     value = "false"
   }
 
@@ -66,4 +66,28 @@ data "helm_template" "cilium" {
     value = "true"
   }
 
+  set {
+    name  = "k8sClientRateLimit.qps"
+    value = "50"
+  }
+
+  set {
+    name  = "k8sClientRateLimit.burst"
+    value = "100"
+  }
+
+  set {
+    name  = "l2announcements.enabled"
+    value = "true"
+  }
+
+  set {
+    name  = "externalIPS.enabled"
+    value = "true"
+  }
+
+  set {
+    name  = "operator.replicas"
+    value = "3"
+  }
 }
