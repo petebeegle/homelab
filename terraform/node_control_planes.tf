@@ -33,12 +33,12 @@ resource "talos_machine_configuration_apply" "controlplane" {
         }
       }
       proxy = {
-        disabled = false
+        disabled = true
       }
       inlineManifests = [
         {
           name     = "cilium"
-          contents = file("${path.module}/scripts/cilium-install.yaml")
+          contents = data.helm_template.cilium.manifest
         }
       ]
     }
