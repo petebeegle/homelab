@@ -13,8 +13,8 @@ variable "target_node" {
   type        = string
 
   validation {
-    condition     = can(regex("pve0[1-3]", var.target_node))
-    error_message = "Invalid target_node value. It should be one of pve01, pve02, or pve03."
+    condition     = can(regex("pve0[1-4]", var.target_node))
+    error_message = "Invalid target_node value. It should be one of pve01, pve02, pve03, or pve04."
   }
 }
 
@@ -36,4 +36,10 @@ variable "memory" {
 variable "cores" {
   description = "The number of cores for the VM"
   type        = number
+}
+
+variable "pcie_device" {
+  description = "Optional: The PCI device ID to attach to the VM"
+  type        = string
+  default     = null
 }

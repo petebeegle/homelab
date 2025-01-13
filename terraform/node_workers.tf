@@ -8,6 +8,7 @@ module "worker_nodes" {
   id           = each.value.id
   memory       = each.value.memory
   cores        = each.value.cores
+  pcie_device  = each.value.pcie_device
 
   file_ready = module.talos_iso.id
 }
