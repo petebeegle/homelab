@@ -13,8 +13,8 @@ variable "target_node" {
   type        = string
 
   validation {
-    condition     = can(regex("pve0[1-3]", var.target_node))
-    error_message = "Invalid target_node value. It should be one of pve01, pve02, or pve03."
+    condition     = can(regex("pve*", var.target_node))
+    error_message = "Invalid target_node value. It should start with pve."
   }
 }
 

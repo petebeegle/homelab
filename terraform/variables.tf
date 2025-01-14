@@ -63,6 +63,12 @@ variable "node_data" {
         memory = 16384
         cores  = 2
       }
+      "192.168.3.66" = {
+        node   = "pve04"
+        id     = 400
+        memory = 63488
+        cores  = 28
+      }
     }
   }
 }
