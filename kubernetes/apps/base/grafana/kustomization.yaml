@@ -5,3 +5,13 @@ namespace: monitoring
 resources:
   - podmonitor.yaml
   - gateway.yaml
+configMapGenerator:
+  - name: flux-grafana-dashboards
+    files:
+      - dashboards/synology.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+        app.kubernetes.io/part-of: flux
+        app.kubernetes.io/component: monitoring
+        kustomize.toolkit.fluxcd.io/substitute: disabled
