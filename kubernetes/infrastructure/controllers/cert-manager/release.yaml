@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: cert-manager
         namespace: kube-system
-      version: "v1.16.2"
+      version: "v1.16.3"
   values:
     crds:
       enabled: true
