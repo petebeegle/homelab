@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dataplane
+  labels:
+    app.kubernetes.io/component: dataplane
+    pod-security.kubernetes.io/enforce: privileged
