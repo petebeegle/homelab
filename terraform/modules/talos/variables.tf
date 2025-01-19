@@ -18,3 +18,7 @@ variable "destination_host" {
   type        = string
 }
 
+variable "extensions" {
+  description = "List of extensions to include in the Talos image"
+  type        = list(string)
+}

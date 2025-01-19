@@ -8,6 +8,12 @@ variable "destination_user" {
   type        = string
 }
 
+variable "talosos_version" {
+  description = "TalosOS version to use"
+  type        = string
+  default     = "v1.9.2"
+}
+
 variable "node_data" {
   type = object({
     controlplanes = map(object({

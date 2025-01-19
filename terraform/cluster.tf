@@ -5,18 +5,33 @@ locals {
   controlplanes_nodes = [for k, v in var.node_data.controlplanes : k]
 
   node_gateway = "192.168.3.1"
+  install_patch = {
+    machine = {
+        install = {
+            image = module.talos_iso.install_image
+        }
+    }
+  }
 }
 
 module "talos_iso" {
   source = "./modules/talos"
 
-  talos_version = "v1.9.1"
+  talos_version = var.talosos_version
 
   destination_host = var.destination_host
   destination_user = var.destination_user
+
+  extensions = [
+    "btrfs",
+    "iscsi-tools",
+  ]
 }
 
-resource "talos_machine_secrets" "this" {}
+resource "talos_machine_secrets" "this" {
+  talos_version = var.talosos_version
+}
+
 data "talos_client_configuration" "this" {
   cluster_name         = local.cluster_name
   client_configuration = talos_machine_secrets.this.client_configuration

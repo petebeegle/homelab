@@ -2,17 +2,34 @@ locals {
   image_name = "talos-${data.talos_image_factory_urls.this.talos_version}-${data.talos_image_factory_urls.this.platform}-${data.talos_image_factory_urls.this.architecture}.iso"
 }
 
+
+data "talos_image_factory_extensions_versions" "this" {
+  talos_version = var.talos_version
+  filters = {
+    names = var.extensions
+  }
+}
+
+resource "talos_image_factory_schematic" "this" {
+  schematic = yamlencode(
+    {
+      customization = {
+        systemExtensions = {
+          officialExtensions = data.talos_image_factory_extensions_versions.this.extensions_info.*.name
+        }
+      }
+    }
+  )
+}
+
 data "talos_image_factory_urls" "this" {
   talos_version = var.talos_version
-  schematic_id  = "ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515"
+  schematic_id  = talos_image_factory_schematic.this.id
   platform      = "nocloud"
 }
 
-resource "null_resource" "this" {
-  triggers = {
-    on_url_change = data.talos_image_factory_urls.this.urls.iso
-  }
 
+resource "null_resource" "this" {
   provisioner "local-exec" {
     command = "curl -o /tmp/talos-disk.iso ${data.talos_image_factory_urls.this.urls.iso}"
   }
@@ -36,6 +53,10 @@ resource "null_resource" "this" {
 
 output "filename" {
   value = local.image_name
+}
+
+output "install_image" {
+  value = data.talos_image_factory_urls.this.urls.installer
 }
 
 output "id" {

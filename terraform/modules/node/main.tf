@@ -14,7 +14,7 @@ resource "proxmox_vm_qemu" "vm" {
   cores   = var.cores
   cpu     = "x86-64-v2-AES"
   memory  = var.memory
-  boot    = "order=scsi0;net0"
+  boot    = "order=scsi0"
 
   network {
     model  = "virtio"

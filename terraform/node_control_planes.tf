@@ -17,6 +17,7 @@ data "talos_machine_configuration" "controlplane" {
   cluster_endpoint = local.cluster_endpoint
   machine_type     = "controlplane"
   machine_secrets  = talos_machine_secrets.this.machine_secrets
+  talos_version    = var.talosos_version
 }
 
 resource "talos_machine_configuration_apply" "controlplane" {
@@ -25,26 +26,28 @@ resource "talos_machine_configuration_apply" "controlplane" {
   client_configuration        = talos_machine_secrets.this.client_configuration
   machine_configuration_input = data.talos_machine_configuration.controlplane.machine_configuration
   node                        = each.key
-  config_patches = [yamlencode({
-    cluster = {
-      network = {
-        cni = {
-          name = "none"
+  config_patches = [
+    yamlencode(local.install_patch),
+    yamlencode({
+      cluster = {
+        network = {
+          cni = {
+            name = "none"
+          }
         }
-      }
-      proxy = {
-        disabled = true
-      }
-      inlineManifests = [
-        {
-          name     = "cilium"
-          contents = data.helm_template.cilium.manifest
-        },
-        {
-            name = "loadbalancer"
+        proxy = {
+          disabled = true
+        }
+        inlineManifests = [
+          {
+            name     = "cilium"
+            contents = data.helm_template.cilium.manifest
+          },
+          {
+            name     = "loadbalancer"
             contents = file("${path.module}/scripts/loadbalancer.yaml")
-        }
-      ]
-    }
+          }
+        ]
+      }
   })]
 }
