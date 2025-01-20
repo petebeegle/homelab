@@ -1,0 +1,60 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: foundryvtt
+  name: foundryvtt
+  labels:
+    app: foundryvtt
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: foundryvtt
+  template:
+    metadata:
+      labels:
+        app: foundryvtt
+    spec:
+      containers:
+        - name: foundryvtt
+          image: felddy/foundryvtt:12.331
+          env:
+            - name: FOUNDRY_ADMIN_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: foundryvtt-secret
+                  key: FOUNDRY_ADMIN_KEY
+            - name: FOUNDRY_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: foundryvtt-secret
+                  key: FOUNDRY_USERNAME
+            - name: FOUNDRY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: foundryvtt-secret
+                  key: FOUNDRY_PASSWORD
+            - name: FOUNDRY_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: foundryvtt-secret
+                  key: FOUNDRY_LICENSE_KEY
+          ports:
+            - name: web
+              containerPort: 30000
+          volumeMounts:
+            - name: foundryvtt-data-persistent-storage
+              mountPath: /data
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "4Gi"
+              cpu: "1"
+      volumes:
+        - name: foundryvtt-data-persistent-storage
+          persistentVolumeClaim:
+            claimName: foundryvtt-data-pvc
