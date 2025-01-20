@@ -30,3 +30,15 @@ spec:
           fsType: 'btrfs'
           dsm: 192.168.3.27
           formatOptions: '--nodiscard'
+      synology-nfs-storage:
+        disabled: false
+        isDefault: false
+        reclaimPolicy: Retain
+        volumeBindingMode: Immediate
+        parameters:
+          protocol: nfs
+          location: /volume2
+          dsm: 192.168.3.27
+          fsType: ext4
+          mountPermissions: '0755'
+          mountOptions: 'nfsvers=4.1'
