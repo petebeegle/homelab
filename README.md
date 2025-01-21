@@ -73,7 +73,7 @@ talosctl --nodes {CONTROL_PLANE_NODE} upgrade-k8s --to 1.32.0
 ## Appendices
 Random things that have caused me suffering:
 - [Configure NFS With Proxmox](./runbooks/configure_nfs_with_proxmox.md)
-
+- [Cloudflare Tunnels](./runbooks/cloudflare_tunnels.md)
 
 ## Terraform Docs for Nerds
 - [Main Module](./terraform/README.md)

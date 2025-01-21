@@ -8,3 +8,4 @@ resources:
   - ../base/grafana
   - ../base/renovate
   - ../base/foundryvtt
+  - ../base/cloudflare-tunnels
