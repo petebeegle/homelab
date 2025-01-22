@@ -42,3 +42,6 @@ spec:
           fsType: ext4
           mountPermissions: '0755'
           mountOptions: 'nfsvers=4.1'
+    volumeSnapshotClasses:
+      synology-iscsi-snapshot:
+        deletionPolicy: Delete
