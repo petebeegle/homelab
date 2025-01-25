@@ -1,24 +1,40 @@
-variable "talos_version" {
-  description = "Talos version to use"
-  type        = string
-
-  validation {
-    condition     = can(regex("v[0-9]+\\.[0-9]+\\.[0-9]+", var.talos_version))
-    error_message = "Talos version must be in the format v1.2.3"
-  }
+variable "image" {
+  description = "The image to use for the talos ISO"
+  type = object({
+    version = string
+  })
 }
 
-variable "destination_user" {
-  description = "User to connect to the destination host"
-  type        = string
+variable "cluster" {
+  description = "The cluster configuration"
+  type = object({
+    name     = string
+    endpoint = string
+  })
 }
 
-variable "destination_host" {
-  description = "Host to connect to"
-  type        = string
+variable "cilium" {
+  description = "Cilium configuration for the talos ISO"
+  type = object({
+    values  = string
+  })
 }
 
-variable "extensions" {
-  description = "List of extensions to include in the Talos image"
-  type        = list(string)
+variable "ssh" {
+  description = "SSH configuration for storing the talos ISO"
+  type = object({
+    user = string
+    host = string
+  })
+}
+
+variable "nodes" {
+  description = "The nodes to create in the cluster"
+  type = map(object({
+    node          = string
+    vm_id         = number
+    memory        = number
+    cores         = number
+    machine_type = string
+  }))
 }
