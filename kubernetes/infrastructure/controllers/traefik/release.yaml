@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: traefik
         namespace: kube-system
-      version: "34.1.0"
+      version: "34.2.0"
   # https://github.com/traefik/traefik-helm-chart/blob/master/traefik/VALUES.md
   values:
     deployment:
