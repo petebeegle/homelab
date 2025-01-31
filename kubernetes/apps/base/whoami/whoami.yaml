@@ -41,8 +41,8 @@ metadata:
   namespace: whoami
 spec:
   parentRefs:
-    - name: traefik-gateway
-      namespace: kube-system
+    - name: internal
+      namespace: gateway
   hostnames:
     - whoami.lab.petebeegle.com
   rules:

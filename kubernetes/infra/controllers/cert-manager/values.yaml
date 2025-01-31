@@ -1,0 +1,5 @@
+crds:
+  enabled: true
+  keep: true
+config:
+  enableGatewayAPI: true
