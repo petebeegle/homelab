@@ -3,7 +3,7 @@ variable "iso_filename" {
   type        = string
 }
 
-variable "ipconfig0" {
+variable "ip" {
   description = "The IP configuration for the VM"
   type        = string
 }
@@ -18,14 +18,9 @@ variable "target_node" {
   }
 }
 
-variable "id" {
+variable "vm_id" {
   description = "The ID of the VM"
   type        = number
-}
-
-variable "file_ready" {
-  description = "The filename of the ISO image to use for the VM"
-  type        = string
 }
 
 variable "memory" {

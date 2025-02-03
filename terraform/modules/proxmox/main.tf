@@ -1,3 +1,7 @@
+locals {
+  node_gateway = "192.168.3.1"
+}
+
 resource "random_pet" "name" {
   length = 2
 }
@@ -7,7 +11,7 @@ resource "proxmox_vm_qemu" "vm" {
 
   target_node = var.target_node
 
-  vmid    = var.id
+  vmid    = var.vm_id
   agent   = 1
   os_type = "cloud-init"
   onboot  = true
@@ -46,7 +50,7 @@ resource "proxmox_vm_qemu" "vm" {
     }
   }
 
-  ipconfig0 = var.ipconfig0
+  ipconfig0 = "ip=${var.ip}/24,gw=${local.node_gateway}"
 
   desc = <<EOF
     Updated At: ${timestamp()}
@@ -63,6 +67,4 @@ resource "proxmox_vm_qemu" "vm" {
     update = "2m"
     delete = "2m"
   }
-
-  depends_on = [var.file_ready]
 }
