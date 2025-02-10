@@ -16,10 +16,28 @@ spec:
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
+  name: controllers
+  namespace: flux-system
+spec:
+  interval: 2m0s
+  path: ./kubernetes/infra/controllers
+  prune: true
+  wait: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
   name: network
   namespace: flux-system
 spec:
-  interval: 10m0s
+  interval: 2m0s
   path: ./kubernetes/infra/network
   prune: true
   wait: true
@@ -30,39 +48,6 @@ spec:
     provider: sops
     secretRef:
       name: sops-age
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: cert-manager
-  namespace: flux-system
-spec:
-  interval: 10m0s
-  path: ./kubernetes/infrastructure/controllers/cert-manager
-  prune: true
-  wait: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-  decryption:
-    provider: sops
-    secretRef:
-      name: sops-age
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: certs
-  namespace: flux-system
-spec:
-  interval: 10m0s
-  dependsOn:
-    - name: cert-manager
-  path: ./kubernetes/infrastructure/configs/certs
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
@@ -89,7 +74,7 @@ metadata:
   namespace: flux-system
 spec:
   dependsOn:
-    - name: certs
+    - name: network
     - name: kube-prometheus-stack
   interval: 10m0s
   path: ./kubernetes/infrastructure/controllers/traefik
@@ -105,7 +90,7 @@ metadata:
   namespace: flux-system
 spec:
   dependsOn:
-    - name: certs
+    - name: network
   interval: 10m0s
   path: ./kubernetes/infrastructure/controllers/kube-prometheus-stack
   prune: true

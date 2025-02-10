@@ -1,0 +1,14 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: staging-wildcard-lab-petebeegle-com
+  namespace: cert-manager
+spec:
+  secretName: staging-wildcard-lab-petebeegle-com
+  dnsNames:
+    - "lab.petebeegle.com"
+    - "*.lab.petebeegle.com"
+  issuerRef:
+    name: cloudflare-staging
+    kind: ClusterIssuer
