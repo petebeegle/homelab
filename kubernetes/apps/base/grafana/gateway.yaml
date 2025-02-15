@@ -6,8 +6,8 @@ metadata:
   namespace: monitoring
 spec:
   parentRefs:
-    - name: traefik-gateway
-      namespace: kube-system
+    - name: internal
+      namespace: gateway
   hostnames:
     - monitoring.lab.petebeegle.com
   rules:

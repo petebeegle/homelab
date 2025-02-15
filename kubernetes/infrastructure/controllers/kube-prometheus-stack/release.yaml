@@ -74,14 +74,6 @@ spec:
               editable: true
               options:
                 path: /var/lib/grafana/dashboards/flux-cd-dashboards
-            - name: "traefik-dashboards"
-              orgId: 1
-              folder: "Traefik"
-              type: file
-              disableDeletion: true
-              editable: true
-              options:
-                path: /var/lib/grafana/dashboards/traefik-dashboards
       dashboards:
         grafana-dashboards-kubernetes:
           k8s-system-api-server:
@@ -111,8 +103,4 @@ spec:
             token: ""
           logs:
             url: https://raw.githubusercontent.com/fluxcd/flux2-monitoring-example/refs/heads/main/monitoring/configs/dashboards/logs.json
-            token: ""
-        traefik-dashboards:
-          traefik-kubernetes:
-            url: https://raw.githubusercontent.com/traefik/traefik/refs/heads/master/contrib/grafana/traefik-kubernetes.json
             token: ""

@@ -34,3 +34,11 @@ externalIPs:
 
 operator:
   replicas: 3
+
+gatewayAPI:
+  enabled: true
+  enableAlpn: true
+  enableAppProtocol: true
+
+ciliumEndpointSlice:
+  enabled: true

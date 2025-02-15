@@ -3,7 +3,7 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: wildcard-lab-petebeegle-com
-  namespace: cert-manager
+  namespace: gateway
 spec:
   secretName: wildcard-lab-petebeegle-com
   dnsNames:

@@ -19,6 +19,6 @@ spec:
   timeout: 5m0s
   dependsOn:
     - name: controllers
-    - name: traefik
+    - name: network
     - name: kube-prometheus-stack
     - name: loki-stack

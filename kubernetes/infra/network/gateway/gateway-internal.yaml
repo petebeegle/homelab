@@ -1,0 +1,43 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: internal
+  namespace: gateway
+  annotations:
+    cert-manager.io/issuer: cloudflare
+spec:
+  gatewayClassName: cilium
+  infrastructure:
+    annotations:
+      io.cilium/lb-ipam-ips: 192.168.3.241
+  listeners:
+    - protocol: HTTP
+      port: 80
+      name: http-gateway
+      allowedRoutes:
+        namespaces:
+          from: All
+    - protocol: HTTPS
+      port: 443
+      name: https-gateway
+      hostname: "*.lab.petebeegle.com"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: wildcard-lab-petebeegle-com
+      allowedRoutes:
+        namespaces:
+          from: All
+    - protocol: HTTPS
+      port: 443
+      name: https-domain-gateway
+      hostname: lab.petebeegle.com
+      tls:
+        certificateRefs:
+          - kind: Secret
+            name: wildcard-lab-petebeegle-com
+      allowedRoutes:
+        namespaces:
+          from: All

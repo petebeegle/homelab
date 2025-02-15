@@ -6,8 +6,8 @@ metadata:
   namespace: foundryvtt
 spec:
   parentRefs:
-    - name: traefik-gateway
-      namespace: kube-system
+    - name: internal
+      namespace: gateway
   hostnames:
     - foundry.lab.petebeegle.com
   rules:

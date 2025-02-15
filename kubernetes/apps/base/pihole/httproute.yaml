@@ -6,8 +6,8 @@ metadata:
   namespace: pihole
 spec:
   parentRefs:
-    - name: traefik-gateway
-      namespace: kube-system
+    - name: internal
+      namespace: gateway
   hostnames:
     - pihole.lab.petebeegle.com
   rules:
