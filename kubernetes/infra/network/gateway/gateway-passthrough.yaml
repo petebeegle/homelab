@@ -1,0 +1,21 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: passthrough
+  namespace: gateway
+spec:
+  gatewayClassName: cilium
+  infrastructure:
+    annotations:
+      io.cilium/lb-ipam-ips: 192.168.3.242
+  listeners:
+    - protocol: TLS
+      port: 443
+      name: tls-passthrough
+      hostname: "*.lab.petebeegle.com"
+      tls:
+        mode: Passthrough
+      allowedRoutes:
+        namespaces:
+          from: All
