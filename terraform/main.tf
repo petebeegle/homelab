@@ -95,7 +95,6 @@ resource "null_resource" "bootstrap_script" {
   }
 }
 
-
 output "kubeconfig" {
   value     = module.talos.kubeconfig
   sensitive = true
