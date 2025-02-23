@@ -1,7 +1,6 @@
 variable "pm_api_url" {}
 variable "pm_api_token_id" {}
 variable "pm_api_token_secret" {}
-variable "cloudflare_api_token" {}
 
 terraform {
   required_providers {
@@ -21,10 +20,6 @@ terraform {
       source = "hashicorp/kubernetes"
       version = "2.35.1"
     }
-    cloudflare = {
-      source  = "cloudflare/cloudflare"
-      version = "5.1.0"
-    }
   }
 }
 
@@ -43,8 +38,4 @@ provider "helm" {
 
 provider "kubernetes" {
   config_path = "~/.kube/config"
-}
-
-provider "cloudflare" {
-  api_token   = var.cloudflare_api_token
 }

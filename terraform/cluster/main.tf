@@ -22,7 +22,7 @@ module "talos" {
   }
 
   cilium = {
-    values = file("${path.module}/../kubernetes/infra/network/cilium/values.yaml")
+    values = file("${path.module}/../../kubernetes/infra/network/cilium/values.yaml")
   }
 
   nodes = {

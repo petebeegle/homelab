@@ -24,7 +24,7 @@ github_user = "urnamehere"
 ### 2. Create the cluster
 Create and bootstrap an environment via terraform!
 ```sh
-cd terraform
+cd terraform/cluster
 terraform init
 
 # live más

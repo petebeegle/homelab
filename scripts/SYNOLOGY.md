@@ -17,7 +17,7 @@
 ## 1. Create DNS Entries
 Run terraform to add DNS entries for our services:
 ```sh
-cd terraform
+cd terraform/environment
 terraform apply -auto-approve -var="cloudflare_api_token=keep-your-secrets"
 ```
 > [!IMPORTANT]
