@@ -80,6 +80,12 @@ module "talos" {
 
     }
   }
+
+  enable_docker_proxy = true
+  docker_registry = {
+    user     = var.docker_user
+    password = var.docker_password
+  }
 }
 
 resource "null_resource" "bootstrap_script" {

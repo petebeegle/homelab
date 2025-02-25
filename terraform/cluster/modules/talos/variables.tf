@@ -38,3 +38,18 @@ variable "nodes" {
     machine_type = string
   }))
 }
+
+variable "enable_docker_proxy" {
+  description = "Whether to use a docker proxy for the cluster"
+  type        = bool
+  default     = false
+}
+
+variable "docker_registry" {
+  description = "Credentials for authenticating to the pass-through docker registry used by the cluster"
+  type = object({
+    user     = string
+    password = string
+  })
+  sensitive = true
+}

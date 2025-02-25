@@ -1,0 +1,17 @@
+machine:
+  registries:
+    config:
+      docker-registry.petebeegle.com:
+        auth:
+          username: ${docker_user}
+          password: ${docker_password}
+    mirrors:
+      docker.io:
+        endpoints:
+          - https://docker-registry.petebeegle.com
+      quay.io:
+        endpoints:
+          - https://docker-registry.petebeegle.com
+      ghcr.io:
+        endpoints:
+          - https://docker-registry.petebeegle.com

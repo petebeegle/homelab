@@ -1,14 +1,12 @@
 machine:
   install:
     image: ${install_image}
-
 cluster:
   network:
     cni:
       name: none
   proxy:
     disabled: true
-  #need to install gateway api manifests before cilium deployment. GatewayClass acceptance
   extraManifests:
     - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.2.0/config/crd/standard/gateway.networking.k8s.io_gatewayclasses.yaml
     - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.2.0/config/crd/experimental/gateway.networking.k8s.io_gateways.yaml

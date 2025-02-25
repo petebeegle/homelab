@@ -29,7 +29,7 @@ resource "talos_machine_configuration_apply" "this" {
   machine_configuration_input = data.talos_machine_configuration.this[each.key].machine_configuration
   node                        = each.key
 
-  config_patches = each.value.machine_type == "controlplane" ? [
+  config_patches = concat(each.value.machine_type == "controlplane" ? [
     templatefile("${path.module}/templates/control_plane.yaml.tftpl", {
       install_image  = data.talos_image_factory_urls.this.urls.installer
       cilium_install = data.helm_template.cilium.manifest
@@ -38,7 +38,12 @@ resource "talos_machine_configuration_apply" "this" {
     templatefile("${path.module}/templates/worker.yaml.tftpl", {
       install_image = data.talos_image_factory_urls.this.urls.installer
     })
-  ]
+    ], var.enable_docker_proxy ? [
+    templatefile("${path.module}/templates/docker_proxy.yaml.tftpl", {
+      docker_user     = var.docker_registry.user
+      docker_password = var.docker_registry.password
+    })
+  ] : [])
 }
 
 resource "talos_machine_secrets" "this" {
