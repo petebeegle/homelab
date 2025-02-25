@@ -19,3 +19,39 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+    - protocol: TLS
+      port: 443
+      name: pve01-passthrough
+      hostname: "pve01.petebeegle.com"
+      tls:
+        mode: Passthrough
+      allowedRoutes:
+        namespaces:
+          from: All
+    - protocol: TLS
+      port: 443
+      name: pve02-passthrough
+      hostname: "pve02.petebeegle.com"
+      tls:
+        mode: Passthrough
+      allowedRoutes:
+        namespaces:
+          from: All
+    - protocol: TLS
+      port: 443
+      name: pve03-passthrough
+      hostname: "pve03.petebeegle.com"
+      tls:
+        mode: Passthrough
+      allowedRoutes:
+        namespaces:
+          from: All
+    - protocol: TLS
+      port: 443
+      name: pve04-passthrough
+      hostname: "pve04.petebeegle.com"
+      tls:
+        mode: Passthrough
+      allowedRoutes:
+        namespaces:
+          from: All

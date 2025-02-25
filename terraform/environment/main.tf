@@ -42,6 +42,54 @@ resource "cloudflare_dns_record" "docker" {
   zone_id = data.cloudflare_zone.this.zone_id
 }
 
+resource "cloudflare_dns_record" "pve01" {
+  type    = "A"
+  content = "192.168.3.242"
+  name    = "pve01"
+  ttl     = 1 # automatic
+
+  comment = "[Terraform Managed] Proxmox Node 1 record"
+  proxied = false
+
+  zone_id = data.cloudflare_zone.this.zone_id
+}
+
+resource "cloudflare_dns_record" "pve02" {
+  type    = "A"
+  content = "192.168.3.242"
+  name    = "pve02"
+  ttl     = 1 # automatic
+
+  comment = "[Terraform Managed] Proxmox Node 2 record"
+  proxied = false
+
+  zone_id = data.cloudflare_zone.this.zone_id
+}
+
+resource "cloudflare_dns_record" "pve03" {
+  type    = "A"
+  content = "192.168.3.242"
+  name    = "pve03"
+  ttl     = 1 # automatic
+
+  comment = "[Terraform Managed] Proxmox Node 3 record"
+  proxied = false
+
+  zone_id = data.cloudflare_zone.this.zone_id
+}
+
+resource "cloudflare_dns_record" "pve04" {
+  type    = "A"
+  content = "192.168.3.242"
+  name    = "pve04"
+  ttl     = 1 # automatic
+
+  comment = "[Terraform Managed] Proxmox Node 4 record"
+  proxied = false
+
+  zone_id = data.cloudflare_zone.this.zone_id
+}
+
 resource "cloudflare_dns_record" "lab" {
   for_each = toset([for i in range(1, pow(2, (32 - tonumber(split("/", local.cluster_cidr)[1]))) - 1) : cidrhost(local.cluster_cidr, i)])
 

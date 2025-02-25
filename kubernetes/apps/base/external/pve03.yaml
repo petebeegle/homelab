@@ -2,22 +2,22 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: proxmox
-  namespace: proxmox
+  name: pve03
+  namespace: external
 spec:
   ports:
     - name: https
       protocol: TCP
-      port: 443
+      port: 8006
       targetPort: 8006
 ---
 apiVersion: discovery.k8s.io/v1
 kind: EndpointSlice
 metadata:
-  name: proxmox
-  namespace: proxmox
+  name: pve03
+  namespace: external
   labels:
-    kubernetes.io/service-name: proxmox
+    kubernetes.io/service-name: pve03
 addressType: IPv4
 ports:
   - name: https
@@ -25,20 +25,20 @@ ports:
     port: 8006
 endpoints:
   - addresses:
-      - 192.168.3.2
+      - 192.168.3.13
 ---
 apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TLSRoute
 metadata:
-  name: proxmox-route
-  namespace: proxmox
+  name: pve03-route
+  namespace: external
 spec:
   parentRefs:
     - name: passthrough
       namespace: gateway
   hostnames:
-    - proxmox.lab.petebeegle.com
+    - pve03.petebeegle.com
   rules:
     - backendRefs:
-        - name: proxmox
-          port: 443
+        - name: pve03
+          port: 8006
