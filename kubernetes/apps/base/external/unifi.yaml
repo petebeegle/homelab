@@ -37,7 +37,7 @@ spec:
     - name: passthrough
       namespace: gateway
   hostnames:
-    - unifi.lab.petebeegle.com
+    - unifi.petebeegle.com
   rules:
     - backendRefs:
         - name: unifi

@@ -55,3 +55,12 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+    - protocol: TLS
+      port: 443
+      name: unifi-passthrough
+      hostname: "unifi.petebeegle.com"
+      tls:
+        mode: Passthrough
+      allowedRoutes:
+        namespaces:
+          from: All

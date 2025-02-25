@@ -90,6 +90,18 @@ resource "cloudflare_dns_record" "pve04" {
   zone_id = data.cloudflare_zone.this.zone_id
 }
 
+resource "cloudflare_dns_record" "unifi" {
+  type    = "A"
+  content = "192.168.1.1"
+  name    = "unifi"
+  ttl     = 1 # automatic
+
+  comment = "[Terraform Managed] Unifi controller record"
+  proxied = false
+
+  zone_id = data.cloudflare_zone.this.zone_id
+}
+
 resource "cloudflare_dns_record" "lab" {
   for_each = toset([for i in range(1, pow(2, (32 - tonumber(split("/", local.cluster_cidr)[1]))) - 1) : cidrhost(local.cluster_cidr, i)])
 
