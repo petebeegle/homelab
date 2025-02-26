@@ -1,0 +1,14 @@
+persistence:
+  config:
+    enabled: true
+    storageClass: synology-iscsi-storage
+  media:
+    enabled: false
+volumes:
+  - name: custom-media
+    nfs:
+      server: 192.168.3.27
+      path: /volume1/Media/Jellyfin
+volumeMounts:
+  - name: custom-media
+    mountPath: /custom-media
