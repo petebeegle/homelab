@@ -39,6 +39,33 @@ spec:
         podMonitorNamespaceSelector: {}
         podMonitorSelector: {}
         serviceMonitorSelector: {}
+        additionalScrapeConfigs:
+          - job_name: 'kubernetes-pods'
+            scrape_interval: 30s
+            kubernetes_sd_configs:
+            - role: pod
+            relabel_configs:
+              - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+                action: keep
+                regex: true
+              - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+                action: replace
+                regex: ([^:]+)(?::\d+)?;(\d+)
+                replacement: ${1}:${2}
+                target_label: __address__
+          - job_name: 'kubernetes-endpoints'
+            scrape_interval: 30s
+            kubernetes_sd_configs:
+              - role: endpoints
+            relabel_configs:
+              - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+                action: keep
+                regex: true
+              - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
+                action: replace
+                target_label: __address__
+                regex: (.+)(?::\d+);(\d+)
+                replacement: $1:$2
     kubelet:
       enabled: true
       serviceMonitor:
@@ -74,6 +101,14 @@ spec:
               editable: true
               options:
                 path: /var/lib/grafana/dashboards/flux-cd-dashboards
+            - name: "cilium-dashboards"
+              orgId: 1
+              folder: "Cilium"
+              type: file
+              disableDeletion: true
+              editable: true
+              options:
+                path: /var/lib/grafana/dashboards/cilium-dashboards
       dashboards:
         grafana-dashboards-kubernetes:
           k8s-system-api-server:
@@ -103,4 +138,17 @@ spec:
             token: ""
           logs:
             url: https://raw.githubusercontent.com/fluxcd/flux2-monitoring-example/refs/heads/main/monitoring/configs/dashboards/logs.json
+            token: ""
+        cilium-dashboards:
+          cilium-dashboard:
+            url: "https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/install/kubernetes/cilium/files/cilium-agent/dashboards/cilium-dashboard.json"
+            token: ""
+          cilium-operator-dashboard:
+            url: "https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/install/kubernetes/cilium/files/cilium-operator/dashboards/cilium-operator-dashboard.json"
+            token: ""
+          hubble-dashboard:
+            url: "https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/install/kubernetes/cilium/files/hubble/dashboards/hubble-dashboard.json"
+            token: ""
+          hubble-l7-http-metrics-by-workload:
+            url: "https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/install/kubernetes/cilium/files/hubble/dashboards/hubble-l7-http-metrics-by-workload.json"
             token: ""
