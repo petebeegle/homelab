@@ -7,7 +7,6 @@ metadata:
 spec:
   secretName: wildcard-lab-petebeegle-com
   dnsNames:
-    - "lab.petebeegle.com"
     - "*.lab.petebeegle.com"
   issuerRef:
     name: cloudflare

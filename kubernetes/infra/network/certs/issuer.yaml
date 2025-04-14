@@ -18,5 +18,4 @@ spec:
               key: token
         selector:
           dnsZones:
-            - "lab.petebeegle.com"
             - "*.lab.petebeegle.com"
