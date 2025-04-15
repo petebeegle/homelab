@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: synology-csi-chart
         namespace: flux-system
-      version: "0.9.5-pre.1"
+      version: "0.9.5-pre.4"
   values:
     clientInfoSecret:
       create: false
