@@ -115,3 +115,22 @@ resource "cloudflare_dns_record" "lab" {
 
   zone_id = data.cloudflare_zone.this.zone_id
 }
+
+data "http" "my_public_ip" {
+  url = "https://ifconfig.co/json"
+  request_headers = {
+    Accept = "application/json"
+  }
+}
+
+resource "cloudflare_dns_record" "arda" {
+  type    = "A"
+  content = jsondecode(data.http.my_public_ip.response_body).ip
+  name    = "arda"
+  ttl     = 1 # automatic
+
+  comment = "[Terraform Managed] Arda record"
+  proxied = false
+
+  zone_id = data.cloudflare_zone.this.zone_id
+}
