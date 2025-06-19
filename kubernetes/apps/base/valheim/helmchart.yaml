@@ -1,0 +1,40 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: valheim-k8s
+  namespace: valheim
+spec:
+  interval: 1h
+  url: https://addyvan.github.io/valheim-k8s/
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: valheim-server
+  namespace: valheim
+spec:
+  interval: 5m
+  releaseName: valheim-server
+  chart:
+    spec:
+      chart: valheim-k8s
+      sourceRef:
+        kind: HelmRepository
+        name: valheim-k8s
+        namespace: valheim
+      version: "2.0.1"
+  values:
+    worldName: beleriand
+    serverName: arda
+    passwordName: valheim-secret
+    storage:
+      kind: persistentVolumeClaim
+      pvc:
+        size: 25Gi
+        storeageClassName: synology-nfs-storage
+    serverStorage:
+      kind: persistentVolumeClaim
+      pvc:
+        size: 25Gi
+        storageClassName: synology-nfs-storage

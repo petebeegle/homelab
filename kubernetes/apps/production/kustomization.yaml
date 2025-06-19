@@ -11,3 +11,4 @@ resources:
   - ../base/foundryvtt
   - ../base/cloudflare-tunnels
   - ../base/jellyfin
+  - ../base/valheim
