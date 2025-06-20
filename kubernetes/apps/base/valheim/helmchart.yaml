@@ -27,7 +27,7 @@ spec:
   values:
     worldName: beleriand
     serverName: arda
-    passwordName: valheim-secret
+    passwordSecret: valheim-secret
     storage:
       kind: persistentVolumeClaim
       pvc:
