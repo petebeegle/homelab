@@ -4,4 +4,5 @@ kind: Kustomization
 resources:
   - ./cilium
   - ./certs
+  - ./vpn
   - ./gateway

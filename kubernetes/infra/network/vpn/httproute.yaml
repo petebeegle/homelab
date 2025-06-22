@@ -1,0 +1,22 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: wireguard-ui
+  namespace: wireguard
+spec:
+  parentRefs:
+    - name: internal
+      namespace: gateway
+  hostnames:
+    - vpn.lab.petebeegle.com
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+
+      backendRefs:
+        - name: wireguard-http
+          port: 51821
+          weight: 1
