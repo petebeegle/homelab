@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: foundryvtt
-          image: felddy/foundryvtt:12.343
+          image: felddy/foundryvtt:13.346
           env:
             - name: FOUNDRY_ADMIN_KEY
               valueFrom:
