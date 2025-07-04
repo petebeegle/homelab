@@ -17,6 +17,10 @@ spec:
       labels:
         app: foundryvtt
     spec:
+      securityContext:
+        runAsUser: 421
+        runAsGroup: 421
+        fsGroup: 421
       containers:
         - name: foundryvtt
           image: felddy/foundryvtt:13.346
