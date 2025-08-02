@@ -70,6 +70,70 @@ talosctl --nodes {CONTROL_PLANE_NODE} upgrade-k8s --to 1.32.0
 > See: [Upgrading K8s](https://www.talos.dev/v1.9/kubernetes-guides/upgrading-kubernetes/)
 
 ---
+
+## Kubernetes & Flux Quick Reference
+
+### Directory Structure
+```text
+kubernetes/
+├── apps/           # Application manifests (base configs, overlays)
+├── clusters/       # Cluster entrypoints and Flux system
+├── infrastructure/ # Networking, storage, controllers, etc.
+└── README.md       # (See this root README for usage)
+```
+
+### SOPS & Secrets
+- We use [SOPS](https://github.com/getsops/sops) and [age](https://github.com/FiloSottile/age) for secret encryption.
+- Update `.sops.yaml` to reference your age key fingerprint as needed.
+
+#### Create Flux SOPS Secret
+```sh
+cat ~/.config/sops/age/keys.agekey | \
+  kubectl create secret generic sops-age \
+  --namespace=flux-system \
+  --from-file=keys.agekey=/dev/stdin
+```
+
+#### Encrypt/Decrypt Secrets
+```sh
+# Encrypt a secret
+sops -i -e secret.yaml
+# Decrypt a secret
+sops secret.yaml
+```
+
+### Dependency Management (Renovate)
+- Renovate runs as a cronjob in the `renovate` namespace.
+
+Manual run:
+```sh
+kubectl create job --from=cronjob.batch/renovate renovate-manual-run -n renovate
+```
+
+Local dry-run:
+```sh
+docker run --rm \
+  -e LOG_LEVEL="debug" \
+  -e RENOVATE_CONFIG="$(cat renovate.json)" \
+  renovate/renovate:39.42.4 \
+  --token "$TOKEN" \
+  --dry-run="true" \
+  petebeegle/homelab
+```
+
+### Handy Flux & K8s Commands
+```sh
+# View Flux logs
+flux logs -f
+# Watch kustomization events
+flux get kustomizations --watch
+# List Helm releases
+kubectl get helmreleases -n kube-system
+# List Helm repositories
+kubectl get helmrepositories -n kube-system
+```
+
+---
 ## Appendices
 Random things that have caused me suffering:
 - [Configure NFS With Proxmox](./runbooks/configure_nfs_with_proxmox.md)
@@ -79,4 +143,3 @@ Random things that have caused me suffering:
 - [Main Module](./terraform/README.md)
     - [Create Node](./terraform/modules/node/README.md)
     - [Talos Image](./terraform/modules/talos/README.md)
-- [Flux Info](./kubernetes/README.md)
