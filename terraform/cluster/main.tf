@@ -9,7 +9,7 @@ module "talos" {
 
   cluster = {
     name     = "proxmox-k8s-cluster"
-    endpoint = "192.168.3.60"
+    endpoint = "192.168.3.67"
   }
 
   image = {
@@ -26,16 +26,9 @@ module "talos" {
   }
 
   nodes = {
-    "192.168.3.60" = {
-      node         = "pve01"
-      vm_id        = 102
-      memory       = 8192
-      cores        = 2
-      machine_type = "controlplane"
-    },
     "192.168.3.63" = {
       node         = "pve02"
-      vm_id        = 201
+      vm_id        = 200
       memory       = 8192
       cores        = 2
       machine_type = "controlplane"
@@ -48,20 +41,26 @@ module "talos" {
       cores        = 2
       machine_type = "controlplane"
     },
-    "192.168.3.61" = {
-      node         = "pve01"
-      vm_id        = 103
+    "192.168.3.67" = {
+      node         = "pve04"
+      vm_id        = 400
       memory       = 16384
-      cores        = 2
+      cores        = 4
+      machine_type = "controlplane"
+    },
+    "192.168.3.60" = {
+      node         = "pve01"
+      vm_id        = 102
+      memory       = 24576
+      cores        = 4
       machine_type = "worker"
     },
     "192.168.3.62" = {
       node         = "pve02"
-      vm_id        = 200
+      vm_id        = 201
       memory       = 16384
       cores        = 2
       machine_type = "worker"
-
     },
     "192.168.3.65" = {
       node         = "pve03"
@@ -69,16 +68,14 @@ module "talos" {
       memory       = 16384
       cores        = 2
       machine_type = "worker"
-
-    }
+    },
     "192.168.3.66" = {
       node         = "pve04"
-      vm_id        = 400
-      memory       = 63488
-      cores        = 28
+      vm_id        = 401
+      memory       = 47104
+      cores        = 24
       machine_type = "worker"
-
-    }
+    },
   }
 
   enable_docker_proxy = true
