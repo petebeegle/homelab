@@ -35,9 +35,7 @@ spec:
       kind: persistentVolumeClaim
       pvc:
         size: 25Gi
-        storageClassName: synology-nfs-storage
     serverStorage:
       kind: persistentVolumeClaim
       pvc:
         size: 25Gi
-        storageClassName: synology-nfs-storage
