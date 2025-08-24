@@ -43,4 +43,3 @@ Ensure that terraform is configured for the correct user:
 echo 'destination_host = "192.168.3.1"' >> /workspaces/homelab/terraformterraform.tfvars
 echo 'destination_user = "nfsuser"' >> /workspaces/homelab/terraformterraform.tfvars
 ```
-

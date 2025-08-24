@@ -10,12 +10,12 @@ variable "github_user" {
 }
 
 variable "docker_user" {
-    description = "Docker user for authenticating to the pass-through docker registry"
-    type        = string
+  description = "Docker user for authenticating to the pass-through docker registry"
+  type        = string
 }
 
 variable "docker_password" {
-    description = "Docker password for authenticating to the pass-through docker registry"
-    type        = string
-    sensitive   = true
+  description = "Docker password for authenticating to the pass-through docker registry"
+  type        = string
+  sensitive   = true
 }

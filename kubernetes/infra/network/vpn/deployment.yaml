@@ -30,7 +30,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: wireguard-env
-                  key: WG_PORT    
+                  key: WG_PORT
             - name: WG_ALLOWED_IPS
               valueFrom:
                 secretKeyRef:

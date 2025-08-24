@@ -13,7 +13,7 @@
 
 ## Run Nexus
 1. Install `Container Manager` via `Package Center`
-2. Ensure the folder `/volume2/docker/nexus` exists 
+2. Ensure the folder `/volume2/docker/nexus` exists
 3. Open `Container Manager` and create a new project
 4. Upload [nexus.docker-compose.yaml](./synology/nexus.docker-compose.yaml)
 5. Start the project. This will run the docker-compose exposing nexus on ports `8081` and `8082`.

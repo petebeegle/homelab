@@ -42,13 +42,13 @@ kubectl get nodes -o wide
 talosctl upgrade --nodes {NODE} \
       --image ghcr.io/siderolabs/installer:v1.9.1
 ```
-> See: [Upgrading Talos](https://www.talos.dev/latest/talos-guides/upgrading-talos/) 
+> See: [Upgrading Talos](https://www.talos.dev/latest/talos-guides/upgrading-talos/)
 
 ### 2. Upgrade K8s
-Once we've upgraded talos, we can upgrade k8s. 
+Once we've upgraded talos, we can upgrade k8s.
 
-First we need to ensure that our talos client matches the talos server version, otherwise the 
-k8s target versio may not exist. To resolve this, we can simply rebuild our developer environment 
+First we need to ensure that our talos client matches the talos server version, otherwise the
+k8s target versio may not exist. To resolve this, we can simply rebuild our developer environment
 without the build cache.
 
 If we rebuilt the developer environment, we may need to re-hydrate our `talosconfig` and `kubeconfig`:
