@@ -48,13 +48,14 @@ module "talos" {
       cores        = 4
       machine_type = "controlplane"
     },
-    "192.168.3.60" = {
-      node         = "pve01"
-      vm_id        = 102
-      memory       = 24576
-      cores        = 4
-      machine_type = "worker"
-    },
+    # TODO: pve01 is unstable
+    # "192.168.3.60" = {
+    #   node         = "pve01"
+    #   vm_id        = 102
+    #   memory       = 24576
+    #   cores        = 4
+    #   machine_type = "worker"
+    # },
     "192.168.3.62" = {
       node         = "pve02"
       vm_id        = 201
