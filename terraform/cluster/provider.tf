@@ -10,7 +10,7 @@ terraform {
     }
     proxmox = {
       source  = "Telmate/proxmox"
-      version = "3.0.1-rc3"
+      version = "3.0.1-rc9"
     }
     helm = {
       source  = "hashicorp/helm"
