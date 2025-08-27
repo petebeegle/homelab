@@ -6,7 +6,6 @@ resources:
   - ../base/prometheus-snmp-exporter
   - ../base/pihole
   - ../base/whoami
-  - ../base/grafana
   - ../base/renovate
   - ../base/foundryvtt
   - ../base/cloudflare-tunnels

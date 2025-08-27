@@ -58,7 +58,7 @@ spec:
   dependsOn:
     - name: network
   interval: 10m0s
-  path: ./kubernetes/infrastructure/controllers/kube-prometheus-stack
+  path: ./kubernetes/infra/monitoring
   prune: true
   sourceRef:
     kind: GitRepository
