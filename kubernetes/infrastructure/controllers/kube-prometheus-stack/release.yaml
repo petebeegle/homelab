@@ -53,19 +53,30 @@ spec:
     grafana:
       admin:
         existingSecret: grafana-credentials
+      additionalDataSources:
+        - name: loki
+          access: proxy
+          basicAuth: false
+          editable: true
+          jsonData:
+            tlsSkipVerify: true
+          orgId: 1
+          type: loki
+          url: http://loki-gateway
+      #   version: 1
       defaultDashboardsEnabled: false
       dashboardProviders:
         dashboardproviders.yaml:
           apiVersion: 1
           providers:
-            - name: "grafana-dashboards-kubernetes"
-              orgId: 1
-              folder: "Kubernetes"
-              type: file
-              disableDeletion: true
-              editable: true
-              options:
-                path: /var/lib/grafana/dashboards/grafana-dashboards-kubernetes
+            # - name: "grafana-dashboards-kubernetes"
+            #   orgId: 1
+            #   folder: "Kubernetes"
+            #   type: file
+            #   disableDeletion: true
+            #   editable: true
+            #   options:
+            #     path: /var/lib/grafana/dashboards/grafana-dashboards-kubernetes
             - name: "flux-cd-dashboards"
               orgId: 1
               folder: "Flux CD"
@@ -74,54 +85,54 @@ spec:
               editable: true
               options:
                 path: /var/lib/grafana/dashboards/flux-cd-dashboards
-            - name: "cilium-dashboards"
-              orgId: 1
-              folder: "Cilium"
-              type: file
-              disableDeletion: true
-              editable: true
-              options:
-                path: /var/lib/grafana/dashboards/cilium-dashboards
-      dashboards:
-        grafana-dashboards-kubernetes:
-          k8s-system-api-server:
-            url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-system-api-server.json
-            token: ""
-          k8s-system-coredns:
-            url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-system-coredns.json
-            token: ""
-          k8s-views-global:
-            url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-views-global.json
-            token: ""
-          k8s-views-namespaces:
-            url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-views-namespaces.json
-            token: ""
-          k8s-views-nodes:
-            url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-views-nodes.json
-            token: ""
-          k8s-views-pods:
-            url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-views-pods.json
-            token: ""
-        flux-cd-dashboards:
-          cluster:
-            url: https://raw.githubusercontent.com/fluxcd/flux2-monitoring-example/refs/heads/main/monitoring/configs/dashboards/cluster.json
-            token: ""
-          control-plane:
-            url: https://raw.githubusercontent.com/fluxcd/flux2-monitoring-example/refs/heads/main/monitoring/configs/dashboards/control-plane.json
-            token: ""
-          logs:
-            url: https://raw.githubusercontent.com/fluxcd/flux2-monitoring-example/refs/heads/main/monitoring/configs/dashboards/logs.json
-            token: ""
-        cilium-dashboards:
-          cilium-dashboard:
-            url: "https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/install/kubernetes/cilium/files/cilium-agent/dashboards/cilium-dashboard.json"
-            token: ""
-          cilium-operator-dashboard:
-            url: "https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/install/kubernetes/cilium/files/cilium-operator/dashboards/cilium-operator-dashboard.json"
-            token: ""
-          hubble-dashboard:
-            url: "https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/install/kubernetes/cilium/files/hubble/dashboards/hubble-dashboard.json"
-            token: ""
-          hubble-l7-http-metrics-by-workload:
-            url: "https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/install/kubernetes/cilium/files/hubble/dashboards/hubble-l7-http-metrics-by-workload.json"
-            token: ""
+            # - name: "cilium-dashboards"
+            #   orgId: 1
+            #   folder: "Cilium"
+            #   type: file
+            #   disableDeletion: true
+            #   editable: true
+            #   options:
+            #     path: /var/lib/grafana/dashboards/cilium-dashboards
+      # dashboards:
+      #   grafana-dashboards-kubernetes:
+      #     k8s-system-api-server:
+      #       url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-system-api-server.json
+      #       token: ""
+      #     k8s-system-coredns:
+      #       url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-system-coredns.json
+      #       token: ""
+      #     k8s-views-global:
+      #       url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-views-global.json
+      #       token: ""
+      #     k8s-views-namespaces:
+      #       url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-views-namespaces.json
+      #       token: ""
+      #     k8s-views-nodes:
+      #       url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-views-nodes.json
+      #       token: ""
+      #     k8s-views-pods:
+      #       url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-views-pods.json
+      #       token: ""
+      #   flux-cd-dashboards:
+      #     cluster:
+      #       url: https://raw.githubusercontent.com/fluxcd/flux2-monitoring-example/refs/heads/main/monitoring/configs/dashboards/cluster.json
+      #       token: ""
+      #     control-plane:
+      #       url: https://raw.githubusercontent.com/fluxcd/flux2-monitoring-example/refs/heads/main/monitoring/configs/dashboards/control-plane.json
+      #       token: ""
+      #     logs:
+      #       url: https://raw.githubusercontent.com/fluxcd/flux2-monitoring-example/refs/heads/main/monitoring/configs/dashboards/logs.json
+      #       token: ""
+      #   cilium-dashboards:
+      #     cilium-dashboard:
+      #       url: "https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/install/kubernetes/cilium/files/cilium-agent/dashboards/cilium-dashboard.json"
+      #       token: ""
+      #     cilium-operator-dashboard:
+      #       url: "https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/install/kubernetes/cilium/files/cilium-operator/dashboards/cilium-operator-dashboard.json"
+      #       token: ""
+      #     hubble-dashboard:
+      #       url: "https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/install/kubernetes/cilium/files/hubble/dashboards/hubble-dashboard.json"
+      #       token: ""
+      #     hubble-l7-http-metrics-by-workload:
+      #       url: "https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/install/kubernetes/cilium/files/hubble/dashboards/hubble-l7-http-metrics-by-workload.json"
+      #       token: ""

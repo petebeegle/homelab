@@ -20,5 +20,4 @@ spec:
   dependsOn:
     - name: controllers
     - name: network
-    - name: kube-prometheus-stack
-    # - name: loki-stack
+    # - name: kube-prometheus-stack
