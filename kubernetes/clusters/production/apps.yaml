@@ -21,4 +21,4 @@ spec:
     - name: controllers
     - name: network
     - name: kube-prometheus-stack
-    - name: loki-stack
+    # - name: loki-stack
