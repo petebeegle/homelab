@@ -4,6 +4,6 @@ kind: Kustomization
 resources:
   - ./namespace.yaml
   - ./kube-prometheus-stack
-  - ./loki
-  - ./promtail
-  - ./grafana
+  # - ./loki
+  # - ./promtail
+  # - ./grafana
