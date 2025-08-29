@@ -20,4 +20,3 @@ spec:
   dependsOn:
     - name: controllers
     - name: network
-    # - name: kube-prometheus-stack
