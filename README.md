@@ -133,11 +133,13 @@ kubectl get helmreleases -n kube-system
 kubectl get helmrepositories -n kube-system
 ```
 
+
 ---
 ## Appendices
 Random things that have caused me suffering:
 - [Configure NFS With Proxmox](./runbooks/configure_nfs_with_proxmox.md)
 - [Cloudflare Tunnels](./runbooks/cloudflare_tunnels.md)
+- [Resize a PVC like an idiot](./runbooks/resize_pvc.md)
 
 ## Terraform Docs for Nerds
 - [Main Module](./terraform/README.md)

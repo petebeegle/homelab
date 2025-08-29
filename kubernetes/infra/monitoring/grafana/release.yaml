@@ -1,0 +1,46 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: grafana
+  namespace: monitoring
+spec:
+  interval: 5m0s
+  chart:
+    spec:
+      chart: grafana
+      version: 7.3.9
+      sourceRef:
+        kind: HelmRepository
+        name: grafana
+        namespace: kube-system
+  values:
+    image:
+      tag: 12.1.0
+    admin:
+      existingSecret: grafana-credentials
+    sidecar:
+      dashboards:
+        enabled: true
+    datasources:
+      datasources.yaml:
+        apiVersion: 1
+        datasources:
+          - name: loki
+            access: proxy
+            basicAuth: false
+            editable: true
+            jsonData:
+              tlsSkipVerify: true
+            orgId: 1
+            type: loki
+            url: http://loki-gateway
+          - name: prometheus
+            access: proxy
+            basicAuth: false
+            editable: true
+            jsonData:
+              tlsSkipVerify: true
+            orgId: 1
+            type: prometheus
+            url: http://mimir-nginx/prometheus

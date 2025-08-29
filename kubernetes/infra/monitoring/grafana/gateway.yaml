@@ -23,6 +23,6 @@ spec:
                 value: monitoring.lab.petebeegle.com
 
       backendRefs:
-        - name: kube-prometheus-stack-grafana
+        - name: grafana
           port: 80
           weight: 1

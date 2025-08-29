@@ -2,18 +2,17 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 configMapGenerator:
-  - name: flux-dashboard
+  - name: alloy-config
     namespace: monitoring
     files:
-      - dashboard.json=config/flux-dashboard.json
+      - config/config.alloy
     options:
       disableNameSuffixHash: true
       labels:
-        grafana_dashboard: "1"
         app.kubernetes.io/part-of: flux
         app.kubernetes.io/component: monitoring
+configurations:
+  - kustomizeconfig.yaml
 resources:
   - repository.yaml
-  - secret.yaml
   - release.yaml
-  - gateway.yaml
