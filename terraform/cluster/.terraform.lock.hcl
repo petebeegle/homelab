@@ -129,6 +129,19 @@ provider "registry.terraform.io/telmate/proxmox" {
   version     = "3.0.1-rc3"
   constraints = "3.0.1-rc3"
   hashes = [
+    "h1:2GqyvCFguS9ARS/ZR184J4H2NahaIphtkt/e/HJ0RFM=",
+    "h1:2ozR3GBsn2hgUJSMh0NX8iBaAYyIvBaWGvrfalWUwqQ=",
+    "h1:8cticzlDJaiS7m1sPiV0IERcspvXjTl8ABuW+tvGx6I=",
+    "h1:9CaB1ZOq0j0zcirTP/ifnmTlzlhIOQeCPdTZ4axrcSc=",
+    "h1:GUD5naEaSL/SL7Gi2bB8ocmZb2pJ4PpLZz/AaB6Rs1Q=",
+    "h1:SlneYoWtf77jq52+N/WAX/ATblttWHanr+a5f51Az7A=",
+    "h1:T4bbKkNL+iIAcGrtVv0CUnTkrBkHclX9Vc/e+t+o1l4=",
+    "h1:UarMgQh0cmYu3P7KF2geI7s8pInbmZns/WnWMgjM/uE=",
+    "h1:UeP/LixV/HemU6r7Zy4Vexkvg1bvyPFqbkkL36mXowE=",
+    "h1:gBgbb5GoHR4YnwejqkRwMVVjkPxkEDfz+2gldIPr8v0=",
+    "h1:kd0CSR9Mbhg6t/Gv4yeIgkbDG2QEwlMuBAxghZhGOd0=",
+    "h1:mW4VkegXcCTMjAKVqkBpiLV0hHtY/5vktItQLSzmJTw=",
+    "h1:oHGZN/fTXBp7MT15vmMrnw6lZSxC4K4M4OoxyCBRKGw=",
     "h1:x7TfUaW+RpBtGov4DBuSJ5YPYBozapWuLyyZs0qjsKY=",
     "zh:3699c41289c6fbe0f33b6c54360d43dcfba429de5fbf49506df9276d03aea915",
     "zh:486c9ddda427d3fecdc6dfa189fce85c4a2aa1f490b024d636c0ac6a4dd3c692",
