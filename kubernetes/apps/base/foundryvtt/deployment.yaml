@@ -23,7 +23,7 @@ spec:
         fsGroup: 421
       containers:
         - name: foundryvtt
-          image: felddy/foundryvtt:13.346
+          image: felddy/foundryvtt:13.348
           env:
             - name: FOUNDRY_ADMIN_KEY
               valueFrom:
