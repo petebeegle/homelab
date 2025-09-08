@@ -4,3 +4,7 @@ creation_rules:
     encrypted_regex: ^(data|stringData)$
     age: >-
       age1g4erccmqr8znqmhszfyq425l6dt9thq7vmllrn7z9yjfaug3putqlgs4ry
+  - path_regex: grafana-env.yaml
+    encrypted_regex: ^(data|stringData)$
+    age: >-
+      age1g4erccmqr8znqmhszfyq425l6dt9thq7vmllrn7z9yjfaug3putqlgs4ry

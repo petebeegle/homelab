@@ -15,6 +15,7 @@ spec:
         name: grafana
         namespace: kube-system
   values:
+    envFromSecret: grafana-env
     image:
       tag: 12.1.0
     admin:
@@ -44,3 +45,20 @@ spec:
             orgId: 1
             type: prometheus
             url: http://mimir-nginx/prometheus
+    alerting:
+      contactpoints.yaml:
+        apiVersion: 1
+        contactPoints:
+          - name: discord
+            orgId: 1
+            receivers:
+              - uid: discord-webhook
+                type: discord
+                settings:
+                  url: "${DISCORD_WEBHOOK_URL}"
+                  username: Grafana Alerts
+                  avatar_url: "https://avatars.githubusercontent.com/u/7195757?s=200&v=4"
+                  message: |
+                    **Alert:** {{`{{ .CommonLabels.alertname }}`}}
+                    **Status:** {{`{{ .Status }}`}}
+                    **Description:** {{`{{ .Annotations.description }}`}}
