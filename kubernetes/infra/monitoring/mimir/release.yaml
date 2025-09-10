@@ -35,5 +35,7 @@ spec:
       zoneAwareReplication:
         enabled: false
     minio:
+      persistence:
+        size: 50Gi
       serviceAccount:
         name: "mimir-minio-sa"
