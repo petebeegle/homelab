@@ -22,17 +22,17 @@ spec:
     storageClasses:
       synology-iscsi-storage:
         disabled: false
-        isDefault: true
+        isDefault: false
         reclaimPolicy: Retain
         volumeBindingMode: Immediate
         parameters:
           location: /volume2
-          fsType: 'btrfs'
+          fsType: "btrfs"
           dsm: 192.168.3.27
-          formatOptions: '--nodiscard'
+          formatOptions: "--nodiscard"
       synology-nfs-storage:
         disabled: false
-        isDefault: false
+        isDefault: true
         reclaimPolicy: Retain
         volumeBindingMode: Immediate
         parameters:
@@ -40,8 +40,8 @@ spec:
           location: /volume2
           dsm: 192.168.3.27
           fsType: ext4
-          mountPermissions: '0755'
-          mountOptions: 'nfsvers=4.1'
+          mountPermissions: "0755"
+          mountOptions: "nfsvers=4.1"
     volumeSnapshotClasses:
       synology-iscsi-snapshot:
         deletionPolicy: Delete
