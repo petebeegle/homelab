@@ -18,7 +18,7 @@ resource "proxmox_vm_qemu" "vm" {
   cores   = var.cores
   cpu     = "x86-64-v2-AES"
   memory  = var.memory
-  boot    = "order=scsi0"
+  boot    = "order=scsi1;scsi0"
 
   network {
     model  = "virtio"
@@ -35,8 +35,7 @@ resource "proxmox_vm_qemu" "vm" {
       }
       scsi1 {
         disk {
-          size    = 16
-          backup  = false
+          size    = var.disk_size
           storage = "local-lvm"
         }
       }

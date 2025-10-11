@@ -32,3 +32,9 @@ variable "cores" {
   description = "The number of cores for the VM"
   type        = number
 }
+
+variable "disk_size" {
+  description = "The disk size of the VM in GB"
+  type        = number
+  default     = 16
+}

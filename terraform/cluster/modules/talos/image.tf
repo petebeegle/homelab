@@ -17,8 +17,9 @@ data "talos_image_factory_urls" "this" {
 }
 
 resource "null_resource" "this" {
+
   provisioner "local-exec" {
-    command = "curl -o /tmp/talos-disk.iso ${data.talos_image_factory_urls.this.urls.iso}"
+    command = "curl -L ${data.talos_image_factory_urls.this.urls.iso} > /tmp/talos-disk.iso"
   }
 
   provisioner "file" {

@@ -36,6 +36,7 @@ variable "nodes" {
     memory       = number
     cores        = number
     machine_type = string
+    disk_size    = number
   }))
 }
 

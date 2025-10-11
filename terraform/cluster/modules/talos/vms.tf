@@ -12,6 +12,7 @@ module "control_planes" {
   vm_id        = each.value.vm_id
   memory       = each.value.memory
   cores        = each.value.cores
+  disk_size    = each.value.disk_size
 }
 
 module "workers" {
@@ -28,4 +29,5 @@ module "workers" {
   vm_id        = each.value.vm_id
   memory       = each.value.memory
   cores        = each.value.cores
+  disk_size    = each.value.disk_size
 }
