@@ -25,7 +25,7 @@ ports:
     port: 8006
 endpoints:
   - addresses:
-      - 192.168.3.2
+      - 192.168.3.11
 ---
 apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TLSRoute

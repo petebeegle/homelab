@@ -18,7 +18,7 @@ module "talos" {
 
   ssh = {
     user = "vscode"
-    host = "192.168.3.2"
+    host = "192.168.3.11"
   }
 
   cilium = {
