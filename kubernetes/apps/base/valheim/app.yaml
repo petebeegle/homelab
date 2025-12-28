@@ -14,7 +14,7 @@ metadata:
   name: valheim-k8s
   namespace: flux-system
 spec:
-  interval: 1h
+  interval: 12h
   url: https://addyvan.github.io/valheim-k8s/
 ---
 apiVersion: helm.toolkit.fluxcd.io/v2
