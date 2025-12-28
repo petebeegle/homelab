@@ -9,6 +9,7 @@ spec:
   path: ./kubernetes/infra/crds
   prune: true
   wait: true
+  force: true
   sourceRef:
     kind: GitRepository
     name: flux-system
@@ -23,6 +24,7 @@ spec:
   path: ./kubernetes/infra/controllers
   prune: true
   wait: true
+  force: true
   dependsOn:
     - name: crds
   sourceRef:
@@ -43,6 +45,7 @@ spec:
   path: ./kubernetes/infra/network
   prune: true
   wait: true
+  force: true
   dependsOn:
     - name: crds
     - name: controllers
@@ -66,6 +69,7 @@ spec:
   path: ./kubernetes/infra/monitoring
   prune: true
   wait: true
+  force: true
   sourceRef:
     kind: GitRepository
     name: flux-system

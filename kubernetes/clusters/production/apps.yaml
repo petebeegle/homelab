@@ -16,6 +16,7 @@ spec:
   path: ./kubernetes/apps/production
   prune: true
   wait: true
+  force: true
   timeout: 5m0s
   dependsOn:
     - name: controllers
