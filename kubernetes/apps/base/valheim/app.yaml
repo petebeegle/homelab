@@ -25,6 +25,15 @@ metadata:
 spec:
   interval: 5m
   releaseName: valheim-server
+  install:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+      remediateLastFailure: true
   chart:
     spec:
       chart: valheim-k8s

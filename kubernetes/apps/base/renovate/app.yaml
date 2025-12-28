@@ -24,6 +24,15 @@ metadata:
 spec:
   interval: 1h
   releaseName: renovate
+  install:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+      remediateLastFailure: true
   chart:
     spec:
       chart: renovate
