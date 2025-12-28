@@ -3,7 +3,7 @@ apiVersion: source.toolkit.fluxcd.io/v1
 kind: HelmRepository
 metadata:
   name: jellyfin
-  namespace: jellyfin
+  namespace: flux-system
 spec:
   interval: 5m0s
   url: https://jellyfin.github.io/jellyfin-helm
@@ -22,7 +22,7 @@ spec:
       sourceRef:
         kind: HelmRepository
         name: jellyfin
-        namespace: jellyfin
+        namespace: flux-system
       version: "2.1.0"
   valuesFrom:
     - kind: ConfigMap
