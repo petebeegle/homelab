@@ -24,6 +24,7 @@ spec:
       containers:
         - name: foundryvtt
           image: felddy/foundryvtt:13.346
+          imagePullPolicy: IfNotPresent
           env:
             - name: FOUNDRY_ADMIN_KEY
               valueFrom:

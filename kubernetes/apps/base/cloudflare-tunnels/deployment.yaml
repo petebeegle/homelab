@@ -17,6 +17,7 @@ spec:
       containers:
         - name: cloudflared
           image: cloudflare/cloudflared:2025.1.0
+          imagePullPolicy: IfNotPresent
           args:
             - tunnel
             # Points cloudflared to the config file, which configures what
