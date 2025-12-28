@@ -38,3 +38,9 @@ variable "disk_size" {
   type        = number
   default     = 16
 }
+
+variable "additional_tags" {
+  description = "List of additional tags to add to the VM"
+  type        = list(string)
+  default     = []
+}

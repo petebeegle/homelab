@@ -6,13 +6,14 @@ module "control_planes" {
     proxmox = proxmox
   }
 
-  ip           = each.key
-  iso_filename = local.image_name
-  target_node  = each.value.node
-  vm_id        = each.value.vm_id
-  memory       = each.value.memory
-  cores        = each.value.cores
-  disk_size    = each.value.disk_size
+  ip              = each.key
+  iso_filename    = local.image_name
+  target_node     = each.value.node
+  vm_id           = each.value.vm_id
+  memory          = each.value.memory
+  cores           = each.value.cores
+  disk_size       = each.value.disk_size
+  additional_tags = ["controlplane"]
 }
 
 module "workers" {
@@ -23,11 +24,12 @@ module "workers" {
     proxmox = proxmox
   }
 
-  ip           = each.key
-  iso_filename = local.image_name
-  target_node  = each.value.node
-  vm_id        = each.value.vm_id
-  memory       = each.value.memory
-  cores        = each.value.cores
-  disk_size    = each.value.disk_size
+  ip              = each.key
+  iso_filename    = local.image_name
+  target_node     = each.value.node
+  vm_id           = each.value.vm_id
+  memory          = each.value.memory
+  cores           = each.value.cores
+  disk_size       = each.value.disk_size
+  additional_tags = ["worker"]
 }

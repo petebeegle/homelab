@@ -14,13 +14,15 @@ resource "proxmox_vm_qemu" "vm" {
   vmid    = var.vm_id
   agent   = 1
   os_type = "cloud-init"
-  onboot  = true
-  cores   = var.cores
-  cpu     = "x86-64-v2-AES"
-  memory  = var.memory
-  boot    = "order=scsi1;scsi0"
+  cpu {
+    cores = var.cores
+    type  = "x86-64-v2-AES"
+  }
+  memory = var.memory
+  boot   = "order=scsi1;scsi0"
 
   network {
+    id     = 0
     model  = "virtio"
     bridge = "vmbr0"
   }
@@ -51,14 +53,14 @@ resource "proxmox_vm_qemu" "vm" {
 
   ipconfig0 = "ip=${var.ip}/24,gw=${local.node_gateway}"
 
-  desc = <<EOF
+  description = <<EOF
     Updated At: ${timestamp()}
     Managed By: Terraform
   EOF
-  tags = "kubernetes"
+  tags        = join(",", concat(["kubernetes"], var.additional_tags))
 
   lifecycle {
-    ignore_changes = [desc]
+    ignore_changes = [description, tags]
   }
 
   timeouts {
