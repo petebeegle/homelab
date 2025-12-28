@@ -1,0 +1,39 @@
+---
+# Allow HTTPRoutes from application namespaces to reference the internal Gateway
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: apps-to-internal-gateway
+  namespace: gateway
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: foundryvtt
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: pihole
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: jellyfin
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: whoami
+  to:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+---
+# Allow TLSRoutes from external namespace to reference the passthrough Gateway
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: external-to-passthrough-gateway
+  namespace: gateway
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: TLSRoute
+      namespace: external
+  to:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
