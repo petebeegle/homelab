@@ -13,8 +13,7 @@ configMapGenerator:
         app.kubernetes.io/part-of: flux
         app.kubernetes.io/component: monitoring
 resources:
-  - repository.yaml
+  - app.yaml
   - secret.yaml
   - grafana-env.yaml
-  - release.yaml
   - gateway.yaml
