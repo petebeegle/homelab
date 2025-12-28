@@ -5,6 +5,9 @@ metadata:
   name: alloy
   namespace: monitoring
 spec:
+  dependsOn:
+    - name: loki
+    - name: mimir
   interval: 5m0s
   chart:
     spec:
