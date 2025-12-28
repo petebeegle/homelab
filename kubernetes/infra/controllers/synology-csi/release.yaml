@@ -21,7 +21,7 @@ spec:
       name: synology-csi-secret
     storageClasses:
       synology-iscsi-storage:
-        disabled: false
+        disabled: true
         isDefault: false
         reclaimPolicy: Retain
         volumeBindingMode: Immediate
@@ -44,4 +44,5 @@ spec:
           mountOptions: "nfsvers=4.1"
     volumeSnapshotClasses:
       synology-iscsi-snapshot:
+        disabled: true
         deletionPolicy: Delete

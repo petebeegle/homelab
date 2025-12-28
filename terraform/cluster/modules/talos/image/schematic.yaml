@@ -2,4 +2,3 @@ customization:
   systemExtensions:
     officialExtensions:
       - siderolabs/btrfs
-      - siderolabs/iscsi-tools
