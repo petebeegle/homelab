@@ -19,7 +19,7 @@ Select `Datacenter > Storage > Add > NFS`'
 |field|value|description|
 |---|---|---|
 |ID|nfs|Name to be referenced in the file structure|
-|Server|`192.168.3.1`|IP of the NAS|
+|Server|`192.168.30.100`|IP of the NAS|
 |Export|`/volumeX/lab/proxmox`|Remote mount location|
 |Content|Disk image, ISO image, Snippets, Container template|Things to store|
 
@@ -28,7 +28,7 @@ Within a proxmox shell, we will create a user and give it access to the mount lo
 ```shell
 # Create the user and group, and associate them
 useradd -m nfsuser
-groupadd -nfs
+groupadd nfs
 usermod -aG nfs nfsuser
 
 # Update the file permissions and ensure that new folders/files inherit the proper permissions
@@ -40,6 +40,6 @@ chmod g+s /mnt/pve/nfs
 ## Configure the terraform module
 Ensure that terraform is configured for the correct user:
 ```shell
-echo 'destination_host = "192.168.3.1"' >> /workspaces/homelab/terraformterraform.tfvars
-echo 'destination_user = "nfsuser"' >> /workspaces/homelab/terraformterraform.tfvars
+echo 'nfs_host = "192.168.30.100"' >> /workspaces/homelab/terraform/cluster/terraform.tfvars
+echo 'nfs_user = "nfsuser"' >> /workspaces/homelab/terraform/cluster/terraform.tfvars
 ```

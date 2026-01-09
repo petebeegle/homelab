@@ -9,7 +9,6 @@
 
 ## Prerequisites
 - Run [Configure Synology](./SYNOLOGY.md), configuring a `nexus` and `docker-registry` certificate and reverse proxy
-- SSH is enabled (temporarily)
 
 ## Run Nexus
 1. Install `Container Manager` via `Package Center`
@@ -26,34 +25,11 @@
 
 ## Configure A Docker Registry
 
-### Set up a docker user
-1. Create a new role named `docker-group-view` with the following `Applied Privileges`:
-    - `nx-repository-view-docker-docker-group-*`
-2. Create a new user named `docker` with `docker-group-view` granted
-
-### Create a Proxy Registry
-1. Create a `Blob Store` of type `File` called `docker-hub` at path `docker-hub`
-2. Create a new repository for `docker (proxy)` with the following settings:
-
-| Setting                | Value                          |
-|------------------------|--------------------------------|
-| Name                   | docker-proxy                   |
-| Type                   | docker (proxy)                 |
-| Remote Storage         | https://registry-1.docker.io   |
-| Docker Index           | Use Docker Hub                 |
-| Auto blocking enabled  | `true`                         |
-| Blob store             | docker-hub                     |
-
-3. Create a new repository `docker (group)` with the following settings:
-
-| Setting                | Value                          |
-|------------------------|--------------------------------|
-| Name                   | docker-group                   |
-| Type                   | docker (group)                 |
-| HTTP                   | `8082`                         |
-| Enable Docker V1 API   | `true`                         |
-| Group Members          | docker-proxy                   |
-
+Run the environment terraform to provision the docker registry:
+```shell
+cd /workspaces/homelab/terraform/external
+terraform apply -auto
+```
 
 ### Test the Proxy Registry
 ```sh

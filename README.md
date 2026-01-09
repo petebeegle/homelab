@@ -21,7 +21,12 @@ github_token = "github_pat_qqq"
 github_user = "urnamehere"
 ```
 
-### 2. Create the cluster
+### 2. Configure external dependencies
+The following external dependencies also include terraform modules for easier configuration.
+#### Nexus
+To set-up Nexus, follow the guide [here](./scripts/NEXUS.md).
+
+### 3. Create the cluster
 Create and bootstrap an environment via terraform!
 ```sh
 cd terraform/cluster
