@@ -36,6 +36,7 @@
 | <a name="input_github_user"></a> [github\_user](#input\_github\_user) | GitHub user to use for the bootstrap script | `string` | n/a | yes |
 | <a name="input_nfs_host"></a> [nfs\_host](#input\_nfs\_host) | NFS host for mounting the NFS server | `string` | n/a | yes |
 | <a name="input_nfs_user"></a> [nfs\_user](#input\_nfs\_user) | NFS user for mounting the NFS server | `string` | n/a | yes |
+| <a name="input_nodes"></a> [nodes](#input\_nodes) | Map of nodes to create in the cluster | <pre>map(object({<br/>    node         = string<br/>    vm_id        = number<br/>    memory       = number<br/>    cores        = number<br/>    machine_type = string<br/>    disk_size    = number<br/>  }))</pre> | n/a | yes |
 | <a name="input_pm_api_token_id"></a> [pm\_api\_token\_id](#input\_pm\_api\_token\_id) | n/a | `any` | n/a | yes |
 | <a name="input_pm_api_token_secret"></a> [pm\_api\_token\_secret](#input\_pm\_api\_token\_secret) | n/a | `any` | n/a | yes |
 | <a name="input_pm_api_url"></a> [pm\_api\_url](#input\_pm\_api\_url) | n/a | `any` | n/a | yes |

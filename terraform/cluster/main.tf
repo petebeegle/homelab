@@ -9,7 +9,7 @@ module "talos" {
 
   cluster = {
     name     = "proxmox-k8s-cluster"
-    endpoint = "192.168.3.63"
+    endpoint = "192.168.30.150"
   }
 
   image = {
@@ -20,64 +20,7 @@ module "talos" {
     values = file("${path.module}/../../kubernetes/infra/network/cilium/values.yaml")
   }
 
-  nodes = {
-    "192.168.3.63" = {
-      node         = "pve02"
-      vm_id        = 200
-      memory       = 8192
-      cores        = 2
-      machine_type = "controlplane"
-      disk_size    = 128
-    },
-    "192.168.3.64" = {
-      node         = "pve03"
-      vm_id        = 300
-      memory       = 8192
-      cores        = 2
-      machine_type = "controlplane"
-      disk_size    = 128
-    },
-    "192.168.3.67" = {
-      node         = "pve04"
-      vm_id        = 400
-      memory       = 16384
-      cores        = 4
-      machine_type = "controlplane"
-      disk_size    = 128
-    },
-    # TODO: pve01 is unstable
-    # "192.168.3.60" = {
-    #   node         = "pve01"
-    #   vm_id        = 102
-    #   memory       = 24576
-    #   cores        = 4
-    #   machine_type = "worker"
-    # },
-    "192.168.3.62" = {
-      node         = "pve02"
-      vm_id        = 201
-      memory       = 16384
-      cores        = 2
-      machine_type = "worker"
-      disk_size    = 128
-    },
-    "192.168.3.65" = {
-      node         = "pve03"
-      vm_id        = 301
-      memory       = 16384
-      cores        = 2
-      machine_type = "worker"
-      disk_size    = 128
-    },
-    "192.168.3.66" = {
-      node         = "pve04"
-      vm_id        = 401
-      memory       = 47104
-      cores        = 24
-      machine_type = "worker"
-      disk_size    = 128
-    }
-  }
+  nodes = var.nodes
 
   docker_image_proxy = {
     enabled = false

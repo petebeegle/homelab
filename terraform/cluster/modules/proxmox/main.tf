@@ -1,5 +1,5 @@
 locals {
-  node_gateway = "192.168.3.1"
+  node_gateway = "192.168.30.1"
 }
 
 resource "random_pet" "name" {
