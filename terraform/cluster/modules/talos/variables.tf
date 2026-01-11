@@ -42,17 +42,18 @@ variable "nodes" {
   }))
 }
 
-variable "enable_docker_proxy" {
-  description = "Whether to use a docker proxy for the cluster"
-  type        = bool
-  default     = false
-}
-
-variable "docker_registry" {
-  description = "Credentials for authenticating to the pass-through docker registry used by the cluster"
+variable "docker_image_proxy" {
+  description = "Configuration for the docker image proxy used by the cluster"
   type = object({
-    user     = string
-    password = string
+    enabled = bool
+    registry = optional(object({
+      user     = string
+      password = string
+    }))
   })
   sensitive = true
+  default = {
+    enabled  = false
+    registry = null
+  }
 }

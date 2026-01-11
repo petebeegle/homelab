@@ -38,10 +38,10 @@ resource "talos_machine_configuration_apply" "this" {
     templatefile("${path.module}/templates/worker.yaml.tftpl", {
       install_image = data.talos_image_factory_urls.this.urls.installer
     })
-    ], var.enable_docker_proxy ? [
+    ], var.docker_image_proxy.enabled ? [
     templatefile("${path.module}/templates/docker_proxy.yaml.tftpl", {
-      docker_user     = var.docker_registry.user
-      docker_password = var.docker_registry.password
+      docker_user     = var.docker_image_proxy.registry.user
+      docker_password = var.docker_image_proxy.registry.password
     })
   ] : [])
 }

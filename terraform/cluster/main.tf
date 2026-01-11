@@ -79,10 +79,12 @@ module "talos" {
     }
   }
 
-  enable_docker_proxy = true
-  docker_registry = {
-    user     = var.docker_user
-    password = var.docker_password
+  docker_image_proxy = {
+    enabled = false
+    registry = {
+      user     = var.docker_user
+      password = var.docker_password
+    }
   }
 
   nfs_server = {
