@@ -23,7 +23,7 @@ module "talos" {
   nodes = var.nodes
 
   docker_image_proxy = {
-    enabled = false
+    enabled = true
     registry = {
       user     = var.docker_user
       password = var.docker_password

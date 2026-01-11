@@ -17,14 +17,24 @@ data "talos_image_factory_urls" "this" {
 }
 
 resource "null_resource" "image" {
+  triggers = {
+    talos_version = data.talos_image_factory_urls.this.talos_version
+    schematic_id  = talos_image_factory_schematic.this.id
+  }
 
   provisioner "local-exec" {
-    command = "curl -L ${data.talos_image_factory_urls.this.urls.iso} > /tmp/talos-disk.iso"
+    command = <<-EOT
+      if [ ! -f /tmp/${local.image_name} ]; then
+        curl -L ${data.talos_image_factory_urls.this.urls.iso} -o /tmp/${local.image_name}
+      else
+        echo 'Image ${local.image_name} already exists, skipping download'
+      fi
+    EOT
   }
 
   provisioner "file" {
-    source      = "/tmp/talos-disk.iso"
-    destination = "${var.nfs_server.destination_path}/talos-${data.talos_image_factory_urls.this.talos_version}-${data.talos_image_factory_urls.this.platform}-${data.talos_image_factory_urls.this.architecture}.iso"
+    source      = "/tmp/${local.image_name}"
+    destination = "${var.nfs_server.destination_path}/${local.image_name}"
 
     connection {
       type    = "ssh"
