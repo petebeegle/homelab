@@ -29,15 +29,12 @@ This will create DNS records for our Synology services:
 - `docker-registry`
 
 ## 2. Adding Reverse Proxies
-1. Navigate to `Control Panel > Login Portal > Advanced > Reverse Proxy`
-2. Add entries for the following:
-
-| Description       | Source                                  | Destination            |
-|-------------------|-----------------------------------------|------------------------|
-| NAS               | https://nas.example.com:443             | https://localhost:5001 |
-| Nexus             | https://nexus.example.com:443           | https://localhost:8081 |
-| Docker Registry   | https://docker-registry.example.com:443 | https://localhost:8082 |
-
+Run the following:
+```sh
+cd /workspaces/homelab/terraform/external/synology
+terraform init
+terraform apply -auto
+```
 
 ## 3. Creating Certificates
 
