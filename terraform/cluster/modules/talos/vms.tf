@@ -13,7 +13,10 @@ module "control_planes" {
   memory          = each.value.memory
   cores           = each.value.cores
   disk_size       = each.value.disk_size
+  cdrom_location  = var.nfs_server.name
   additional_tags = ["controlplane"]
+
+  depends_on = [null_resource.image]
 }
 
 module "workers" {
@@ -31,5 +34,8 @@ module "workers" {
   memory          = each.value.memory
   cores           = each.value.cores
   disk_size       = each.value.disk_size
+  cdrom_location  = var.nfs_server.name
   additional_tags = ["worker"]
+
+  depends_on = [null_resource.image]
 }

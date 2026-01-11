@@ -16,11 +16,6 @@ module "talos" {
     version = "v1.11.2"
   }
 
-  ssh = {
-    user = "vscode"
-    host = "192.168.3.11"
-  }
-
   cilium = {
     values = file("${path.module}/../../kubernetes/infra/network/cilium/values.yaml")
   }
@@ -81,13 +76,20 @@ module "talos" {
       cores        = 24
       machine_type = "worker"
       disk_size    = 128
-    },
+    }
   }
 
   enable_docker_proxy = true
   docker_registry = {
     user     = var.docker_user
     password = var.docker_password
+  }
+
+  nfs_server = {
+    name             = "remote-nas"
+    destination_path = "/mnt/pve/remote-nas/template/iso"
+    host             = var.nfs_host
+    user             = var.nfs_user
   }
 }
 

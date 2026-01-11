@@ -16,7 +16,7 @@ data "talos_image_factory_urls" "this" {
   platform      = "nocloud"
 }
 
-resource "null_resource" "this" {
+resource "null_resource" "image" {
 
   provisioner "local-exec" {
     command = "curl -L ${data.talos_image_factory_urls.this.urls.iso} > /tmp/talos-disk.iso"
@@ -24,12 +24,12 @@ resource "null_resource" "this" {
 
   provisioner "file" {
     source      = "/tmp/talos-disk.iso"
-    destination = "/mnt/pve/nfs/template/iso/talos-${data.talos_image_factory_urls.this.talos_version}-${data.talos_image_factory_urls.this.platform}-${data.talos_image_factory_urls.this.architecture}.iso"
+    destination = "${var.nfs_server.destination_path}/talos-${data.talos_image_factory_urls.this.talos_version}-${data.talos_image_factory_urls.this.platform}-${data.talos_image_factory_urls.this.architecture}.iso"
 
     connection {
       type    = "ssh"
-      host    = var.ssh.host
-      user    = var.ssh.user
+      host    = var.nfs_server.host
+      user    = var.nfs_server.user
       timeout = "30s"
     }
   }

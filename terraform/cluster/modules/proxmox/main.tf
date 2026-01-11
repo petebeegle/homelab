@@ -32,7 +32,7 @@ resource "proxmox_vm_qemu" "vm" {
     scsi {
       scsi0 {
         cdrom {
-          iso = "nfs:iso/${var.iso_filename}"
+          iso = "${var.cdrom_location}:iso/${var.iso_filename}"
         }
       }
       scsi1 {

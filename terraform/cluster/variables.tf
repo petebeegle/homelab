@@ -19,3 +19,13 @@ variable "docker_password" {
   type        = string
   sensitive   = true
 }
+
+variable "nfs_user" {
+  description = "NFS user for mounting the NFS server"
+  type        = string
+}
+
+variable "nfs_host" {
+  description = "NFS host for mounting the NFS server"
+  type        = string
+}

@@ -20,11 +20,13 @@ variable "cilium" {
   })
 }
 
-variable "ssh" {
-  description = "Information about the ssh configuration"
+variable "nfs_server" {
+  description = "Information about the nfs server configuration"
   type = object({
-    user = string
-    host = string
+    name             = string
+    user             = string
+    host             = string
+    destination_path = string
   })
 }
 
