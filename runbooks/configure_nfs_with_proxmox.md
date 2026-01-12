@@ -9,7 +9,7 @@ In order to upload talos images, proxmox needs access to the nfs server and the 
 See: [How to access files on Synology NAS within a local network (NFS)](https://kb.synology.com/en-us/DSM/tutorial/How_to_access_files_on_Synology_NAS_within_the_local_network_NFS).
 
 When creating NFS rules for my shared folder, I opted to expose 2 IP address ranges, provided below as an example:
-- `192.168.3.0/24`: This is the subnet assigned to the VLAN for my homelab
+- `192.168.30.0/24`: This is the subnet assigned to the VLAN for my homelab
 - `172.17.0.0/16`: The subnet for the devcontainer I work out of
 
 ## Configure proxmox to connect to NFS

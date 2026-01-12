@@ -54,7 +54,7 @@ spec:
         parameters:
           location: /volume2
           fsType: "btrfs"
-          dsm: 192.168.3.27
+          dsm: 192.168.30.99
           formatOptions: "--nodiscard"
       synology-nfs-storage:
         disabled: false
@@ -64,7 +64,7 @@ spec:
         parameters:
           protocol: nfs
           location: /volume2
-          dsm: 192.168.3.27
+          dsm: 192.168.30.99
           fsType: ext4
           mountPermissions: "0755"
           mountOptions: "nfsvers=4.1"
