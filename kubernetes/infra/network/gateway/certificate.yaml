@@ -9,5 +9,5 @@ spec:
   dnsNames:
     - "*.lab.petebeegle.com"
   issuerRef:
-    name: cloudflare
+    name: cloudflare-staging
     kind: ClusterIssuer
