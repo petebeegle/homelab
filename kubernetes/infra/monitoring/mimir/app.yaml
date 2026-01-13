@@ -30,17 +30,17 @@ spec:
           max_global_series_per_user: 2000000
           out_of_order_time_window: 5m
     distributor:
-      replicas: 3
+      replicas: 1
     alertmanager:
-      replicas: 3
+      replicas: 1
     ingester:
-      replicas: 3
+      replicas: 1
       zoneAwareReplication:
         enabled: false
       persistentVolume:
         size: 50Gi
     store_gateway:
-      replicas: 3
+      replicas: 1
       zoneAwareReplication:
         enabled: false
     minio:
