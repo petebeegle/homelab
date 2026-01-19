@@ -5,7 +5,7 @@ metadata:
   name: foundryvtt-data-pvc
   namespace: foundryvtt
 spec:
-  storageClassName: synology-nfs-storage
+  storageClassName: nfs-csi-storage
   accessModes:
     - ReadWriteOnce
   resources:

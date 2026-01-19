@@ -4,7 +4,17 @@
       "Bash(wc:*)",
       "Bash(du -sh:*)",
       "Bash(git -C /workspaces/homelab log --oneline)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(kubectl cluster-info:*)",
+      "Bash(kubectl get:*)",
+      "Bash(terraform init:*)",
+      "Bash(terraform plan:*)",
+      "Bash(flux logs:*)",
+      "Bash(flux get:*)",
+      "Bash(kubectl describe:*)",
+      "Bash(kubectl logs:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:github.com)"
     ]
   }
 }

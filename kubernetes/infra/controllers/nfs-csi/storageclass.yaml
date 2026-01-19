@@ -1,0 +1,22 @@
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nfs-csi-storage
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: nfs.csi.k8s.io
+parameters:
+  server: 192.168.30.99
+  share: /volume2/Homelab
+  subDir: nfs-csi-${pvc.metadata.namespace}-${pvc.metadata.name}
+mountOptions:
+  - nfsvers=4.1
+  - hard
+  - timeo=600
+  - retrans=2
+  - rsize=1048576
+  - wsize=1048576
+allowVolumeExpansion: true
+reclaimPolicy: Retain
+volumeBindingMode: Immediate

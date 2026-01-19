@@ -1,7 +1,7 @@
 persistence:
   config:
     enabled: true
-    storageClass: synology-nfs-storage
+    storageClass: nfs-csi-storage
   media:
     enabled: false
 volumes:

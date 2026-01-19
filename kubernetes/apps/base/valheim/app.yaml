@@ -53,7 +53,9 @@ spec:
       kind: persistentVolumeClaim
       pvc:
         size: 25Gi
+        storageClassName: nfs-csi-storage
     serverStorage:
       kind: persistentVolumeClaim
       pvc:
         size: 25Gi
+        storageClassName: nfs-csi-storage
