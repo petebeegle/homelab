@@ -22,3 +22,4 @@ spec:
   dependsOn:
     - name: controllers
     - name: network
+    - name: monitoring
