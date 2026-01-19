@@ -6,6 +6,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 5m
+  retryInterval: 2m
   sourceRef:
     kind: GitRepository
     name: flux-system
@@ -17,7 +18,7 @@ spec:
   prune: true
   wait: true
   force: true
-  timeout: 5m0s
+  timeout: 10m0s
   dependsOn:
     - name: controllers
     - name: network

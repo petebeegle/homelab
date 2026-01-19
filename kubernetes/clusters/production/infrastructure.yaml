@@ -66,6 +66,8 @@ spec:
   dependsOn:
     - name: network
   interval: 2m0s
+  retryInterval: 2m
+  timeout: 15m0s
   path: ./kubernetes/infra/monitoring
   prune: true
   wait: true
