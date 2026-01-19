@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc:*)",
+      "Bash(du -sh:*)",
+      "Bash(git -C /workspaces/homelab log --oneline)",
+      "WebSearch"
+    ]
+  }
+}

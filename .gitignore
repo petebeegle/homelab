@@ -5,3 +5,6 @@
 .terraform/
 
 terraform.tfvars
+
+# Local scratchpad (not committed)
+SCRATCHPAD.md
