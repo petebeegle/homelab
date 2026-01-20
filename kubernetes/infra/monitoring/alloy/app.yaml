@@ -36,3 +36,5 @@ spec:
         create: false
         name: alloy-config
         key: config.alloy
+    configReloader:
+      enabled: true

@@ -14,6 +14,13 @@ prometheus.remote_write "default" {
     endpoint {
       url = "http://mimir-nginx/api/v1/push"
     }
+
+    // Prevent WAL from growing unbounded during outages
+    wal {
+      truncate_frequency = "2h"
+      min_keepalive_time = "5m"
+      max_keepalive_time = "8h"
+    }
 }
 
 discovery.kubernetes "pods" {
@@ -33,12 +40,34 @@ prometheus.exporter.unix "unix" {
 }
 
 prometheus.scrape "pods" {
-  targets    = discovery.kubernetes.pods.targets
+  targets    = discovery.relabel.pods.output
   forward_to = [prometheus.remote_write.default.receiver]
+  clustering {
+    enabled = true
+  }
+}
+
+discovery.relabel "service" {
+  targets = discovery.kubernetes.service.targets
+
+  // Only scrape services with prometheus.io/scrape annotation
+  rule {
+    source_labels = ["__meta_kubernetes_service_annotation_prometheus_io_scrape"]
+    regex = "true"
+    action = "keep"
+  }
+
+  // Use custom port from annotation if specified
+  rule {
+    source_labels = ["__address__", "__meta_kubernetes_service_annotation_prometheus_io_port"]
+    regex = "([^:]+)(?::\\d+)?;(\\d+)"
+    replacement = "$1:$2"
+    target_label = "__address__"
+  }
 }
 
 prometheus.scrape "service" {
-  targets    = discovery.kubernetes.service.targets
+  targets    = discovery.relabel.service.output
   forward_to = [prometheus.remote_write.default.receiver]
 }
 
@@ -73,6 +102,12 @@ discovery.relabel "pods" {
   rule {
     source_labels = ["__meta_kubernetes_node_name"]
     target_label  = "node_name"
+  }
+
+  // Set job label to match existing dashboard queries
+  rule {
+    replacement = "prometheus.scrape.pods"
+    target_label = "job"
   }
 
   rule {
