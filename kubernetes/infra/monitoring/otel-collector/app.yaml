@@ -1,0 +1,97 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: opentelemetry
+  namespace: monitoring
+spec:
+  interval: 1h
+  url: https://open-telemetry.github.io/opentelemetry-helm-charts
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: otel-collector
+  namespace: monitoring
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: opentelemetry-collector
+      version: "0.144.0"
+      sourceRef:
+        kind: HelmRepository
+        name: opentelemetry
+        namespace: monitoring
+  values:
+    mode: deployment
+
+    image:
+      repository: otel/opentelemetry-collector-contrib
+
+    config:
+      receivers:
+        otlp:
+          protocols:
+            grpc:
+              endpoint: 0.0.0.0:4317
+            http:
+              endpoint: 0.0.0.0:4318
+
+      processors:
+        batch:
+          timeout: 10s
+          send_batch_size: 1024
+
+        resource:
+          attributes:
+            - key: service.name
+              value: proxmox
+              action: insert
+
+      exporters:
+        prometheus:
+          endpoint: "0.0.0.0:8889"
+          namespace: proxmox
+          resource_to_telemetry_conversion:
+            enabled: true
+
+      service:
+        pipelines:
+          metrics:
+            receivers: [otlp]
+            processors: [batch, resource]
+            exporters: [prometheus]
+
+    ports:
+      otlp:
+        enabled: true
+        containerPort: 4317
+        servicePort: 4317
+        protocol: TCP
+      otlp-http:
+        enabled: true
+        containerPort: 4318
+        servicePort: 4318
+        protocol: TCP
+      prometheus:
+        enabled: true
+        containerPort: 8889
+        servicePort: 8889
+        protocol: TCP
+
+    service:
+      type: LoadBalancer
+
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+
+    serviceMonitor:
+      enabled: true
+      metricsEndpoints:
+        - port: prometheus
