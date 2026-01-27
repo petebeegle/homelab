@@ -12,6 +12,26 @@ configMapGenerator:
         grafana_dashboard: "1"
         app.kubernetes.io/part-of: flux
         app.kubernetes.io/component: monitoring
+  - name: kubernetes-dashboard
+    namespace: monitoring
+    files:
+      - dashboard.json=config/kubernetes-dashboard.json
+    options:
+      disableNameSuffixHash: true
+      labels:
+        grafana_dashboard: "1"
+        app.kubernetes.io/part-of: flux
+        app.kubernetes.io/component: monitoring
+  - name: proxmox-dashboard
+    namespace: monitoring
+    files:
+      - dashboard.json=config/proxmox-dashboard.json
+    options:
+      disableNameSuffixHash: true
+      labels:
+        grafana_dashboard: "1"
+        app.kubernetes.io/part-of: flux
+        app.kubernetes.io/component: monitoring
 resources:
   - app.yaml
   - secret.yaml
