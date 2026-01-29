@@ -35,5 +35,4 @@ configMapGenerator:
 resources:
   - app.yaml
   - secret.yaml
-  - grafana-env.yaml
   - gateway.yaml

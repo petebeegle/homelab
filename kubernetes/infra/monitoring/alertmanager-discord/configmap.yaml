@@ -1,0 +1,30 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-discord-template
+  namespace: monitoring
+data:
+  template.tmpl: |
+    {{ define "discord.default.title" }}
+    {{ if eq .Status "firing" }}🔴{{ else }}✅{{ end }} [{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}
+    {{ end }}
+
+    {{ define "discord.default.description" }}
+    **Alert:** {{ .CommonLabels.alertname }}
+    {{ if .CommonLabels.proxmox_node }}**Node:** {{ .CommonLabels.proxmox_node }}{{ end }}
+    **Status:** {{ .Status }}
+    **Severity:** {{ .CommonLabels.severity }}
+
+    {{ range .Alerts }}
+    **Summary:** {{ .Annotations.summary }}
+    **Description:** {{ .Annotations.description }}
+    **Started:** {{ .StartsAt.Format "2006-01-02 15:04:05 MST" }}
+    {{ if .EndsAt }}**Ended:** {{ .EndsAt.Format "2006-01-02 15:04:05 MST" }}{{ end }}
+
+    **Links:**
+    {{ if .Annotations.dashboard }}📊 [Dashboard]({{ .Annotations.dashboard }}){{ end }}
+    {{ if .Annotations.runbook }}📖 [Runbook]({{ .Annotations.runbook }}){{ end }}
+    {{ if .Annotations.grafana_query }}🔍 [Query]({{ .Annotations.grafana_query }}){{ end }}
+    {{ end }}
+    {{ end }}

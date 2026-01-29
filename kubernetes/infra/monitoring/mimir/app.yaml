@@ -37,10 +37,41 @@ spec:
         store_gateway:
           sharding_ring:
             replication_factor: 1
+        multitenancy_enabled: false
+        alertmanager:
+          enable_api: true
+          external_url: http://mimir-alertmanager/alertmanager
+          fallback_config_file: /configs/alertmanager_fallback_config.yaml
     distributor:
       replicas: 1
     alertmanager:
       replicas: 1
+      statefulSet:
+        enabled: true
+      extraVolumes:
+        - name: discord-webhook-secret
+          secret:
+            secretName: alertmanager-discord
+      extraVolumeMounts:
+        - name: discord-webhook-secret
+          mountPath: /secrets/discord
+          readOnly: true
+      fallbackConfig: |
+        global:
+          resolve_timeout: 5m
+
+        route:
+          receiver: 'discord'
+          group_by: ['alertname', 'proxmox_node']
+          group_wait: 30s
+          group_interval: 5m
+          repeat_interval: 4h
+
+        receivers:
+          - name: 'discord'
+            webhook_configs:
+              - url: http://alertmanager-discord:9094
+                send_resolved: true
     ingester:
       replicas: 1
       zoneAwareReplication:

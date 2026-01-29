@@ -1,0 +1,32 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: proxmox-alerts
+  namespace: monitoring
+  labels:
+    mimir-rules: "true"
+    prometheus: mimir
+    role: alert-rules
+spec:
+  groups:
+    - name: proxmox.rules
+      interval: 60s
+      rules:
+        - alert: ProxmoxNodeOffline
+          expr: |
+            count(proxmox_proxmox_node_uptime_seconds) < 6
+          for: 0m
+          labels:
+            severity: critical
+            component: proxmox
+          annotations:
+            summary: "Proxmox node {{ $labels.proxmox_node }} is offline"
+            description: |
+              The Proxmox node {{ $labels.proxmox_node }} has not reported uptime metrics for 5 minutes.
+              This indicates the node is offline or the OTEL collector cannot reach it.
+
+              Current status: No metrics received for 5+ minutes
+            dashboard: "https://monitoring.lab.petebeegle.com/d/proxmox-infrastructure/proxmox-overview"
+            runbook: "https://github.com/YOUR_USERNAME/homelab/wiki/runbooks/proxmox-node-offline"
+            grafana_query: "https://monitoring.lab.petebeegle.com/explore?left=%7B%22queries%22:%5B%7B%22expr%22:%22proxmox_proxmox_node_uptime_seconds%22%7D%5D%7D"

@@ -11,3 +11,4 @@ resources:
   - grafana
   - snmp-exporter
   - otel-collector
+  - alertmanager-discord
