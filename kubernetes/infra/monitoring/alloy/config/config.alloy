@@ -134,3 +134,16 @@ loki.source.kubernetes "pods" {
   targets    = discovery.relabel.pods.output
   forward_to = [loki.write.default.receiver]
 }
+
+// Sync PrometheusRule CRDs to Mimir ruler
+mimir.rules.kubernetes "mimir_rules" {
+  address = "http://mimir-nginx:80"
+
+  rule_selector {
+    match_labels = {
+      "mimir-rules" = "true",
+    }
+  }
+
+  sync_interval = "30s"
+}

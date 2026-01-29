@@ -37,10 +37,23 @@ spec:
         store_gateway:
           sharding_ring:
             replication_factor: 1
+        alertmanager:
+          enable_api: true
+          external_url: http://mimir-alertmanager/alertmanager
+          fallback_config_file: /configs/alertmanager.yaml
+        alertmanager_storage:
+          backend: filesystem
+          filesystem:
+            dir: /data/alertmanager
     distributor:
       replicas: 1
     alertmanager:
       replicas: 1
+      extraEnvFrom:
+        - secretRef:
+            name: alertmanager-discord
+      statefulSet:
+        enabled: true
     ingester:
       replicas: 1
       zoneAwareReplication:
@@ -56,3 +69,37 @@ spec:
         size: 50Gi
       serviceAccount:
         name: "mimir-minio-sa"
+    alertmanagerConfig: |
+      global:
+        resolve_timeout: 5m
+
+      route:
+        receiver: 'discord'
+        group_by: ['alertname', 'proxmox_node']
+        group_wait: 30s
+        group_interval: 5m
+        repeat_interval: 4h
+
+      receivers:
+        - name: 'discord'
+          discord_configs:
+            - webhook_url: ${webhook_url}
+              send_resolved: true
+              title: '{{ if eq .Status "firing" }}🔴{{ else }}✅{{ end }} [{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}'
+              message: |
+                **Alert:** {{ .CommonLabels.alertname }}
+                **Node:** {{ .CommonLabels.proxmox_node }}
+                **Status:** {{ .Status }}
+                **Severity:** {{ .CommonLabels.severity }}
+
+                {{ range .Alerts }}
+                **Summary:** {{ .Annotations.summary }}
+                **Description:** {{ .Annotations.description }}
+                **Started:** {{ .StartsAt.Format "2006-01-02 15:04:05 MST" }}
+                {{ if .EndsAt }}**Ended:** {{ .EndsAt.Format "2006-01-02 15:04:05 MST" }}{{ end }}
+
+                **Links:**
+                {{ if .Annotations.dashboard }}📊 [Dashboard]({{ .Annotations.dashboard }}){{ end }}
+                {{ if .Annotations.runbook }}📖 [Runbook]({{ .Annotations.runbook }}){{ end }}
+                {{ if .Annotations.grafana_query }}🔍 [Query in Grafana]({{ .Annotations.grafana_query }}){{ end }}
+                {{ end }}
