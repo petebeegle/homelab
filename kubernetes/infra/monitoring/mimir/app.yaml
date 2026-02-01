@@ -40,7 +40,7 @@ spec:
     distributor:
       replicas: 1
     alertmanager:
-      replicas: 1
+      enabled: false
     ingester:
       replicas: 1
       zoneAwareReplication:
