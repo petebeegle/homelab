@@ -1,0 +1,18 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana
+  namespace: monitoring
+  labels:
+    dashboards: "grafana"
+spec:
+  # External mode - use existing Grafana deployment
+  external:
+    url: http://grafana.monitoring.svc.cluster.local:80
+    adminUser:
+      name: grafana-credentials
+      key: admin-user
+    adminPassword:
+      name: grafana-credentials
+      key: admin-password

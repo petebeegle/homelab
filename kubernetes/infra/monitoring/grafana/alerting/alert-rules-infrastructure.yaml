@@ -1,0 +1,168 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaAlertRuleGroup
+metadata:
+  name: infrastructure
+  namespace: monitoring
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  folderRef: "infrastructure"
+  interval: 1m
+  rules:
+    - uid: node-not-ready
+      title: Kubernetes Node Not Ready
+      condition: C
+      for: 5m
+      noDataState: NoData
+      execErrState: Error
+      annotations:
+        description: "Node {{ $labels.node }} is not ready for more than 5 minutes"
+        summary: Kubernetes node is not ready
+      labels:
+        severity: critical
+        component: node
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 0
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+
+    - uid: node-disk-pressure
+      title: Node Under Disk Pressure
+      condition: C
+      for: 5m
+      noDataState: NoData
+      execErrState: Error
+      annotations:
+        description: "Node {{ $labels.node }} is under disk pressure"
+        summary: Node disk pressure detected
+      labels:
+        severity: warning
+        component: node
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: kube_node_status_condition{condition="DiskPressure",status="true"} == 1
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 0
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+
+    - uid: node-memory-pressure
+      title: Node Under Memory Pressure
+      condition: C
+      for: 5m
+      noDataState: NoData
+      execErrState: Error
+      annotations:
+        description: "Node {{ $labels.node }} is under memory pressure"
+        summary: Node memory pressure detected
+      labels:
+        severity: warning
+        component: node
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: kube_node_status_condition{condition="MemoryPressure",status="true"} == 1
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 0
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
