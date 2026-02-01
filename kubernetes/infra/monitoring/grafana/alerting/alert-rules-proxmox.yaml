@@ -1,0 +1,64 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaAlertRuleGroup
+metadata:
+  name: proxmox
+  namespace: monitoring
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  folderRef: "proxmox"
+  interval: 1m
+  rules:
+    - uid: proxmox-node-down
+      title: Proxmox Node Count Low
+      condition: C
+      for: 5m
+      noDataState: Alerting
+      execErrState: Error
+      annotations:
+        description: "Expected 4 Proxmox nodes, currently detecting {{ $value }} node(s)"
+        summary: One or more Proxmox nodes are unreachable
+      labels:
+        severity: critical
+        component: proxmox
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: count(count by (proxmox_node) (proxmox_proxmox_node_uptime_seconds))
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 4
+                  type: lt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C

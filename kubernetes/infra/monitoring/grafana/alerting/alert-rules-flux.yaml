@@ -2,27 +2,79 @@
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaAlertRuleGroup
 metadata:
-  name: infrastructure
+  name: flux
   namespace: monitoring
 spec:
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
-  folderRef: "infrastructure"
+  folderRef: "flux"
   interval: 1m
   rules:
-    - uid: node-not-ready
-      title: Kubernetes Node Not Ready
+    - uid: flux-resources-suspended
+      title: Flux Resources Suspended
       condition: C
-      for: 5m
+      for: 10m
       noDataState: NoData
       execErrState: Error
       annotations:
-        description: "Node {{ $labels.node }} is not ready for more than 5 minutes"
-        summary: Kubernetes node is not ready
+        description: "{{ $value }} Flux resource(s) are currently suspended and will not reconcile"
+        summary: Flux resources are suspended
+      labels:
+        severity: warning
+        component: flux
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: count(gotk_resource_info{suspended="true",job="prometheus.scrape.pods"}) OR vector(0)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 0
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+
+    - uid: flux-resources-failing
+      title: Flux Resources Failing
+      condition: C
+      for: 10m
+      noDataState: NoData
+      execErrState: Error
+      annotations:
+        description: "{{ $value }} Flux resource(s) are failing reconciliation"
+        summary: Flux resources in failed state
       labels:
         severity: critical
-        component: node
+        component: flux
       data:
         - refId: A
           relativeTimeRange:
@@ -30,7 +82,7 @@ spec:
             to: 0
           datasourceUid: prometheus
           model:
-            expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+            expr: count(gotk_resource_info{ready="False",job="prometheus.scrape.pods"}) OR vector(0)
             refId: A
         - refId: B
           relativeTimeRange:
@@ -63,18 +115,18 @@ spec:
             type: threshold
             refId: C
 
-    - uid: node-disk-pressure
-      title: Node Under Disk Pressure
+    - uid: flux-resources-stale
+      title: Flux Resources Stale
       condition: C
       for: 5m
       noDataState: NoData
       execErrState: Error
       annotations:
-        description: "Node {{ $labels.node }} is under disk pressure"
-        summary: Node disk pressure detected
+        description: "{{ $value }} Flux resource(s) have not reconciled in over 30 minutes"
+        summary: Flux resources are stale
       labels:
         severity: warning
-        component: node
+        component: flux
       data:
         - refId: A
           relativeTimeRange:
@@ -82,7 +134,7 @@ spec:
             to: 0
           datasourceUid: prometheus
           model:
-            expr: kube_node_status_condition{condition="DiskPressure",status="true"} == 1
+            expr: count((time() - gotk_reconcile_condition{status="True",type="Ready",job="prometheus.scrape.pods"}) > 1800) OR vector(0)
             refId: A
         - refId: B
           relativeTimeRange:
@@ -115,18 +167,18 @@ spec:
             type: threshold
             refId: C
 
-    - uid: node-memory-pressure
-      title: Node Under Memory Pressure
+    - uid: flux-reconciliation-rate-low
+      title: Flux Reconciliation Rate Low
       condition: C
-      for: 5m
-      noDataState: NoData
+      for: 15m
+      noDataState: Alerting
       execErrState: Error
       annotations:
-        description: "Node {{ $labels.node }} is under memory pressure"
-        summary: Node memory pressure detected
+        description: "Flux reconciliation rate is {{ $value | humanize }}ops/s (expected > 0.01 ops/s)"
+        summary: Flux controllers may not be reconciling
       labels:
         severity: warning
-        component: node
+        component: flux
       data:
         - refId: A
           relativeTimeRange:
@@ -134,7 +186,7 @@ spec:
             to: 0
           datasourceUid: prometheus
           model:
-            expr: kube_node_status_condition{condition="MemoryPressure",status="true"} == 1
+            expr: sum(rate(gotk_reconcile_duration_seconds_count{job="prometheus.scrape.pods"}[5m])) OR on() vector(0)
             refId: A
         - refId: B
           relativeTimeRange:
@@ -156,8 +208,8 @@ spec:
             conditions:
               - evaluator:
                   params:
-                    - 0
-                  type: gt
+                    - 0.01
+                  type: lt
                 operator:
                   type: and
                 query:

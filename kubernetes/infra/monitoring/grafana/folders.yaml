@@ -13,10 +13,21 @@ spec:
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaFolder
 metadata:
-  name: infrastructure
+  name: flux
   namespace: monitoring
 spec:
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
-  title: "Infrastructure"
+  title: "Flux"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: proxmox
+  namespace: monitoring
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  title: "Proxmox"
