@@ -174,7 +174,7 @@ spec:
       noDataState: Alerting
       execErrState: Error
       annotations:
-        description: "Flux reconciliation rate is {{ $value | humanize }}ops/s (expected > 0.01 ops/s)"
+        description: "Flux reconciliation rate is {{ $values.B.Value | humanize }}ops/s (expected > 0.01 ops/s)"
         summary: Flux controllers may not be reconciling
       labels:
         severity: warning

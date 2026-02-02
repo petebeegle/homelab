@@ -36,7 +36,7 @@ spec:
         root_url: https://monitoring.lab.petebeegle.com
     sidecar:
       dashboards:
-        enabled: true
+        enabled: false
     datasources:
       datasources.yaml:
         apiVersion: 1
@@ -72,12 +72,6 @@ spec:
                 type: discord
                 settings:
                   url: "http://pretty-discord-alerts.monitoring.svc.cluster.local:80/webhook"
-                  username: Grafana Alerts
-                  avatar_url: "https://avatars.githubusercontent.com/u/7195757?s=200&v=4"
-                  message: |
-                    {{`{{ len .Alerts.Firing }}`}} firing, {{`{{ len .Alerts.Resolved }}`}} resolved
-                  title: |
-                    {{`{{ if gt (len .Alerts.Firing) 0 }}`}}🔥 Firing{{`{{ else }}`}}✅ Resolved{{`{{ end }}`}}
       policies.yaml:
         apiVersion: 1
         policies:

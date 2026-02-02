@@ -4,9 +4,9 @@ kind: Kustomization
 resources:
   - app.yaml
   - secret.yaml
-  - folders.yaml
   - grafana-env.yaml
   - gateway.yaml
   - grafana-instance.yaml
+  - folders.yaml
   - dashboards
   - alerting
