@@ -1,0 +1,56 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: monitoring
+  name: pretty-discord-alerts
+  labels:
+    app: pretty-discord-alerts
+
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: pretty-discord-alerts
+  template:
+    metadata:
+      labels:
+        app: pretty-discord-alerts
+    spec:
+      containers:
+        - name: pretty-discord-alerts
+          image: ghcr.io/petebeegle/pretty-discord-alerts:1.0.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: DISCORD_WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-env
+                  key: DISCORD_WEBHOOK_URL
+          ports:
+            - name: web
+              containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: web
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: web
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "50Mi"
+              cpu: "250m"
+            limits:
+              memory: "100Mi"
+              cpu: "250m"
+      restartPolicy: Always

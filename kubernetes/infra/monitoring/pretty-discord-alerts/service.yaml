@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pretty-discord-alerts
+  labels:
+    name: pretty-discord-alerts
+  namespace: monitoring
+spec:
+  selector:
+    app: pretty-discord-alerts
+  ports:
+    - name: web
+      port: 80
+      targetPort: 8080

@@ -9,5 +9,6 @@ resources:
   - kube-state-metrics
   - alloy
   - grafana
+  - pretty-discord-alerts
   - snmp-exporter
   - otel-collector
