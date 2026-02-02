@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: pretty-discord-alerts
-          image: ghcr.io/petebeegle/pretty-discord-alerts:1.0.1
+          image: ghcr.io/petebeegle/pretty-discord-alerts:1.1.0
           imagePullPolicy: IfNotPresent
           env:
             - name: DISCORD_WEBHOOK_URL
@@ -27,6 +27,8 @@ spec:
                 secretKeyRef:
                   name: grafana-env
                   key: DISCORD_WEBHOOK_URL
+            - name: LOG_LEVEL
+              value: debug
           ports:
             - name: web
               containerPort: 8080
