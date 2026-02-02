@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: pretty-discord-alerts
-          image: ghcr.io/petebeegle/pretty-discord-alerts:1.0.0
+          image: ghcr.io/petebeegle/pretty-discord-alerts:1.0.1
           imagePullPolicy: IfNotPresent
           env:
             - name: DISCORD_WEBHOOK_URL
