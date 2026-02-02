@@ -18,7 +18,7 @@ spec:
       noDataState: Alerting
       execErrState: Error
       annotations:
-        description: "Expected 4 Proxmox nodes, currently detecting {{ $value }} node(s)"
+        description: "Expected 4 Proxmox nodes, currently detecting {{ $values.B.Value }} node(s)"
         summary: One or more Proxmox nodes are unreachable
       labels:
         severity: critical
