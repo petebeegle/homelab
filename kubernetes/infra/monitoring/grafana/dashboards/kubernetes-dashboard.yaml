@@ -8,7 +8,7 @@ spec:
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
-  folderRef: "kubernetes"
+  folder: "Kubernetes"
   configMapRef:
     name: kubernetes-dashboard
     key: dashboard.json

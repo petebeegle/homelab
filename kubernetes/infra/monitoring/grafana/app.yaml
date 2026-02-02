@@ -21,17 +21,19 @@ spec:
   chart:
     spec:
       chart: grafana
-      version: 7.3.9
+      version: 11.0.1
       sourceRef:
         kind: HelmRepository
-        name: grafana
+        name: grafana-community
         namespace: flux-system
   values:
     envFromSecret: grafana-env
-    image:
-      tag: 12.1.0
     admin:
       existingSecret: grafana-credentials
+    grafana.ini:
+      server:
+        domain: monitoring.lab.petebeegle.com
+        root_url: https://monitoring.lab.petebeegle.com
     sidecar:
       dashboards:
         enabled: true
@@ -81,7 +83,7 @@ spec:
         policies:
           - orgId: 1
             receiver: discord
-            group_by: ['alertname', 'namespace']
+            group_by: ["alertname", "namespace"]
             group_wait: 10s
             group_interval: 5m
             repeat_interval: 12h

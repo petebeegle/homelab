@@ -8,7 +8,7 @@ spec:
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
-  folderRef: "proxmox"
+  folder: "Proxmox"
   configMapRef:
     name: proxmox-dashboard
     key: dashboard.json

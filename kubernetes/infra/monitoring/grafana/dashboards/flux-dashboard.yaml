@@ -8,7 +8,7 @@ spec:
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
-  folderRef: "flux"
+  folder: "Flux"
   configMapRef:
     name: flux-dashboard
     key: dashboard.json
