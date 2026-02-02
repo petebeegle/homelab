@@ -69,7 +69,7 @@ spec:
             orgId: 1
             receivers:
               - uid: discord-webhook
-                type: discord
+                type: webhook
                 settings:
                   url: "http://pretty-discord-alerts.monitoring.svc.cluster.local:80/webhook"
       policies.yaml:
