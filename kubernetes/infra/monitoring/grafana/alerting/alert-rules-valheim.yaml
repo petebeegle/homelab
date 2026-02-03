@@ -1,0 +1,65 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaAlertRuleGroup
+metadata:
+  name: valheim
+  namespace: monitoring
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  folderRef: "valheim"
+  interval: 1m
+  resyncPeriod: 1m
+  rules:
+    - uid: valheim-player-login
+      title: Valheim Player Login
+      condition: C
+      for: 0s
+      noDataState: OK
+      execErrState: OK
+      annotations:
+        description: "Player logged into Valheim server: {{ $labels.player }}"
+        summary: Player connected to Valheim server
+      labels:
+        severity: notification
+        component: valheim
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 60
+            to: 0
+          datasourceUid: loki
+          model:
+            expr: 'sum by (player) (count_over_time({namespace="valheim"} | regexp "Got character ZDOID from (?P<player>.+?) :" | player != "" [1m]))'
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 60
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 60
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 0
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C

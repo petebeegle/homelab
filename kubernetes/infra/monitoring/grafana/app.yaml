@@ -84,4 +84,12 @@ spec:
             routes:
               - receiver: discord
                 matchers:
+                  - component = valheim
+                group_by: ["player"]
+                group_wait: 0s
+                group_interval: 1m
+                repeat_interval: 1m
+                send_resolved: false
+              - receiver: discord
+                matchers:
                   - severity =~ "warning|critical"

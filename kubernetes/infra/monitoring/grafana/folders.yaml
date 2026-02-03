@@ -31,3 +31,14 @@ spec:
     matchLabels:
       dashboards: "grafana"
   title: "Proxmox"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: valheim
+  namespace: monitoring
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  title: "Valheim"
