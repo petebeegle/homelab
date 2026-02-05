@@ -2,7 +2,7 @@ terraform {
   required_providers {
     synology = {
       source  = "synology-community/synology"
-      version = "0.6.7"
+      version = "0.6.9"
     }
     external = {
       source  = "hashicorp/external"
