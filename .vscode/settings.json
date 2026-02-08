@@ -1,9 +1,17 @@
 {
-  "editor.formatOnSave": true,
-  "[yaml]": {
-    "editor.formatOnSave": true,
-    "files.exclude": {
-      "**/secrets.yaml": true
-    },
-  }
+  "yaml.schemas": {
+    "https://json.schemastore.org/kustomization.json": [
+      "**/kustomization.yaml",
+      "**/kustomization.yml"
+    ]
+  },
+  "yaml.customTags": [
+    "!Env scalar",
+    "!Find sequence",
+    "!Context scalar",
+    "!Format sequence",
+    "!If sequence",
+    "!KeyOf scalar",
+    "!Value scalar"
+  ]
 }
