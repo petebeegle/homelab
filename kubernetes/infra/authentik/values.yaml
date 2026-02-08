@@ -1,0 +1,52 @@
+# Authentik server configuration
+authentik:
+  secret_key: ""  # Set via envFrom
+  error_reporting:
+    enabled: false  # Disable telemetry
+  postgresql:
+    password: ""  # Set via envFrom
+
+# Embedded PostgreSQL
+postgresql:
+  enabled: true
+  auth:
+    existingSecret: authentik-secrets
+    secretKeys:
+      adminPasswordKey: password
+  primary:
+    persistence:
+      enabled: true
+      storageClass: nfs-csi-storage
+      size: 10Gi
+
+# Server configuration
+server:
+  replicas: 1
+  envFrom:
+    - secretRef:
+        name: authentik-secrets
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+  ingress:
+    enabled: false  # Using Gateway API
+
+# Worker configuration
+worker:
+  replicas: 1
+  envFrom:
+    - secretRef:
+        name: authentik-secrets
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+
+# Disable GeoIP (not needed for homelab)
+geoip:
+  enabled: false
