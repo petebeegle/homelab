@@ -21,7 +21,14 @@ configMapGenerator:
       - dashboard.json=proxmox-dashboard.json
     options:
       disableNameSuffixHash: true
+  - name: authentik-dashboard
+    namespace: monitoring
+    files:
+      - dashboard.json=authentik-dashboard.json
+    options:
+      disableNameSuffixHash: true
 resources:
   - proxmox-dashboard.yaml
   - flux-dashboard.yaml
   - kubernetes-dashboard.yaml
+  - authentik-dashboard.yaml

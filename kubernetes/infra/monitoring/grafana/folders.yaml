@@ -42,3 +42,14 @@ spec:
     matchLabels:
       dashboards: "grafana"
   title: "Valheim"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: authentik
+  namespace: monitoring
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  title: "Authentik"

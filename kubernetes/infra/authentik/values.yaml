@@ -1,10 +1,10 @@
 # Authentik server configuration
 authentik:
-  secret_key: "" # Set via envFrom
+  secret_key: ""  # Set via envFrom
   error_reporting:
-    enabled: false # Disable telemetry
+    enabled: false  # Disable telemetry
   postgresql:
-    password: "" # Set via envFrom
+    password: ""  # Set via envFrom
 
 # Embedded PostgreSQL
 postgresql:
@@ -40,7 +40,12 @@ server:
     limits:
       memory: 1Gi
   ingress:
-    enabled: false # Using Gateway API
+    enabled: false  # Using Gateway API
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      interval: 30s
 
 # Worker configuration
 worker:
@@ -54,6 +59,11 @@ worker:
       memory: 512Mi
     limits:
       memory: 1Gi
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      interval: 30s
 
 # Disable GeoIP (not needed for homelab)
 geoip:
