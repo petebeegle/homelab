@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "homelab-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "tsx",
+        "/opt/homelab-mcp/src/index.ts"
+      ],
+      "env": {}
+    }
+  }
+}

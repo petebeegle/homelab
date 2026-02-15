@@ -14,7 +14,12 @@
       "Bash(kubectl describe:*)",
       "Bash(kubectl logs:*)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "mcp__homelab-mcp__*"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "homelab-mcp"
+  ]
 }
