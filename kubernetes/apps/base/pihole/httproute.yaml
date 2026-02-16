@@ -8,6 +8,7 @@ spec:
   parentRefs:
     - name: internal
       namespace: gateway
+      sectionName: https-gateway
   hostnames:
     - pihole.lab.petebeegle.com
   rules:

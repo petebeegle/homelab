@@ -8,6 +8,7 @@ spec:
   parentRefs:
     - name: internal
       namespace: gateway
+      sectionName: https-gateway
   hostnames:
     - authentik.lab.petebeegle.com
   rules:

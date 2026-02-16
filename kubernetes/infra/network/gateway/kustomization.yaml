@@ -6,4 +6,5 @@ resources:
   - ./certificate.yaml
   - ./gateway-internal.yaml
   - ./gateway-passthrough.yaml
+  - ./https-redirect.yaml
   - ./referencegrant.yaml

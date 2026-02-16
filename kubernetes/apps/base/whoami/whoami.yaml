@@ -44,6 +44,7 @@ spec:
   parentRefs:
     - name: internal
       namespace: gateway
+      sectionName: https-gateway
   hostnames:
     - whoami.lab.petebeegle.com
   rules:
