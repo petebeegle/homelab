@@ -25,14 +25,6 @@ server:
   envFrom:
     - secretRef:
         name: authentik-secrets
-  volumes:
-    - name: grafana-oauth-blueprint
-      configMap:
-        name: grafana-oauth-blueprint
-  volumeMounts:
-    - name: grafana-oauth-blueprint
-      mountPath: /blueprints/default/grafana-oauth.yaml
-      subPath: grafana-oauth.yaml
   resources:
     requests:
       cpu: 100m

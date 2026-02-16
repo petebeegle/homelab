@@ -8,5 +8,6 @@ configMapGenerator:
   - name: grafana-oauth-blueprint
     files:
       - grafana-oauth.yaml
-    options:
-      disableNameSuffixHash: true
+  - name: synology-oauth-blueprint
+    files:
+      - synology-oauth.yaml
