@@ -3,8 +3,4 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - namespace.yaml
-  - pve01.yaml
-  - pve02.yaml
-  - pve03.yaml
-  - pve04.yaml
-  - unifi.yaml
+  - synology.yaml

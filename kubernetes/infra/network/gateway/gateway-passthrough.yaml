@@ -64,3 +64,12 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+    - protocol: TLS
+      port: 443
+      name: synology-passthrough
+      hostname: "synology.petebeegle.com"
+      tls:
+        mode: Passthrough
+      allowedRoutes:
+        namespaces:
+          from: All
