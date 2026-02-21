@@ -1,0 +1,64 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaAlertRuleGroup
+metadata:
+  name: mimir
+  namespace: monitoring
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  folderRef: "monitoring"
+  interval: 1m
+  rules:
+    - uid: mimir-ingester-unhealthy
+      title: Mimir Ingester Unhealthy
+      condition: C
+      for: 5m
+      noDataState: Alerting
+      execErrState: Error
+      annotations:
+        description: "Mimir has no ACTIVE ingesters in the ring. Metrics are not being stored and Grafana dashboards will show no data. Fix: kubectl delete pod mimir-ingester-0 -n monitoring"
+        summary: Mimir ingester is not healthy in the ring
+      labels:
+        severity: critical
+        component: mimir
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: cortex_ring_members{name="ingester", state="ACTIVE", job="prometheus.scrape.pods"}
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 1
+                  type: lt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C

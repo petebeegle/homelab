@@ -6,3 +6,4 @@ resources:
   - alert-rules-proxmox.yaml
   - alert-rules-flux.yaml
   - alert-rules-valheim.yaml
+  - alert-rules-mimir.yaml

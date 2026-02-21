@@ -53,3 +53,14 @@ spec:
     matchLabels:
       dashboards: "grafana"
   title: "Authentik"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: monitoring
+  namespace: monitoring
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  title: "Monitoring"
