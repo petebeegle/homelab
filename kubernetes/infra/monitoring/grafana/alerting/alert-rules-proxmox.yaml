@@ -30,7 +30,7 @@ spec:
             to: 0
           datasourceUid: prometheus
           model:
-            expr: count(count by (proxmox_node) (proxmox_proxmox_node_uptime_seconds))
+            expr: count(count by (proxmox_node) (proxmox_proxmox_node_uptime_seconds)) OR on() vector(0)
             refId: A
         - refId: B
           relativeTimeRange:

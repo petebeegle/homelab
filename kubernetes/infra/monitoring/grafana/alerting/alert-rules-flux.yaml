@@ -186,7 +186,7 @@ spec:
             to: 0
           datasourceUid: prometheus
           model:
-            expr: sum(rate(gotk_reconcile_duration_seconds_count{job="prometheus.scrape.pods"}[5m])) OR on() vector(0)
+            expr: sum(rate(gotk_reconcile_duration_seconds_count[5m])) OR on() vector(0)
             refId: A
         - refId: B
           relativeTimeRange:
