@@ -4,17 +4,15 @@ variable "pm_api_token_secret" {}
 
 terraform {
   required_providers {
-    talos = {
-      source  = "siderolabs/talos"
-      version = "0.8.1"
-    }
+    // https://registry.terraform.io/providers/bpg/proxmox/0.97.1/docs
     proxmox = {
-      source  = "Telmate/proxmox"
-      version = "3.0.2-rc07"
+      source  = "bpg/proxmox"
+      version = "0.97.1"
     }
+    // https://registry.terraform.io/providers/hashicorp/helm/3.1.1/docs
     helm = {
       source  = "hashicorp/helm"
-      version = "2.17.0"
+      version = "3.1.1"
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
@@ -24,17 +22,22 @@ terraform {
 }
 
 provider "proxmox" {
-  pm_tls_insecure     = true
-  pm_api_url          = var.pm_api_url
-  pm_api_token_id     = var.pm_api_token_id
-  pm_api_token_secret = var.pm_api_token_secret
+  endpoint  = var.pm_api_url
+  api_token = "${var.pm_api_token_id}=${var.pm_api_token_secret}"
+  insecure  = true
+
+  ssh {
+    agent    = true
+    username = "root"
+  }
 }
 
 provider "helm" {
-  kubernetes {
+  kubernetes = {
     config_path = "~/.kube/config"
   }
 }
+
 provider "kubernetes" {
   config_path = "~/.kube/config"
 }

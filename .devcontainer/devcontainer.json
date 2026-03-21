@@ -25,7 +25,8 @@
         "HashiCorp.terraform",
         "EditorConfig.EditorConfig",
         "Weaveworks.vscode-gitops-tools",
-        "Grafana.grafana-alloy"
+        "Grafana.grafana-alloy",
+        "anthropic.claude-code"
       ],
     }
   },
