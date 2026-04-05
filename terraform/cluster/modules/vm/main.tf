@@ -53,6 +53,8 @@ resource "proxmox_virtual_environment_vm" "kubernetes_node" {
     size         = var.disk_size
   }
 
+  boot_order = ["scsi0", "ide3"]
+
   network_device {
     bridge = "vmbr0"
     model  = "virtio"
