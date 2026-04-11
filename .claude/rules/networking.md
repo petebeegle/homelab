@@ -1,47 +1,27 @@
-# Networking: Cilium & Gateway API
+# Networking — Cilium + Gateway API
 
-## Research Resources
+## Tool priority
 
-1. **Cilium docs:** https://docs.cilium.io/en/stable/
-2. **Gateway API support:** https://docs.cilium.io/en/stable/network/servicemesh/gateway-api/gateway-api/
-3. **Key setting:** `kubeProxyReplacement: true` required for Gateway API
+Use `kubernetes` MCP for all resource inspection. Fall back to CLI only for Cilium connectivity tests that MCP can't produce.
 
-## Troubleshooting
+## Common issues
 
-```bash
-# Check Cilium status
-cilium status
+- **Gateway not getting IP:** Check `l2announcements.enabled: true` in Cilium HelmRelease values
+- **TLS not working:** Verify cert-manager Certificates are Ready (`kubectl get cert -A`)
+- **Source IP not preserved:** Cilium handles this automatically — no `externalTrafficPolicy` needed
+- **CNI change post-deployment:** Causes major disruption — avoid unless necessary
+- **kubeProxyReplacement:** Must be `true` for Gateway API to work
 
-# Check Gateway resources
-kubectl get gateways -A
-kubectl get httproutes -A
-kubectl get tlsroutes -A
+## Exposing an internal service (HTTPRoute)
 
-# Check Cilium logs
-kubectl logs -n kube-system -l k8s-app=cilium
+1. Confirm the Service exists with the correct port
+2. Create `httproute.yaml` referencing Gateway `internal` in namespace `gateway`, section `https-gateway`
+3. Hostname pattern: `<app>.lab.petebeegle.com`
+4. Verify: `kubectl get httproute <name> -o yaml` shows `Accepted` + `Programmed`
 
-# Verify connectivity
-cilium connectivity test
-```
+## Exposing an external service (TLS passthrough)
 
-**Common issues:**
-- Gateway not getting IP: Check `l2announcements.enabled: true` in Cilium config
-- TLS not working: Verify cert-manager certificates are Ready
-- Source IP not preserved: Cilium handles this automatically, no `externalTrafficPolicy` needed
-- Changing CNI after deployment causes major disruption - avoid if possible
-
-## Patterns
-
-### Exposing a Service via Gateway API
-
-1. Ensure service exists and has correct port
-2. Create HTTPRoute or TLSRoute referencing the Gateway in `kubernetes/infra/network/`
-3. For TLS, create Certificate resource referencing cert-manager ClusterIssuer
-4. Verify: `kubectl get httproute <name> -o yaml` shows attached to Gateway
-
-### Adding External Service Access
-
-For services outside the cluster (like Proxmox, UniFi):
-1. Create ExternalName Service or Endpoints + Service
-2. Create TLSRoute with `passthrough` for TLS passthrough
-3. See `kubernetes/apps/base/external/` for examples
+For hosts outside the cluster (Proxmox, UniFi, NAS):
+1. Create `ExternalName` Service or manual `Endpoints` + `Service`
+2. Create `TLSRoute` with `passthrough` mode — TLS terminates at the target, no cert-manager needed
+3. See `kubernetes/apps/base/external/` for existing examples

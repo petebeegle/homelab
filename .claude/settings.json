@@ -1,0 +1,87 @@
+{
+  "model": "sonnet",
+  "env": {
+    "MAX_THINKING_TOKENS": "10000",
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "50"
+  },
+  "enabledPlugins": {
+    "skill-creator@claude-plugins-official": true
+  },
+  "permissions": {
+    "allow": [
+      "WebSearch(*)",
+      "WebFetch(*)",
+      "Grep(*)",
+      "Glop(*)",
+      "Read(*)",
+      "mcp__*",
+      "Bash(flux check:*)",
+      "Bash(flux get:*)",
+      "Bash(flux logs:*)",
+      "Bash(flux debug:*)",
+      "Bash(cilium status:*)",
+      "Bash(cilium connectivity:*)",
+      "Bash(pre-commit *)",
+      "Bash(talosctl version:*)",
+      "Bash(talosctl -n:*)",
+      "Bash(terraform init:*)",
+      "Bash(terraform plan:*)",
+      "Bash(terraform output:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/terraform-plan.sh",
+            "statusMessage": "Running terraform plan...",
+            "timeout": 120
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/sops-guard.sh",
+            "statusMessage": "Checking for unencrypted secrets..."
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "auto",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/compact-checkpoint.sh",
+            "statusMessage": "Noting auto-compact..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/pre-commit-check.sh",
+            "statusMessage": "Running pre-commit..."
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/flux-reminder.sh",
+            "statusMessage": "Noting push..."
+          }
+        ]
+      }
+    ]
+  }
+}
