@@ -1,13 +1,21 @@
 {
   "mcpServers": {
-    "homelab-mcp": {
+    "kubernetes": {
       "type": "stdio",
       "command": "npx",
-      "args": [
-        "tsx",
-        "/opt/homelab-mcp/src/index.ts"
-      ],
-      "env": {}
+      "args": ["-y", "kubernetes-mcp-server@latest"]
+    },
+    "terraform": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "terraform-mcp-server@latest"]
+    },
+    "grafana": {
+      "type": "stdio",
+      "command": "/workspaces/homelab/.devcontainer/grafana-mcp.sh",
+      "env": {
+        "GRAFANA_URL": "https://monitoring.lab.petebeegle.com"
+      }
     }
   }
 }

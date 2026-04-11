@@ -8,3 +8,4 @@ terraform.tfvars
 
 # Local scratchpad (not committed)
 SCRATCHPAD.md
+settings.local.json

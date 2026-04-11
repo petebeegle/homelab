@@ -1,0 +1,28 @@
+{
+  "enabledPlugins": {
+    "skill-creator@claude-plugins-official": true
+  },
+  "permissions": {
+    "allow": [
+      "WebSearch(*)",
+      "WebFetch(*)",
+      "Grep(*)",
+      "Glop(*)",
+      "Read(*)",
+      "mcp__*",
+      "Bash(flux check:*)",
+      "Bash(flux get:*)",
+      "Bash(flux logs:*)",
+      "Bash(flux debug:*)",
+      "Bash(cilium status:*)",
+      "Bash(cilium connectivity:*)",
+      "Bash(pre-commit *)",
+      "Bash(talosctl version:*)",
+      "Bash(talosctl -n:*)",
+      "Bash(terraform init:*)",
+      "Bash(terraform plan:*)",
+      "Bash(terraform output:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true
+}

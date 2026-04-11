@@ -8,6 +8,15 @@ This is an Infrastructure-as-Code homelab repository managing a Kubernetes clust
 
 **Key Technologies:** Terraform, Talos OS, Kubernetes, FluxCD, Cilium (CNI), Gateway API, SOPS/Age encryption
 
+## MCP Tool Priority
+
+| MCP | Use for |
+|-----|---------|
+| `kubernetes` | K8s CRUD, pod logs, Helm, events, CRD queries (including Flux CRDs) |
+| `grafana` | Dashboards, metrics queries, alert rules, datasource inspection |
+
+CLI is fallback only when MCP tools don't cover the need.
+
 ## Commands
 
 ### Terraform (Infrastructure)
@@ -17,6 +26,12 @@ terraform init
 terraform apply -auto-approve
 ```
 
+**Before applying:**
+- [ ] `terraform plan` shows expected changes only
+- [ ] No secrets in plain text (use variables or SOPS)
+- [ ] Node count maintains etcd quorum (odd number of control planes)
+- [ ] NFS host/user variables are set in `terraform.tfvars`
+
 ### Linting & Validation
 ```bash
 pre-commit run --all-files          # Run all hooks (yamllint, k8svalidate, terraform_fmt)
@@ -24,21 +39,24 @@ pre-commit run --all-files          # Run all hooks (yamllint, k8svalidate, terr
 
 ### FluxCD Operations
 
-**Prefer `homelab-mcp` tools** over CLI commands when available:
-- `cluster_health` - aggregated overview of nodes, flux, pods, helmreleases, PVCs
-- `flux_status` - kustomization/helmrelease status (replaces `flux get`)
-- `flux_logs` - flux controller logs filtered by level (replaces `flux logs`)
-- `flux_reconcile` - trigger reconciliation (replaces `flux reconcile`)
-- `helmrelease_debug` - deep dive on a HelmRelease with conditions, events, values
-- `pod_logs` - pod logs by name, label, or deployment (replaces `kubectl logs`)
-- `talos_nodes` - Talos node status with service health
-- `talos_logs` - Talos service logs
-
-Fall back to CLI only when MCP tools don't cover the need:
+Use the `kubernetes` MCP for kustomization/helmrelease status, pod logs, events, and CRD queries. CLI is only needed for computed debug output the MCP can't produce:
 ```bash
-flux debug kustomization <name> --show-vars   # Inspect variable values
-flux debug helmrelease <name> --show-values   # Inspect final Helm values
+flux debug kustomization <name> --show-vars   # Computed variable substitution values
+flux debug helmrelease <name> --show-values   # Final merged Helm values (including valuesFrom)
 ```
+
+**Before pushing Kubernetes changes:**
+- [ ] `pre-commit run --all-files` passes
+- [ ] SOPS secrets are encrypted — verify with `sops -d secret.yaml`
+- [ ] HelmRelease has correct `dependsOn` if it needs CRDs or storage
+- [ ] PVCs reference existing StorageClass (`nfs-csi-storage`)
+- [ ] Gateway API routes reference existing Gateway
+
+**After any change — confirm everything settled (use `kubernetes` MCP):**
+- [ ] All Kustomizations Ready
+- [ ] All HelmReleases Ready
+- [ ] All nodes Ready
+- [ ] No unexpected pods (ignore Running and Completed)
 
 ### Secrets (SOPS/Age)
 ```bash
@@ -113,3 +131,28 @@ FluxCD applies resources in this order via depends-on relationships:
 Use the devcontainer which includes: kubectl, helm, flux, talosctl, terraform, sops, cilium CLI, and pre-commit.
 
 Age key must be at `~/.config/sops/age/keys.agekey` for secret decryption.
+
+### External Service Terraform Workspaces
+
+`terraform/external/` contains workspaces for provisioning credentials on external services:
+
+| Workspace | Purpose |
+|-----------|---------|
+| `grafana/` | Creates `claude-mcp` service account + token; `poststart.sh` exports `GRAFANA_SERVICE_ACCOUNT_TOKEN` from its output |
+| `nexus/` | Docker registry user and repository config |
+| `synology/` | NAS user and NFS export config |
+
+## Skills
+
+Use these skills for common tasks — invoke them with `/skill-name`:
+
+| Skill | When to use |
+|-------|-------------|
+| `add-app` | Scaffolding a new Kubernetes application (HelmRelease, HTTPRoute, production overlay) |
+| `add-secret` | Adding any credentials or sensitive values to an application |
+| `diagnose-kustomization` | Flux Kustomization not Ready or blocking downstream resources |
+| `diagnose-helmrelease` | Flux HelmRelease stuck, failing to install/upgrade, or app not running |
+| `observability` | Working with Grafana, Loki, Mimir, or Alloy |
+| `storage` | Debugging Synology CSI PVC issues |
+| `networking` | Cilium or Gateway API troubleshooting |
+| `talos` | Node management, upgrades, or etcd issues |

@@ -4,7 +4,6 @@
   "features": {
     "ghcr.io/petebeegle/devcontainer-features/cilium:1": {},
     "ghcr.io/petebeegle/devcontainer-features/flux:1": {},
-    "ghcr.io/petebeegle/devcontainer-features/homelab-mcp:1": {},
     "ghcr.io/devcontainers/features/terraform:1.4.1": {
       "terragrunt": "none"
     },
@@ -12,10 +11,15 @@
     "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {},
     "ghcr.io/devcontainers/features/terraform:1": {},
     "ghcr.io/devcontainers-extra/features/sops:1": {},
+    "ghcr.io/devcontainers-extra/features/claude-code:2": {},
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},
     "ghcr.io/devcontainers-extra/features/cloudflared:1": {},
     "ghcr.io/devcontainers-extra/features/terraform-docs:1": {},
-    "ghcr.io/devcontainers-extra/features/pre-commit:2": {}
+    "ghcr.io/devcontainers-extra/features/pre-commit:2": {},
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
+    },
+    "ghcr.io/devcontainers-extra/features/uv:1": {}
   },
   "customizations": {
     "vscode": {
@@ -27,7 +31,7 @@
         "Weaveworks.vscode-gitops-tools",
         "Grafana.grafana-alloy",
         "anthropic.claude-code"
-      ],
+      ]
     }
   },
   "mounts": [
@@ -36,5 +40,5 @@
   "forwardPorts": [
     12345 // alloy
   ],
-  "postStartCommand": "mkdir -p ~/.kube && terraform -chdir=terraform/cluster output -raw kubeconfig > ~/.kube/config && chmod 600 ~/.kube/config"
+  "postStartCommand": ".devcontainer/poststart.sh"
 }

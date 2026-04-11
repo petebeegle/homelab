@@ -1,19 +1,11 @@
-# Storage: Synology CSI
-
-## Research Resources
-
-1. **GitHub:** https://github.com/SynologyOpenSource/synology-csi
-2. **Requirements:** DSM 7.0+, Btrfs volume (ext4 lacks quota support)
-3. **Protocol:** NFS v4.1 recommended for multi-pod access (RWX)
+---
+name: storage
+description: Synology CSI storage reference for this homelab. Invoke when troubleshooting PVCs, stuck Pending volumes, NFS mount failures, StorageClass issues, or when adding persistent storage to an application. Also invoke for NFS export permission questions.
+---
 
 ## Troubleshooting
 
-**Prefer `homelab-mcp` tools** over CLI commands:
-- Use `cluster_health` to check for PVC issues and problem pods across all namespaces
-- Use `pod_logs(namespace="dataplane", label="app.kubernetes.io/name=synology-csi")` for CSI driver logs
-- Use `pod_logs(namespace="dataplane")` to check CSI driver pods
-
-Fall back to CLI only when MCP tools don't cover the need:
+Use the `kubernetes` MCP for pod logs and resource inspection, fall back to CLI when needed:
 ```bash
 # Check StorageClass
 kubectl get storageclass
@@ -30,6 +22,12 @@ kubectl describe pvc <name> -n <namespace>
 - ext4 volumes lack quota support - use Btrfs volumes
 
 **NFS export requirements:**
-- Allow your homelab VLAN (192.168.30.0/24)
+- Allow homelab VLAN (192.168.30.0/24)
 - Allow devcontainer subnet (172.17.0.0/16) if developing locally
 - Use Btrfs volumes for quota/shared folder support
+
+## Research Resources
+
+1. **GitHub:** https://github.com/SynologyOpenSource/synology-csi
+2. **Requirements:** DSM 7.0+, Btrfs volume (ext4 lacks quota support)
+3. **Protocol:** NFS v4.1 recommended for multi-pod access (RWX)

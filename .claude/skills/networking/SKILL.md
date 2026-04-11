@@ -1,13 +1,11 @@
-# Networking: Cilium & Gateway API
-
-## Research Resources
-
-1. **Cilium docs:** https://docs.cilium.io/en/stable/
-2. **Gateway API support:** https://docs.cilium.io/en/stable/network/servicemesh/gateway-api/gateway-api/
-3. **Key setting:** `kubeProxyReplacement: true` required for Gateway API
+---
+name: networking
+description: Cilium and Gateway API reference for this homelab. Invoke when troubleshooting network connectivity, Gateway API routes, HTTPRoutes, TLSRoutes, cert-manager certificates, or Cilium issues. Also invoke when adding a new service ingress or exposing an external service through the cluster.
+---
 
 ## Troubleshooting
 
+Use the `kubernetes` MCP first, fall back to CLI:
 ```bash
 # Check Cilium status
 cilium status
@@ -29,6 +27,12 @@ cilium connectivity test
 - TLS not working: Verify cert-manager certificates are Ready
 - Source IP not preserved: Cilium handles this automatically, no `externalTrafficPolicy` needed
 - Changing CNI after deployment causes major disruption - avoid if possible
+
+## Research Resources
+
+1. **Cilium docs:** https://docs.cilium.io/en/stable/
+2. **Gateway API support:** https://docs.cilium.io/en/stable/network/servicemesh/gateway-api/gateway-api/
+3. **Key setting:** `kubeProxyReplacement: true` required for Gateway API
 
 ## Patterns
 

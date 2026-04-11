@@ -23,8 +23,18 @@ github_user = "urnamehere"
 
 ### 2. Configure external dependencies
 The following external dependencies also include terraform modules for easier configuration.
+
 #### Nexus
 To set-up Nexus, follow the guide [here](./scripts/NEXUS.md).
+
+#### Grafana
+Provision a scoped service account for tooling (MCP, scripts, etc.):
+```sh
+cd terraform/external/grafana
+terraform init
+terraform apply
+```
+This creates a `claude-mcp` Viewer service account in Grafana and outputs a token. The devcontainer's `poststart.sh` exports it automatically as `GRAFANA_API_KEY`.
 
 ### 3. Create the cluster
 Create and bootstrap an environment via terraform!
@@ -73,6 +83,20 @@ talosctl version
 talosctl --nodes {CONTROL_PLANE_NODE} upgrade-k8s --to 1.32.0
 ```
 > See: [Upgrading K8s](https://www.talos.dev/v1.9/kubernetes-guides/upgrading-kubernetes/)
+
+---
+
+## Claude Code / AI Tooling
+
+This repo is set up for use with [Claude Code](https://claude.ai/code) inside the devcontainer. MCP servers are configured in `.mcp.json`:
+
+| MCP | What it does |
+|-----|-------------|
+| `kubernetes` | K8s read/write, pod logs, Helm, events, Flux CRD queries |
+| `grafana` | Dashboard queries, metrics, alert rules |
+| `flux-operator-mcp` | Flux pipeline health (requires flux-operator-mcp binary — installed by `poststart.sh`) |
+
+`GRAFANA_API_KEY` is injected at container start from `terraform/external/grafana` output — no secrets in committed files.
 
 ---
 
