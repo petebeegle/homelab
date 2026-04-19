@@ -3,7 +3,7 @@ apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaFolder
 metadata:
   name: kubernetes
-  namespace: monitoring
+  namespace: grafana
 spec:
   instanceSelector:
     matchLabels:
@@ -14,7 +14,7 @@ apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaFolder
 metadata:
   name: flux
-  namespace: monitoring
+  namespace: grafana
 spec:
   instanceSelector:
     matchLabels:
@@ -25,7 +25,7 @@ apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaFolder
 metadata:
   name: proxmox
-  namespace: monitoring
+  namespace: grafana
 spec:
   instanceSelector:
     matchLabels:
@@ -36,7 +36,7 @@ apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaFolder
 metadata:
   name: valheim
-  namespace: monitoring
+  namespace: grafana
 spec:
   instanceSelector:
     matchLabels:
@@ -47,7 +47,7 @@ apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaFolder
 metadata:
   name: authentik
-  namespace: monitoring
+  namespace: grafana
 spec:
   instanceSelector:
     matchLabels:
@@ -58,7 +58,7 @@ apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaFolder
 metadata:
   name: monitoring
-  namespace: monitoring
+  namespace: grafana
 spec:
   instanceSelector:
     matchLabels:
