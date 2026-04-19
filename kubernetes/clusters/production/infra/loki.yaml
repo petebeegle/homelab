@@ -14,8 +14,7 @@ spec:
     kind: GitRepository
     name: flux-system
   dependsOn:
-    - name: monitoring
-    - name: gateway
+    - name: crds
   postBuild:
     substituteFrom:
       - kind: ConfigMap

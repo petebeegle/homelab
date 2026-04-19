@@ -13,8 +13,6 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  dependsOn:
-    - name: gateway
   postBuild:
     substituteFrom:
       - kind: ConfigMap

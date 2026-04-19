@@ -14,5 +14,6 @@ configMapGenerator:
 configurations:
   - kustomizeconfig.yaml
 resources:
+  - repositories.yaml
   - namespace.yaml
   - app.yaml
