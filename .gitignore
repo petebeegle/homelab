@@ -9,3 +9,6 @@ terraform.tfvars
 # Local scratchpad (not committed)
 SCRATCHPAD.md
 settings.local.json
+
+# commit graph outputs, ignore the extraction cache
+graphify-out/cache/

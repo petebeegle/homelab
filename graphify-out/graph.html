@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>graphify - graphify-out/graph.html</title>
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0f0f1a; color: #e0e0e0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; display: flex; height: 100vh; overflow: hidden; }
+  #graph { flex: 1; }
+  #sidebar { width: 280px; background: #1a1a2e; border-left: 1px solid #2a2a4e; display: flex; flex-direction: column; overflow: hidden; }
+  #search-wrap { padding: 12px; border-bottom: 1px solid #2a2a4e; }
+  #search { width: 100%; background: #0f0f1a; border: 1px solid #3a3a5e; color: #e0e0e0; padding: 7px 10px; border-radius: 6px; font-size: 13px; outline: none; }
+  #search:focus { border-color: #4E79A7; }
+  #search-results { max-height: 140px; overflow-y: auto; padding: 4px 12px; border-bottom: 1px solid #2a2a4e; display: none; }
+  .search-item { padding: 4px 6px; cursor: pointer; border-radius: 4px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .search-item:hover { background: #2a2a4e; }
+  #info-panel { padding: 14px; border-bottom: 1px solid #2a2a4e; min-height: 140px; }
+  #info-panel h3 { font-size: 13px; color: #aaa; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  #info-content { font-size: 13px; color: #ccc; line-height: 1.6; }
+  #info-content .field { margin-bottom: 5px; }
+  #info-content .field b { color: #e0e0e0; }
+  #info-content .empty { color: #555; font-style: italic; }
+  .neighbor-link { display: block; padding: 2px 6px; margin: 2px 0; border-radius: 3px; cursor: pointer; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-left: 3px solid #333; }
+  .neighbor-link:hover { background: #2a2a4e; }
+  #neighbors-list { max-height: 160px; overflow-y: auto; margin-top: 4px; }
+  #legend-wrap { flex: 1; overflow-y: auto; padding: 12px; }
+  #legend-wrap h3 { font-size: 13px; color: #aaa; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .legend-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; cursor: pointer; border-radius: 4px; font-size: 12px; }
+  .legend-item:hover { background: #2a2a4e; padding-left: 4px; }
+  .legend-item.dimmed { opacity: 0.35; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .legend-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .legend-count { color: #666; font-size: 11px; }
+  #stats { padding: 10px 14px; border-top: 1px solid #2a2a4e; font-size: 11px; color: #555; }
+</style>
+</head>
+<body>
+<div id="graph"></div>
+<div id="sidebar">
+  <div id="search-wrap">
+    <input id="search" type="text" placeholder="Search nodes..." autocomplete="off">
+    <div id="search-results"></div>
+  </div>
+  <div id="info-panel">
+    <h3>Node Info</h3>
+    <div id="info-content"><span class="empty">Click a node to inspect it</span></div>
+  </div>
+  <div id="legend-wrap">
+    <h3>Communities</h3>
+    <div id="legend"></div>
+  </div>
+  <div id="stats">58 nodes &middot; 69 edges &middot; 8 communities</div>
+</div>
+<script>
+const RAW_NODES = [{"id": "readme_homelab", "label": "Homelab Project", "color": {"background": "#4E79A7", "border": "#4E79A7", "highlight": {"background": "#ffffff", "border": "#4E79A7"}}, "size": 40.0, "font": {"size": 12, "color": "#ffffff"}, "title": "Homelab Project", "community": 0, "community_name": "Homelab Overview & NFS", "source_file": "README.md", "file_type": "document", "degree": 10}, {"id": "readme_proxmox", "label": "Proxmox Hypervisor", "color": {"background": "#4E79A7", "border": "#4E79A7", "highlight": {"background": "#ffffff", "border": "#4E79A7"}}, "size": 22.0, "font": {"size": 12, "color": "#ffffff"}, "title": "Proxmox Hypervisor", "community": 0, "community_name": "Homelab Overview & NFS", "source_file": "README.md", "file_type": "document", "degree": 4}, {"id": "readme_talos_os", "label": "Talos OS", "color": {"background": "#4E79A7", "border": "#4E79A7", "highlight": {"background": "#ffffff", "border": "#4E79A7"}}, "size": 16.0, "font": {"size": 12, "color": "#ffffff"}, "title": "Talos OS", "community": 0, "community_name": "Homelab Overview & NFS", "source_file": "README.md", "file_type": "document", "degree": 2}, {"id": "readme_fluxcd", "label": "FluxCD GitOps Controller", "color": {"background": "#4E79A7", "border": "#4E79A7", "highlight": {"background": "#ffffff", "border": "#4E79A7"}}, "size": 19.0, "font": {"size": 12, "color": "#ffffff"}, "title": "FluxCD GitOps Controller", "community": 0, "community_name": "Homelab Overview & NFS", "source_file": "README.md", "file_type": "document", "degree": 3}, {"id": "readme_terraform_cluster", "label": "Terraform Cluster Module", "color": {"background": "#4E79A7", "border": "#4E79A7", "highlight": {"background": "#ffffff", "border": "#4E79A7"}}, "size": 19.0, "font": {"size": 12, "color": "#ffffff"}, "title": "Terraform Cluster Module", "community": 0, "community_name": "Homelab Overview & NFS", "source_file": "README.md", "file_type": "document", "degree": 3}, {"id": "readme_sops", "label": "SOPS Secret Encryption", "color": {"background": "#4E79A7", "border": "#4E79A7", "highlight": {"background": "#ffffff", "border": "#4E79A7"}}, "size": 22.0, "font": {"size": 12, "color": "#ffffff"}, "title": "SOPS Secret Encryption", "community": 0, "community_name": "Homelab Overview & NFS", "source_file": "README.md", "file_type": "document", "degree": 4}, {"id": "readme_age_key", "label": "Age Encryption Key", "color": {"background": "#4E79A7", "border": "#4E79A7", "highlight": {"background": "#ffffff", "border": "#4E79A7"}}, "size": 13.0, "font": {"size": 0, "color": "#ffffff"}, "title": "Age Encryption Key", "community": 0, "community_name": "Homelab Overview & NFS", "source_file": "README.md", "file_type": "document", "degree": 1}, {"id": "readme_github_pat", "label": "GitHub Personal Access Token", "color": {"background": "#4E79A7", "border": "#4E79A7", "highlight": {"background": "#ffffff", "border": "#4E79A7"}}, "size": 13.0, "font": {"size": 0, "color": "#ffffff"}, "title": "GitHub Personal Access Token", "community": 0, "community_name": "Homelab Overview & NFS", "source_file": "README.md", "file_type": "document", "degree": 1}, {"id": "readme_renovate", "label": "Renovate Dependency Updater", "color": {"background": "#4E79A7", "border": "#4E79A7", "highlight": {"background": "#ffffff", "border": "#4E79A7"}}, "size": 13.0, "font": {"size": 0, "color": "#ffffff"}, "title": "Renovate Dependency Updater", "community": 0, "community_name": "Homelab Overview & NFS", "source_file": "README.md", "file_type": "document", "degree": 1}, {"id": "readme_grafana_mcp", "label": "Grafana MCP Service Account", "color": {"background": "#EDC948", "border": "#EDC948", "highlight": {"background": "#ffffff", "border": "#EDC948"}}, "size": 19.0, "font": {"size": 12, "color": "#ffffff"}, "title": "Grafana MCP Service Account", "community": 5, "community_name": "Claude MCP Dev Environment", "source_file": "README.md", "file_type": "document", "degree": 3}, {"id": "readme_kubernetes_mcp", "label": "Kubernetes MCP Server", "color": {"background": "#EDC948", "border": "#EDC948", "highlight": {"background": "#ffffff", "border": "#EDC948"}}, "size": 13.0, "font": {"size": 0, "color": "#ffffff"}, "title": "Kubernetes MCP Server", "community": 5, "community_name": "Claude MCP Dev Environment", "source_file": "README.md", "file_type": "document", "degree": 1}, {"id": "readme_devcontainer", "label": "Dev Container Environment", "color": {"background": "#EDC948", "border": "#EDC948", "highlight": {"background": "#ffffff", "border": "#EDC948"}}, "size": 13.0, "font": {"size": 0, "color": "#ffffff"}, "title": "Dev Container Environment", "community": 5, "community_name": "Claude MCP Dev Environment", "source_file": "README.md", "file_type": "document", "degree": 1}, {"id": "readme_nfs_storage", "label": "NFS Storage (Proxmox ISO store)", "color": {"background": "#F28E2B", "border": "#F28E2B", "highlight": {"background": "#ffffff", "border": "#F28E2B"}}, "size": 19.0, "font": {"size": 12, "color": "#ffffff"}, "title": "NFS Storage (Proxmox ISO store)", "community": 1, "community_name": "Terraform External Services", "source_file": "README.md", "file_type": "document", "degree": 3}, {"id": "claude_stack_overview", "label": "Homelab Stack Overview", "color": {"background": "#4E79A7", "border": "#4E79A7", "highlight": {"background": "#ffffff", "border": "#4E79A7"}}, "size": 28.0, "font": {"size": 12, "color": "#ffffff"}, "title": "Homelab Stack Overview", "community": 0, "community_name": "Homelab Overview & NFS", "source_file": "CLAUDE.md", "file_type": "document", "degree": 6}, {"id": "claude_cilium", "label": "Cilium CNI", "color": {"background": "#E15759", "border": "#E15759", "highlight": {"background": "#ffffff", "border": "#E15759"}}, "size": 22.0, "font": {"size": 12, "color": "#ffffff"}, "title": "Cilium CNI", "community": 2, "community_name": "Kubernetes Network Stack", "source_file": "CLAUDE.md", "file_type": "document", "degree": 4}, {"id": "claude_gateway_api", "label": "Gateway API", "color": {"background": "#E15759", "border": "#E15759", "highlight": {"background": "#ffffff", "border": "#E15759"}}, "size": 25.0, "font": {"size": 12, "color": "#ffffff"}, "title": "Gateway API", "community": 2, "community_name": "Kubernetes Network Stack", "source_file": "CLAUDE.md", "file_type": "document", "degree": 5}, {"id": "claude_certmanager", "label": "Cert-manager", "color": {"background": "#E15759", "border": "#E15759", "highlight": {"background": "#ffffff", "border": "#E15759"}}, "size": 13.0, "font": {"size": 0, "color": "#ffffff"}, "title": "Cert-manager", "community": 2, "community_name": "Kubernetes Network Stack", "source_file": "CLAUDE.md", "file_type": "document", "degree": 1}, {"id": "claude_synology_csi", "label": "Synology CSI Driver", "color": {"background": "#B07AA1", "border": "#B07AA1", "highlight": {"background": "#ffffff", "border": "#B07AA1"}}, "size": 16.0, "font": {"size": 12, "color": "#ffffff"}, "title": "Synology CSI Driver", "community": 6, "community_name": "Persistent Storage (CSI)", "source_file": "CLAUDE.md", "file_type": "document", "degree": 2}, {"id": "claude_authentik", "label": "Authentik SSO/IdP", "color": {"background": "#E15759", "border": "#E15759", "highlight": {"background": "#ffffff", "border": "#E15759"}}, "size": 16.0, "font": {"size": 12, "color": "#ffffff"}, "title": "Authentik SSO/IdP", "community": 2, "community_name": "Kubernetes Network Stack", "source_file": "CLAUDE.md", "file_type": "document", "degree": 2}, {"id": "claude_monitoring_stack", "label": "Monitoring Stack (Grafana/Loki/Mimir/Alloy)", "color": {"background": "#E15759", "border": "#E15759", "highlight": {"background": "#ffffff", "border": "#E15759"}}, "size": 16.0, "font": {"size": 12, "color": "#ffffff"}, "title": "Monitoring Stack (Grafana/Loki/Mimir/Alloy)", "community": 2, "community_name": "Kubernetes Network Stack", "source_file": "CLAUDE.md", "file_type": "document", "degree": 2}, {"id": "claude_gitops_dep_chain", "label": "GitOps Dependency Chain", "color": {"background": "#E15759", "border": "#E15759", "highlight": {"background": "#ffffff", "border": "#E15759"}}, "size": 28.0, "font": {"size": 12, "color": "#ffffff"}, "title": "GitOps Dependency Chain", "community": 2, "community_name": "Kubernetes Network Stack", "source_file": "CLAUDE.md", "file_type": "document", "degree": 6}, {"id": "claude_nfs_csi_storageclass", "label": "StorageClass nfs-csi-storage", "color": {"background": "#B07AA1", "border": "#B07AA1", "highlight": {"background": "#ffffff", "border": "#B07AA1"}}, "size": 19.0, "font": {"size": 12, "color": "#ffffff"}, "title": "StorageClass nfs-csi-storage", "community": 6, "community_name": "Persistent Storage (CSI)", "source_file": "CLAUDE.md", "file_type": "document", "degree": 3}, {"id": "claude_sops_yaml", "label": ".sops.yaml Config", "color": {"background": "#4E79A7", "border": "#4E79A7", "highlight": {"background": "#ffffff", "border": "#4E79A7"}}, "size": 13.0, "font": {"size": 0, "color": "#ffffff"}, "title": ".sops.yaml Config", "community": 0, "community_name": "Homelab Overview & NFS", "source_file": "CLAUDE.md", "file_type": "document", "degree": 1}, {"id": "claude_terraform_external", "label": "Terraform External Workspaces", "color": {"background": "#F28E2B", "border": "#F28E2B", "highlight": {"background": "#ffffff", "border": "#F28E2B"}}, "size": 22.0, "font": {"size": 12, "color": "#ffffff"}, "title": "Terraform External Workspaces", "community": 1, "community_name": "Terraform External Services", "source_file": "CLAUDE.md", "file_type": "document", "degree": 4}, {"id": "claude_mcp_tool_priority", "label": "MCP Tool Priority Policy", "color": {"background": "#EDC948", "border": "#EDC948", "highlight": {"background": "#ffffff", "border": "#EDC948"}}, "size": 19.0, "font": {"size": 12, "color": "#ffffff"}, "title": "MCP Tool Priority Policy", "community": 5, "community_name": "Claude MCP Dev Environment", "source_file": "CLAUDE.md", "file_type": "document", "degree": 3}, {"id": "claude_rationale_no_ingress", "label": "Rationale: No traditional Ingress resources", "color": {"background": "#E15759", "border": "#E15759", "highlight": {"background": "#ffffff", "border": "#E15759"}}, "size": 16.0, "font": {"size": 12, "color": "#ffffff"}, "title": "Rationale: No traditional Ingress resources", "community": 2, "community_name": "Kubernetes Network Stack", "source_file": "CLAUDE.md", "file_type": "document", "degree": 2}, {"id": "claude_rationale_mcp_separation", "label": "Rationale: kubernetes vs grafana MCP separation", "color": {"background": "#EDC948", "border": "#EDC948", "highlight": {"background": "#ffffff", "border": "#EDC948"}}, "size": 13.0, "font": {"size": 0, "color": "#ffffff"}, "title": "Rationale: kubernetes vs grafana MCP separation", "community": 5, "community_name": "Claude MCP Dev Environment", "source_file": "CLAUDE.md", "file_type": "document", "degree": 1}, {"id": "nexus_nexus_server", "label": "Nexus Repository Server", "color": {"background": "#F28E2B", "border": "#F28E2B", "highlight": {"background": "#ffffff", "border": "#F28E2B"}}, "size": 16.0, "font": {"size": 12, "color": "#ffffff"}, "title": "Nexus Repository Server", "community": 1, "community_name": "Terraform External Services", "source_file": "scripts/NEXUS.md", "file_type": "document", "degree": 2}, {"id": "nexus_docker_registry", "label": "Docker Registry (Nexus proxy)", "color": {"background": "#F28E2B", "border": "#F28E2B", "highlight": {"background": "#ffffff", "border": "#F28E2B"}}, "size": 19.0, "font": {"size": 12, "color": "#ffffff"}, "title": "Docker Registry (Nexus proxy)", "community": 1, "community_name": "Terraform External Services", "source_file": "scripts/NEXUS.md", "file_type": "document", "degree": 3}, {"id": "nexus_terraform_external", "label": "Terraform External (Nexus)", "color": {"background": "#F28E2B", "border": "#F28E2B", "highlight": {"background": "#ffffff", "border": "#F28E2B"}}, "size": 16.0, "font": {"size": 12, "color": "#ffffff"}, "title": "Terraform External (Nexus)", "community": 1, "community_name": "Terraform External Services", "source_file": "scripts/NEXUS.md", "file_type": "document", "degree": 2}, {"id": "nexus_synology_dependency", "label": "Synology Dependency for Nexus", "color": {"background": "#F28E2B", "border": "#F28E2B", "highlight": {"background": "#ffffff", "border": "#F28E2B"}}, "size": 13.0, "font": {"size": 0, "color": "#ffffff"}, "title": "Synology Dependency for Nexus", "community": 1, "community_name": "Terraform External Services", "source_file": "scripts/NEXUS.md", "file_type": "document", "degree": 1}, {"id": "unifi_cloudflare_token", "label": "Cloudflare API Token (DNS Edit)", "color": {"background": "#59A14F", "border": "#59A14F", "highlight": {"background": "#ffffff", "border": "#59A14F"}}, "size": 19.0, "font": {"size": 12, "color": "#ffffff"}, "title": "Cloudflare API Token (DNS Edit)", "community": 4, "community_name": "TLS Certificate Management", "source_file": "scripts/UNIFI.md", "file_type": "document", "degree": 3}, {"id": "unifi_external_service", "label": "Unifi External Service (Cilium Gateway)", "color": {"background": "#E15759", "border": "#E15759", "highlight": {"background": "#ffffff", "border": "#E15759"}}, "size": 13.0, "font": {"size": 0, "color": "#ffffff"}, "title": "Unifi External Service (Cilium Gateway)", "community": 2, "community_name": "Kubernetes Network Stack", "source_file": "scripts/UNIFI.md", "file_type": "document", "degree": 1}, {"id": "unifi_certificate", "label": "Unifi TLS Certificate (Let's Encrypt)", "color": {"background": "#59A14F", "border": "#59A14F", "highlight": {"background": "#ffffff", "border": "#59A14F"}}, "size": 13.0, "font": {"size": 0, "color": "#ffffff"}, "title": "Unifi TLS Certificate (Let&#x27;s Encrypt)", "community": 4, "community_name": "TLS Certificate Management", "source_file": "scripts/UNIFI.md", "file_type": "document", "degree": 1}, {"id": "unifi_terraform_env", "label": "Terraform Environment (Cloudflare DNS)", "color": {"background": "#59A14F", "border": "#59A14F", "highlight": {"background": "#ffffff", "border": "#59A14F"}}, "size": 13.0, "font": {"size": 0, "color": "#ffffff"}, "title": "Terraform Environment (Cloudflare DNS)", "community": 4, "community_name": "TLS Certificate Management", "source_file": "scripts/UNIFI.md", "file_type": "document", "degree": 1}, {"id": "synology_nas", "label": "Synology NAS (DSM)", "color": {"background": "#F28E2B", "border": "#F28E2B", "highlight": {"background": "#ffffff", "border": "#F28E2B"}}, "size": 37.0, "font": {"size": 12, "color": "#ffffff"}, "title": "Synology NAS (DSM)", "community": 1, "community_name": "Terraform External Services", "source_file": "scripts/SYNOLOGY.md", "file_type": "document", "degree": 9}, {"id": "synology_certadmin_user", "label": "Synology certadmin User", "color": {"background": "#59A14F", "border": "#59A14F", "highlight": {"background": "#ffffff", "border": "#59A14F"}}, "size": 16.0, "font": {"size": 12, "color": "#ffffff"}, "title": "Synology certadmin User", "community": 4, "community_name": "TLS Certificate Management", "source_file": "scripts/SYNOLOGY.md", "file_type": "document", "degree": 2}, {"id": "synology_cert_renewal", "label": "Synology Certificate Auto-Renewal Task", "color": {"background": "#59A14F", "border": "#59A14F", "highlight": {"background": "#ffffff", "border": "#59A14F"}}, "size": 16.0, "font": {"size": 12, "color": "#ffffff"}, "title": "Synology Certificate Auto-Renewal Task", "community": 4, "community_name": "TLS Certificate Management", "source_file": "scripts/SYNOLOGY.md", "file_type": "document", "degree": 2}, {"id": "synology_cloudflare_token", "label": "Cloudflare API Token (Synology DNS)", "color": {"background": "#59A14F", "border": "#59A14F", "highlight": {"background": "#ffffff", "border": "#59A14F"}}, "size": 16.0, "font": {"size": 12, "color": "#ffffff"}, "title": "Cloudflare API Token (Synology DNS)", "community": 4, "community_name": "TLS Certificate Management", "source_file": "scripts/SYNOLOGY.md", "file_type": "document", "degree": 2}, {"id": "synology_terraform_external_synology", "label": "Terraform External (Synology reverse proxy)", "color": {"background": "#F28E2B", "border": "#F28E2B", "highlight": {"background": "#ffffff", "border": "#F28E2B"}}, "size": 13.0, "font": {"size": 0, "color": "#ffffff"}, "title": "Terraform External (Synology reverse proxy)", "community": 1, "community_name": "Terraform External Services", "source_file": "scripts/SYNOLOGY.md", "file_type": "document", "degree": 1}, {"id": "resize_pvc_runbook", "label": "Runbook: Resize PVC", "color": {"background": "#B07AA1", "border": "#B07AA1", "highlight": {"background": "#ffffff", "border": "#B07AA1"}}, "size": 16.0, "font": {"size": 12, "color": "#ffffff"}, "title": "Runbook: Resize PVC", "community": 6, "community_name": "Persistent Storage (CSI)", "source_file": "runbooks/resize_pvc.md", "file_type": "document", "degree": 2}, {"id": "resize_pvc_storageclass_expand", "label": "StorageClass volume expansion requirement", "color": {"background": "#B07AA1", "border": "#B07AA1", "highlight": {"background": "#ffffff", "border": "#B07AA1"}}, "size": 13.0, "font": {"size": 0, "color": "#ffffff"}, "title": "StorageClass volume expansion requirement", "community": 6, "community_name": "Persistent Storage (CSI)", "source_file": "runbooks/resize_pvc.md", "file_type": "document", "degree": 1}, {"id": "cloudflare_tunnels_runbook", "label": "Runbook: Cloudflare Tunnels", "color": {"background": "#4E79A7", "border": "#4E79A7", "highlight": {"background": "#ffffff", "border": "#4E79A7"}}, "size": 13.0, "font": {"size": 0, "color": "#ffffff"}, "title": "Runbook: Cloudflare Tunnels", "community": 0, "community_name": "Homelab Overview & NFS", "source_file": "runbooks/cloudflare_tunnels.md", "file_type": "document", "degree": 1}, {"id": "cloudflare_tunnels_cloudflared", "label": "cloudflared Tunnel Daemon", "color": {"background": "#FF9DA7", "border": "#FF9DA7", "highlight": {"background": "#ffffff", "border": "#FF9DA7"}}, "size": 16.0, "font": {"size": 12, "color": "#ffffff"}, "title": "cloudflared Tunnel Daemon", "community": 7, "community_name": "Cloudflare Tunnel", "source_file": "runbooks/cloudflare_tunnels.md", "file_type": "document", "degree": 2}, {"id": "cloudflare_tunnels_secret", "label": "Secret/tunnel-credentials (cloudflared)", "color": {"background": "#FF9DA7", "border": "#FF9DA7", "highlight": {"background": "#ffffff", "border": "#FF9DA7"}}, "size": 13.0, "font": {"size": 0, "color": "#ffffff"}, "title": "Secret/tunnel-credentials (cloudflared)", "community": 7, "community_name": "Cloudflare Tunnel", "source_file": "runbooks/cloudflare_tunnels.md", "file_type": "document", "degree": 1}, {"id": "cloudflare_tunnels_configmap", "label": "ConfigMap/cloudflared tunnel config", "color": {"background": "#FF9DA7", "border": "#FF9DA7", "highlight": {"background": "#ffffff", "border": "#FF9DA7"}}, "size": 13.0, "font": {"size": 0, "color": "#ffffff"}, "title": "ConfigMap/cloudflared tunnel config", "community": 7, "community_name": "Cloudflare Tunnel", "source_file": "runbooks/cloudflare_tunnels.md", "file_type": "document", "degree": 1}, {"id": "nfs_proxmox_runbook", "label": "Runbook: Configure NFS with Proxmox", "color": {"background": "#4E79A7", "border": "#4E79A7", "highlight": {"background": "#ffffff", "border": "#4E79A7"}}, "size": 19.0, "font": {"size": 12, "color": "#ffffff"}, "title": "Runbook: Configure NFS with Proxmox", "community": 0, "community_name": "Homelab Overview & NFS", "source_file": "runbooks/configure_nfs_with_proxmox.md", "file_type": "document", "degree": 3}, {"id": "nfs_proxmox_synology_nfs", "label": "Synology NFS Export Config", "color": {"background": "#F28E2B", "border": "#F28E2B", "highlight": {"background": "#ffffff", "border": "#F28E2B"}}, "size": 13.0, "font": {"size": 0, "color": "#ffffff"}, "title": "Synology NFS Export Config", "community": 1, "community_name": "Terraform External Services", "source_file": "runbooks/configure_nfs_with_proxmox.md", "file_type": "document", "degree": 1}, {"id": "nfs_proxmox_nfsuser", "label": "Proxmox nfsuser account", "color": {"background": "#4E79A7", "border": "#4E79A7", "highlight": {"background": "#ffffff", "border": "#4E79A7"}}, "size": 13.0, "font": {"size": 0, "color": "#ffffff"}, "title": "Proxmox nfsuser account", "community": 0, "community_name": "Homelab Overview & NFS", "source_file": "runbooks/configure_nfs_with_proxmox.md", "file_type": "document", "degree": 1}, {"id": "nfs_proxmox_ip", "label": "NAS IP 192.168.30.100 (Proxmox NFS)", "color": {"background": "#F28E2B", "border": "#F28E2B", "highlight": {"background": "#ffffff", "border": "#F28E2B"}}, "size": 13.0, "font": {"size": 0, "color": "#ffffff"}, "title": "NAS IP 192.168.30.100 (Proxmox NFS)", "community": 1, "community_name": "Terraform External Services", "source_file": "runbooks/configure_nfs_with_proxmox.md", "file_type": "document", "degree": 1}, {"id": "tfcluster_readme_module", "label": "Terraform Cluster Module (README)", "color": {"background": "#76B7B2", "border": "#76B7B2", "highlight": {"background": "#ffffff", "border": "#76B7B2"}}, "size": 31.0, "font": {"size": 12, "color": "#ffffff"}, "title": "Terraform Cluster Module (README)", "community": 3, "community_name": "Terraform Cluster Provisioning", "source_file": "terraform/cluster/README.md", "file_type": "document", "degree": 7}, {"id": "tfcluster_kubernetes_nodes_module", "label": "Terraform Module: kubernetes_nodes (vm)", "color": {"background": "#76B7B2", "border": "#76B7B2", "highlight": {"background": "#ffffff", "border": "#76B7B2"}}, "size": 13.0, "font": {"size": 0, "color": "#ffffff"}, "title": "Terraform Module: kubernetes_nodes (vm)", "community": 3, "community_name": "Terraform Cluster Provisioning", "source_file": "terraform/cluster/README.md", "file_type": "document", "degree": 1}, {"id": "tfcluster_talos_bootstrap_module", "label": "Terraform Module: talos_bootstrap", "color": {"background": "#76B7B2", "border": "#76B7B2", "highlight": {"background": "#ffffff", "border": "#76B7B2"}}, "size": 13.0, "font": {"size": 0, "color": "#ffffff"}, "title": "Terraform Module: talos_bootstrap", "community": 3, "community_name": "Terraform Cluster Provisioning", "source_file": "terraform/cluster/README.md", "file_type": "document", "degree": 1}, {"id": "tfcluster_talos_provision_module", "label": "Terraform Module: talos_provision", "color": {"background": "#76B7B2", "border": "#76B7B2", "highlight": {"background": "#ffffff", "border": "#76B7B2"}}, "size": 13.0, "font": {"size": 0, "color": "#ffffff"}, "title": "Terraform Module: talos_provision", "community": 3, "community_name": "Terraform Cluster Provisioning", "source_file": "terraform/cluster/README.md", "file_type": "document", "degree": 1}, {"id": "tfcluster_bpg_proxmox_provider", "label": "Terraform Provider: bpg/proxmox 0.97.1", "color": {"background": "#76B7B2", "border": "#76B7B2", "highlight": {"background": "#ffffff", "border": "#76B7B2"}}, "size": 16.0, "font": {"size": 12, "color": "#ffffff"}, "title": "Terraform Provider: bpg/proxmox 0.97.1", "community": 3, "community_name": "Terraform Cluster Provisioning", "source_file": "terraform/cluster/README.md", "file_type": "document", "degree": 2}, {"id": "tfcluster_talos_iso_resource", "label": "proxmox_virtual_environment_file (talos ISO)", "color": {"background": "#F28E2B", "border": "#F28E2B", "highlight": {"background": "#ffffff", "border": "#F28E2B"}}, "size": 13.0, "font": {"size": 0, "color": "#ffffff"}, "title": "proxmox_virtual_environment_file (talos ISO)", "community": 1, "community_name": "Terraform External Services", "source_file": "terraform/cluster/README.md", "file_type": "document", "degree": 1}, {"id": "tfcluster_output_kubeconfig", "label": "Terraform Output: kubeconfig", "color": {"background": "#76B7B2", "border": "#76B7B2", "highlight": {"background": "#ffffff", "border": "#76B7B2"}}, "size": 13.0, "font": {"size": 0, "color": "#ffffff"}, "title": "Terraform Output: kubeconfig", "community": 3, "community_name": "Terraform Cluster Provisioning", "source_file": "terraform/cluster/README.md", "file_type": "document", "degree": 1}, {"id": "tfcluster_output_talosconfig", "label": "Terraform Output: talosconfig", "color": {"background": "#76B7B2", "border": "#76B7B2", "highlight": {"background": "#ffffff", "border": "#76B7B2"}}, "size": 13.0, "font": {"size": 0, "color": "#ffffff"}, "title": "Terraform Output: talosconfig", "community": 3, "community_name": "Terraform Cluster Provisioning", "source_file": "terraform/cluster/README.md", "file_type": "document", "degree": 1}];
+const RAW_EDGES = [{"from": "readme_homelab", "to": "readme_proxmox", "label": "depends_on", "title": "depends_on [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "readme_homelab", "to": "readme_talos_os", "label": "uses", "title": "uses [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "readme_homelab", "to": "readme_fluxcd", "label": "uses", "title": "uses [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "readme_homelab", "to": "readme_terraform_cluster", "label": "provisioned_by", "title": "provisioned_by [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "readme_homelab", "to": "readme_nfs_storage", "label": "depends_on", "title": "depends_on [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "readme_homelab", "to": "readme_sops", "label": "uses", "title": "uses [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "readme_homelab", "to": "readme_renovate", "label": "manages_dependencies_for", "title": "manages_dependencies_for [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "readme_homelab", "to": "nfs_proxmox_runbook", "label": "references", "title": "references [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "readme_homelab", "to": "cloudflare_tunnels_runbook", "label": "references", "title": "references [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "readme_homelab", "to": "resize_pvc_runbook", "label": "references", "title": "references [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "readme_proxmox", "to": "nfs_proxmox_runbook", "label": "configures_nfs_on", "title": "configures_nfs_on [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "readme_proxmox", "to": "nfs_proxmox_nfsuser", "label": "created_on", "title": "created_on [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "readme_proxmox", "to": "tfcluster_bpg_proxmox_provider", "label": "manages", "title": "manages [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "readme_talos_os", "to": "claude_stack_overview", "label": "describes", "title": "describes [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "readme_fluxcd", "to": "readme_github_pat", "label": "authenticated_by", "title": "authenticated_by [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "readme_fluxcd", "to": "claude_stack_overview", "label": "describes", "title": "describes [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "readme_terraform_cluster", "to": "claude_stack_overview", "label": "describes", "title": "describes [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "readme_terraform_cluster", "to": "tfcluster_readme_module", "label": "documents", "title": "documents [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "readme_sops", "to": "readme_age_key", "label": "uses", "title": "uses [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "readme_sops", "to": "claude_stack_overview", "label": "describes", "title": "describes [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "readme_sops", "to": "claude_sops_yaml", "label": "configures", "title": "configures [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "readme_grafana_mcp", "to": "readme_devcontainer", "label": "injected_into", "title": "injected_into [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "readme_grafana_mcp", "to": "claude_mcp_tool_priority", "label": "governs", "title": "governs [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "readme_grafana_mcp", "to": "claude_terraform_external", "label": "provisions", "title": "provisions [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "readme_kubernetes_mcp", "to": "claude_mcp_tool_priority", "label": "governs", "title": "governs [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "readme_nfs_storage", "to": "tfcluster_talos_iso_resource", "label": "uploaded_to", "title": "uploaded_to [INFERRED]", "dashes": true, "width": 1, "color": {"opacity": 0.35}, "confidence": "INFERRED"}, {"from": "readme_nfs_storage", "to": "synology_nas", "label": "semantically_similar_to", "title": "semantically_similar_to [INFERRED]", "dashes": true, "width": 1, "color": {"opacity": 0.35}, "confidence": "INFERRED"}, {"from": "claude_stack_overview", "to": "claude_cilium", "label": "describes", "title": "describes [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "claude_stack_overview", "to": "claude_gateway_api", "label": "describes", "title": "describes [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "claude_cilium", "to": "claude_gitops_dep_chain", "label": "contains", "title": "contains [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "claude_cilium", "to": "claude_rationale_no_ingress", "label": "rationale_for", "title": "rationale_for [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "claude_cilium", "to": "unifi_external_service", "label": "exposed_via", "title": "exposed_via [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "claude_gateway_api", "to": "claude_gitops_dep_chain", "label": "contains", "title": "contains [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "claude_gateway_api", "to": "claude_authentik", "label": "depends_on", "title": "depends_on [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "claude_gateway_api", "to": "claude_monitoring_stack", "label": "depends_on", "title": "depends_on [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "claude_gateway_api", "to": "claude_rationale_no_ingress", "label": "rationale_for", "title": "rationale_for [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "claude_certmanager", "to": "claude_gitops_dep_chain", "label": "contains", "title": "contains [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "claude_synology_csi", "to": "claude_gitops_dep_chain", "label": "contains", "title": "contains [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "claude_synology_csi", "to": "claude_nfs_csi_storageclass", "label": "provides", "title": "provides [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "claude_authentik", "to": "claude_gitops_dep_chain", "label": "contains", "title": "contains [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "claude_monitoring_stack", "to": "claude_gitops_dep_chain", "label": "contains", "title": "contains [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "claude_nfs_csi_storageclass", "to": "resize_pvc_runbook", "label": "references", "title": "references [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "claude_nfs_csi_storageclass", "to": "resize_pvc_storageclass_expand", "label": "applies_to", "title": "applies_to [INFERRED]", "dashes": true, "width": 1, "color": {"opacity": 0.35}, "confidence": "INFERRED"}, {"from": "claude_terraform_external", "to": "nexus_docker_registry", "label": "provisions", "title": "provisions [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "claude_terraform_external", "to": "synology_nas", "label": "configures", "title": "configures [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "claude_terraform_external", "to": "nexus_terraform_external", "label": "semantically_similar_to", "title": "semantically_similar_to [INFERRED]", "dashes": true, "width": 1, "color": {"opacity": 0.35}, "confidence": "INFERRED"}, {"from": "claude_mcp_tool_priority", "to": "claude_rationale_mcp_separation", "label": "rationale_for", "title": "rationale_for [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "nexus_nexus_server", "to": "synology_nas", "label": "hosted_on", "title": "hosted_on [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "nexus_nexus_server", "to": "nexus_docker_registry", "label": "provided_by", "title": "provided_by [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "nexus_docker_registry", "to": "nexus_terraform_external", "label": "provisions", "title": "provisions [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "nexus_synology_dependency", "to": "synology_nas", "label": "requires", "title": "requires [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "unifi_cloudflare_token", "to": "unifi_certificate", "label": "depends_on", "title": "depends_on [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "unifi_cloudflare_token", "to": "unifi_terraform_env", "label": "uses", "title": "uses [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "unifi_cloudflare_token", "to": "synology_cloudflare_token", "label": "semantically_similar_to", "title": "semantically_similar_to [INFERRED]", "dashes": true, "width": 1, "color": {"opacity": 0.35}, "confidence": "INFERRED"}, {"from": "synology_nas", "to": "synology_certadmin_user", "label": "created_on", "title": "created_on [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "synology_nas", "to": "synology_terraform_external_synology", "label": "configures", "title": "configures [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "synology_nas", "to": "nfs_proxmox_runbook", "label": "configures_nfs_on", "title": "configures_nfs_on [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "synology_nas", "to": "nfs_proxmox_synology_nfs", "label": "exported_from", "title": "exported_from [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "synology_nas", "to": "nfs_proxmox_ip", "label": "identifies", "title": "identifies [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "synology_certadmin_user", "to": "synology_cert_renewal", "label": "runs_as", "title": "runs_as [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "synology_cert_renewal", "to": "synology_cloudflare_token", "label": "depends_on", "title": "depends_on [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "cloudflare_tunnels_cloudflared", "to": "cloudflare_tunnels_secret", "label": "stores_credentials_in", "title": "stores_credentials_in [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "cloudflare_tunnels_cloudflared", "to": "cloudflare_tunnels_configmap", "label": "configured_by", "title": "configured_by [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "tfcluster_readme_module", "to": "tfcluster_kubernetes_nodes_module", "label": "contains_module", "title": "contains_module [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "tfcluster_readme_module", "to": "tfcluster_talos_bootstrap_module", "label": "contains_module", "title": "contains_module [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "tfcluster_readme_module", "to": "tfcluster_talos_provision_module", "label": "contains_module", "title": "contains_module [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "tfcluster_readme_module", "to": "tfcluster_bpg_proxmox_provider", "label": "uses_provider", "title": "uses_provider [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "tfcluster_readme_module", "to": "tfcluster_output_kubeconfig", "label": "outputs", "title": "outputs [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "tfcluster_readme_module", "to": "tfcluster_output_talosconfig", "label": "outputs", "title": "outputs [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}];
+const LEGEND = [{"cid": 0, "color": "#4E79A7", "label": "Homelab Overview &amp; NFS", "count": 14}, {"cid": 1, "color": "#F28E2B", "label": "Terraform External Services", "count": 11}, {"cid": 2, "color": "#E15759", "label": "Kubernetes Network Stack", "count": 8}, {"cid": 3, "color": "#76B7B2", "label": "Terraform Cluster Provisioning", "count": 7}, {"cid": 4, "color": "#59A14F", "label": "TLS Certificate Management", "count": 6}, {"cid": 5, "color": "#EDC948", "label": "Claude MCP Dev Environment", "count": 5}, {"cid": 6, "color": "#B07AA1", "label": "Persistent Storage (CSI)", "count": 4}, {"cid": 7, "color": "#FF9DA7", "label": "Cloudflare Tunnel", "count": 3}];
+
+// HTML-escape helper — prevents XSS when injecting graph data into innerHTML
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// Build vis datasets
+const nodesDS = new vis.DataSet(RAW_NODES.map(n => ({
+  id: n.id, label: n.label, color: n.color, size: n.size,
+  font: n.font, title: n.title,
+  _community: n.community, _community_name: n.community_name,
+  _source_file: n.source_file, _file_type: n.file_type, _degree: n.degree,
+})));
+
+const edgesDS = new vis.DataSet(RAW_EDGES.map((e, i) => ({
+  id: i, from: e.from, to: e.to,
+  label: '',
+  title: e.title,
+  dashes: e.dashes,
+  width: e.width,
+  color: e.color,
+  arrows: { to: { enabled: true, scaleFactor: 0.5 } },
+})));
+
+const container = document.getElementById('graph');
+const network = new vis.Network(container, { nodes: nodesDS, edges: edgesDS }, {
+  physics: {
+    enabled: true,
+    solver: 'forceAtlas2Based',
+    forceAtlas2Based: {
+      gravitationalConstant: -60,
+      centralGravity: 0.005,
+      springLength: 120,
+      springConstant: 0.08,
+      damping: 0.4,
+      avoidOverlap: 0.8,
+    },
+    stabilization: { iterations: 200, fit: true },
+  },
+  interaction: {
+    hover: true,
+    tooltipDelay: 100,
+    hideEdgesOnDrag: true,
+    navigationButtons: false,
+    keyboard: false,
+  },
+  nodes: { shape: 'dot', borderWidth: 1.5 },
+  edges: { smooth: { type: 'continuous', roundness: 0.2 }, selectionWidth: 3 },
+});
+
+network.once('stabilizationIterationsDone', () => {
+  network.setOptions({ physics: { enabled: false } });
+});
+
+function showInfo(nodeId) {
+  const n = nodesDS.get(nodeId);
+  if (!n) return;
+  const neighborIds = network.getConnectedNodes(nodeId);
+  const neighborItems = neighborIds.map(nid => {
+    const nb = nodesDS.get(nid);
+    const color = nb ? nb.color.background : '#555';
+    return `<span class="neighbor-link" style="border-left-color:${esc(color)}" onclick="focusNode(${JSON.stringify(nid)})">${esc(nb ? nb.label : nid)}</span>`;
+  }).join('');
+  document.getElementById('info-content').innerHTML = `
+    <div class="field"><b>${esc(n.label)}</b></div>
+    <div class="field">Type: ${esc(n._file_type || 'unknown')}</div>
+    <div class="field">Community: ${esc(n._community_name)}</div>
+    <div class="field">Source: ${esc(n._source_file || '-')}</div>
+    <div class="field">Degree: ${n._degree}</div>
+    ${neighborIds.length ? `<div class="field" style="margin-top:8px;color:#aaa;font-size:11px">Neighbors (${neighborIds.length})</div><div id="neighbors-list">${neighborItems}</div>` : ''}
+  `;
+}
+
+function focusNode(nodeId) {
+  network.focus(nodeId, { scale: 1.4, animation: true });
+  network.selectNodes([nodeId]);
+  showInfo(nodeId);
+}
+
+// Track hovered node — hover detection is more reliable than click params
+let hoveredNodeId = null;
+network.on('hoverNode', params => {
+  hoveredNodeId = params.node;
+  container.style.cursor = 'pointer';
+});
+network.on('blurNode', () => {
+  hoveredNodeId = null;
+  container.style.cursor = 'default';
+});
+container.addEventListener('click', () => {
+  if (hoveredNodeId !== null) {
+    showInfo(hoveredNodeId);
+    network.selectNodes([hoveredNodeId]);
+  }
+});
+network.on('click', params => {
+  if (params.nodes.length > 0) {
+    showInfo(params.nodes[0]);
+  } else if (hoveredNodeId === null) {
+    document.getElementById('info-content').innerHTML = '<span class="empty">Click a node to inspect it</span>';
+  }
+});
+
+const searchInput = document.getElementById('search');
+const searchResults = document.getElementById('search-results');
+searchInput.addEventListener('input', () => {
+  const q = searchInput.value.toLowerCase().trim();
+  searchResults.innerHTML = '';
+  if (!q) { searchResults.style.display = 'none'; return; }
+  const matches = RAW_NODES.filter(n => n.label.toLowerCase().includes(q)).slice(0, 20);
+  if (!matches.length) { searchResults.style.display = 'none'; return; }
+  searchResults.style.display = 'block';
+  matches.forEach(n => {
+    const el = document.createElement('div');
+    el.className = 'search-item';
+    el.textContent = n.label;
+    el.style.borderLeft = `3px solid ${n.color.background}`;
+    el.style.paddingLeft = '8px';
+    el.onclick = () => {
+      network.focus(n.id, { scale: 1.5, animation: true });
+      network.selectNodes([n.id]);
+      showInfo(n.id);
+      searchResults.style.display = 'none';
+      searchInput.value = '';
+    };
+    searchResults.appendChild(el);
+  });
+});
+document.addEventListener('click', e => {
+  if (!searchResults.contains(e.target) && e.target !== searchInput)
+    searchResults.style.display = 'none';
+});
+
+const hiddenCommunities = new Set();
+const legendEl = document.getElementById('legend');
+LEGEND.forEach(c => {
+  const item = document.createElement('div');
+  item.className = 'legend-item';
+  item.innerHTML = `<div class="legend-dot" style="background:${c.color}"></div>
+    <span class="legend-label">${c.label}</span>
+    <span class="legend-count">${c.count}</span>`;
+  item.onclick = () => {
+    if (hiddenCommunities.has(c.cid)) {
+      hiddenCommunities.delete(c.cid);
+      item.classList.remove('dimmed');
+    } else {
+      hiddenCommunities.add(c.cid);
+      item.classList.add('dimmed');
+    }
+    const updates = RAW_NODES
+      .filter(n => n.community === c.cid)
+      .map(n => ({ id: n.id, hidden: hiddenCommunities.has(c.cid) }));
+    nodesDS.update(updates);
+  };
+  legendEl.appendChild(item);
+});
+</script>
+<script>
+// Render hyperedges as shaded regions
+const hyperedges = [{"id": "gitops_dep_chain_bootstrap", "label": "GitOps Bootstrap Dependency Chain: crds \u2192 controllers \u2192 network \u2192 apps", "nodes": ["claude_gitops_dep_chain", "claude_gateway_api", "claude_cilium", "claude_certmanager", "claude_synology_csi", "claude_authentik", "claude_monitoring_stack"], "relation": "participate_in", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "CLAUDE.md"}, {"id": "certificate_provisioning_flow", "label": "Certificate provisioning: Cloudflare token + certadmin user + Let's Encrypt \u2192 TLS certs on NAS/Unifi", "nodes": ["synology_cloudflare_token", "synology_certadmin_user", "synology_cert_renewal", "unifi_certificate", "unifi_cloudflare_token"], "relation": "participate_in", "confidence": "INFERRED", "confidence_score": 0.8, "source_file": "scripts/SYNOLOGY.md"}, {"id": "terraform_cluster_provisioning", "label": "Cluster provisioning: Terraform modules provision Proxmox VMs with Talos OS and bootstrap FluxCD", "nodes": ["tfcluster_kubernetes_nodes_module", "tfcluster_talos_bootstrap_module", "tfcluster_talos_provision_module", "readme_proxmox", "readme_talos_os", "readme_fluxcd"], "relation": "implement", "confidence": "INFERRED", "confidence_score": 0.85, "source_file": "terraform/cluster/README.md"}];
+// afterDrawing passes ctx already transformed to network coordinate space.
+// Draw node positions raw — no manual pan/zoom/DPR math needed.
+network.on('afterDrawing', function(ctx) {
+    hyperedges.forEach(h => {
+        const positions = h.nodes
+            .map(nid => network.getPositions([nid])[nid])
+            .filter(p => p !== undefined);
+        if (positions.length < 2) return;
+        ctx.save();
+        ctx.globalAlpha = 0.12;
+        ctx.fillStyle = '#6366f1';
+        ctx.strokeStyle = '#6366f1';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        // Centroid and expanded hull in network coordinates
+        const cx = positions.reduce((s, p) => s + p.x, 0) / positions.length;
+        const cy = positions.reduce((s, p) => s + p.y, 0) / positions.length;
+        const expanded = positions.map(p => ({
+            x: cx + (p.x - cx) * 1.15,
+            y: cy + (p.y - cy) * 1.15
+        }));
+        ctx.moveTo(expanded[0].x, expanded[0].y);
+        expanded.slice(1).forEach(p => ctx.lineTo(p.x, p.y));
+        ctx.closePath();
+        ctx.fill();
+        ctx.globalAlpha = 0.4;
+        ctx.stroke();
+        // Label
+        ctx.globalAlpha = 0.8;
+        ctx.fillStyle = '#4f46e5';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(h.label, cx, cy - 5);
+        ctx.restore();
+    });
+});
+</script>
+</body>
+</html>

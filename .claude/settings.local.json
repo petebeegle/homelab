@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs ls:*)",
+      "Bash(xargs -I{} sh -c 'echo \"=== {} ===\" && cat {}')",
+      "Bash(git -C /workspaces/homelab status)",
+      "Bash(git -C /workspaces/homelab diff CLAUDE.md)",
+      "Bash(gh api:*)",
+      "Bash(curl -s https://raw.githubusercontent.com/affaan-m/everything-claude-code/main/README.md)",
+      "Skill(update-config)",
+      "Bash(chmod +x /workspaces/homelab/.claude/hooks/*.sh)",
+      "Bash(bash .claude/hooks/pre-commit-check.sh)",
+      "Bash(echo \"Exit: $?\")",
+      "Bash(bash .claude/hooks/terraform-plan.sh)",
+      "Bash(bash .claude/hooks/sops-guard.sh)",
+      "Bash(bash .claude/hooks/flux-reminder.sh)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs",
+      "mcp__kubernetes__resources_get",
+      "Bash(curl:*)",
+      "mcp__kubernetes__pods_list_in_namespace",
+      "mcp__kubernetes__pods_exec",
+      "mcp__kubernetes__pods_log",
+      "Bash(gh repo:*)",
+      "Bash(mkdir -p /workspaces/homelab/.claude/skills/graphify)",
+      "Bash(cp /home/vscode/.claude/skills/graphify/SKILL.md /workspaces/homelab/.claude/skills/graphify/SKILL.md)",
+      "Bash(rm /home/vscode/.claude/skills/graphify/SKILL.md)",
+      "Bash(rmdir /home/vscode/.claude/skills/graphify)"
+    ]
+  }
+}
