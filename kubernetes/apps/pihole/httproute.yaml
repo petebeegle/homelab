@@ -10,7 +10,7 @@ spec:
       namespace: gateway
       sectionName: https-gateway
   hostnames:
-    - pihole.lab.petebeegle.com
+    - pihole.${cluster_domain}
   rules:
     - matches:
         - path:

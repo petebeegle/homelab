@@ -48,7 +48,7 @@ entries:
       client_secret: !Context grafana_client_secret
       redirect_uris:
         - matching_mode: strict
-          url: https://monitoring.lab.petebeegle.com/login/generic_oauth
+          url: https://monitoring.${cluster_domain}/login/generic_oauth
       signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, openid]]
@@ -70,7 +70,7 @@ entries:
       slug: grafana
       provider: !Find [authentik_providers_oauth2.oauth2provider, [name, grafana-provider]]
       policy_engine_mode: any
-      meta_launch_url: https://monitoring.lab.petebeegle.com
+      meta_launch_url: https://monitoring.${cluster_domain}
       meta_icon: https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/grafana.png
       meta_description: Monitoring and observability dashboards
       open_in_new_tab: true

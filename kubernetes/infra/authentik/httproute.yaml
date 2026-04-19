@@ -10,7 +10,7 @@ spec:
       namespace: gateway
       sectionName: https-gateway
   hostnames:
-    - authentik.lab.petebeegle.com
+    - authentik.${cluster_domain}
   rules:
     - matches:
         - path:

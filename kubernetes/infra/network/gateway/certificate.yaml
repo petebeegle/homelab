@@ -2,12 +2,12 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: wildcard-lab-petebeegle-com
+  name: ${wildcard_cert_name}
   namespace: gateway
 spec:
-  secretName: wildcard-lab-petebeegle-com
+  secretName: ${wildcard_cert_name}
   dnsNames:
-    - "*.lab.petebeegle.com"
+    - "*.${cluster_domain}"
   issuerRef:
     name: cloudflare
     kind: ClusterIssuer

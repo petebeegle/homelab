@@ -46,7 +46,7 @@ spec:
       namespace: gateway
       sectionName: https-gateway
   hostnames:
-    - whoami.lab.petebeegle.com
+    - whoami.${cluster_domain}
   rules:
     - matches:
         - path:

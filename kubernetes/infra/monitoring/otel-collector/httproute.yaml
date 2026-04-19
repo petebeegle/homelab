@@ -3,14 +3,14 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: otel-collector
-  namespace: monitoring
+  namespace: otel-collector
 spec:
   parentRefs:
     - name: internal
       namespace: gateway
       sectionName: https-gateway
   hostnames:
-    - otel.lab.petebeegle.com
+    - otel.${cluster_domain}
   rules:
     - matches:
         - path:

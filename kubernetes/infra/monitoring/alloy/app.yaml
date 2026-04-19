@@ -3,11 +3,8 @@ apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: alloy
-  namespace: monitoring
+  namespace: alloy
 spec:
-  dependsOn:
-    - name: loki
-    - name: mimir
   interval: 5m0s
   install:
     crds: CreateReplace

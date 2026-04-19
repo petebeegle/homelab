@@ -51,14 +51,18 @@ After pushing, confirm Kustomizations, HelmReleases, and nodes are Ready (kubern
 ## Architecture
 
 ### GitOps Dependency Chain
-(`kubernetes/clusters/production/infrastructure.yaml` and `apps.yaml`)
+(Each component is a separate Flux Kustomization in `kubernetes/clusters/production/infra/` and `apps/`)
 
 1. **crds** — Gateway API, Snapshotter
-2. **controllers** — Cert-manager (`cert-manager` ns), Synology CSI (`dataplane` ns)
-3. **network** — Cilium, Gateway API, certificates (depends on crds + controllers)
-4. **authentik** — SSO/IdP (depends on network + controllers)
-5. **monitoring** — Grafana, Loki, Mimir, Alloy (depends on network)
-6. **apps** — depends on controllers + network + monitoring
+2. **cert-manager** (`cert-manager` ns), **nfs-csi** (`dataplane` ns), **grafana-operator** — depend on crds
+3. **cilium** — depends on crds
+4. **certs** — depends on cert-manager + cilium
+5. **gateway** — depends on crds + cilium + certs
+6. **authentik** — SSO/IdP (depends on gateway + cert-manager)
+7. **monitoring** (base ns/repos), **loki**, **mimir**, **otel-collector** — depend on gateway
+8. **alloy** — depends on loki + mimir
+9. **grafana** — depends on gateway + grafana-operator + loki + mimir
+10. **apps** — each depends on gateway; NFS apps also depend on nfs-csi
 
 Synology CSI (`dataplane` ns) must be healthy before any PVC workload — CSI failure blocks all dependent pods.
 
@@ -66,7 +70,23 @@ Synology CSI (`dataplane` ns) must be healthy before any PVC workload — CSI fa
 - **Secrets:** SOPS-encrypted; `.sops.yaml` matches `secret.yaml` and `grafana-env.yaml`
 - **Storage:** StorageClass `nfs-csi-storage` (Synology NFS); Btrfs volumes required for quota
 - **Ingress:** Gateway API with Cilium — no traditional Ingress resources
-- **Apps:** `kubernetes/apps/base/<name>/` → `app.yaml` (HelmRelease) + optional `secret.yaml`, `httproute.yaml`; activated in `kubernetes/apps/production/kustomization.yaml`
+- **Apps:** `kubernetes/apps/<name>/` → `app.yaml` (HelmRelease) + optional `secret.yaml`, `httproute.yaml`; each activated by a Flux Kustomization in `kubernetes/clusters/production/apps/`
+- **Variable substitution:** All Flux Kustomizations use `postBuild.substituteFrom` to inject values from the `cluster-vars` ConfigMap in `flux-system`. Shared manifests use `${variable}` syntax (e.g., `${cluster_domain}`, `${nfs_server}`).
+
+### Multi-Environment Support
+The repo is structured for multiple environments via Flux variable substitution:
+
+- `kubernetes/clusters/<env>/cluster-vars.yaml` — plaintext ConfigMap with env-specific values (domain, IPs, Let's Encrypt server, cert name)
+- `kubernetes/clusters/<env>/kustomization.yaml` — includes `cluster-vars.yaml` so it's applied to the cluster
+- Every Flux Kustomization has `postBuild.substituteFrom: [{kind: ConfigMap, name: cluster-vars}]`
+- Shared manifests in `kubernetes/infra/` and `kubernetes/apps/` use `${cluster_domain}`, `${nfs_server}`, etc. — no hardcoded env-specific values
+
+To add a new environment (`staging`):
+1. Create `kubernetes/clusters/staging/cluster-vars.yaml` with staging-specific values
+2. Run `flux bootstrap` pointing at `./kubernetes/clusters/staging`
+3. Apply a staging-specific SOPS age key as the `sops-age` Secret in `flux-system`
+4. Create `kubernetes/clusters/staging/infra/` and `apps/` with the subset of components to run
+5. Use `patches:` in cluster-layer Kustomizations for env-specific sizing (replicas, PV sizes) — no overlay directories needed
 
 ## Development Environment
 

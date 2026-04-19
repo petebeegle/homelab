@@ -15,7 +15,7 @@ SOPS only encrypts files matching the path patterns in `.sops.yaml`:
 
 ### 1. Create `secret.yaml` in the app's base directory
 
-Place it alongside `app.yaml` in `kubernetes/apps/base/<app-name>/secret.yaml`. The namespace must match the app's namespace:
+Place it alongside `app.yaml` in `kubernetes/apps/<app-name>/secret.yaml`. The namespace must match the app's namespace:
 
 ```yaml
 apiVersion: v1
@@ -31,13 +31,13 @@ stringData:
 ### 2. Encrypt in-place before doing anything else
 
 ```bash
-sops -i -e kubernetes/apps/base/<app-name>/secret.yaml
+sops -i -e kubernetes/apps/<app-name>/secret.yaml
 ```
 
 ### 3. Verify it encrypted correctly — before `git add`
 
 ```bash
-sops -d kubernetes/apps/base/<app-name>/secret.yaml
+sops -d kubernetes/apps/<app-name>/secret.yaml
 ```
 
 If it decrypts and shows your values, it was encrypted correctly. If `sops -d` fails or shows raw values, do not proceed.

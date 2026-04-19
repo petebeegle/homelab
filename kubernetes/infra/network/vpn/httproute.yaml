@@ -10,7 +10,7 @@ spec:
       namespace: gateway
       sectionName: https-gateway
   hostnames:
-    - vpn.lab.petebeegle.com
+    - vpn.${cluster_domain}
   rules:
     - matches:
         - path:

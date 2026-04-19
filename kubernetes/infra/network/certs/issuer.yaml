@@ -6,7 +6,7 @@ metadata:
   namespace: cert-manager
 spec:
   acme:
-    server: https://acme-v02.api.letsencrypt.org/directory
+    server: ${letsencrypt_server}
     email: pete.beegle@gmail.com
     privateKeySecretRef:
       name: cloudflare-key
@@ -18,7 +18,7 @@ spec:
               key: token
         selector:
           dnsZones:
-            - "*.lab.petebeegle.com"
+            - "*.${cluster_domain}"
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
@@ -39,4 +39,4 @@ spec:
               key: token
         selector:
           dnsZones:
-            - "*.lab.petebeegle.com"
+            - "*.${cluster_domain}"

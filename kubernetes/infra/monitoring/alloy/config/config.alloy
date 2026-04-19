@@ -5,14 +5,14 @@ logging {
 
 loki.write "default" {
   endpoint {
-    url = "http://loki-gateway/loki/api/v1/push"
+    url = "http://loki-gateway.loki.svc.cluster.local/loki/api/v1/push"
     tenant_id = 1
   }
 }
 
 prometheus.remote_write "default" {
     endpoint {
-      url = "http://mimir-nginx/api/v1/push"
+      url = "http://mimir-nginx.mimir.svc.cluster.local/api/v1/push"
     }
 
     // Prevent WAL from growing unbounded during outages

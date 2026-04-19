@@ -4,11 +4,6 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - repositories.yaml
-  - loki
-  - mimir
   - kube-state-metrics
-  - alloy
-  - grafana
-  - pretty-discord-alerts
   - snmp-exporter
-  - otel-collector
+  - pretty-discord-alerts

@@ -24,4 +24,4 @@ Use `kubernetes` MCP for all resource inspection. Fall back to CLI only for Cili
 For hosts outside the cluster (Proxmox, UniFi, NAS):
 1. Create `ExternalName` Service or manual `Endpoints` + `Service`
 2. Create `TLSRoute` with `passthrough` mode — TLS terminates at the target, no cert-manager needed
-3. See `kubernetes/apps/base/external/` for existing examples
+3. See `kubernetes/apps/external/` for existing examples

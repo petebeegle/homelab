@@ -1,0 +1,23 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: gateway
+  namespace: flux-system
+spec:
+  interval: 2m
+  retryInterval: 2m
+  path: ./kubernetes/infra/network/gateway
+  prune: true
+  wait: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: crds
+    - name: cilium
+    - name: certs
+  postBuild:
+    substituteFrom:
+      - kind: ConfigMap
+        name: cluster-vars

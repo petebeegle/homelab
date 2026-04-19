@@ -9,8 +9,8 @@ spec:
     - name: internal
       sectionName: http-gateway
   hostnames:
-    - "*.lab.petebeegle.com"
-    - lab.petebeegle.com
+    - "*.${cluster_domain}"
+    - ${cluster_domain}
   rules:
     - matches:
         - path:

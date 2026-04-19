@@ -7,9 +7,9 @@ metadata:
     storageclass.kubernetes.io/is-default-class: "true"
 provisioner: nfs.csi.k8s.io
 parameters:
-  server: 192.168.30.99
+  server: ${nfs_server}
   share: /volume2/Homelab
-  subDir: nfs-csi-${pvc.metadata.namespace}-${pvc.metadata.name}
+  subDir: nfs-csi-$${pvc.metadata.namespace}-$${pvc.metadata.name}
 mountOptions:
   - nfsvers=4.1
   - hard

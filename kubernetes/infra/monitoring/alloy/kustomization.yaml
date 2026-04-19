@@ -3,7 +3,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 configMapGenerator:
   - name: alloy-config
-    namespace: monitoring
+    namespace: alloy
     files:
       - config/config.alloy
     options:
@@ -14,4 +14,5 @@ configMapGenerator:
 configurations:
   - kustomizeconfig.yaml
 resources:
+  - namespace.yaml
   - app.yaml

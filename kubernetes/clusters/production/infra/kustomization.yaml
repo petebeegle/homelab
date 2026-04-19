@@ -1,0 +1,18 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - crds.yaml
+  - cert-manager.yaml
+  - grafana-operator.yaml
+  - nfs-csi.yaml
+  - cilium.yaml
+  - certs.yaml
+  - gateway.yaml
+  - monitoring.yaml
+  - loki.yaml
+  - mimir.yaml
+  - alloy.yaml
+  - grafana.yaml
+  - otel-collector.yaml
+  - authentik.yaml

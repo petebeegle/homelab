@@ -1,0 +1,21 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: app-whoami
+  namespace: flux-system
+spec:
+  interval: 5m
+  retryInterval: 2m
+  path: ./kubernetes/apps/whoami
+  prune: true
+  wait: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: gateway
+  postBuild:
+    substituteFrom:
+      - kind: ConfigMap
+        name: cluster-vars

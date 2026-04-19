@@ -18,7 +18,7 @@ This will create DNS records for our Unifi service:
 - `unifi`
 
 ## 2. Configure the Proxy
-This service is exposed as an external service through a cilium gateway. The configuration is found [here](../kubernetes/apps/base/external).
+This service is exposed as an external service through a cilium gateway. The configuration is found [here](../kubernetes/apps/external).
 
 ## 3. Creating Certificates
 

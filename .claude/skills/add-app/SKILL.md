@@ -7,7 +7,7 @@ description: Scaffold a new Kubernetes application in this homelab. Invoke when 
 
 ### 1. Create the base config
 
-Create `kubernetes/apps/base/<app-name>/app.yaml` combining Namespace, HelmRepository (if new), and HelmRelease:
+Create `kubernetes/apps/<app-name>/app.yaml` combining Namespace, HelmRepository (if new), and HelmRelease:
 
 ```yaml
 ---
@@ -59,7 +59,7 @@ spec:
 
 ### 2. Create the HTTPRoute
 
-Every app exposed via the cluster needs a Gateway API HTTPRoute (not a traditional Ingress). Create `kubernetes/apps/base/<app-name>/httproute.yaml`:
+Every app exposed via the cluster needs a Gateway API HTTPRoute (not a traditional Ingress). Create `kubernetes/apps/<app-name>/httproute.yaml`:
 
 ```yaml
 ---

@@ -1,0 +1,22 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: otel-collector
+  namespace: flux-system
+spec:
+  interval: 2m
+  retryInterval: 2m
+  path: ./kubernetes/infra/monitoring/otel-collector
+  prune: true
+  wait: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: monitoring
+    - name: gateway
+  postBuild:
+    substituteFrom:
+      - kind: ConfigMap
+        name: cluster-vars

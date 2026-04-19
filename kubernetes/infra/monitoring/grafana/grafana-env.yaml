@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Secret
 metadata:
     name: grafana-env
-    namespace: monitoring
+    namespace: grafana
 type: Opaque
 stringData:
     DISCORD_WEBHOOK_URL: ENC[AES256_GCM,data:mUWCqnIWC9jopETe2cHx//q8OfSFKDS/KJ5GFbUmyp6qi8oOnpoQelaYf00OawqPcCB6t2J8hd7lzjmDAr2e6e3hZirW72M2F6RSKmnA2Uf16ZQtBrC2aKDHDpsxmJWR6bkq424G4202r1Kms7pmDYO9heJQ8JAdng==,iv:7cAnllHBmYifJwE+D3LKRNs26n/ob9RCbVgMbYgTyrM=,tag:mlHL779h0TVqdx/NfAHf8A==,type:str]
