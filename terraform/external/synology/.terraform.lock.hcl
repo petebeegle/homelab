@@ -3,8 +3,18 @@
 
 provider "registry.terraform.io/hashicorp/external" {
   version     = "2.3.5"
-  constraints = "~> 2.0"
+  constraints = "2.3.5"
   hashes = [
+    "h1:+mTcv4uC/3pTEm0Ndf2Zwq9qOBvGE0U8ETkmCaYGOkQ=",
+    "h1:1JSWWSmVSxzHGbD4RmaNUsdGsr2hPo+WwYaluyWv7vY=",
+    "h1:FnUk98MI5nOh3VJ16cHf8mchQLewLfN1qZG/MqNgPrI=",
+    "h1:Htn3w+kMuggvB3ErfMk+wANaSQZkigSr4r77vb5K2/k=",
+    "h1:IE3n531K7Agq3/pourJdsKV7l5EifBb09TXsb8shTXM=",
+    "h1:ILw1n6XioHhRMLA5Y6ab8Cqncy5KcMgpuJ2Mj3ikm3A=",
+    "h1:ORX3G4aEHO9sFP3dyv821JJTF9qa8J9XVp441SvvjvA=",
+    "h1:PCqACIJO7O94d9ff6sRDml3ACfsDvcmgbNL7sgWPSiY=",
+    "h1:Y4Z4NI6uqCsWTm8BTz9c3cG62SH1pOsbH77PtopF/EI=",
+    "h1:jBKnODzoHyyMss7IoiAjmi+2iQqFsJW8O+RSuOem+44=",
     "h1:smKSos4zs57pJjQrNuvGBpSWth2el9SgePPbPHo0aps=",
     "zh:6e89509d056091266532fa64de8c06950010498adf9070bf6ff85bc485a82562",
     "zh:78d5eefdd9e494defcb3c68d282b8f96630502cac21d1ea161f53cfe9bb483b3",
