@@ -23,17 +23,39 @@
       "(?:^|/)kubernetes(?:/.+)?/*\\.ya?ml$"
     ]
   },
-  "regexManagers": [
+  "customManagers": [
     {
       "fileMatch": [
         "(?:^|/)kubernetes/infra/crds/kustomization\\.ya?ml$",
-        "(?:^|/)terraform/cluster/modules/talos/templates/control_plane.yaml.tftpl$"
+        "(?:^|/)terraform/cluster/modules/talos-bootstrap/templates/control_plane\.yaml\.tftpl$"
       ],
       "matchStrings": [
-        "https://github\\.com/(?<depName>[^/]+/[^/]+)//[^?]+\\?ref=(?<currentValue>.*?)\\s",
-        "https://raw\\.githubusercontent\\.com/(?<depName>[^/]+/[^/]+)/(?<currentValue>[^/]+)/"
+        "https://github\.com/(?<depName>[^/]+/[^/]+)//[^?]+\\?ref=(?<currentValue>.*?)\\s",
+        "https://raw\.githubusercontent\.com/(?<depName>[^/]+/[^/]+)/(?<currentValue>[^/]+)/"
       ],
       "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver"
+    },
+    {
+      "fileMatch": [
+        "(?:^|/)terraform/cluster/terraform\.tfvars$"
+      ],
+      "matchStrings": [
+        "talos_version\\s*=\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "depNameTemplate": "siderolabs/talos",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver"
+    },
+    {
+      "fileMatch": [
+        "(?:^|/)terraform/cluster/modules/talos-bootstrap/network\.tf$"
+      ],
+      "matchStrings": [
+        "chart\\s*=\\s*\"(?<depName>[^\"]+)\"[\\s\\S]*?version\\s*=\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "helm",
+      "registryUrlTemplate": "https://helm.cilium.io/",
       "versioningTemplate": "semver"
     }
   ],
@@ -41,5 +63,12 @@
     "fileMatch": [
       "\\.tf$"
     ]
-  }
+  },
+  "packageRules": [
+    {
+      "groupName": "cilium",
+      "matchPackageNames": ["cilium"],
+      "matchDatasources": ["helm"]
+    }
+  ]
 }

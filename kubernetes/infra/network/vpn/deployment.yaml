@@ -36,7 +36,7 @@ spec:
                 secretKeyRef:
                   name: wireguard-env
                   key: WG_ALLOWED_IPS
-          image: ghcr.io/wg-easy/wg-easy
+          image: ghcr.io/wg-easy/wg-easy:v15.2.2
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 30000
