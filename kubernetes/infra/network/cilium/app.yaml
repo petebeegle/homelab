@@ -32,7 +32,7 @@ spec:
         kind: HelmRepository
         name: cilium
         namespace: flux-system
-      version: "v1.18.9"
+      version: "1.19.3"
   valuesFrom:
     - kind: ConfigMap
       name: cilium-values
