@@ -15,7 +15,8 @@
     "managerFilePatterns": [
       "/(?:^|/)gotk-components\\.ya?ml$/",
       "/(?:^|/)kubernetes(?:/.+)?/repository\\.ya?ml$/",
-      "/(?:^|/)kubernetes(?:/.+)?/release\\.ya?ml$/"
+      "/(?:^|/)kubernetes(?:/.+)?/release\\.ya?ml$/",
+      "/(?:^|/)kubernetes(?:/.+)?/app\\.ya?ml$/"
     ]
   },
   "kubernetes": {
