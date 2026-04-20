@@ -12,33 +12,35 @@
     ":pinVersions"
   ],
   "flux": {
-    "fileMatch": [
-      "(?:^|/)gotk-components\\.ya?ml$",
-      "(?:^|/)kubernetes(?:/.+)?/repository\\.ya?ml$",
-      "(?:^|/)kubernetes(?:/.+)?/release\\.ya?ml$"
+    "managerFilePatterns": [
+      "/(?:^|/)gotk-components\\.ya?ml$/",
+      "/(?:^|/)kubernetes(?:/.+)?/repository\\.ya?ml$/",
+      "/(?:^|/)kubernetes(?:/.+)?/release\\.ya?ml$/"
     ]
   },
   "kubernetes": {
-    "fileMatch": [
-      "(?:^|/)kubernetes(?:/.+)?/*\\.ya?ml$"
+    "managerFilePatterns": [
+      "/(?:^|/)kubernetes(?:/.+)?/*\\.ya?ml$/"
     ]
   },
   "customManagers": [
     {
-      "fileMatch": [
-        "(?:^|/)kubernetes/infra/crds/kustomization\\.ya?ml$",
-        "(?:^|/)terraform/cluster/modules/talos-bootstrap/templates/control_plane\.yaml\.tftpl$"
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(?:^|/)kubernetes/infra/crds/kustomization\\.ya?ml$/",
+        "/(?:^|/)terraform/cluster/modules/talos-bootstrap/templates/control_plane.yaml.tftpl$/"
       ],
       "matchStrings": [
-        "https://github\.com/(?<depName>[^/]+/[^/]+)//[^?]+\\?ref=(?<currentValue>.*?)\\s",
-        "https://raw\.githubusercontent\.com/(?<depName>[^/]+/[^/]+)/(?<currentValue>[^/]+)/"
+        "https://github.com/(?<depName>[^/]+/[^/]+)//[^?]+\\?ref=(?<currentValue>.*?)\\s",
+        "https://raw.githubusercontent.com/(?<depName>[^/]+/[^/]+)/(?<currentValue>[^/]+)/"
       ],
       "datasourceTemplate": "github-releases",
       "versioningTemplate": "semver"
     },
     {
-      "fileMatch": [
-        "(?:^|/)terraform/cluster/terraform\.tfvars$"
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(?:^|/)terraform/cluster/terraform.tfvars$/"
       ],
       "matchStrings": [
         "talos_version\\s*=\\s*\"(?<currentValue>[^\"]+)\""
@@ -48,8 +50,9 @@
       "versioningTemplate": "semver"
     },
     {
-      "fileMatch": [
-        "(?:^|/)terraform/cluster/modules/talos-bootstrap/network\.tf$"
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(?:^|/)terraform/cluster/modules/talos-bootstrap/network.tf$/"
       ],
       "matchStrings": [
         "chart\\s*=\\s*\"(?<depName>[^\"]+)\"[\\s\\S]*?version\\s*=\\s*\"(?<currentValue>[^\"]+)\""
@@ -60,15 +63,19 @@
     }
   ],
   "terraform": {
-    "fileMatch": [
-      "\\.tf$"
+    "managerFilePatterns": [
+      "/\\.tf$/"
     ]
   },
   "packageRules": [
     {
       "groupName": "cilium",
-      "matchPackageNames": ["cilium"],
-      "matchDatasources": ["helm"]
+      "matchPackageNames": [
+        "cilium"
+      ],
+      "matchDatasources": [
+        "helm"
+      ]
     }
   ]
 }
