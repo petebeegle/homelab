@@ -17,19 +17,19 @@
       ]
     },
     "grafana": {
-      "type": "stdio",
-      "command": "/workspaces/homelab/.devcontainer/grafana-mcp.sh",
+      "command": "uvx",
+      "args": ["mcp-grafana"],
       "env": {
         "GRAFANA_URL": "https://monitoring.lab.petebeegle.com"
       }
-    },
-    "context7": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@upstash/context7-mcp@latest"
-      ],
-      "description": "Live documentation lookup — use with /docs command and documentation-lookup skill (resolve-library-id, query-docs)."
     }
+  },
+  "context7": {
+    "command": "npx",
+    "args": [
+      "-y",
+      "@upstash/context7-mcp@latest"
+    ],
+    "description": "Live documentation lookup — use with /docs command and documentation-lookup skill (resolve-library-id, query-docs)."
   }
 }

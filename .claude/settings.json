@@ -26,7 +26,9 @@
       "Bash(talosctl -n:*)",
       "Bash(terraform init:*)",
       "Bash(terraform plan:*)",
-      "Bash(terraform output:*)"
+      "Bash(terraform output:*)",
+      "mcp__context7__*",
+      "mcp__kubernetes__*"
     ]
   },
   "enableAllProjectMcpServers": true,

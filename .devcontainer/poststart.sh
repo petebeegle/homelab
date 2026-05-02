@@ -19,8 +19,8 @@ tf_output_to_file() {
 tf_output_to_file "terraform/cluster" "kubeconfig" ~/.kube/config
 
 # Grafana MCP token
-if tf_output_to_file "terraform/external/grafana" "mcp_token" ~/.config/grafana/mcp.env.tmp; then
-  echo "export GRAFANA_SERVICE_ACCOUNT_TOKEN=$(cat ~/.config/grafana/mcp.env.tmp)" > ~/.config/grafana/mcp.env
-  chmod 600 ~/.config/grafana/mcp.env
-  rm ~/.config/grafana/mcp.env.tmp
+GRAFANA_SERVICE_ACCOUNT_TOKEN=$(tfo -state=terraform/external/grafana/terraform.tfstate -raw mcp_token 2>/dev/null || true)
+if [[ -z "$GRAFANA_SERVICE_ACCOUNT_TOKEN" ]]; then
+  echo "WARNING: GRAFANA_SERVICE_ACCOUNT_TOKEN is empty — run 'terraform apply' in terraform/external/grafana/ to provision the token"
 fi
+export GRAFANA_SERVICE_ACCOUNT_TOKEN

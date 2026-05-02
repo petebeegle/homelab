@@ -17,10 +17,10 @@
     "ghcr.io/devcontainers-extra/features/cloudflared:1": {},
     "ghcr.io/devcontainers-extra/features/terraform-docs:1": {},
     "ghcr.io/devcontainers-extra/features/pre-commit:2": {},
-    "ghcr.io/devcontainers/features/node:1": {
+    "ghcr.io/devcontainers/features/node:2": {
       "version": "lts"
     },
-    "ghcr.io/devcontainers-extra/features/uv:1": {}
+    "ghcr.io/devcontainer-community/devcontainer-features/astral.sh-uv:1": {}
   },
   "customizations": {
     "vscode": {
