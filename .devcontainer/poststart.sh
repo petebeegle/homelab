@@ -24,3 +24,6 @@ if [[ -z "$GRAFANA_SERVICE_ACCOUNT_TOKEN" ]]; then
   echo "WARNING: GRAFANA_SERVICE_ACCOUNT_TOKEN is empty — run 'terraform apply' in terraform/external/grafana/ to provision the token"
 fi
 export GRAFANA_SERVICE_ACCOUNT_TOKEN
+
+# pip install mcp (for graphify)
+python3 -m pip install mcp

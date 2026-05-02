@@ -1,11 +1,642 @@
 {
-  "README.md": 1775430899.885278,
-  "CLAUDE.md": 1776021695.523812,
-  "scripts/NEXUS.md": 1768105484.9810967,
-  "scripts/UNIFI.md": 1740463140.642858,
-  "scripts/SYNOLOGY.md": 1768105815.8003519,
-  "runbooks/resize_pvc.md": 1757135233.3517678,
-  "runbooks/cloudflare_tunnels.md": 1737439466.8372362,
-  "runbooks/configure_nfs_with_proxmox.md": 1768187711.8036876,
-  "terraform/cluster/README.md": 1775430451.360627
+  "/workspaces/homelab/terraform/cluster/README.md": {
+    "mtime": 1775430451.360627,
+    "hash": "80334c3bcbc48cf492052ab4333650a9"
+  },
+  "/workspaces/homelab/kubernetes/infra/authentik/kustomizeconfig.yaml": {
+    "mtime": 1771218425.0350392,
+    "hash": "a9316e21e7ea690a6d8f1f8e991c7759"
+  },
+  "/workspaces/homelab/kubernetes/infra/authentik/httproute.yaml": {
+    "mtime": 1776639009.1983576,
+    "hash": "dd58751554411330573d3ca637832bcf"
+  },
+  "/workspaces/homelab/kubernetes/infra/authentik/kustomization.yaml": {
+    "mtime": 1776027267.3883488,
+    "hash": "b538e7334d6805dbe981174b339c8d9f"
+  },
+  "/workspaces/homelab/kubernetes/infra/authentik/namespace.yaml": {
+    "mtime": 1770526322.1021492,
+    "hash": "3cf4f03a596a4f1a657e7fb460d14bd6"
+  },
+  "/workspaces/homelab/kubernetes/infra/authentik/app.yaml": {
+    "mtime": 1776645186.2076008,
+    "hash": "5835bdd1409054985b163d3fd69f2018"
+  },
+  "/workspaces/homelab/kubernetes/infra/authentik/values.yaml": {
+    "mtime": 1771218425.0350392,
+    "hash": "0534cc9f639ca805b8e80c7e75885eaa"
+  },
+  "/workspaces/homelab/kubernetes/infra/authentik/blueprints/kustomization.yaml": {
+    "mtime": 1771218425.0390394,
+    "hash": "6d5e232dd001d6297771d471a6d4e708"
+  },
+  "/workspaces/homelab/kubernetes/infra/authentik/blueprints/synology-oauth.yaml": {
+    "mtime": 1771219021.054004,
+    "hash": "70da0fd27151c947bb4e6d8940fad70c"
+  },
+  "/workspaces/homelab/kubernetes/infra/authentik/blueprints/grafana-oauth.yaml": {
+    "mtime": 1776639009.9743905,
+    "hash": "ec6b1657e2a27aed1c7bb2c5b16e3c7e"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/kustomization.yaml": {
+    "mtime": 1776641311.2822993,
+    "hash": "f50d0a61cf837266d52b670980f0d840"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/namespace.yaml": {
+    "mtime": 1756268422.8264492,
+    "hash": "610df66a7df1b05f6fae23bbf9a390dd"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/grafana/kustomization.yaml": {
+    "mtime": 1776641311.2822993,
+    "hash": "6b0525b91eb651e3a9c22e48e4911276"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/grafana/gateway.yaml": {
+    "mtime": 1776639011.5744586,
+    "hash": "c616b37b2b9e741e1d1d80b44c04c49c"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/grafana/grafana-env.yaml": {
+    "mtime": 1776637918.4496565,
+    "hash": "30ef35e10f5db2bf174a40a322182ccd"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/grafana/grafana-instance.yaml": {
+    "mtime": 1776641772.895442,
+    "hash": "b0c4eda9b17372db83c60738abb94348"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/grafana/folders.yaml": {
+    "mtime": 1776642120.6547942,
+    "hash": "647249ab3fd4ebd3161ad1f5abc01fbe"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/grafana/namespace.yaml": {
+    "mtime": 1776637884.6454682,
+    "hash": "0bfe868a04f0013a7d4f3c1261692454"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/grafana/app.yaml": {
+    "mtime": 1776639015.4746246,
+    "hash": "3a02428e1a4c3abbcc4df530e1320047"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/grafana/repositories.yaml": {
+    "mtime": 1776641311.2822993,
+    "hash": "117130d8b2a14fabf5148e828b32254a"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/grafana/dashboards/kustomization.yaml": {
+    "mtime": 1776642178.637293,
+    "hash": "b29215322ff6cf0103fd44471c93d599"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/grafana/dashboards/authentik-dashboard.yaml": {
+    "mtime": 1776641750.323506,
+    "hash": "4a4affe6f9ba86634cc9863a64d97fad"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/grafana/dashboards/kubernetes-dashboard.yaml": {
+    "mtime": 1776642284.7304304,
+    "hash": "dfc0064acde757794eb24003e1953d71"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/grafana/dashboards/flux-dashboard.yaml": {
+    "mtime": 1776642277.9781408,
+    "hash": "a90ecdf49d27c98a7ec9f460d3770be5"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/grafana/dashboards/proxmox-dashboard.yaml": {
+    "mtime": 1776642287.1425338,
+    "hash": "c74e06720f093a9f093c004ec6ff1c1c"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/grafana/alerting/alert-rules-flux.yaml": {
+    "mtime": 1776641787.3180633,
+    "hash": "3763cf8614f0ae1a175f80dd78533645"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/grafana/alerting/kustomization.yaml": {
+    "mtime": 1771648449.708397,
+    "hash": "eb979655c20172afa3ab1f9ce0f1a514"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/grafana/alerting/alert-rules-valheim.yaml": {
+    "mtime": 1776641793.1343267,
+    "hash": "ede2090a6137a55afe8ee68878b9d259"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/grafana/alerting/alert-rules-mimir.yaml": {
+    "mtime": 1776641789.494161,
+    "hash": "61512aa24f4c18590cf309f4aead6f81"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/grafana/alerting/alert-rules-proxmox.yaml": {
+    "mtime": 1776641796.282472,
+    "hash": "d98db875a6e811a4c91b7c1ba5f0262c"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/snmp-exporter/servicemonitor.yaml": {
+    "mtime": 1769228593.3008108,
+    "hash": "bdbe64f3d1f234c3348cdb31ab8a84c5"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/snmp-exporter/kustomization.yaml": {
+    "mtime": 1776641311.2822993,
+    "hash": "21bee23f877cf9c1db34fcc9e9ba0305"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/snmp-exporter/service.yaml": {
+    "mtime": 1769228591.4167192,
+    "hash": "c5f37966a8cfebc4ae4fa85a59041f93"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/snmp-exporter/repositories.yaml": {
+    "mtime": 1776641311.2822993,
+    "hash": "38b467c045a15998abd8b3445c3df2a4"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/snmp-exporter/deployment.yaml": {
+    "mtime": 1769229964.4297574,
+    "hash": "081bb309e28b050f1709878e98ff80bc"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/loki/kustomization.yaml": {
+    "mtime": 1776641311.2822993,
+    "hash": "4e4fbd3ad9f59b9087cd00b553b7f9c9"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/loki/namespace.yaml": {
+    "mtime": 1776637882.7453964,
+    "hash": "0bc8a74c6f0d50755356a606f3ed50f6"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/loki/app.yaml": {
+    "mtime": 1776637911.9334128,
+    "hash": "c52e4427c0e6608b1dbb1cfa58f6626f"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/loki/repositories.yaml": {
+    "mtime": 1776641311.2822993,
+    "hash": "a47e7f8028f93046f3888383c495cbb0"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/pretty-discord-alerts/kustomization.yaml": {
+    "mtime": 1770008938.889289,
+    "hash": "3b7590b5d701e23f2c3f33f642929047"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/pretty-discord-alerts/service.yaml": {
+    "mtime": 1770008458.790737,
+    "hash": "fe2de6288892351a438718c5226616c7"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/pretty-discord-alerts/deployment.yaml": {
+    "mtime": 1770095203.7089856,
+    "hash": "44bbdb7e7894d14f3fbaf4f0096f3309"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/otel-collector/httproute.yaml": {
+    "mtime": 1776639016.6186736,
+    "hash": "f85d5a78350c5ad37c53fd409bd20984"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/otel-collector/kustomization.yaml": {
+    "mtime": 1776637896.8859475,
+    "hash": "3863bc58121d36c3910cdf5bc1a44d1c"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/otel-collector/namespace.yaml": {
+    "mtime": 1776637885.3934965,
+    "hash": "e2163a4fb82b05b1f124422407035726"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/otel-collector/app.yaml": {
+    "mtime": 1776637931.6741571,
+    "hash": "730a4b1a2df45c897395f1c5627bb51b"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/alloy/kustomizeconfig.yaml": {
+    "mtime": 1757300875.9955397,
+    "hash": "cedae08ca0b7f2f346c294e73004764f"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/alloy/kustomization.yaml": {
+    "mtime": 1776641311.2822993,
+    "hash": "72afd70963f2e9b3e177dda84ecef761"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/alloy/namespace.yaml": {
+    "mtime": 1776637883.8894396,
+    "hash": "703a3691803d68b88f3c538e5c10f646"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/alloy/app.yaml": {
+    "mtime": 1776637924.5978875,
+    "hash": "cb9bb8cb59b4e614ae481af8ac29c9f9"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/alloy/repositories.yaml": {
+    "mtime": 1776641311.2822993,
+    "hash": "a47e7f8028f93046f3888383c495cbb0"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/kube-state-metrics/kustomizeconfig.yaml": {
+    "mtime": 1756956181.7832294,
+    "hash": "cedae08ca0b7f2f346c294e73004764f"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/kube-state-metrics/kustomization.yaml": {
+    "mtime": 1776641311.2822993,
+    "hash": "8826537f410be83517d4a6363cbea142"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/kube-state-metrics/app.yaml": {
+    "mtime": 1766973255.2013447,
+    "hash": "891b37efbb7c1fd67d80a73da599ebac"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/kube-state-metrics/repositories.yaml": {
+    "mtime": 1776641311.2822993,
+    "hash": "38b467c045a15998abd8b3445c3df2a4"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/kube-state-metrics/config/metrics.yaml": {
+    "mtime": 1757245620.4499874,
+    "hash": "ba05dd13113a5bf76db81ad907fbdd3f"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/mimir/kustomization.yaml": {
+    "mtime": 1776641311.2822993,
+    "hash": "4e4fbd3ad9f59b9087cd00b553b7f9c9"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/mimir/namespace.yaml": {
+    "mtime": 1776637883.1214106,
+    "hash": "74e10335fb00f8da9b7ef490cb8162a1"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/mimir/app.yaml": {
+    "mtime": 1776637912.6734407,
+    "hash": "c178640f06840d8184487d20060cdcd4"
+  },
+  "/workspaces/homelab/kubernetes/infra/monitoring/mimir/repositories.yaml": {
+    "mtime": 1776641311.2822993,
+    "hash": "a47e7f8028f93046f3888383c495cbb0"
+  },
+  "/workspaces/homelab/kubernetes/infra/controllers/kustomization.yaml": {
+    "mtime": 1769998238.5909905,
+    "hash": "273684873bc1cb7686c84aa4a8f60361"
+  },
+  "/workspaces/homelab/kubernetes/infra/controllers/nfs-csi/kustomization.yaml": {
+    "mtime": 1768869029.0455692,
+    "hash": "93f2664b2bfbd79c76122965db0f29d1"
+  },
+  "/workspaces/homelab/kubernetes/infra/controllers/nfs-csi/storageclass.yaml": {
+    "mtime": 1776639056.6666372,
+    "hash": "f4acc02094b1a27d704edd2b4b1b9267"
+  },
+  "/workspaces/homelab/kubernetes/infra/controllers/nfs-csi/app.yaml": {
+    "mtime": 1768869029.0455692,
+    "hash": "a9f0c24e624efe7bb21edc8423468173"
+  },
+  "/workspaces/homelab/kubernetes/infra/controllers/grafana-operator/kustomization.yaml": {
+    "mtime": 1769918321.439156,
+    "hash": "4ddb829fd2e2c20326b401fbfc8e44dd"
+  },
+  "/workspaces/homelab/kubernetes/infra/controllers/grafana-operator/namespace.yaml": {
+    "mtime": 1769917759.707745,
+    "hash": "8e6ede81d09d3b60a129f135b9fae5e2"
+  },
+  "/workspaces/homelab/kubernetes/infra/controllers/grafana-operator/app.yaml": {
+    "mtime": 1769918318.6710274,
+    "hash": "a59bece6f3b5889ab88b7d9c2f59363b"
+  },
+  "/workspaces/homelab/kubernetes/infra/controllers/cert-manager/kustomizeconfig.yaml": {
+    "mtime": 1755997792.2635658,
+    "hash": "8abd5f6ea45c55c49496661997af8475"
+  },
+  "/workspaces/homelab/kubernetes/infra/controllers/cert-manager/kustomization.yaml": {
+    "mtime": 1766973105.392893,
+    "hash": "22b3a9d720f73114ed6425d3f0031f6f"
+  },
+  "/workspaces/homelab/kubernetes/infra/controllers/cert-manager/app.yaml": {
+    "mtime": 1766973255.2013447,
+    "hash": "d997d8aef17e43495139ed542f6c7095"
+  },
+  "/workspaces/homelab/kubernetes/infra/controllers/cert-manager/values.yaml": {
+    "mtime": 1755997739.0216503,
+    "hash": "092b194d9ffe4040b884c157e429ae86"
+  },
+  "/workspaces/homelab/kubernetes/infra/crds/kustomization.yaml": {
+    "mtime": 1776644205.6668205,
+    "hash": "321764beb7142b43b42f9503766e4e31"
+  },
+  "/workspaces/homelab/kubernetes/infra/crds/grafana/kustomization.yaml": {
+    "mtime": 1769998238.5949905,
+    "hash": "c5f9189eaed1789133acc0e3a4fb9a36"
+  },
+  "/workspaces/homelab/kubernetes/infra/crds/grafana/app.yaml": {
+    "mtime": 1769998238.5949905,
+    "hash": "2d1f0c34b66b45a2409937f9b958fa39"
+  },
+  "/workspaces/homelab/kubernetes/infra/crds/prometheus/kustomization.yaml": {
+    "mtime": 1766973105.392893,
+    "hash": "c5f9189eaed1789133acc0e3a4fb9a36"
+  },
+  "/workspaces/homelab/kubernetes/infra/crds/prometheus/app.yaml": {
+    "mtime": 1766973255.2013447,
+    "hash": "b62f97dfb8b341328b8a995b439c02bb"
+  },
+  "/workspaces/homelab/kubernetes/infra/network/kustomization.yaml": {
+    "mtime": 1768869029.037568,
+    "hash": "acc598be6ff46be5ea1cce3b958ec692"
+  },
+  "/workspaces/homelab/kubernetes/infra/network/cilium/kustomizeconfig.yaml": {
+    "mtime": 1755997802.0472672,
+    "hash": "8abd5f6ea45c55c49496661997af8475"
+  },
+  "/workspaces/homelab/kubernetes/infra/network/cilium/kustomization.yaml": {
+    "mtime": 1768192452.2106397,
+    "hash": "2f401fb7967ae03ceac8f140e4bbc4d4"
+  },
+  "/workspaces/homelab/kubernetes/infra/network/cilium/app.yaml": {
+    "mtime": 1776645186.2076008,
+    "hash": "6965f2407708106faec53fdc3fdc3ded"
+  },
+  "/workspaces/homelab/kubernetes/infra/network/cilium/values.yaml": {
+    "mtime": 1768192457.4469323,
+    "hash": "534feecb4477c167893416f870f7a992"
+  },
+  "/workspaces/homelab/kubernetes/infra/network/cilium/announcement.yaml": {
+    "mtime": 1767925342.9687195,
+    "hash": "e79943050fb8d3a77ce3a38f8d6e5368"
+  },
+  "/workspaces/homelab/kubernetes/infra/network/cilium/ip-pool.yaml": {
+    "mtime": 1768189857.0729556,
+    "hash": "107f3e7fdf6ec36612f39a61b206db16"
+  },
+  "/workspaces/homelab/kubernetes/infra/network/certs/kustomization.yaml": {
+    "mtime": 1739634495.009491,
+    "hash": "b9f42a4f7993afe44e0eb9a042c2ceff"
+  },
+  "/workspaces/homelab/kubernetes/infra/network/certs/issuer.yaml": {
+    "mtime": 1776639008.0343082,
+    "hash": "ad5cc589e35064d7c12c6fb9ee5337bc"
+  },
+  "/workspaces/homelab/kubernetes/infra/network/gateway/kustomization.yaml": {
+    "mtime": 1771215961.7522676,
+    "hash": "b1c4b344174477f0e2c0c604fb9bd28f"
+  },
+  "/workspaces/homelab/kubernetes/infra/network/gateway/gateway-internal.yaml": {
+    "mtime": 1776638995.8778205,
+    "hash": "c7eead1e10391061315a4d57095bb99d"
+  },
+  "/workspaces/homelab/kubernetes/infra/network/gateway/referencegrant.yaml": {
+    "mtime": 1766973255.205345,
+    "hash": "0faa5b4d77887d8b08d937352547f1c0"
+  },
+  "/workspaces/homelab/kubernetes/infra/network/gateway/namespace.yaml": {
+    "mtime": 1739758333.4703715,
+    "hash": "153f121fad3e8263a9a33b9c885ae22d"
+  },
+  "/workspaces/homelab/kubernetes/infra/network/gateway/gateway-passthrough.yaml": {
+    "mtime": 1776638998.8739367,
+    "hash": "e0ef6f87e8be3589d79db2a561fc3468"
+  },
+  "/workspaces/homelab/kubernetes/infra/network/gateway/https-redirect.yaml": {
+    "mtime": 1776639001.2740295,
+    "hash": "adc391ae6311196dccdf07ac7b057900"
+  },
+  "/workspaces/homelab/kubernetes/infra/network/gateway/certificate.yaml": {
+    "mtime": 1776639000.7940109,
+    "hash": "a44107177b45f7d0da66237111d3ec40"
+  },
+  "/workspaces/homelab/kubernetes/infra/network/vpn/httproute.yaml": {
+    "mtime": 1776639017.3227034,
+    "hash": "c34a0fcbab2249290eabb24c365ef345"
+  },
+  "/workspaces/homelab/kubernetes/infra/network/vpn/kustomization.yaml": {
+    "mtime": 1776027267.3963494,
+    "hash": "7fbc8c0f7d4427ce0846d1510a2d4843"
+  },
+  "/workspaces/homelab/kubernetes/infra/network/vpn/service.yaml": {
+    "mtime": 1768189859.2770593,
+    "hash": "b34e894917f95549df5570df596e0bcc"
+  },
+  "/workspaces/homelab/kubernetes/infra/network/vpn/namespace.yaml": {
+    "mtime": 1750643820.5100625,
+    "hash": "fab82e207270e37c49ca5a0957fe38a1"
+  },
+  "/workspaces/homelab/kubernetes/infra/network/vpn/deployment.yaml": {
+    "mtime": 1776643935.0616648,
+    "hash": "a03ed521b50b56052f7c461855aa6ca9"
+  },
+  "/workspaces/homelab/kubernetes/infra/network/vpn/pvc.yaml": {
+    "mtime": 1768869029.0455692,
+    "hash": "fcb98556ecab3d1057855c1db76b0e20"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/kustomization.yaml": {
+    "mtime": 1776638761.7676256,
+    "hash": "711321aaf51e1e7269c4717a42427caf"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/cluster-vars.yaml": {
+    "mtime": 1776638985.3941784,
+    "hash": "f607b64bdfc760a150471f5d5715e9f8"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/flux-system/kustomization.yaml": {
+    "mtime": 1768877627.5708535,
+    "hash": "ac4512b07cfa0a1406158da3adde983a"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/flux-system/gotk-sync.yaml": {
+    "mtime": 1738294091.1457064,
+    "hash": "f4d490fedc06cb2929c2050105b2a5b7"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/flux-system/gotk-components.yaml": {
+    "mtime": 1776643925.3852232,
+    "hash": "ebd4182ac7af23002f1675717ed17ca1"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/infra/monitoring.yaml": {
+    "mtime": 1776640686.04244,
+    "hash": "7a5e561d7fe054e855732178cdc7a6eb"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/infra/grafana.yaml": {
+    "mtime": 1776638930.8964972,
+    "hash": "221c4c8837d85e01a7d9e25164e01ab3"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/infra/kustomization.yaml": {
+    "mtime": 1776637743.31342,
+    "hash": "c6261497c7bafefd8d5f78c217d9ea84"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/infra/crds.yaml": {
+    "mtime": 1776638906.6954794,
+    "hash": "31dbb7bebda487e53eeae20f18c68803"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/infra/authentik.yaml": {
+    "mtime": 1776638932.8082852,
+    "hash": "3903407b5fda0e7e409b17aee5827489"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/infra/mimir.yaml": {
+    "mtime": 1776641311.2822993,
+    "hash": "54abbbbe8086b6e87168bac6fd518111"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/infra/gateway.yaml": {
+    "mtime": 1776638912.0517042,
+    "hash": "75468219ba7207779eadb7fa47798bf9"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/infra/otel-collector.yaml": {
+    "mtime": 1776641311.2822993,
+    "hash": "92ad1314fccb67a3e021fc4a2933c8e6"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/infra/loki.yaml": {
+    "mtime": 1776641311.2822993,
+    "hash": "fc4b0319fd8fb82cdbf06357e128fb81"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/infra/alloy.yaml": {
+    "mtime": 1776638929.7764504,
+    "hash": "2c8a1972d06e63651c124ac29c84029d"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/infra/nfs-csi.yaml": {
+    "mtime": 1776638909.3715918,
+    "hash": "8c252644dac56f9c9b3299c4970dce66"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/infra/cilium.yaml": {
+    "mtime": 1776638910.4956388,
+    "hash": "bb69beec9096144a5aee76963521b26d"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/infra/cert-manager.yaml": {
+    "mtime": 1776638907.8435276,
+    "hash": "6f1c9c26af10599d506d47bf8a9308cc"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/infra/certs.yaml": {
+    "mtime": 1776638911.259671,
+    "hash": "c32f049ca9b190cd8557355badeb5232"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/infra/grafana-operator.yaml": {
+    "mtime": 1776638908.6075597,
+    "hash": "81ab6302e74ea147d3409fd005da23fd"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/apps/external.yaml": {
+    "mtime": 1776639259.2573543,
+    "hash": "5c93043660c20105f26407d4a105a850"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/apps/kustomization.yaml": {
+    "mtime": 1776637744.6734722,
+    "hash": "fc84a84db1f85f7e5f0fdf6b634e1657"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/apps/pihole.yaml": {
+    "mtime": 1776639267.22882,
+    "hash": "daf3763e0a41ddb1dd1187a9f5efb6fc"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/apps/foundryvtt.yaml": {
+    "mtime": 1776639261.9246027,
+    "hash": "e37a7bc4b3d3493059e1e3c0d516b17c"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/apps/renovate.yaml": {
+    "mtime": 1776639269.8409307,
+    "hash": "19a1ab337e6e6339d538158601d3acee"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/apps/cloudflare-tunnels.yaml": {
+    "mtime": 1776639256.389235,
+    "hash": "7041ec327602d7b0a1bd6042adc8a8ab"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/apps/valheim.yaml": {
+    "mtime": 1776639272.5210452,
+    "hash": "123516858a863dac582cc5c06f3990c0"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/apps/jellyfin.yaml": {
+    "mtime": 1776639264.6127129,
+    "hash": "5f159d187985eda9de9c0f05f9f26a99"
+  },
+  "/workspaces/homelab/kubernetes/clusters/production/apps/whoami.yaml": {
+    "mtime": 1776639275.329165,
+    "hash": "c16c692765b7b782175f7e1a4440b6b5"
+  },
+  "/workspaces/homelab/kubernetes/apps/jellyfin/kustomizeconfig.yaml": {
+    "mtime": 1755997788.5753746,
+    "hash": "8abd5f6ea45c55c49496661997af8475"
+  },
+  "/workspaces/homelab/kubernetes/apps/jellyfin/httproute.yaml": {
+    "mtime": 1776639022.0548172,
+    "hash": "9bdaa88a80808c568055e6612f1eb67a"
+  },
+  "/workspaces/homelab/kubernetes/apps/jellyfin/kustomization.yaml": {
+    "mtime": 1776027267.3883488,
+    "hash": "06d7a3d94e6cf221d0884f7b02b601a5"
+  },
+  "/workspaces/homelab/kubernetes/apps/jellyfin/app.yaml": {
+    "mtime": 1776645186.2036006,
+    "hash": "df1d290edb6f7cc49f11dfe113e451bf"
+  },
+  "/workspaces/homelab/kubernetes/apps/jellyfin/values.yaml": {
+    "mtime": 1776639023.3748705,
+    "hash": "3c6436a48cb31f0cebcd7fded44ba2ec"
+  },
+  "/workspaces/homelab/kubernetes/apps/whoami/kustomization.yaml": {
+    "mtime": 1776027267.3883488,
+    "hash": "48a4d76df4bc32fe6b23ac0b9ca60c57"
+  },
+  "/workspaces/homelab/kubernetes/apps/whoami/namespace.yaml": {
+    "mtime": 1731811821.193759,
+    "hash": "ea0b918eb8ad73dfa72a9c591bddc69d"
+  },
+  "/workspaces/homelab/kubernetes/apps/whoami/whoami.yaml": {
+    "mtime": 1776645186.2076008,
+    "hash": "1438b77b40a7a01221bed09f38b2e515"
+  },
+  "/workspaces/homelab/kubernetes/apps/cloudflare-tunnels/kustomization.yaml": {
+    "mtime": 1755358467.63914,
+    "hash": "48ce5a62a2edb4ceaef4da704f29d1bb"
+  },
+  "/workspaces/homelab/kubernetes/apps/cloudflare-tunnels/namespace.yaml": {
+    "mtime": 1737435286.818988,
+    "hash": "260a89dba96c62cb22f942307575e44e"
+  },
+  "/workspaces/homelab/kubernetes/apps/cloudflare-tunnels/deployment.yaml": {
+    "mtime": 1766973255.209345,
+    "hash": "651d82ff3c18ab3c981aca2904a8da68"
+  },
+  "/workspaces/homelab/kubernetes/apps/cloudflare-tunnels/podmonitor.yaml": {
+    "mtime": 1755358336.5213118,
+    "hash": "d1be3e77d74b8586ffc1d6030b9b0bd8"
+  },
+  "/workspaces/homelab/kubernetes/apps/renovate/kustomization.yaml": {
+    "mtime": 1766973105.392893,
+    "hash": "f24121fc68790bf023d74725e5449900"
+  },
+  "/workspaces/homelab/kubernetes/apps/renovate/app.yaml": {
+    "mtime": 1776645186.2036006,
+    "hash": "6f438d68d06137b1ecf2424eaaebd12c"
+  },
+  "/workspaces/homelab/kubernetes/apps/foundryvtt/httproute.yaml": {
+    "mtime": 1776639024.7069244,
+    "hash": "5a8c827a835ba47a373cc3411705c95d"
+  },
+  "/workspaces/homelab/kubernetes/apps/foundryvtt/kustomization.yaml": {
+    "mtime": 1776027267.3883488,
+    "hash": "1fa9dfd07898804fcb672d08bacd17f4"
+  },
+  "/workspaces/homelab/kubernetes/apps/foundryvtt/service.yaml": {
+    "mtime": 1737315812.4399679,
+    "hash": "7432947890427006e68fdb011ccb1e5f"
+  },
+  "/workspaces/homelab/kubernetes/apps/foundryvtt/namespace.yaml": {
+    "mtime": 1737347895.2551022,
+    "hash": "4c23f236962976424c709c9fd9101b13"
+  },
+  "/workspaces/homelab/kubernetes/apps/foundryvtt/deployment.yaml": {
+    "mtime": 1776644583.682322,
+    "hash": "dbef1e96df59eebc114040503a9ab359"
+  },
+  "/workspaces/homelab/kubernetes/apps/foundryvtt/pvc.yaml": {
+    "mtime": 1768869029.0455692,
+    "hash": "2198d1cb023a8c625e48107c67cc1e10"
+  },
+  "/workspaces/homelab/kubernetes/apps/valheim/kustomization.yaml": {
+    "mtime": 1770091352.8641398,
+    "hash": "cb7863eb5063ef42b2253b81f1eabc03"
+  },
+  "/workspaces/homelab/kubernetes/apps/valheim/app.yaml": {
+    "mtime": 1768884252.8816984,
+    "hash": "2b797ff2cfecca57d8ad50247ef300ed"
+  },
+  "/workspaces/homelab/kubernetes/apps/external/pve01.yaml": {
+    "mtime": 1766886949.9032843,
+    "hash": "a0954e2c0b352ed2243e4876ffe64a38"
+  },
+  "/workspaces/homelab/kubernetes/apps/external/unifi.yaml": {
+    "mtime": 1766886957.1316276,
+    "hash": "90c230acfc2fb2a976a96ed04ef8a97c"
+  },
+  "/workspaces/homelab/kubernetes/apps/external/pve04.yaml": {
+    "mtime": 1766886953.5754604,
+    "hash": "936bfd3163f424cafae96343e59a219a"
+  },
+  "/workspaces/homelab/kubernetes/apps/external/kustomization.yaml": {
+    "mtime": 1771220806.7306454,
+    "hash": "cee81f122b304d3dc9e1902bc046e559"
+  },
+  "/workspaces/homelab/kubernetes/apps/external/pve03.yaml": {
+    "mtime": 1766886952.4114046,
+    "hash": "11c1556b439b476563dc70448c545726"
+  },
+  "/workspaces/homelab/kubernetes/apps/external/namespace.yaml": {
+    "mtime": 1740458357.0385234,
+    "hash": "aea40b421031d8a887ad2d329dc073eb"
+  },
+  "/workspaces/homelab/kubernetes/apps/external/pve02.yaml": {
+    "mtime": 1766886951.711371,
+    "hash": "dc470782d24856647294dcdf39c4318b"
+  },
+  "/workspaces/homelab/kubernetes/apps/external/synology.yaml": {
+    "mtime": 1776639055.1785824,
+    "hash": "063f01d874fe556bdeebb439e7392681"
+  },
+  "/workspaces/homelab/kubernetes/apps/pihole/httproute.yaml": {
+    "mtime": 1776639025.618961,
+    "hash": "3f1a54c33626b13d4b35341c4d0bf607"
+  },
+  "/workspaces/homelab/kubernetes/apps/pihole/kustomization.yaml": {
+    "mtime": 1776027267.3883488,
+    "hash": "8c6991f7a2ac258f0fc06b94916d616e"
+  },
+  "/workspaces/homelab/kubernetes/apps/pihole/app.yaml": {
+    "mtime": 1768189848.3525386,
+    "hash": "90e291e75aa5f631671c87f98f9ab73e"
+  }
 }

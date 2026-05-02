@@ -22,3 +22,12 @@ repos:
     hooks:
       - id: terraform_fmt
       - id: terraform_docs
+  - repo: local
+    hooks:
+      - id: graphify-update
+        name: Update graphify knowledge graph
+        entry: bash -c 'command -v graphify &>/dev/null && graphify . --update 2>/dev/null || true'
+        language: system
+        stages: [commit]
+        pass_filenames: false
+        always_run: false

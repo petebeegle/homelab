@@ -2,6 +2,7 @@
 name: graphify
 description: "any input (code, docs, papers, images) - knowledge graph - clustered communities - HTML + JSON + audit report"
 trigger: /graphify
+subagent-model: haiku
 ---
 
 # /graphify
@@ -37,6 +38,24 @@ Turn any folder of files into a navigable knowledge graph with community detecti
 /graphify path "AuthModule" "Database"                # shortest path between two concepts
 /graphify explain "SwinTransformer"                   # plain-language explanation of a node
 ```
+
+## Cost Warning ⚠️
+
+**Token-free operations** (use liberally):
+- `graphify update .` — incremental reparse (AST-only, no LLM)
+- `--cluster-only` — recompute clusters on existing graph
+- `--watch` — auto-rebuild on code changes
+- `query` with `--budget` capped <500 tokens
+
+**Expensive operations** (use deliberately):
+- `query "question"` — BFS/DFS traversal (can be 1000+ tokens for deep graphs)
+- `explain "concept"` — semantic explanation of a node (500–1000 tokens)
+- `--mode deep` — thorough extraction with richer INFERRED edges (2–3× cost)
+- `--wiki` — generate per-community articles (1000+ tokens)
+- `--obsidian` — Obsidian vault generation
+- `--neo4j` — Neo4j export + analysis
+
+**Note:** This skill spawns subagents with Haiku (cheaper model) for chunk extraction. Expensive operations above refer to the LLM work done in the main graphify pipeline, not subagent dispatch.
 
 ## What graphify is for
 
