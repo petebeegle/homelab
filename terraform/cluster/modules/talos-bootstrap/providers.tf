@@ -13,7 +13,7 @@ terraform {
     // https://registry.terraform.io/providers/hashicorp/local/2.7.0/docs
     local = {
       source  = "hashicorp/local"
-      version = "2.7.0"
+      version = "2.8.0"
     }
   }
 }
