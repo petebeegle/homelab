@@ -13,6 +13,10 @@ Stack: Terraform, Talos OS, Kubernetes, Flux, Cilium, Gateway API, SOPS/Age, Syn
 - Use StorageClass `nfs-csi-storage` for persistent app storage unless a decision record supersedes it.
 - Manage Talos nodes through `talosctl`; Talos nodes do not support SSH.
 - Preserve other people's work. Check the working tree before editing and avoid unrelated rewrites.
+- Break work into named ideas before implementation. Each idea maps to one PR and may contain multiple conventional commits.
+- Implement each idea with a separate implementation agent. As implementations finish, create separate verifier agents; the planner coordinates, delegates, and summarizes.
+- Conventional commits are enforced locally and by origin.
+- Do not push to origin until verifier approval is recorded for the exact `HEAD`.
 
 ## Tool Routing
 
