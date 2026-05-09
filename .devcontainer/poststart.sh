@@ -54,6 +54,3 @@ if ! agnix --version >/dev/null 2>&1; then
   install -m 0755 "$tmpdir/agnix" "$HOME/.local/bin/agnix"
   rm -rf "$tmpdir"
 fi
-
-# pip install mcp (for graphify)
-python3 -m pip install mcp
