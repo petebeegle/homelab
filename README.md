@@ -98,6 +98,14 @@ This repo is set up for use with [Claude Code](https://claude.ai/code) inside th
 
 `GRAFANA_API_KEY` is injected at container start from `terraform/external/grafana` output — no secrets in committed files.
 
+### Git Hooks
+
+Install both pre-commit and commit-msg hooks:
+
+```sh
+pre-commit install --hook-type pre-commit --hook-type commit-msg
+```
+
 ---
 
 ## Kubernetes & Flux Quick Reference

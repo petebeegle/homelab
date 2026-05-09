@@ -22,6 +22,23 @@ repos:
     hooks:
       - id: terraform_fmt
       - id: terraform_docs
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v4.4.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args:
+          - build
+          - chore
+          - ci
+          - docs
+          - feat
+          - fix
+          - perf
+          - refactor
+          - revert
+          - style
+          - test
   - repo: local
     hooks:
       - id: architecture-doc
