@@ -24,10 +24,10 @@ repos:
       - id: terraform_docs
   - repo: local
     hooks:
-      - id: graphify-update
-        name: Update graphify knowledge graph
-        entry: bash -c 'command -v graphify &>/dev/null && graphify . --update 2>/dev/null || true'
+      - id: architecture-doc
+        name: Check generated architecture document
+        entry: python3 tools/architecture/render.py --check
         language: system
-        stages: [commit]
+        stages: [pre-commit]
         pass_filenames: false
-        always_run: false
+        always_run: true

@@ -38,9 +38,15 @@ kubectl create job --from=cronjob.batch/renovate renovate-manual-run -n renovate
 - Compact or summarize at stable checkpoints: after research, after a milestone, or after a debugging session.
 - Avoid compaction in the middle of an implementation because summaries can drop exact names, paths, and values.
 - Clear context between unrelated tasks rather than carrying stale assumptions forward.
-- When resuming, start by reading `AGENTS.md`, `PLANS.md`, and the relevant files under `docs/decisions/` or `docs/runbooks/`.
+- When resuming, start by reading `AGENTS.md`, `PLANS.md`, `docs/architecture.md`, and the relevant files under `docs/decisions/` or `docs/runbooks/`.
 
 ## Architecture
+
+Generated relationship map:
+
+- `docs/architecture.md` is generated from Kubernetes and Terraform source files.
+- Do not edit it by hand. Run `python3 tools/architecture/render.py --write`, then commit the result.
+- Pre-commit runs `python3 tools/architecture/render.py --check` and fails if it is stale.
 
 Flux cluster entrypoint:
 
