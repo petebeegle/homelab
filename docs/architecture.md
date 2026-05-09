@@ -1,0 +1,152 @@
+# Architecture
+
+<!-- GENERATED: do not edit by hand. Run `python3 tools/architecture/render.py --write`. -->
+
+This document is generated for agentic repo navigation. It records relationships that must stay aligned with the Kubernetes, Flux, and Terraform source of truth.
+
+## Cluster Entrypoint
+
+- Production root Kustomization: `kubernetes/clusters/production/kustomization.yaml`.
+- Root resources: `flux-system`, `cluster-vars.yaml`, `infra`, `apps`.
+- Infra activation list: `crds.yaml`, `cert-manager.yaml`, `grafana-operator.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `certs.yaml`, `gateway.yaml`, `monitoring.yaml`, `loki.yaml`, `mimir.yaml`, `alloy.yaml`, `grafana.yaml`, `otel-collector.yaml`, `authentik.yaml`.
+- App activation list: `external.yaml`, `pihole.yaml`, `whoami.yaml`, `renovate.yaml`, `cloudflare-tunnels.yaml`, `jellyfin.yaml`, `foundryvtt.yaml`, `valheim.yaml`.
+
+### Flux Substitution Variables
+
+| Variable | Value |
+| --- | --- |
+| `cluster_domain` | `lab.petebeegle.com` |
+| `cluster_env` | `production` |
+| `gateway_internal_ip` | `192.168.30.241` |
+| `gateway_passthrough_ip` | `192.168.30.242` |
+| `letsencrypt_server` | `https://acme-v02.api.letsencrypt.org/directory` |
+| `nfs_server` | `192.168.30.99` |
+| `wildcard_cert_name` | `wildcard-lab-petebeegle-com` |
+
+## Flux Dependencies
+
+### Infrastructure
+
+| Kustomization | Path | Depends on | Substitute from | SOPS |
+| --- | --- | --- | --- | --- |
+| `alloy` | `./kubernetes/infra/monitoring/alloy` | `loki`, `mimir` | `cluster-vars` | `no` |
+| `authentik` | `./kubernetes/infra/authentik` | `gateway`, `cert-manager` | `cluster-vars` | `sops` |
+| `cert-manager` | `./kubernetes/infra/controllers/cert-manager` | `crds` | `cluster-vars` | `sops` |
+| `certs` | `./kubernetes/infra/network/certs` | `cert-manager`, `cilium` | `cluster-vars` | `no` |
+| `cilium` | `./kubernetes/infra/network/cilium` | `crds` | `cluster-vars` | `no` |
+| `crds` | `./kubernetes/infra/crds` | (none) | `cluster-vars` | `no` |
+| `gateway` | `./kubernetes/infra/network/gateway` | `crds`, `cilium`, `certs` | `cluster-vars` | `no` |
+| `grafana-operator` | `./kubernetes/infra/controllers/grafana-operator` | `crds` | `cluster-vars` | `no` |
+| `grafana` | `./kubernetes/infra/monitoring/grafana` | `gateway`, `grafana-operator`, `loki`, `mimir` | `cluster-vars` | `sops` |
+| `loki` | `./kubernetes/infra/monitoring/loki` | `crds` | `cluster-vars` | `no` |
+| `mimir` | `./kubernetes/infra/monitoring/mimir` | `crds`, `nfs-csi` | `cluster-vars` | `no` |
+| `monitoring` | `./kubernetes/infra/monitoring` | (none) | `cluster-vars` | `no` |
+| `nfs-csi` | `./kubernetes/infra/controllers/nfs-csi` | (none) | `cluster-vars` | `no` |
+| `otel-collector` | `./kubernetes/infra/monitoring/otel-collector` | `crds`, `gateway` | `cluster-vars` | `no` |
+
+### Applications
+
+| Kustomization | Path | Depends on | Substitute from | SOPS |
+| --- | --- | --- | --- | --- |
+| `app-cloudflare-tunnels` | `./kubernetes/apps/cloudflare-tunnels` | `gateway` | `cluster-vars` | `sops` |
+| `app-external` | `./kubernetes/apps/external` | `gateway` | `cluster-vars` | `no` |
+| `app-foundryvtt` | `./kubernetes/apps/foundryvtt` | `gateway`, `nfs-csi` | `cluster-vars` | `sops` |
+| `app-jellyfin` | `./kubernetes/apps/jellyfin` | `gateway`, `nfs-csi` | `cluster-vars` | `no` |
+| `app-pihole` | `./kubernetes/apps/pihole` | `gateway` | `cluster-vars` | `sops` |
+| `app-renovate` | `./kubernetes/apps/renovate` | `gateway` | `cluster-vars` | `sops` |
+| `app-valheim` | `./kubernetes/apps/valheim` | `gateway`, `nfs-csi` | `cluster-vars` | `sops` |
+| `app-whoami` | `./kubernetes/apps/whoami` | `gateway` | `cluster-vars` | `no` |
+
+## Kustomize Resource Relationships
+
+| Component path | Listed resources |
+| --- | --- |
+| `kubernetes/infra/authentik` | `namespace.yaml`, `app.yaml`, `secret.yaml`, `httproute.yaml`, `blueprints` |
+| `kubernetes/infra/controllers/cert-manager` | `app.yaml`, `secret.yaml` |
+| `kubernetes/infra/controllers/grafana-operator` | `namespace.yaml`, `app.yaml` |
+| `kubernetes/infra/controllers` | `./nfs-csi`, `./cert-manager`, `./grafana-operator` |
+| `kubernetes/infra/controllers/nfs-csi` | `app.yaml`, `storageclass.yaml` |
+| `kubernetes/infra/crds/grafana` | `app.yaml` |
+| `kubernetes/infra/crds` | `https://github.com/kubernetes-csi/external-snapshotter//client/config/crd?ref=v8.5.0`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/standard/gateway.networking.k8s.io_gatewayclasses.yaml`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/experimental/gateway.networking.k8s.io_gateways.yaml`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/standard/gateway.networking.k8s.io_httproutes.yaml`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/standard/gateway.networking.k8s.io_referencegrants.yaml`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/standard/gateway.networking.k8s.io_grpcroutes.yaml`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/experimental/gateway.networking.k8s.io_tlsroutes.yaml`, `prometheus`, `grafana` |
+| `kubernetes/infra/crds/prometheus` | `app.yaml` |
+| `kubernetes/infra/monitoring/alloy` | `repositories.yaml`, `namespace.yaml`, `app.yaml` |
+| `kubernetes/infra/monitoring/grafana/alerting` | `alert-rules-proxmox.yaml`, `alert-rules-flux.yaml`, `alert-rules-valheim.yaml`, `alert-rules-mimir.yaml` |
+| `kubernetes/infra/monitoring/grafana/dashboards` | `proxmox-dashboard.yaml`, `flux-dashboard.yaml`, `kubernetes-dashboard.yaml`, `authentik-dashboard.yaml` |
+| `kubernetes/infra/monitoring/grafana` | `namespace.yaml`, `repositories.yaml`, `app.yaml`, `secret.yaml`, `grafana-env.yaml`, `gateway.yaml`, `grafana-instance.yaml`, `folders.yaml`, `dashboards`, `alerting` |
+| `kubernetes/infra/monitoring/kube-state-metrics` | `repositories.yaml`, `app.yaml` |
+| `kubernetes/infra/monitoring` | `namespace.yaml`, `kube-state-metrics`, `snmp-exporter`, `pretty-discord-alerts` |
+| `kubernetes/infra/monitoring/loki` | `namespace.yaml`, `repositories.yaml`, `app.yaml` |
+| `kubernetes/infra/monitoring/mimir` | `namespace.yaml`, `repositories.yaml`, `app.yaml` |
+| `kubernetes/infra/monitoring/otel-collector` | `namespace.yaml`, `app.yaml`, `httproute.yaml` |
+| `kubernetes/infra/monitoring/pretty-discord-alerts` | `deployment.yaml`, `service.yaml` |
+| `kubernetes/infra/monitoring/snmp-exporter` | `repositories.yaml`, `deployment.yaml`, `service.yaml`, `servicemonitor.yaml` |
+| `kubernetes/infra/network/certs` | `./issuer.yaml` |
+| `kubernetes/infra/network/cilium` | `app.yaml`, `announcement.yaml`, `ip-pool.yaml` |
+| `kubernetes/infra/network/gateway` | `./namespace.yaml`, `./certificate.yaml`, `./gateway-internal.yaml`, `./gateway-passthrough.yaml`, `./https-redirect.yaml`, `./referencegrant.yaml` |
+| `kubernetes/infra/network` | `./cilium`, `./certs`, `./gateway` |
+| `kubernetes/infra/network/vpn` | `./namespace.yaml`, `./secret.yaml`, `./pvc.yaml`, `./deployment.yaml`, `./service.yaml`, `./httproute.yaml` |
+| `kubernetes/apps/cloudflare-tunnels` | `namespace.yaml`, `secret.yaml`, `deployment.yaml`, `podmonitor.yaml` |
+| `kubernetes/apps/external` | `namespace.yaml`, `synology.yaml` |
+| `kubernetes/apps/foundryvtt` | `namespace.yaml`, `pvc.yaml`, `secret.yaml`, `deployment.yaml`, `service.yaml`, `httproute.yaml` |
+| `kubernetes/apps/jellyfin` | `./app.yaml`, `./httproute.yaml` |
+| `kubernetes/apps/pihole` | `app.yaml`, `secret.yaml`, `httproute.yaml` |
+| `kubernetes/apps/renovate` | `app.yaml`, `secret.yaml` |
+| `kubernetes/apps/valheim` | `./app.yaml`, `./secret.yaml` |
+| `kubernetes/apps/whoami` | `namespace.yaml`, `whoami.yaml` |
+
+## Gateway Routes
+
+| Kind | Route | Hostnames | Parent Gateway | Backend refs |
+| --- | --- | --- | --- | --- |
+| `HTTPRoute` | `authentik/authentik` | `authentik.${cluster_domain}` | `gateway/internal/https-gateway` | `authentik-server:80` |
+| `HTTPRoute` | `foundryvtt/foundryvtt` | `foundry.${cluster_domain}` | `gateway/internal/https-gateway` | `foundryvtt:80` |
+| `HTTPRoute` | `gateway/https-redirect` | `*.${cluster_domain}, ${cluster_domain}` | `gateway/internal/http-gateway` | `(none)` |
+| `HTTPRoute` | `grafana/monitoring` | `monitoring.${cluster_domain}` | `gateway/internal/https-gateway` | `grafana:80` |
+| `HTTPRoute` | `jellyfin/jellyfin` | `jellyfin.${cluster_domain}` | `gateway/internal/https-gateway` | `jellyfin:8096` |
+| `HTTPRoute` | `otel-collector/otel-collector` | `otel.${cluster_domain}` | `gateway/internal/https-gateway` | `otel-collector-opentelemetry-collector:4318` |
+| `HTTPRoute` | `pihole/pihole-httproute` | `pihole.${cluster_domain}` | `gateway/internal/https-gateway` | `pihole-web:80` |
+| `HTTPRoute` | `whoami/whoami` | `whoami.${cluster_domain}` | `gateway/internal/https-gateway` | `whoami:80` |
+| `HTTPRoute` | `wireguard/wireguard-ui` | `vpn.${cluster_domain}` | `gateway/internal/https-gateway` | `wireguard-http:51821` |
+| `TLSRoute` | `external/pve01-route` | `pve01.petebeegle.com` | `gateway/passthrough` | `pve01:8006` |
+| `TLSRoute` | `external/pve02-route` | `pve02.petebeegle.com` | `gateway/passthrough` | `pve02:8006` |
+| `TLSRoute` | `external/pve03-route` | `pve03.petebeegle.com` | `gateway/passthrough` | `pve03:8006` |
+| `TLSRoute` | `external/pve04-route` | `pve04.petebeegle.com` | `gateway/passthrough` | `pve04:8006` |
+| `TLSRoute` | `external/synology-route` | `synology.petebeegle.com` | `gateway/passthrough` | `synology:5001` |
+| `TLSRoute` | `external/unifi-route` | `unifi.petebeegle.com` | `gateway/passthrough` | `unifi:443` |
+
+## Storage Relationships
+
+| Source | Owner | StorageClass | Path |
+| --- | --- | --- | --- |
+| HelmRelease values | `valheim/valheim-server` | `nfs-csi-storage` | `kubernetes/apps/valheim/app.yaml` |
+| PVC | `foundryvtt/foundryvtt-data-pvc` | `nfs-csi-storage` | `kubernetes/apps/foundryvtt/pvc.yaml` |
+| PVC | `wireguard/wireguard-pvc` | `nfs-csi-storage` | `kubernetes/infra/network/vpn/pvc.yaml` |
+| Values file | `authentik` | `nfs-csi-storage` | `kubernetes/infra/authentik/values.yaml` |
+| Values file | `jellyfin` | `nfs-csi-storage` | `kubernetes/apps/jellyfin/values.yaml` |
+
+## Secret Manifests
+
+This lists secret manifest presence only. Secret values are not rendered.
+
+| Component | Secret | SOPS encrypted | Path |
+| --- | --- | --- | --- |
+| `authentik` | `authentik/authentik-secrets` | `yes` | `kubernetes/infra/authentik/secret.yaml` |
+| `cloudflare-tunnels` | `cloudflare/tunnel-credentials` | `yes` | `kubernetes/apps/cloudflare-tunnels/secret.yaml` |
+| `controllers/cert-manager` | `cert-manager/cloudflare-api-token` | `yes` | `kubernetes/infra/controllers/cert-manager/secret.yaml` |
+| `foundryvtt` | `foundryvtt/foundryvtt-secret` | `yes` | `kubernetes/apps/foundryvtt/secret.yaml` |
+| `monitoring/grafana` | `grafana/grafana-credentials` | `yes` | `kubernetes/infra/monitoring/grafana/secret.yaml` |
+| `monitoring/grafana` | `grafana/grafana-env` | `yes` | `kubernetes/infra/monitoring/grafana/grafana-env.yaml` |
+| `network/vpn` | `wireguard/wireguard-env` | `yes` | `kubernetes/infra/network/vpn/secret.yaml` |
+| `pihole` | `pihole/pihole-admin-password` | `yes` | `kubernetes/apps/pihole/secret.yaml` |
+| `renovate` | `renovate/renovate-secret` | `yes` | `kubernetes/apps/renovate/secret.yaml` |
+| `valheim` | `valheim/valheim-secret` | `yes` | `kubernetes/apps/valheim/secret.yaml` |
+
+## Terraform Substrate
+
+| Type | Name | Source | References |
+| --- | --- | --- | --- |
+| Module | `kubernetes_nodes` | `./modules/vm` | `(none)` |
+| Module | `talos_bootstrap` | `./modules/talos-bootstrap` | `kubernetes_nodes, talos_provision` |
+| Module | `talos_provision` | `./modules/talos-provision` | `(none)` |
+| Root resource | `proxmox_virtual_environment_file.talos_iso` | `(root)` | `talos_provision` |
+| Root resource | `terraform_data.bootstrap_script` | `(root)` | `talos_bootstrap` |

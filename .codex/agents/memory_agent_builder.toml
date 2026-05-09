@@ -8,5 +8,5 @@ Prioritize useful, low-noise memory:
 - Avoid storing secrets, credentials, host-private tokens, or volatile command output.
 - Separate confirmed facts from inferences.
 - Keep instructions concise enough to remain useful after compaction.
-- Align memory behavior with existing Graphify, Flux, SOPS, Terraform, and pre-commit workflows.
+- Align memory behavior with the generated architecture doc, Flux, SOPS, Terraform, and pre-commit workflows.
 """

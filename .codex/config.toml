@@ -14,22 +14,9 @@ command = "uvx"
 args = ["mcp-grafana"]
 env = { GRAFANA_URL = "https://monitoring.lab.petebeegle.com" }
 
-[mcp_servers.graphify]
-command = "python3"
-args = ["-m", "graphify.serve", "graphify-out/graph.json"]
-
 [mcp_servers.context7]
 command = "npx"
 args = ["-y", "@upstash/context7-mcp@latest"]
-
-[[hooks.SessionStart]]
-matcher = "startup|resume"
-
-[[hooks.SessionStart.hooks]]
-type = "command"
-command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/graphify_context.sh\"'"
-timeout = 10
-statusMessage = "Loading graphify context"
 
 [[hooks.PreToolUse]]
 matcher = "^Bash$"
@@ -66,12 +53,6 @@ type = "command"
 command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/flux_reminder.sh\"'"
 timeout = 10
 statusMessage = "Checking Flux follow-up"
-
-[[hooks.PostToolUse.hooks]]
-type = "command"
-command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/graphify_context.sh\"'"
-timeout = 120
-statusMessage = "Refreshing graphify context"
 
 [[hooks.Stop]]
 
