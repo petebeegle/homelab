@@ -25,5 +25,35 @@ if [[ -z "$GRAFANA_SERVICE_ACCOUNT_TOKEN" ]]; then
 fi
 export GRAFANA_SERVICE_ACCOUNT_TOKEN
 
+# Codex sandbox prerequisite. This should already be present from the
+# devcontainer image build, but keep a clear warning if the container was not
+# rebuilt after the Dockerfile change.
+if ! command -v bwrap >/dev/null 2>&1; then
+  echo "WARNING: bubblewrap is missing — rebuild the devcontainer so Codex sandboxing can use bwrap"
+fi
+
+# Codex-native agent tooling. Keep installs idempotent so rebuilding the
+# devcontainer is predictable and day-to-day starts stay fast.
+if ! command -v codex >/dev/null 2>&1; then
+  npm install -g @openai/codex
+fi
+
+if ! command -v agnix >/dev/null 2>&1 || ! agnix --version >/dev/null 2>&1; then
+  npm install -g agnix || true
+fi
+
+# The npm package may ship a glibc-linked binary newer than the Ubuntu base
+# image supports. Prefer the musl release binary if the npm binary cannot run.
+if ! agnix --version >/dev/null 2>&1; then
+  mkdir -p "$HOME/.local/bin"
+  tmpdir="$(mktemp -d)"
+  curl -fsSL \
+    "https://github.com/agent-sh/agnix/releases/download/v0.25.0/agnix-x86_64-unknown-linux-musl.tar.gz" \
+    -o "$tmpdir/agnix.tar.gz"
+  tar -xzf "$tmpdir/agnix.tar.gz" -C "$tmpdir"
+  install -m 0755 "$tmpdir/agnix" "$HOME/.local/bin/agnix"
+  rm -rf "$tmpdir"
+fi
+
 # pip install mcp (for graphify)
 python3 -m pip install mcp

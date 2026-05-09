@@ -1,6 +1,8 @@
 {
   "name": "Ubuntu",
-  "image": "mcr.microsoft.com/devcontainers/base:jammy",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
   "features": {
     "ghcr.io/petebeegle/devcontainer-features/cilium:1": {},
     "ghcr.io/petebeegle/devcontainer-features/flux:1": {},
@@ -37,6 +39,7 @@
   },
   "mounts": [
     "source=${localEnv:HOME}/.config/sops/age,target=/home/vscode/.config/sops/age,type=bind,consistency=cached",
+    "source=${localEnv:HOME}/.codex,target=/home/vscode/.codex,type=bind,consistency=cached",
     "source=${localEnv:HOME}/.claude,target=/home/vscode/.claude,type=bind,consistency=cached"
   ],
   "forwardPorts": [
