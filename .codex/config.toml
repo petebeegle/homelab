@@ -1,0 +1,82 @@
+[features]
+hooks = true
+
+[mcp_servers.kubernetes]
+command = "npx"
+args = ["-y", "kubernetes-mcp-server@latest"]
+
+[mcp_servers.terraform]
+command = "npx"
+args = ["-y", "terraform-mcp-server@latest"]
+
+[mcp_servers.grafana]
+command = "uvx"
+args = ["mcp-grafana"]
+env = { GRAFANA_URL = "https://monitoring.lab.petebeegle.com" }
+
+[mcp_servers.graphify]
+command = "python3"
+args = ["-m", "graphify.serve", "graphify-out/graph.json"]
+
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp@latest"]
+
+[[hooks.SessionStart]]
+matcher = "startup|resume"
+
+[[hooks.SessionStart.hooks]]
+type = "command"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/graphify_context.sh\"'"
+timeout = 10
+statusMessage = "Loading graphify context"
+
+[[hooks.PreToolUse]]
+matcher = "^Bash$"
+
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/sops_guard.sh\"'"
+timeout = 30
+statusMessage = "Checking SOPS safety"
+
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/terraform_plan.sh\"'"
+timeout = 120
+statusMessage = "Checking Terraform apply safety"
+
+[[hooks.PostToolUse]]
+matcher = "^(Bash|apply_patch|Edit|MultiEdit|Write)$"
+
+[[hooks.PostToolUse.hooks]]
+type = "command"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/sops_guard.sh\"'"
+timeout = 60
+statusMessage = "Checking secret files"
+
+[[hooks.PostToolUse.hooks]]
+type = "command"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/pre_commit_check.sh\"'"
+timeout = 300
+statusMessage = "Running pre-commit checks"
+
+[[hooks.PostToolUse.hooks]]
+type = "command"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/flux_reminder.sh\"'"
+timeout = 10
+statusMessage = "Checking Flux follow-up"
+
+[[hooks.PostToolUse.hooks]]
+type = "command"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/graphify_context.sh\"'"
+timeout = 120
+statusMessage = "Refreshing graphify context"
+
+[[hooks.Stop]]
+
+[[hooks.Stop.hooks]]
+type = "command"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/stop_self_verify.sh\"'"
+timeout = 120
+statusMessage = "Running Codex harness self-check"
