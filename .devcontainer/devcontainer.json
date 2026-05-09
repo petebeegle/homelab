@@ -10,11 +10,9 @@
       "terragrunt": "none"
     },
     "ghcr.io/petebeegle/devcontainer-features/talosctl:1": {},
-    "ghcr.io/petebeegle/devcontainer-features/graphify:1": {},
     "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {},
     "ghcr.io/devcontainers/features/terraform:1": {},
     "ghcr.io/devcontainers-extra/features/sops:1": {},
-    "ghcr.io/devcontainers-extra/features/claude-code:2": {},
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},
     "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/devcontainers-extra/features/cloudflared:1": {},
@@ -28,20 +26,17 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "github.copilot-chat",
         "1password.1password",
         "HashiCorp.terraform",
         "EditorConfig.EditorConfig",
         "Weaveworks.vscode-gitops-tools",
         "Grafana.grafana-alloy",
-        "anthropic.claude-code"
+        "openai.chatgpt"
       ]
     }
   },
   "mounts": [
     "source=${localEnv:HOME}/.config/sops/age,target=/home/vscode/.config/sops/age,type=bind,consistency=cached",
-    "source=${localEnv:HOME}/.codex,target=/home/vscode/.codex,type=bind,consistency=cached",
-    "source=${localEnv:HOME}/.claude,target=/home/vscode/.claude,type=bind,consistency=cached"
   ],
   "forwardPorts": [
     12345 // alloy
