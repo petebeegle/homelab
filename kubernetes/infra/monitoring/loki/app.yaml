@@ -50,7 +50,7 @@ spec:
 
     limits_config:
       allow_structured_metadata: true
-      retention_period: 336h # 14 days
+      retention_period: 336h  # 14 days
 
     deploymentMode: SimpleScalable
 

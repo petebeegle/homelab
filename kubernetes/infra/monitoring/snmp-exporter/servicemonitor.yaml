@@ -16,7 +16,7 @@ spec:
       path: /snmp
       params:
         module: [synology]
-        target: [nas.beagle.casa] # Your Synology hostname
+        target: [nas.beagle.casa]  # Your Synology hostname
       relabelings:
         - sourceLabels: [__address__]
           targetLabel: __param_target
