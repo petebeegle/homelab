@@ -1,0 +1,38 @@
+---
+# Retrieval is a manifest-driven context discipline over Git-authored files.
+# It is not a vector database configuration and does not make indexed chunks
+# authoritative. Git remains the source of truth.
+indexes:
+  - name: binding-agent-context
+    include:
+      - AGENTS.md
+      - PLANS.md
+      - docs/architecture.md
+      - docs/decisions/**/*.md
+      - docs/runbooks/**/*.md
+      - .codex/memory/approved/**/*.md
+    exclude:
+      - .codex/tmp/**
+      - .codex/logs/**
+      - .codex/memory/candidates/**
+      - .codex/memory/checkpoints/**
+      - .codex/memory/rejected/**
+      - .codex/memory/reports/**
+      - "**/secret.yaml"
+      - "**/grafana-env.yaml"
+      - "*.tfvars"
+      - "**/*.tfvars"
+      - "*.tfstate"
+      - "**/*.tfstate"
+      - kubeconfig
+      - "**/kubeconfig"
+      - talosconfig
+      - "**/talosconfig"
+    required_metadata:
+      - source_path
+      - commit_sha
+      - kind
+      - status
+      - scope
+      - authority
+      - last_verified
