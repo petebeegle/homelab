@@ -23,16 +23,24 @@ entries:
     attrs:
       name: Synology Editors
 
-  # Custom property mapping for groups
+  # Custom property mapping for Synology profile compatibility
   - identifiers:
-      managed: goauthentik.io/providers/oauth2/synology-groups
+      managed: goauthentik.io/providers/oauth2/synology-profile
     model: authentik_providers_oauth2.scopemapping
     attrs:
-      name: Synology Groups Mapping
-      scope_name: groups
+      name: Synology Profile Mapping
+      scope_name: profile
       expression: |
+        username = request.user.username
         return {
-          "groups": [group.name for group in request.user.ak_groups.all()],
+          "name": request.user.name,
+          "given_name": request.user.name,
+          "preferred_username": username,
+          "username": username,
+          "nickname": username,
+          "email": request.user.email,
+          "email_verified": False,
+          "groups": [group.name for group in request.user.groups.all()],
         }
 
   # OAuth2 Provider for Synology
@@ -55,8 +63,7 @@ entries:
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, openid]]
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, email]]
-        - !Find [authentik_providers_oauth2.scopemapping, [scope_name, profile]]
-        - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/synology-groups]]
+        - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/synology-profile]]
       sub_mode: hashed_user_id
       issuer_mode: per_provider
       access_code_validity: minutes=1
