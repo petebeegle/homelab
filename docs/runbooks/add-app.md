@@ -101,7 +101,7 @@ spec:
 ## External Service HTTPRoute Template
 
 Use this pattern for a service outside the cluster when the Gateway should present the trusted certificate or hide the backend port.
-Set `appProtocol: https` on the Service port when the Gateway should use HTTPS to reach the backend.
+If the backend only accepts HTTPS and cannot present a certificate trusted for the public hostname, add an in-cluster proxy and point the `HTTPRoute` at the proxy. Do not rely on `appProtocol: https` alone to make the Gateway originate HTTPS upstream.
 
 ```yaml
 ---
@@ -114,7 +114,6 @@ spec:
   ports:
     - name: http
       protocol: TCP
-      appProtocol: <http-or-https>
       port: <backend-port>
       targetPort: <backend-port>
 ---
@@ -129,7 +128,6 @@ addressType: IPv4
 ports:
   - name: http
     protocol: TCP
-    appProtocol: <http-or-https>
     port: <backend-port>
 endpoints:
   - addresses:
@@ -154,6 +152,8 @@ spec:
 ```
 
 Add a matching Gateway HTTPS listener and cert-manager `Certificate` when the hostname is outside `${cluster_domain}`.
+
+For HTTPS-only external backends with untrusted certificates or backend redirects that expose ports, use a small proxy Deployment instead of routing directly to the external `EndpointSlice`. The proxy can connect to the backend over HTTPS, set forwarded headers, and normalize redirects or response bodies before returning traffic to the Gateway route.
 
 ## External TLSRoute Template
 

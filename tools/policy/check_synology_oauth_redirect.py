@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 BLUEPRINT = ROOT / "kubernetes/infra/authentik/blueprints/synology-oauth.yaml"
 EXPECTED_REDIRECT = "https://synology.petebeegle.com"
 FORBIDDEN_REDIRECTS = {
+    "https://synology.petebeegle.com:5001",
     "https://synology.petebeegle.com/#/signin",
     "https://192.168.30.99:5001",
 }
