@@ -48,8 +48,6 @@ entries:
       client_secret: !Context synology_client_secret
       redirect_uris:
         - matching_mode: strict
-          url: https://192.168.30.99:5001
-        - matching_mode: strict
           url: https://synology.petebeegle.com
       signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
       property_mappings:
