@@ -55,3 +55,9 @@ repos:
         stages: [pre-commit]
         pass_filenames: false
         always_run: true
+      - id: agent-memory-lint
+        name: Lint Codex memory docs
+        entry: bash -c 'PYTHONPATH=tools/agent-memory/src python3 -m agent_memory.cli lint'
+        language: system
+        files: ^(\.codex/memory/|tools/agent-memory/|\.pre-commit-config\.yaml$)
+        pass_filenames: false
