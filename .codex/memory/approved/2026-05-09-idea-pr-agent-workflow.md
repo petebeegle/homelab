@@ -13,6 +13,8 @@ Each idea maps to one pull request and may contain multiple conventional commits
 
 New idea branches must always branch from `main`.
 
+Branches should follow the format `codex/<IDEA>`.
+
 As implementation agents finish, create separate verifier agents to review the result. The planner coordinates the idea breakdown, delegates implementation and verification, and summarizes status.
 
 Conventional commits are enforced locally and by origin.
