@@ -1,8 +1,18 @@
+---
+id: ADR-0004
+status: accepted
+scope:
+  - mcp
+  - operations
+  - observability
+authority: binding
+created: 2026-05-09
+last_verified: 2026-05-10
+supersedes: []
+superseded_by:
+---
+
 # MCP Tool Routing
-
-## Status
-
-Accepted.
 
 ## Decision
 

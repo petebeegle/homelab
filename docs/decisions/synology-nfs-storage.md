@@ -1,8 +1,18 @@
+---
+id: ADR-0005
+status: accepted
+scope:
+  - storage
+  - synology
+  - nfs
+authority: binding
+created: 2026-05-09
+last_verified: 2026-05-10
+supersedes: []
+superseded_by:
+---
+
 # Synology NFS Storage
-
-## Status
-
-Accepted.
 
 ## Decision
 

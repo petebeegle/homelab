@@ -1,8 +1,18 @@
+---
+id: ADR-0001
+status: accepted
+scope:
+  - gitops
+  - kubernetes
+  - flux
+authority: binding
+created: 2026-05-09
+last_verified: 2026-05-10
+supersedes: []
+superseded_by:
+---
+
 # Flux GitOps Source Of Truth
-
-## Status
-
-Accepted.
 
 ## Decision
 

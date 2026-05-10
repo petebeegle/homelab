@@ -1,8 +1,17 @@
+---
+id: ADR-0009
+status: accepted
+scope:
+  - terraform
+  - secrets
+authority: binding
+created: 2026-05-10
+last_verified: 2026-05-10
+supersedes: []
+superseded_by:
+---
+
 # Terraform Sensitive Values
-
-## Status
-
-Accepted.
 
 ## Decision
 
