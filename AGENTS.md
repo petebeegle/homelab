@@ -16,10 +16,12 @@ Stack: Terraform, Talos OS, Kubernetes, Flux, Cilium, Gateway API, SOPS/Age, Syn
 - All repository code changes must use the mandatory implementation workflow, no questions asked.
 - Break work into named implementations before editing. Each implementation maps to one PR and may contain multiple conventional commits.
 - New work must always leverage `.codex/memory/approved/2026-05-09-implementation-workflow.md`.
+- Every implementation must consider documentation impact. Update stale docs, generated docs, decision records, runbooks, or agent guidance when behavior changes; otherwise record why no docs changed.
 - Before cloning, the planner must stage any required ignored local secret/config files into `.codex/tmp/implementation-secrets/<implementation>/`, preserving their repo-relative paths and never logging secret contents.
 - Implementation agents must clone `https://github.com/petebeegle/homelab.git` into `/workspaces/homelab-ideas/<implementation>`, create `codex/<implementation>` from `origin/main`, and work only in that sibling clone.
+- Multiple helper agents may contribute to one implementation clone only through the single integrator model: helpers may research, test, verify, or prepare patch recommendations, but one implementation owner owns tracked-file edits, commits, `.codex/tmp/active-implementation`, `.codex/tmp/pr-summary.md`, and final branch state.
 - Implementation and verifier agents must install staged secret/config files into identical repo-relative locations in their sibling clones before running commands that need them.
-- Before PR creation, record plan-derived PR text in `.codex/tmp/pr-summary.md` so the automatic PR body includes the implementation summary and important changes from the plan.
+- Before PR creation, record plan-derived PR text in `.codex/tmp/pr-summary.md` so the automatic PR body includes the implementation summary, important changes from the plan, and a documentation impact note listing docs updated/generated or explaining why none were needed.
 - After verifier sign-off for the exact `HEAD`, create the PR without intervention, then delete the sibling clone only after PR creation succeeds.
 
 ## Tool Routing
@@ -55,6 +57,7 @@ Generated relationship map:
 - `docs/architecture.md` is generated from Kubernetes and Terraform source files.
 - Do not edit it by hand. Run `python3 tools/architecture/render.py --write`, then commit the result.
 - Pre-commit runs `python3 tools/architecture/render.py --check` and fails if it is stale.
+- When Kubernetes or Terraform source changes make the architecture check fail, refresh `docs/architecture.md` with `python3 tools/architecture/render.py --write` as part of the same implementation.
 
 Flux cluster entrypoint:
 
