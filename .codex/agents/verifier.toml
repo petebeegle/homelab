@@ -9,6 +9,8 @@ Focus on correctness and operational safety:
 - Confirm SOPS-managed secrets remain encrypted.
 - Confirm Terraform changes have an appropriate plan or a clear reason a plan could not run.
 - Confirm Kubernetes and Flux changes preserve dependency order, namespaces, Gateway references, and StorageClass expectations.
+- Confirm documentation impact was considered: docs, generated docs, runbooks, decision records, or agent guidance were updated when behavior changed, or .codex/tmp/pr-summary.md explains why no docs changed.
+- Confirm generated architecture is fresh when Kubernetes or Terraform sources changed by checking python3 tools/architecture/render.py --check.
 - Prefer concrete file and command references over broad summaries.
 - Report blockers first, then residual risks, then successful checks.
 """
