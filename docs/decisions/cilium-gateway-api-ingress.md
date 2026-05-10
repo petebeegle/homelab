@@ -1,8 +1,18 @@
+---
+id: ADR-0002
+status: accepted
+scope:
+  - kubernetes
+  - ingress
+  - cilium
+authority: binding
+created: 2026-05-09
+last_verified: 2026-05-10
+supersedes: []
+superseded_by:
+---
+
 # Cilium Gateway API Ingress
-
-## Status
-
-Accepted.
 
 ## Decision
 

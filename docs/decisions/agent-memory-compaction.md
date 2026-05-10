@@ -1,8 +1,17 @@
+---
+id: ADR-0007
+status: accepted
+scope:
+  - agent-memory
+  - context-management
+authority: binding
+created: 2026-05-09
+last_verified: 2026-05-10
+supersedes: []
+superseded_by:
+---
+
 # Agent Memory And Compaction
-
-## Status
-
-Accepted.
 
 ## Decision
 

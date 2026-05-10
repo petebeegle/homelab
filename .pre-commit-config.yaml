@@ -61,6 +61,12 @@ repos:
         language: system
         files: ^(kubernetes/infra/authentik/blueprints/synology-oauth\.yaml|tools/policy/check_synology_oauth_redirect\.py|\.pre-commit-config\.yaml)$
         pass_filenames: false
+      - id: decision-metadata
+        name: Check decision record metadata
+        entry: python3 tools/policy/check_decision_metadata.py
+        language: system
+        files: ^(docs/decisions/.*\.md|tools/policy/check_decision_metadata\.py|\.pre-commit-config\.yaml)$
+        pass_filenames: false
       - id: mcp-config-consistency
         name: Check MCP config consistency
         entry: python3 tools/policy/check_mcp_config_consistency.py
