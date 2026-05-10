@@ -6,15 +6,16 @@ Status: implemented for the repository documentation surface.
 
 Scope:
 
-- Convert agent-facing guidance from `CLAUDE.md` into Codex-neutral `AGENTS.md`.
-- Keep `CLAUDE.md` as a compatibility pointer for agents or tools that still discover that filename.
+- Convert agent-facing guidance into Codex-neutral `AGENTS.md`.
+- Remove the legacy compatibility pointer after agent workflows moved to `AGENTS.md`.
+- Update README tooling references from tool-specific wording to agent-neutral wording.
 - Convert selected legacy agent rules into decision records and runbooks under `docs/`.
 - Leave legacy agent config, Codex config, devcontainer config, ignore rules, and `tools/agent-memory` to their dedicated workstreams.
 
 Completed outputs:
 
 - Agent guidance: `AGENTS.md`
-- Compatibility pointer: `CLAUDE.md`
+- README agent tooling documentation
 - Decision records:
   - `docs/decisions/flux-gitops-source-of-truth.md`
   - `docs/decisions/cilium-gateway-api-ingress.md`
@@ -33,8 +34,7 @@ Completed outputs:
 Follow-up candidates:
 
 1. Move useful older top-level `runbooks/` content into `docs/runbooks/` in a separate change.
-2. Update README references from tool-specific wording to agent-neutral wording in a separate change.
-3. Decide whether legacy agent config should remain as source material or be removed after active workflows stop depending on it.
+2. Decide whether legacy agent config should remain as source material or be removed after active workflows stop depending on it.
 
 ## Codex Harness PR Review Follow-Ups
 
