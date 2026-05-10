@@ -13,8 +13,13 @@ Stack: Terraform, Talos OS, Kubernetes, Flux, Cilium, Gateway API, SOPS/Age, Syn
 - Use StorageClass `nfs-csi-storage` for persistent app storage unless a decision record supersedes it.
 - Manage Talos nodes through `talosctl`; Talos nodes do not support SSH.
 - Preserve other people's work. Check the working tree before editing and avoid unrelated rewrites.
-- Break work into named ideas before implementation. Each idea maps to one PR and may contain multiple conventional commits.
-- New work must always leverage the 2026-05-09-idea-pr-agent-workflow.md
+- All repository code changes must use the mandatory implementation workflow, no questions asked.
+- Break work into named implementations before editing. Each implementation maps to one PR and may contain multiple conventional commits.
+- New work must always leverage `.codex/memory/approved/2026-05-09-implementation-workflow.md`.
+- Before cloning, the planner must stage any required ignored local secret/config files into `.codex/tmp/implementation-secrets/<implementation>/`, preserving their repo-relative paths and never logging secret contents.
+- Implementation agents must clone `https://github.com/petebeegle/homelab.git` into `/workspaces/homelab-ideas/<implementation>`, create `codex/<implementation>` from `origin/main`, and work only in that sibling clone.
+- Implementation and verifier agents must install staged secret/config files into identical repo-relative locations in their sibling clones before running commands that need them.
+- After verifier sign-off for the exact `HEAD`, create the PR without intervention, then delete the sibling clone only after PR creation succeeds.
 
 ## Tool Routing
 
