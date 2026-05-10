@@ -19,6 +19,8 @@ All repository code changes must use the implementation workflow. Agents must no
 
 Break work into named implementations before editing. Each implementation maps to one pull request and may contain multiple conventional commits. A single implementation owner or integrator owns each implementation's tracked-file edits, commits, active implementation marker, PR summary, and final branch state.
 
+When runtime tooling exposes implementation or verifier subagents, delegate normal implementation and verification work to those subagents by default. The user's standing repository preference is subagents opt-out, not opt-in: do not ask whether to use subagents for the standard implementation owner or verifier roles. Respect explicit task instructions such as "do not use subagents."
+
 Implementation agents must work in full sibling clones under `/workspaces/homelab-ideas/<implementation>`, not in the planner checkout. Create each implementation branch from `origin/main`.
 
 Branches must follow the format `codex/<implementation>`.
@@ -32,6 +34,8 @@ The active implementation clone must record `.codex/tmp/active-implementation` w
 Multiple helper agents may contribute to one implementation clone when useful. Use the single integrator model: helper agents may research, inspect, test, verify, or prepare focused patch recommendations, but the implementation owner applies tracked-file edits and creates commits in the shared clone.
 
 As implementation agents finish, create separate verifier agents to review the result. The planner coordinates implementation breakdown, delegates implementation and verification, and summarizes status.
+
+Self-implementation or self-verification is acceptable only when subagent tooling is unavailable or higher-priority runtime policy blocks delegation. Any fallback to self-verification must be recorded in `.codex/tmp/pr-summary.md`.
 
 Implementation and verifier agents must install the staged secret/config files into their sibling clone before running commands that need them, preserving the repo-relative paths from the staged tree.
 
