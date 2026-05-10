@@ -48,7 +48,9 @@ entries:
       client_secret: !Context synology_client_secret
       redirect_uris:
         - matching_mode: strict
-          url: https://192.168.30.99:5001/#/signin
+          url: https://192.168.30.99:5001
+        - matching_mode: strict
+          url: https://synology.petebeegle.com
       signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, openid]]
@@ -70,7 +72,7 @@ entries:
       slug: synology
       provider: !Find [authentik_providers_oauth2.oauth2provider, [name, synology-provider]]
       policy_engine_mode: any
-      meta_launch_url: https://192.168.30.99:5001
+      meta_launch_url: https://synology.petebeegle.com
       meta_icon: https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/synology.png
       meta_description: Synology NAS
       open_in_new_tab: true
