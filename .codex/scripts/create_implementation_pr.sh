@@ -79,14 +79,25 @@ fi
 
 title="Implementation: ${implementation}"
 commit_summary="$(git log --oneline origin/main..HEAD)"
+changed_files="$(git diff --name-only origin/main..HEAD)"
+plan_summary_file=".codex/tmp/pr-summary.md"
 body="$(mktemp)"
 trap 'rm -f "$body"' EXIT
 
 {
   printf '## Summary\n'
-  printf '%s\n' "- Implementation: \`$implementation\`"
-  printf '%s\n' "- Branch: \`$branch\`"
-  printf '%s\n' "- Verified HEAD: \`$head_sha\`"
+  if [[ -s "$plan_summary_file" ]]; then
+    cat "$plan_summary_file"
+    printf '\n'
+  else
+    printf 'Implements the `%s` implementation plan. Changes are isolated on `%s`, verified at `%s`, and ready for review.\n' "$implementation" "$branch" "$head_sha"
+  fi
+  printf '\n## Changes\n'
+  if [[ -n "$changed_files" ]]; then
+    printf '%s\n' "$changed_files" | sed 's/^/- /'
+  else
+    printf '%s\n' '- No files changed relative to origin/main.'
+  fi
   printf '\n## Commits\n'
   if [[ -n "$commit_summary" ]]; then
     printf '%s\n' "$commit_summary" | sed 's/^/- /'
@@ -94,7 +105,8 @@ trap 'rm -f "$body"' EXIT
     printf '%s\n' '- No commits found relative to origin/main.'
   fi
   printf '\n## Verification\n'
-  printf '%s\n' "- Verifier approval recorded for exact HEAD in \`$approval_file\`."
+  printf '%s\n' "- Verified HEAD: \`$head_sha\`."
+  printf '%s\n' "- Verifier approval recorded in \`$approval_file\`."
 } >"$body"
 
 git push -u origin "$branch"

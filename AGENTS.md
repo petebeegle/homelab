@@ -19,6 +19,7 @@ Stack: Terraform, Talos OS, Kubernetes, Flux, Cilium, Gateway API, SOPS/Age, Syn
 - Before cloning, the planner must stage any required ignored local secret/config files into `.codex/tmp/implementation-secrets/<implementation>/`, preserving their repo-relative paths and never logging secret contents.
 - Implementation agents must clone `https://github.com/petebeegle/homelab.git` into `/workspaces/homelab-ideas/<implementation>`, create `codex/<implementation>` from `origin/main`, and work only in that sibling clone.
 - Implementation and verifier agents must install staged secret/config files into identical repo-relative locations in their sibling clones before running commands that need them.
+- Before PR creation, record plan-derived PR text in `.codex/tmp/pr-summary.md` so the automatic PR body includes the implementation summary and important changes from the plan.
 - After verifier sign-off for the exact `HEAD`, create the PR without intervention, then delete the sibling clone only after PR creation succeeds.
 
 ## Tool Routing

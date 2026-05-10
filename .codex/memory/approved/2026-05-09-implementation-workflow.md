@@ -29,4 +29,6 @@ Conventional commits are enforced locally and by origin.
 
 Do not push to origin until verifier approval is recorded for the exact `HEAD` commit.
 
+Before PR creation, the planner or implementation agent should record plan-derived PR text in `.codex/tmp/pr-summary.md`. Keep this file concise and include the implementation summary plus the important changes from the plan. The automatic PR helper includes this text in the PR body and falls back to generated branch, file, commit, and verification details if the file is absent.
+
 After verifier approval is recorded, create the pull request without additional intervention. Push the current `codex/<implementation>` branch to origin, run `gh pr create --base main --head codex/<implementation>`, and delete the sibling clone only after the pull request is created successfully.
