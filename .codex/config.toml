@@ -23,6 +23,12 @@ matcher = "^Bash$"
 
 [[hooks.PreToolUse.hooks]]
 type = "command"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/implementation_workflow_guard.sh\" --record'"
+timeout = 10
+statusMessage = "Recording implementation workflow state"
+
+[[hooks.PreToolUse.hooks]]
+type = "command"
 command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/sops_guard.sh\"'"
 timeout = 30
 statusMessage = "Checking SOPS safety"
@@ -33,8 +39,23 @@ command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.code
 timeout = 120
 statusMessage = "Checking Terraform apply safety"
 
+[[hooks.PreToolUse]]
+matcher = "^(apply_patch|Edit|MultiEdit|Write)$"
+
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/implementation_workflow_guard.sh\" --record'"
+timeout = 10
+statusMessage = "Recording implementation workflow state"
+
 [[hooks.PostToolUse]]
 matcher = "^(Bash|apply_patch|Edit|MultiEdit|Write)$"
+
+[[hooks.PostToolUse.hooks]]
+type = "command"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/implementation_workflow_guard.sh\"'"
+timeout = 30
+statusMessage = "Checking implementation workflow"
 
 [[hooks.PostToolUse.hooks]]
 type = "command"
@@ -61,3 +82,9 @@ type = "command"
 command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/stop_self_verify.sh\"'"
 timeout = 120
 statusMessage = "Running Codex harness self-check"
+
+[[hooks.Stop.hooks]]
+type = "command"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/scripts/create_implementation_pr.sh\" --auto'"
+timeout = 300
+statusMessage = "Creating implementation PR"

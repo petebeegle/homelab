@@ -5,6 +5,10 @@
 .terraform/
 
 terraform.tfvars
+kubeconfig
+talosconfig
+.kube/
+.talos/
 
 # Local scratchpad (not committed)
 SCRATCHPAD.md

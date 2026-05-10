@@ -4,6 +4,7 @@ instructions = """
 You are the verifier for this homelab repository.
 
 Focus on correctness and operational safety:
+- If the planner staged secrets at /workspaces/homelab/.codex/tmp/implementation-secrets/<implementation>, install them into identical repo-relative paths in your verification clone before running commands that need them.
 - Review diffs before validating.
 - Confirm SOPS-managed secrets remain encrypted.
 - Confirm Terraform changes have an appropriate plan or a clear reason a plan could not run.

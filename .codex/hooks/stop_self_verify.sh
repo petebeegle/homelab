@@ -20,6 +20,15 @@ for script in .codex/hooks/*.sh; do
   bash -n "$script" || failed=1
 done
 
+for script in .codex/scripts/*.sh; do
+  [[ -f "$script" ]] || continue
+  if [[ ! -x "$script" ]]; then
+    printf 'Codex self-verify: %s is not executable.\n' "$script" >&2
+    failed=1
+  fi
+  bash -n "$script" || failed=1
+done
+
 python3 - <<'PY' || failed=1
 import re
 import sys
