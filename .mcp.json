@@ -22,10 +22,6 @@
       "env": {
         "GRAFANA_URL": "https://monitoring.lab.petebeegle.com"
       }
-    },
-    "graphify": {
-      "command": "python3",
-      "args": ["-m", "graphify.serve", "graphify-out/graph.json"]
     }
   },
   "context7": {
