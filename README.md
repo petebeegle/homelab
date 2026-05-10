@@ -197,8 +197,8 @@ docker run --rm \
 ```sh
 # View Flux logs
 flux logs -f
-# Watch kustomization events
-flux get kustomizations --watch
+# Watch Kustomizations across namespaces
+flux get kustomizations --all-namespaces --watch
 # List Helm releases
 kubectl get helmreleases -n kube-system
 # List Helm repositories
