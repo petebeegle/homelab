@@ -16,6 +16,8 @@ Stack: Terraform, Talos OS, Kubernetes, Flux, Cilium, Gateway API, SOPS/Age, Syn
 - All repository code changes must use the mandatory implementation workflow, no questions asked.
 - Break work into named implementations before editing. Each implementation maps to one PR and may contain multiple conventional commits.
 - New work must always leverage `.codex/memory/approved/2026-05-09-implementation-workflow.md`.
+- Use implementation and verifier subagents by default whenever runtime tooling exposes them. This is a standing opt-out preference, so do not ask whether to use subagents for normal implementation or verifier roles; respect explicit task instructions such as "do not use subagents."
+- Self-implementation or self-verification is acceptable only when subagent tooling is unavailable or higher-priority runtime policy blocks delegation. Record any fallback to self-verification in `.codex/tmp/pr-summary.md`.
 - Every implementation must consider documentation impact. Update stale docs, generated docs, decision records, runbooks, or agent guidance when behavior changes; otherwise record why no docs changed.
 - Before cloning, the planner must stage any required ignored local secret/config files into `.codex/tmp/implementation-secrets/<implementation>/`, preserving their repo-relative paths and never logging secret contents.
 - Implementation agents must clone `https://github.com/petebeegle/homelab.git` into `/workspaces/homelab-ideas/<implementation>`, create `codex/<implementation>` from `origin/main`, and work only in that sibling clone.
