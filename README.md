@@ -211,6 +211,8 @@ kubectl get helmrepositories -n kube-system
 ---
 ## Appendices
 Random things that have caused me suffering:
+- [Proxmox VE Host Baseline](./docs/decisions/proxmox-ve-host-baseline.md)
+- [Proxmox No-Subscription Repository](./docs/runbooks/proxmox-no-subscription-repository.md)
 - [Configure NFS With Proxmox](./.codex/runbooks/configure-nfs-with-proxmox.md)
 - [Cloudflare Tunnels](./.codex/runbooks/cloudflare-tunnels.md)
 - [Resize a PVC](./.codex/runbooks/resize-pvc.md)
