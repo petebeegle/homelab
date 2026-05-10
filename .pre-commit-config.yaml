@@ -61,6 +61,12 @@ repos:
         language: system
         files: ^(kubernetes/infra/authentik/blueprints/synology-oauth\.yaml|tools/policy/check_synology_oauth_redirect\.py|\.pre-commit-config\.yaml)$
         pass_filenames: false
+      - id: mcp-config-consistency
+        name: Check MCP config consistency
+        entry: python3 tools/policy/check_mcp_config_consistency.py
+        language: system
+        files: ^(\.mcp\.json|\.codex/config\.toml|tools/policy/check_mcp_config_consistency\.py|\.pre-commit-config\.yaml)$
+        pass_filenames: false
       - id: agent-memory-lint
         name: Lint Codex memory docs
         entry: bash -c 'PYTHONPATH=tools/agent-memory/src python3 -m agent_memory.cli lint'
