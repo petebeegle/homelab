@@ -9,6 +9,11 @@ description = "Local Codex memory compaction and consolidation scaffold."
 requires-python = ">=3.10"
 dependencies = []
 
+[dependency-groups]
+dev = [
+    "pytest>=9.0.1",
+]
+
 [project.scripts]
 agent-memory = "agent_memory.cli:main"
 
