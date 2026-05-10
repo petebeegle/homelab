@@ -6,7 +6,7 @@ Use this runbook to add a Kubernetes app managed by Flux.
 
 - App name and namespace.
 - Deployment style: raw manifests or HelmRelease.
-- Exposure model: no route, internal `HTTPRoute`, or external `TLSRoute`.
+- Exposure model: no route, Gateway-terminated `HTTPRoute`, or `TLSRoute` passthrough.
 - Storage needs, especially whether PVCs require `nfs-csi-storage`.
 - Secret needs; if present, also follow `docs/runbooks/add-secret.md`.
 
@@ -15,7 +15,7 @@ Use this runbook to add a Kubernetes app managed by Flux.
 1. Create `kubernetes/apps/<app-name>/`.
 2. Add `namespace.yaml` or include the Namespace in `app.yaml`.
 3. Add the workload manifest or HelmRelease.
-4. Add `httproute.yaml` if the app is exposed internally.
+4. Add `httproute.yaml` for Gateway-terminated HTTP(S), or `tlsroute.yaml` for TLS passthrough.
 5. Add `kustomization.yaml` listing the app resources.
 6. Add `kubernetes/clusters/production/apps/<app-name>.yaml` as a Flux Kustomization.
 7. Add the new cluster-layer file to `kubernetes/clusters/production/apps/kustomization.yaml`.
@@ -96,6 +96,84 @@ spec:
         - name: <service-name>
           port: <port>
           weight: 1
+```
+
+## External Service HTTPRoute Template
+
+Use this pattern for a service outside the cluster when the Gateway should present the trusted certificate or hide the backend port.
+
+```yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: <service-name>
+  namespace: external
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: <backend-port>
+      targetPort: <backend-port>
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: <service-name>
+  namespace: external
+  labels:
+    kubernetes.io/service-name: <service-name>
+addressType: IPv4
+ports:
+  - name: http
+    protocol: TCP
+    port: <backend-port>
+endpoints:
+  - addresses:
+      - <backend-ip>
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: <service-name>-route
+  namespace: external
+spec:
+  parentRefs:
+    - name: internal
+      namespace: gateway
+      sectionName: <listener-name>
+  hostnames:
+    - <hostname>
+  rules:
+    - backendRefs:
+        - name: <service-name>
+          port: <backend-port>
+```
+
+Add a matching Gateway HTTPS listener and cert-manager `Certificate` when the hostname is outside `${cluster_domain}`.
+
+## External TLSRoute Template
+
+Use this pattern only when the external service should terminate TLS itself and already presents an acceptable certificate for the hostname.
+Define the backing `Service` and `EndpointSlice` with the target TLS port, as shown in the external HTTPRoute example.
+
+```yaml
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TLSRoute
+metadata:
+  name: <service-name>-route
+  namespace: external
+spec:
+  parentRefs:
+    - name: passthrough
+      namespace: gateway
+  hostnames:
+    - <hostname>
+  rules:
+    - backendRefs:
+        - name: <service-name>
+          port: <tls-port>
 ```
 
 ## App Kustomization Template

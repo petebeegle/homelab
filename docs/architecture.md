@@ -99,8 +99,9 @@ This document is generated for agentic repo navigation. It records relationships
 | Kind | Route | Hostnames | Parent Gateway | Backend refs |
 | --- | --- | --- | --- | --- |
 | `HTTPRoute` | `authentik/authentik` | `authentik.${cluster_domain}` | `gateway/internal/https-gateway` | `authentik-server:80` |
+| `HTTPRoute` | `external/synology-route` | `synology.petebeegle.com` | `gateway/internal/synology-https-gateway` | `synology:5000` |
 | `HTTPRoute` | `foundryvtt/foundryvtt` | `foundry.${cluster_domain}` | `gateway/internal/https-gateway` | `foundryvtt:80` |
-| `HTTPRoute` | `gateway/https-redirect` | `*.${cluster_domain}, ${cluster_domain}` | `gateway/internal/http-gateway` | `(none)` |
+| `HTTPRoute` | `gateway/https-redirect` | `*.${cluster_domain}, ${cluster_domain}, synology.petebeegle.com` | `gateway/internal/http-gateway` | `(none)` |
 | `HTTPRoute` | `grafana/monitoring` | `monitoring.${cluster_domain}` | `gateway/internal/https-gateway` | `grafana:80` |
 | `HTTPRoute` | `jellyfin/jellyfin` | `jellyfin.${cluster_domain}` | `gateway/internal/https-gateway` | `jellyfin:8096` |
 | `HTTPRoute` | `otel-collector/otel-collector` | `otel.${cluster_domain}` | `gateway/internal/https-gateway` | `otel-collector-opentelemetry-collector:4318` |
@@ -111,7 +112,6 @@ This document is generated for agentic repo navigation. It records relationships
 | `TLSRoute` | `external/pve02-route` | `pve02.petebeegle.com` | `gateway/passthrough` | `pve02:8006` |
 | `TLSRoute` | `external/pve03-route` | `pve03.petebeegle.com` | `gateway/passthrough` | `pve03:8006` |
 | `TLSRoute` | `external/pve04-route` | `pve04.petebeegle.com` | `gateway/passthrough` | `pve04:8006` |
-| `TLSRoute` | `external/synology-route` | `synology.petebeegle.com` | `gateway/passthrough` | `synology:5001` |
 | `TLSRoute` | `external/unifi-route` | `unifi.petebeegle.com` | `gateway/passthrough` | `unifi:443` |
 
 ## Storage Relationships

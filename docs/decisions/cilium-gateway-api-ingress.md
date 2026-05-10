@@ -12,13 +12,15 @@ Use Cilium Gateway API for cluster ingress. Do not add traditional Kubernetes In
 
 - Cilium provides Gateway API support, L2 load balancer IP advertisement, and kube-proxy replacement in one networking layer.
 - Gateway API separates shared listener configuration from app-owned routes.
-- Existing apps use `HTTPRoute` for internal HTTPS and `TLSRoute` for passthrough to external services.
+- Existing apps use `HTTPRoute` for Gateway-terminated HTTPS and `TLSRoute` for passthrough to external services that terminate TLS themselves.
 
 ## Consequences
 
 - Internal HTTP apps attach to Gateway `internal` in namespace `gateway`, section `https-gateway`.
 - Hostnames should use `${cluster_domain}` in shared manifests.
 - Cilium settings such as `kubeProxyReplacement: true` and L2 announcements are ingress-critical.
+- Use `HTTPRoute` when the cluster should provide the trusted certificate, normalize a public hostname, or hide a backend port.
+- Use `TLSRoute` passthrough only when the target should terminate TLS itself and presents an acceptable certificate for the hostname.
 - TLS passthrough targets terminate TLS themselves and do not need cert-manager certificates.
 
 ## Operational Notes

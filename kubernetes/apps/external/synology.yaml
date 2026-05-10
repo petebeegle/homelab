@@ -6,10 +6,10 @@ metadata:
   namespace: external
 spec:
   ports:
-    - name: https
+    - name: http
       protocol: TCP
-      port: 5001
-      targetPort: 5001
+      port: 5000
+      targetPort: 5000
 ---
 apiVersion: discovery.k8s.io/v1
 kind: EndpointSlice
@@ -20,25 +20,26 @@ metadata:
     kubernetes.io/service-name: synology
 addressType: IPv4
 ports:
-  - name: https
+  - name: http
     protocol: TCP
-    port: 5001
+    port: 5000
 endpoints:
   - addresses:
       - ${nfs_server}
 ---
-apiVersion: gateway.networking.k8s.io/v1alpha2
-kind: TLSRoute
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata:
   name: synology-route
   namespace: external
 spec:
   parentRefs:
-    - name: passthrough
+    - name: internal
       namespace: gateway
+      sectionName: synology-https-gateway
   hostnames:
     - synology.petebeegle.com
   rules:
     - backendRefs:
         - name: synology
-          port: 5001
+          port: 5000
