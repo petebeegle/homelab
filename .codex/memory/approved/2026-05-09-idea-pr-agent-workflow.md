@@ -11,7 +11,7 @@ Break work into named ideas before implementation.
 
 Each idea maps to one pull request and may contain multiple conventional commits. A separate implementation agent owns each idea's implementation work.
 
-New idea branches must always branch from `main`.
+New idea branches must always branch from `origin/main`.
 
 Branches should follow the format `codex/<IDEA>`.
 
