@@ -25,7 +25,7 @@ APPROVED_REQUIRED_FIELDS = (
     "superseded_by",
 )
 ALLOWED_AUTHORITY_VALUES = {"advisory", "binding"}
-DEFAULT_REVIEW_WINDOW_DAYS = 90
+DEFAULT_REVIEW_WINDOW_DAYS = 30
 DEFAULT_WORD_WARNING_THRESHOLD = 1200
 VAGUE_METADATA_VALUES = {"", "unknown", "todo", "tbd", "none", "n/a"}
 

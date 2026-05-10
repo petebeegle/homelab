@@ -17,7 +17,7 @@ def write_approved_memory(root: Path, name: str = "2026-05-09-good-memory.md", *
         "status": "approved",
         "created": "2026-05-09",
         "last_verified": "2026-05-10",
-        "review_after": "2026-08-08",
+        "review_after": "2026-05-17",
         "source": "unit-test",
         "kind": "workflow-preference",
         "scope": ["unit-test"],
@@ -60,11 +60,11 @@ class MemoryLintTests(unittest.TestCase):
     def test_invalid_approved_markdown_reports_errors(self):
         cases = {
             "missing-frontmatter.md": "# Missing Frontmatter\n\nBody.\n",
-            "bad-date.md": "---\nstatus: approved\ncreated: 2026/05/09\nlast_verified: 2026-05-10\nreview_after: 2026-08-08\nsource: unit-test\nkind: note\nscope:\n  - unit-test\nauthority: advisory\nsupersedes: []\nsuperseded_by: []\n---\n\n# Bad Date\n\nBody.\n",
-            "wrong-status.md": "---\nstatus: draft\ncreated: 2026-05-09\nlast_verified: 2026-05-10\nreview_after: 2026-08-08\nsource: unit-test\nkind: note\nscope:\n  - unit-test\nauthority: advisory\nsupersedes: []\nsuperseded_by: []\n---\n\n# Wrong Status\n\nBody.\n",
-            "missing-h1.md": "---\nstatus: approved\ncreated: 2026-05-09\nlast_verified: 2026-05-10\nreview_after: 2026-08-08\nsource: unit-test\nkind: note\nscope:\n  - unit-test\nauthority: advisory\nsupersedes: []\nsuperseded_by: []\n---\n\nBody.\n",
-            "empty-body.md": "---\nstatus: approved\ncreated: 2026-05-09\nlast_verified: 2026-05-10\nreview_after: 2026-08-08\nsource: unit-test\nkind: note\nscope:\n  - unit-test\nauthority: advisory\nsupersedes: []\nsuperseded_by: []\n---\n",
-            "secret.md": "---\nstatus: approved\ncreated: 2026-05-09\nlast_verified: 2026-05-10\nreview_after: 2026-08-08\nsource: unit-test\nkind: note\nscope:\n  - unit-test\nauthority: advisory\nsupersedes: []\nsuperseded_by: []\n---\n\n# Secret\n\napi_key = supersecretvalue123\n",
+            "bad-date.md": "---\nstatus: approved\ncreated: 2026/05/09\nlast_verified: 2026-05-10\nreview_after: 2026-05-17\nsource: unit-test\nkind: note\nscope:\n  - unit-test\nauthority: advisory\nsupersedes: []\nsuperseded_by: []\n---\n\n# Bad Date\n\nBody.\n",
+            "wrong-status.md": "---\nstatus: draft\ncreated: 2026-05-09\nlast_verified: 2026-05-10\nreview_after: 2026-05-17\nsource: unit-test\nkind: note\nscope:\n  - unit-test\nauthority: advisory\nsupersedes: []\nsuperseded_by: []\n---\n\n# Wrong Status\n\nBody.\n",
+            "missing-h1.md": "---\nstatus: approved\ncreated: 2026-05-09\nlast_verified: 2026-05-10\nreview_after: 2026-05-17\nsource: unit-test\nkind: note\nscope:\n  - unit-test\nauthority: advisory\nsupersedes: []\nsuperseded_by: []\n---\n\nBody.\n",
+            "empty-body.md": "---\nstatus: approved\ncreated: 2026-05-09\nlast_verified: 2026-05-10\nreview_after: 2026-05-17\nsource: unit-test\nkind: note\nscope:\n  - unit-test\nauthority: advisory\nsupersedes: []\nsuperseded_by: []\n---\n",
+            "secret.md": "---\nstatus: approved\ncreated: 2026-05-09\nlast_verified: 2026-05-10\nreview_after: 2026-05-17\nsource: unit-test\nkind: note\nscope:\n  - unit-test\nauthority: advisory\nsupersedes: []\nsuperseded_by: []\n---\n\n# Secret\n\napi_key = supersecretvalue123\n",
         }
         expected_codes = {
             "frontmatter-missing",
