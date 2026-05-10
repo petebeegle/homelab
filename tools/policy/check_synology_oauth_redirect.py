@@ -9,9 +9,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 BLUEPRINT = ROOT / "kubernetes/infra/authentik/blueprints/synology-oauth.yaml"
-EXPECTED_REDIRECT = "https://synology.petebeegle.com/#/signin"
+EXPECTED_REDIRECT = "https://synology.petebeegle.com"
 FORBIDDEN_REDIRECTS = {
-    "https://synology.petebeegle.com",
+    "https://synology.petebeegle.com/#/signin",
     "https://192.168.30.99:5001",
 }
 

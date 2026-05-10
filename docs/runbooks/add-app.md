@@ -101,6 +101,7 @@ spec:
 ## External Service HTTPRoute Template
 
 Use this pattern for a service outside the cluster when the Gateway should present the trusted certificate or hide the backend port.
+Set `appProtocol: https` on the Service port when the Gateway should use HTTPS to reach the backend.
 
 ```yaml
 ---
@@ -113,6 +114,7 @@ spec:
   ports:
     - name: http
       protocol: TCP
+      appProtocol: <http-or-https>
       port: <backend-port>
       targetPort: <backend-port>
 ---
@@ -127,6 +129,7 @@ addressType: IPv4
 ports:
   - name: http
     protocol: TCP
+    appProtocol: <http-or-https>
     port: <backend-port>
 endpoints:
   - addresses:
