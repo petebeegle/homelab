@@ -1,0 +1,186 @@
+---
+name: CI
+
+"on":
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pre-commit:
+    name: Pre-commit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.15.2"
+          terraform_wrapper: false
+
+      - name: Install terraform-docs
+        env:
+          TERRAFORM_DOCS_VERSION: "0.23.0"
+        run: |
+          set -euo pipefail
+          curl -sSLo terraform-docs.tar.gz \
+            "https://github.com/terraform-docs/terraform-docs/releases/download/v${TERRAFORM_DOCS_VERSION}/terraform-docs-v${TERRAFORM_DOCS_VERSION}-linux-amd64.tar.gz"
+          tar -xzf terraform-docs.tar.gz terraform-docs
+          sudo install -m 0755 terraform-docs /usr/local/bin/terraform-docs
+
+      - name: Install pre-commit
+        run: python -m pip install --upgrade pre-commit
+
+      - name: Run pre-commit hooks
+        run: pre-commit run --all-files
+
+  python:
+    name: Python
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Run tests
+        run: >-
+          uv run --project tools/agent-memory --with pytest pytest
+          tools/agent-memory/tests
+
+  terraform:
+    name: Terraform
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.15.2"
+          terraform_wrapper: false
+
+      - name: Check Terraform formatting
+        run: terraform fmt -check -recursive terraform
+
+      - name: Validate Terraform root modules
+        run: |
+          set -euo pipefail
+          for dir in \
+            terraform/cluster \
+            terraform/external/grafana \
+            terraform/external/nexus \
+            terraform/external/synology
+          do
+            echo "::group::${dir}"
+            terraform -chdir="${dir}" init -backend=false -input=false -no-color
+            terraform -chdir="${dir}" validate -no-color
+            echo "::endgroup::"
+          done
+
+  kubernetes:
+    name: Kubernetes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Install kubeconform
+        env:
+          KUBECONFORM_VERSION: "0.7.0"
+        run: |
+          set -euo pipefail
+          archive="kubeconform-linux-amd64.tar.gz"
+          url="https://github.com/yannh/kubeconform/releases/download"
+          curl -sSLo kubeconform.tar.gz \
+            "${url}/v${KUBECONFORM_VERSION}/${archive}"
+          tar -xzf kubeconform.tar.gz kubeconform
+          sudo install -m 0755 kubeconform /usr/local/bin/kubeconform
+
+      - name: Render production manifests
+        run: >-
+          kubectl kustomize kubernetes/clusters/production >
+          /tmp/homelab-production.yaml
+
+      - name: Validate rendered manifests
+        run: >-
+          kubeconform -summary -ignore-missing-schemas
+          /tmp/homelab-production.yaml
+
+  secrets:
+    name: Secrets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Check encrypted secret manifests
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(
+            find kubernetes \
+              \( -path '*/secret.yaml' -o -name 'grafana-env.yaml' \) \
+              -type f |
+              sort
+          )
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No secret manifests found."
+            exit 0
+          fi
+
+          failed=0
+          for file in "${files[@]}"; do
+            if ! grep -Eq '^sops:' "${file}"; then
+              echo "::error file=${file}::Missing top-level sops block"
+              failed=1
+            fi
+            if ! grep -q 'ENC\[' "${file}"; then
+              echo "::error file=${file}::Missing encrypted ENC[...] values"
+              failed=1
+            fi
+          done
+          exit "${failed}"
+
+  agnix:
+    name: Agnix
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install Agnix
+        run: npm install --global agnix@0.25.0
+
+      - name: Validate agent instructions
+        run: agnix .
