@@ -1,8 +1,17 @@
 ---
 status: approved
 created: 2026-05-09
+last_verified: 2026-05-10
+review_after: 2026-05-17
 source: codex-follow-up-migration
 kind: agent-operational-learning
+scope:
+  - devcontainer
+  - runbooks
+  - codex-harness
+authority: advisory
+supersedes: []
+superseded_by:
 ---
 
 # Devcontainer And Runbook Placement Learning

@@ -1,8 +1,18 @@
+---
+id: ADR-0006
+status: accepted
+scope:
+  - talos
+  - operations
+  - nodes
+authority: binding
+created: 2026-05-09
+last_verified: 2026-05-10
+supersedes: []
+superseded_by:
+---
+
 # Talos Management Boundaries
-
-## Status
-
-Accepted.
 
 ## Decision
 

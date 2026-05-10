@@ -1,8 +1,18 @@
+---
+id: ADR-0003
+status: accepted
+scope:
+  - secrets
+  - sops
+  - age
+authority: binding
+created: 2026-05-09
+last_verified: 2026-05-10
+supersedes: []
+superseded_by:
+---
+
 # SOPS Age Secrets
-
-## Status
-
-Accepted.
 
 ## Decision
 

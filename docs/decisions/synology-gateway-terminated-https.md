@@ -1,8 +1,18 @@
+---
+id: ADR-0008
+status: accepted
+scope:
+  - synology
+  - ingress
+  - gateway-api
+authority: binding
+created: 2026-05-10
+last_verified: 2026-05-10
+supersedes: []
+superseded_by:
+---
+
 # Synology Gateway-Terminated HTTPS
-
-## Status
-
-Accepted.
 
 ## Decision
 
