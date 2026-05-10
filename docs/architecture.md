@@ -40,7 +40,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `grafana` | `./kubernetes/infra/monitoring/grafana` | `gateway`, `grafana-operator`, `loki`, `mimir` | `cluster-vars` | `sops` |
 | `loki` | `./kubernetes/infra/monitoring/loki` | `crds` | `cluster-vars` | `no` |
 | `mimir` | `./kubernetes/infra/monitoring/mimir` | `crds`, `nfs-csi` | `cluster-vars` | `no` |
-| `monitoring` | `./kubernetes/infra/monitoring` | (none) | `cluster-vars` | `no` |
+| `monitoring` | `./kubernetes/infra/monitoring` | (none) | `cluster-vars` | `sops` |
 | `nfs-csi` | `./kubernetes/infra/controllers/nfs-csi` | (none) | `cluster-vars` | `no` |
 | `otel-collector` | `./kubernetes/infra/monitoring/otel-collector` | `crds`, `gateway` | `cluster-vars` | `no` |
 
@@ -78,7 +78,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/infra/monitoring/loki` | `namespace.yaml`, `repositories.yaml`, `app.yaml` |
 | `kubernetes/infra/monitoring/mimir` | `namespace.yaml`, `repositories.yaml`, `app.yaml` |
 | `kubernetes/infra/monitoring/otel-collector` | `namespace.yaml`, `app.yaml`, `httproute.yaml` |
-| `kubernetes/infra/monitoring/pretty-discord-alerts` | `deployment.yaml`, `service.yaml` |
+| `kubernetes/infra/monitoring/pretty-discord-alerts` | `grafana-env.yaml`, `deployment.yaml`, `service.yaml` |
 | `kubernetes/infra/monitoring/snmp-exporter` | `repositories.yaml`, `deployment.yaml`, `service.yaml`, `servicemonitor.yaml` |
 | `kubernetes/infra/network/certs` | `./issuer.yaml` |
 | `kubernetes/infra/network/cilium` | `app.yaml`, `announcement.yaml`, `ip-pool.yaml` |
@@ -136,6 +136,7 @@ This lists secret manifest presence only. Secret values are not rendered.
 | `foundryvtt` | `foundryvtt/foundryvtt-secret` | `yes` | `kubernetes/apps/foundryvtt/secret.yaml` |
 | `monitoring/grafana` | `grafana/grafana-credentials` | `yes` | `kubernetes/infra/monitoring/grafana/secret.yaml` |
 | `monitoring/grafana` | `grafana/grafana-env` | `yes` | `kubernetes/infra/monitoring/grafana/grafana-env.yaml` |
+| `monitoring/pretty-discord-alerts` | `monitoring/grafana-env` | `yes` | `kubernetes/infra/monitoring/pretty-discord-alerts/grafana-env.yaml` |
 | `network/vpn` | `wireguard/wireguard-env` | `yes` | `kubernetes/infra/network/vpn/secret.yaml` |
 | `pihole` | `pihole/pihole-admin-password` | `yes` | `kubernetes/apps/pihole/secret.yaml` |
 | `renovate` | `renovate/renovate-secret` | `yes` | `kubernetes/apps/renovate/secret.yaml` |
