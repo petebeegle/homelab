@@ -88,14 +88,13 @@ talosctl --nodes {CONTROL_PLANE_NODE} upgrade-k8s --to 1.32.0
 
 ## Agent Tooling
 
-This repo is set up for agent-assisted operations inside the devcontainer. MCP servers are configured in `.mcp.json`:
+This repo is set up for agent-assisted operations inside the devcontainer. General MCP clients read `.mcp.json`; Codex reads `.codex/config.toml`.
 
 | MCP | What it does |
 |-----|-------------|
 | `kubernetes` | K8s read/write, pod logs, Helm, events, Flux CRD queries |
 | `grafana` | Dashboard queries, metrics, alert rules |
 | `terraform` | Terraform Registry provider, module, and resource lookup |
-| `graphify` | Generated repository graph queries |
 | `context7` | Live documentation lookup |
 
 `GRAFANA_SERVICE_ACCOUNT_TOKEN` is injected at container start from `terraform/external/grafana` output. No Grafana token is committed to the repository.
