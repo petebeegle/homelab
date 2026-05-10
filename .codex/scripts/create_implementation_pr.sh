@@ -38,34 +38,13 @@ if [[ ! -f "$marker" ]]; then
   exit 1
 fi
 
-get_marker_value() {
-  local key="$1"
-  awk -F= -v key="$key" '
-    $1 == key {
-      value = $0
-      sub(/^[^=]*=/, "", value)
-      gsub(/^"|"$/, "", value)
-      print value
-      exit
-    }
-  ' "$marker"
-}
-
-implementation="$(get_marker_value implementation)"
-marker_branch="$(get_marker_value branch)"
-clone_path="$(get_marker_value clone_path)"
-
-if [[ -z "$implementation" || "$marker_branch" != "$branch" || "$clone_path" != "$root" ]]; then
-  {
-    printf 'Implementation PR: active implementation marker does not match this checkout.\n'
-    printf '  implementation=%s\n' "$implementation"
-    printf '  marker branch=%s\n' "$marker_branch"
-    printf '  current branch=%s\n' "$branch"
-    printf '  marker clone_path=%s\n' "$clone_path"
-    printf '  current root=%s\n' "$root"
-  } >&2
+validator="tools/codex-harness/validate_active_implementation.py"
+if ! python3 "$validator" --marker "$marker" --root "$root" --branch "$branch"; then
+  printf 'Implementation PR: active implementation marker does not match this checkout.\n' >&2
   exit 1
 fi
+
+implementation="${branch#codex/}"
 
 if [[ -n "$(git status --porcelain)" ]]; then
   printf 'Implementation PR: working tree must be clean before creating a PR.\n' >&2
