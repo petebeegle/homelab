@@ -38,10 +38,14 @@ Follow-up candidates:
 
 ## Codex Harness PR Review Follow-Ups
 
-Status: identified during final read-only review of branch `harness` against `origin/main`.
+Status: partially implemented by `terraform-apply-safety`.
+
+Completed follow-ups:
+
+1. `.codex/hooks/terraform_plan.sh` now fails closed when a selected Terraform directory is not initialized.
+2. `.codex/hooks/terraform_plan.sh` now scopes `terraform -chdir=<dir> apply` and `terraform -chdir <dir> apply` checks to the targeted Terraform root.
+3. `tools/agent-memory` now declares its pytest test dependency so `uv run --project tools/agent-memory pytest tools/agent-memory/tests` works without `--with pytest`.
 
 Follow-up efforts:
 
-1. Make `.codex/hooks/terraform_plan.sh` fail closed when a Terraform directory is not initialized, instead of skipping every uninitialized directory and potentially allowing `terraform apply` without a successful plan.
-2. Narrow `.codex/hooks/terraform_plan.sh` planning scope so targeted `terraform apply` commands are not blocked by unrelated Terraform workspaces with missing credentials or unrelated drift.
-3. Declare the memory-agent test runner dependency, or document the supported command, so `uv run --project tools/agent-memory pytest tools/agent-memory/tests` works without adding `--with pytest`.
+1. No open follow-ups remain from this review set.
