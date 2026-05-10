@@ -19,7 +19,7 @@ Before cloning, the planner must stage any needed local-only secret/config files
 
 Only ignored local files, such as `terraform.tfvars`, other `*.tfvars`, kubeconfig files, or talosconfig files, may be staged this way. Never stage tracked files, SOPS-encrypted manifests, or secret contents in logs.
 
-The active implementation clone must record `.codex/tmp/active-implementation` with the implementation name, branch, base, role, and clone path before tracked files are changed.
+The active implementation clone must record `.codex/tmp/active-implementation` with `implementation`, `branch`, `base`, `role`, `clone_path`, `owner_role`, and `owner_agent` before tracked files are changed. The marker must validate with `tools/codex-harness/validate_active_implementation.py`: use `branch=codex/<implementation>`, `role=implementation`, `owner_role=implementation-agent`, and `clone_path=/workspaces/homelab-ideas/<implementation>`. `owner_agent` must identify the implementation owner and must not be planner-like.
 
 Multiple helper agents may contribute to one implementation clone when useful. Use the single integrator model: helper agents may research, inspect, test, verify, or prepare focused patch recommendations, but the implementation owner applies tracked-file edits and creates commits in the shared clone.
 

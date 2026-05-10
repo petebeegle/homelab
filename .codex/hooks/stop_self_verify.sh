@@ -29,6 +29,8 @@ for script in .codex/scripts/*.sh; do
   bash -n "$script" || failed=1
 done
 
+python3 -m unittest discover -s tools/codex-harness/tests || failed=1
+
 python3 - <<'PY' || failed=1
 import re
 import sys

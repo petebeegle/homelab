@@ -27,6 +27,7 @@ fi
 
 branch="$(git branch --show-current)"
 marker=".codex/tmp/active-implementation"
+validator="tools/codex-harness/validate_active_implementation.py"
 
 fail() {
   {
@@ -35,7 +36,7 @@ fail() {
     printf '\nRequired workflow:\n'
     printf '  1. Clone https://github.com/petebeegle/homelab.git into /workspaces/homelab-ideas/<implementation>.\n'
     printf '  2. Create codex/<implementation> from origin/main.\n'
-    printf '  3. Record %s with implementation, branch, base, role=implementation, and clone_path.\n' "$marker"
+    printf '  3. Record %s with implementation, branch, base, role=implementation, clone_path, owner_role=implementation-agent, and owner_agent.\n' "$marker"
     printf '  4. Make tracked-file changes only inside that sibling clone.\n'
   } >&2
   exit 1
@@ -53,43 +54,6 @@ if [[ ! -f "$marker" ]]; then
   fail "Missing $marker."
 fi
 
-expected_implementation="${branch#codex/}"
-expected_clone="/workspaces/homelab-ideas/$expected_implementation"
-
-get_marker_value() {
-  local key="$1"
-  awk -F= -v key="$key" '
-    $1 == key {
-      value = $0
-      sub(/^[^=]*=/, "", value)
-      gsub(/^"|"$/, "", value)
-      print value
-      exit
-    }
-  ' "$marker"
-}
-
-marker_implementation="$(get_marker_value implementation)"
-marker_branch="$(get_marker_value branch)"
-marker_role="$(get_marker_value role)"
-marker_clone_path="$(get_marker_value clone_path)"
-
-if [[ "$marker_implementation" != "$expected_implementation" ]]; then
-  fail "$marker has implementation='$marker_implementation', expected '$expected_implementation'."
-fi
-
-if [[ "$marker_branch" != "$branch" ]]; then
-  fail "$marker has branch='$marker_branch', expected '$branch'."
-fi
-
-if [[ "$marker_role" != "implementation" ]]; then
-  fail "$marker has role='$marker_role', expected 'implementation'."
-fi
-
-if [[ "$marker_clone_path" != "$expected_clone" ]]; then
-  fail "$marker has clone_path='$marker_clone_path', expected '$expected_clone'."
-fi
-
-if [[ "$root" != "$expected_clone" ]]; then
-  fail "Current checkout is '$root', expected sibling clone '$expected_clone'."
+if ! python3 "$validator" --marker "$marker" --root "$root" --branch "$branch"; then
+  fail "Active implementation marker validation failed."
 fi
