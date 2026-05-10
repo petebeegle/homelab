@@ -12,9 +12,8 @@ terraform {
 }
 
 provider "synology" {
-  host       = "https://192.168.30.99:5001"
-  user       = "petebeegle"
-  password   = "4o3TkK4vA6gVeCQo8QPJ"
-  otp_secret = "2NDUKO44ISCVQK6S"
-
+  host       = var.synology.host
+  user       = var.synology.user
+  password   = var.synology.password
+  otp_secret = var.synology.otp_secret
 }
