@@ -100,6 +100,8 @@ This repo is set up for agent-assisted operations inside the devcontainer. MCP s
 
 `GRAFANA_SERVICE_ACCOUNT_TOKEN` is injected at container start from `terraform/external/grafana` output. No Grafana token is committed to the repository.
 
+Codex context retrieval is defined by `.codex/retrieval.yaml`. The manifest lists Git-authored context sources and excluded local or secret paths; it is not a vector database service and does not replace Git as the source of truth.
+
 ### Git Hooks
 
 Install both pre-commit and commit-msg hooks:
