@@ -34,7 +34,7 @@ cd terraform/external/grafana
 terraform init
 terraform apply
 ```
-This creates a `claude-mcp` Viewer service account in Grafana and outputs a token. The devcontainer's `poststart.sh` exports it automatically as `GRAFANA_API_KEY`.
+This creates an `agent-service-account` Viewer service account in Grafana and outputs a token. The devcontainer's `poststart.sh` exports it automatically as `GRAFANA_SERVICE_ACCOUNT_TOKEN`.
 
 ### 3. Create the cluster
 Create and bootstrap an environment via terraform!
@@ -86,17 +86,19 @@ talosctl --nodes {CONTROL_PLANE_NODE} upgrade-k8s --to 1.32.0
 
 ---
 
-## Claude Code / AI Tooling
+## Agent Tooling
 
-This repo is set up for use with [Claude Code](https://claude.ai/code) inside the devcontainer. MCP servers are configured in `.mcp.json`:
+This repo is set up for agent-assisted operations inside the devcontainer. MCP servers are configured in `.mcp.json`:
 
 | MCP | What it does |
 |-----|-------------|
 | `kubernetes` | K8s read/write, pod logs, Helm, events, Flux CRD queries |
 | `grafana` | Dashboard queries, metrics, alert rules |
-| `flux-operator-mcp` | Flux pipeline health (requires flux-operator-mcp binary — installed by `poststart.sh`) |
+| `terraform` | Terraform Registry provider, module, and resource lookup |
+| `graphify` | Generated repository graph queries |
+| `context7` | Live documentation lookup |
 
-`GRAFANA_API_KEY` is injected at container start from `terraform/external/grafana` output — no secrets in committed files.
+`GRAFANA_SERVICE_ACCOUNT_TOKEN` is injected at container start from `terraform/external/grafana` output. No Grafana token is committed to the repository.
 
 ### Git Hooks
 

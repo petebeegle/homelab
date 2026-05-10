@@ -8,7 +8,7 @@ variable "grafana" {
 }
 
 variable "service_account_name" {
-  description = "Name of the Grafana service account for Claude MCP"
+  description = "Name of the Grafana service account for agent tooling"
   type        = string
-  default     = "claude-mcp"
+  default     = "agent-service-account"
 }
