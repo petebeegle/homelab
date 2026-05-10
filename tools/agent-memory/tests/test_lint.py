@@ -12,15 +12,31 @@ from agent_memory.cli import main
 from agent_memory.lint import lint_memory_root
 
 
-def write_approved_memory(root: Path, name: str = "2026-05-09-good-memory.md", **overrides: str) -> Path:
+def write_approved_memory(root: Path, name: str = "2026-05-09-good-memory.md", **overrides: object) -> Path:
     metadata = {
         "status": "approved",
         "created": "2026-05-09",
+        "last_verified": "2026-05-10",
+        "review_after": "2026-08-08",
         "source": "unit-test",
         "kind": "workflow-preference",
+        "scope": ["unit-test"],
+        "authority": "advisory",
+        "supersedes": [],
+        "superseded_by": [],
     }
     metadata.update(overrides)
-    frontmatter = "\n".join(f"{key}: {value}" for key, value in metadata.items())
+    frontmatter_lines = []
+    for key, value in metadata.items():
+        if isinstance(value, list):
+            if value:
+                frontmatter_lines.append(f"{key}:")
+                frontmatter_lines.extend(f"  - {item}" for item in value)
+            else:
+                frontmatter_lines.append(f"{key}: []")
+        else:
+            frontmatter_lines.append(f"{key}: {value}")
+    frontmatter = "\n".join(frontmatter_lines)
     path = root / "approved" / name
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
@@ -44,11 +60,11 @@ class MemoryLintTests(unittest.TestCase):
     def test_invalid_approved_markdown_reports_errors(self):
         cases = {
             "missing-frontmatter.md": "# Missing Frontmatter\n\nBody.\n",
-            "bad-date.md": "---\nstatus: approved\ncreated: 2026/05/09\nsource: unit-test\nkind: note\n---\n\n# Bad Date\n\nBody.\n",
-            "wrong-status.md": "---\nstatus: draft\ncreated: 2026-05-09\nsource: unit-test\nkind: note\n---\n\n# Wrong Status\n\nBody.\n",
-            "missing-h1.md": "---\nstatus: approved\ncreated: 2026-05-09\nsource: unit-test\nkind: note\n---\n\nBody.\n",
-            "empty-body.md": "---\nstatus: approved\ncreated: 2026-05-09\nsource: unit-test\nkind: note\n---\n",
-            "secret.md": "---\nstatus: approved\ncreated: 2026-05-09\nsource: unit-test\nkind: note\n---\n\n# Secret\n\napi_key = supersecretvalue123\n",
+            "bad-date.md": "---\nstatus: approved\ncreated: 2026/05/09\nlast_verified: 2026-05-10\nreview_after: 2026-08-08\nsource: unit-test\nkind: note\nscope:\n  - unit-test\nauthority: advisory\nsupersedes: []\nsuperseded_by: []\n---\n\n# Bad Date\n\nBody.\n",
+            "wrong-status.md": "---\nstatus: draft\ncreated: 2026-05-09\nlast_verified: 2026-05-10\nreview_after: 2026-08-08\nsource: unit-test\nkind: note\nscope:\n  - unit-test\nauthority: advisory\nsupersedes: []\nsuperseded_by: []\n---\n\n# Wrong Status\n\nBody.\n",
+            "missing-h1.md": "---\nstatus: approved\ncreated: 2026-05-09\nlast_verified: 2026-05-10\nreview_after: 2026-08-08\nsource: unit-test\nkind: note\nscope:\n  - unit-test\nauthority: advisory\nsupersedes: []\nsuperseded_by: []\n---\n\nBody.\n",
+            "empty-body.md": "---\nstatus: approved\ncreated: 2026-05-09\nlast_verified: 2026-05-10\nreview_after: 2026-08-08\nsource: unit-test\nkind: note\nscope:\n  - unit-test\nauthority: advisory\nsupersedes: []\nsuperseded_by: []\n---\n",
+            "secret.md": "---\nstatus: approved\ncreated: 2026-05-09\nlast_verified: 2026-05-10\nreview_after: 2026-08-08\nsource: unit-test\nkind: note\nscope:\n  - unit-test\nauthority: advisory\nsupersedes: []\nsuperseded_by: []\n---\n\n# Secret\n\napi_key = supersecretvalue123\n",
         }
         expected_codes = {
             "frontmatter-missing",
@@ -105,6 +121,31 @@ class MemoryLintTests(unittest.TestCase):
             self.assertEqual(result.exit_code, 0)
             self.assertIn("freshness-review", {issue.code for issue in result.issues})
             self.assertEqual(result.warning_count, 1)
+
+    def test_review_overdue_warns_without_failure_by_default(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            write_approved_memory(root, review_after="2026-05-09")
+
+            result = lint_memory_root(root, today=date(2026, 5, 10))
+
+            self.assertEqual(result.exit_code, 0)
+            self.assertIn("review-overdue", {issue.code for issue in result.issues})
+            self.assertEqual(result.warning_count, 1)
+
+    def test_invalid_supersession_metadata_reports_errors(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            write_approved_memory(root, last_verified="2026-05-08", authority="policy", scope=[])
+
+            result = lint_memory_root(root, today=date(2026, 5, 10))
+
+            self.assertEqual(result.exit_code, 1)
+            self.assertTrue(
+                {"last-verified-invalid", "authority-invalid", "scope-invalid"}.issubset(
+                    {issue.code for issue in result.issues}
+                )
+            )
 
     def test_strict_fails_when_warnings_exist(self):
         with tempfile.TemporaryDirectory() as directory:

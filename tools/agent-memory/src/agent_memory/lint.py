@@ -12,7 +12,19 @@ from typing import Any, Iterable
 from agent_memory.policy import secret_rejection_reason
 from agent_memory.storage import memory_root
 
-APPROVED_REQUIRED_FIELDS = ("status", "created", "source", "kind")
+APPROVED_REQUIRED_FIELDS = (
+    "status",
+    "created",
+    "last_verified",
+    "review_after",
+    "source",
+    "kind",
+    "scope",
+    "authority",
+    "supersedes",
+    "superseded_by",
+)
+ALLOWED_AUTHORITY_VALUES = {"advisory", "binding"}
 DEFAULT_REVIEW_WINDOW_DAYS = 90
 DEFAULT_WORD_WARNING_THRESHOLD = 1200
 VAGUE_METADATA_VALUES = {"", "unknown", "todo", "tbd", "none", "n/a"}
@@ -160,7 +172,7 @@ def _lint_approved_markdown(
     if metadata.get("status") != "approved":
         issues.append(_issue(path, "error", "status-invalid", "approved memory must have status: approved", base))
 
-    created = _parse_created_date(metadata.get("created"))
+    created = _parse_date_field(metadata.get("created"))
     if created is None:
         issues.append(_issue(path, "error", "created-invalid", "created must be formatted as YYYY-MM-DD", base))
     else:
@@ -176,6 +188,41 @@ def _lint_approved_markdown(
                     base,
                 )
             )
+
+    last_verified = _parse_date_field(metadata.get("last_verified"))
+    if last_verified is None:
+        issues.append(
+            _issue(path, "error", "last-verified-invalid", "last_verified must be formatted as YYYY-MM-DD", base)
+        )
+    elif created is not None and last_verified < created:
+        issues.append(_issue(path, "error", "last-verified-invalid", "last_verified must be on or after created", base))
+
+    review_after = _parse_date_field(metadata.get("review_after"))
+    if review_after is None:
+        issues.append(_issue(path, "error", "review-after-invalid", "review_after must be formatted as YYYY-MM-DD", base))
+    elif today > review_after:
+        issues.append(_issue(path, "warning", "review-overdue", "approved memory is past review_after", base))
+
+    authority = metadata.get("authority")
+    if authority not in ALLOWED_AUTHORITY_VALUES:
+        issues.append(
+            _issue(
+                path,
+                "error",
+                "authority-invalid",
+                f"authority must be one of {sorted(ALLOWED_AUTHORITY_VALUES)}",
+                base,
+            )
+        )
+
+    scope = metadata.get("scope")
+    if not isinstance(scope, list) or not scope:
+        issues.append(_issue(path, "error", "scope-invalid", "scope must be a non-empty list", base))
+
+    for field_name in ("supersedes", "superseded_by"):
+        value = metadata.get(field_name)
+        if value is not None and not isinstance(value, list):
+            issues.append(_issue(path, "error", "supersession-invalid", f"{field_name} must be a list or empty", base))
 
     h1_count = sum(1 for line in body.splitlines() if line.startswith("# "))
     if h1_count != 1:
@@ -267,13 +314,26 @@ def _split_frontmatter(text: str) -> tuple[str, str]:
     raise ValueError("approved Markdown memory frontmatter is not closed")
 
 
-def _parse_frontmatter(frontmatter: str) -> tuple[dict[str, str], list[str]]:
-    metadata: dict[str, str] = {}
+def _parse_frontmatter(frontmatter: str) -> tuple[dict[str, object], list[str]]:
+    metadata: dict[str, object] = {}
     errors: list[str] = []
+    current_list_key: str | None = None
     for line_number, line in enumerate(frontmatter.splitlines(), start=1):
-        stripped = line.strip()
-        if not stripped or stripped.startswith("#"):
+        if not line.strip() or line.lstrip().startswith("#"):
             continue
+        if line.startswith("  - "):
+            if current_list_key is None:
+                errors.append(f"line {line_number}: list item without list key")
+                continue
+            value = _strip_quotes(line[4:].strip())
+            if value:
+                current_value = metadata[current_list_key]
+                if isinstance(current_value, list):
+                    current_value.append(value)
+            continue
+
+        current_list_key = None
+        stripped = line.strip()
         if ":" not in stripped:
             errors.append(f"line {line_number}: expected key: value")
             continue
@@ -282,12 +342,19 @@ def _parse_frontmatter(frontmatter: str) -> tuple[dict[str, str], list[str]]:
         if not key:
             errors.append(f"line {line_number}: key must not be empty")
             continue
-        metadata[key] = _strip_quotes(value.strip())
+        cleaned = value.strip()
+        if cleaned == "[]":
+            metadata[key] = []
+        elif cleaned == "":
+            metadata[key] = []
+            current_list_key = key
+        else:
+            metadata[key] = _strip_quotes(cleaned)
     return metadata, errors
 
 
-def _parse_created_date(value: str | None) -> date | None:
-    if value is None:
+def _parse_date_field(value: object) -> date | None:
+    if not isinstance(value, str):
         return None
     if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
         return None
@@ -301,8 +368,8 @@ def _has_dated_filename(path: Path) -> bool:
     return re.match(r"^\d{4}-\d{2}-\d{2}-", path.name) is not None
 
 
-def _is_vague(value: str) -> bool:
-    return value.strip().lower() in VAGUE_METADATA_VALUES
+def _is_vague(value: object) -> bool:
+    return isinstance(value, str) and value.strip().lower() in VAGUE_METADATA_VALUES
 
 
 def _strip_quotes(value: str) -> str:

@@ -1,8 +1,16 @@
 ---
 status: approved
 created: 2026-05-09
+last_verified: 2026-05-10
+review_after: 2026-08-08
 source: user-preference
 kind: workflow-preference
+scope:
+  - implementation-workflow
+  - codex-harness
+authority: binding
+supersedes: []
+superseded_by:
 ---
 
 # Mandatory Implementation Workflow

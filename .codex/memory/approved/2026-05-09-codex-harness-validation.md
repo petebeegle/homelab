@@ -1,8 +1,16 @@
 ---
 status: approved
 created: 2026-05-09
+last_verified: 2026-05-10
+review_after: 2026-08-08
 source: codex-harness-migration
 kind: agent-operational-learning
+scope:
+  - codex-harness
+  - validation
+authority: advisory
+supersedes: []
+superseded_by:
 ---
 
 # Codex Harness Validation Learning
