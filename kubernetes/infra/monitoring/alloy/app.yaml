@@ -24,6 +24,15 @@ spec:
         name: grafana
         namespace: flux-system
   values:
+    rbac:
+      create: true
+    serviceAccount:
+      automountServiceAccountToken: true
+    controller:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
     alloy:
       clustering:
         enabled: true

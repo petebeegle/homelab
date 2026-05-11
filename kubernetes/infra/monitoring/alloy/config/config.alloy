@@ -1,136 +1,308 @@
 logging {
-  level  = "info"
-  format = "logfmt"
+	level  = "info"
+	format = "logfmt"
 }
 
 loki.write "default" {
-  endpoint {
-    url = "http://loki-gateway.loki.svc.cluster.local/loki/api/v1/push"
-    tenant_id = 1
-  }
+	endpoint {
+		url       = "http://loki-gateway.loki.svc.cluster.local/loki/api/v1/push"
+		tenant_id = 1
+	}
 }
 
 prometheus.remote_write "default" {
-    endpoint {
-      url = "http://mimir-nginx.mimir.svc.cluster.local/api/v1/push"
-    }
+	endpoint {
+		url = "http://mimir-nginx.mimir.svc.cluster.local/api/v1/push"
+	}
 
-    // Prevent WAL from growing unbounded during outages
-    wal {
-      truncate_frequency = "2h"
-      min_keepalive_time = "5m"
-      max_keepalive_time = "8h"
-    }
+	// Prevent WAL from growing unbounded during outages
+	wal {
+		truncate_frequency = "2h"
+		min_keepalive_time = "5m"
+		max_keepalive_time = "8h"
+	}
 }
 
-discovery.kubernetes "pods" {
-  role = "pod"
+discovery.kubernetes "pod_logs" {
+	role = "pod"
+
+	selectors {
+		role  = "pod"
+		field = "spec.nodeName=" + coalesce(sys.env("HOSTNAME"), constants.hostname)
+	}
+}
+
+discovery.kubernetes "pod_metrics" {
+	role = "pod"
 }
 
 discovery.kubernetes "service" {
-  role = "service"
+	role = "service"
 }
 
-discovery.kubernetes "node" {
-  role = "node"
+discovery.kubernetes "kubelet" {
+	role = "node"
 }
 
-prometheus.exporter.unix "unix" {
-
-}
-
-prometheus.scrape "pods" {
-  targets    = discovery.relabel.pods.output
-  forward_to = [prometheus.remote_write.default.receiver]
-  clustering {
-    enabled = true
-  }
-}
+prometheus.exporter.unix "unix" { }
 
 discovery.relabel "service" {
-  targets = discovery.kubernetes.service.targets
+	targets = discovery.kubernetes.service.targets
 
-  // Only scrape services with prometheus.io/scrape annotation
-  rule {
-    source_labels = ["__meta_kubernetes_service_annotation_prometheus_io_scrape"]
-    regex = "true"
-    action = "keep"
-  }
+	rule {
+		source_labels = ["__meta_kubernetes_service_annotation_prometheus_io_scrape"]
+		regex         = "true"
+		action        = "keep"
+	}
 
-  // Use custom port from annotation if specified
-  rule {
-    source_labels = ["__address__", "__meta_kubernetes_service_annotation_prometheus_io_port"]
-    regex = "([^:]+)(?::\\d+)?;(\\d+)"
-    replacement = "$1:$2"
-    target_label = "__address__"
-  }
+	// Use custom port from annotation if specified
+	rule {
+		source_labels = ["__address__", "__meta_kubernetes_service_annotation_prometheus_io_port"]
+		regex         = "([^:]+)(?::\\d+)?;(\\d+)"
+		replacement   = "$1:$2"
+		target_label  = "__address__"
+	}
+
+	rule {
+		source_labels = ["__meta_kubernetes_service_annotation_prometheus_io_path"]
+		regex         = "(.+)"
+		target_label  = "__metrics_path__"
+	}
+
+	rule {
+		source_labels = ["__meta_kubernetes_namespace"]
+		target_label  = "namespace"
+	}
+
+	rule {
+		source_labels = ["__meta_kubernetes_service_name"]
+		target_label  = "service"
+	}
+
+	rule {
+		replacement  = "prometheus.scrape.service"
+		target_label = "job"
+	}
 }
 
 prometheus.scrape "service" {
-  targets    = discovery.relabel.service.output
-  forward_to = [prometheus.remote_write.default.receiver]
-}
+	targets    = discovery.relabel.service.output
+	forward_to = [prometheus.remote_write.default.receiver]
 
-prometheus.scrape "node" {
-  targets    = discovery.kubernetes.node.targets
-  forward_to = [prometheus.remote_write.default.receiver]
+	clustering {
+		enabled = true
+	}
 }
 
 prometheus.scrape "unix" {
-  targets    = prometheus.exporter.unix.unix.targets
-  forward_to = [prometheus.remote_write.default.receiver]
+	targets    = prometheus.exporter.unix.unix.targets
+	forward_to = [prometheus.remote_write.default.receiver]
 }
 
-discovery.relabel "pods" {
-  targets = discovery.kubernetes.pods.targets
+discovery.relabel "pod_metrics" {
+	targets = discovery.kubernetes.pod_metrics.targets
 
-  rule {
-    source_labels = ["__meta_kubernetes_namespace"]
-    target_label  = "namespace"
-  }
+	rule {
+		source_labels = ["__meta_kubernetes_pod_annotation_prometheus_io_scrape"]
+		regex         = "true"
+		action        = "keep"
+	}
 
-  rule {
-    source_labels = ["__meta_kubernetes_pod_name"]
-    target_label  = "pod"
-  }
+	rule {
+		source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+		regex         = "kube-state-metrics"
+		action        = "drop"
+	}
 
-  rule {
-    source_labels = ["__meta_kubernetes_pod_container_name"]
-    target_label  = "container"
-  }
+	rule {
+		source_labels = ["__address__", "__meta_kubernetes_pod_annotation_prometheus_io_port"]
+		regex         = "([^:]+)(?::\\d+)?;(\\d+)"
+		replacement   = "$1:$2"
+		target_label  = "__address__"
+	}
 
-  rule {
-    source_labels = ["__meta_kubernetes_node_name"]
-    target_label  = "node_name"
-  }
+	rule {
+		source_labels = ["__meta_kubernetes_pod_annotation_prometheus_io_path"]
+		regex         = "(.+)"
+		target_label  = "__metrics_path__"
+	}
 
-  // Set job label to match existing dashboard queries
-  rule {
-    replacement = "prometheus.scrape.pods"
-    target_label = "job"
-  }
+	rule {
+		source_labels = ["__meta_kubernetes_namespace"]
+		target_label  = "namespace"
+	}
 
-  rule {
-    source_labels = ["__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
-    target_label  = "__path__"
-    replacement   = "/var/log/pods/*$1/*.log"
-  }
+	rule {
+		source_labels = ["__meta_kubernetes_pod_name"]
+		target_label  = "pod"
+	}
 
-  rule {
-    source_labels = ["__meta_kubernetes_pod_label_app"]
-    action        = "replace"
-    target_label  = "app"
-    regex         = "(.+)"
-    replacement   = "$1"
-  }
+	rule {
+		source_labels = ["__meta_kubernetes_pod_container_name"]
+		target_label  = "container"
+	}
 
-  rule {
-    action = "labeldrop"
-    regex  = "__meta_kubernetes_pod_label_app"
-  }
+	rule {
+		source_labels = ["__meta_kubernetes_node_name"]
+		target_label  = "node"
+	}
+
+	// Set job label to match existing dashboard queries
+	rule {
+		replacement  = "prometheus.scrape.pods"
+		target_label = "job"
+	}
+}
+
+prometheus.scrape "pods" {
+	targets    = discovery.relabel.pod_metrics.output
+	forward_to = [prometheus.remote_write.default.receiver]
+
+	clustering {
+		enabled = true
+	}
+}
+
+discovery.relabel "pod_logs" {
+	targets = discovery.kubernetes.pod_logs.targets
+
+	rule {
+		source_labels = ["__meta_kubernetes_namespace"]
+		target_label  = "namespace"
+	}
+
+	rule {
+		source_labels = ["__meta_kubernetes_pod_name"]
+		target_label  = "pod"
+	}
+
+	rule {
+		source_labels = ["__meta_kubernetes_pod_container_name"]
+		target_label  = "container"
+	}
+
+	rule {
+		source_labels = ["__meta_kubernetes_node_name"]
+		target_label  = "node"
+	}
+
+	rule {
+		source_labels = ["__meta_kubernetes_namespace", "__meta_kubernetes_pod_container_name"]
+		separator     = "/"
+		target_label  = "job"
+	}
+
+	rule {
+		source_labels = ["__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
+		target_label  = "__path__"
+		replacement   = "/var/log/pods/*$1/*.log"
+	}
+
+	rule {
+		source_labels = ["__meta_kubernetes_pod_label_app"]
+		action        = "replace"
+		target_label  = "app"
+		regex         = "(.+)"
+		replacement   = "$1"
+	}
+
+	rule {
+		action = "labeldrop"
+		regex  = "__meta_kubernetes_pod_label_app"
+	}
 }
 
 loki.source.kubernetes "pods" {
-  targets    = discovery.relabel.pods.output
-  forward_to = [loki.write.default.receiver]
+	targets    = discovery.relabel.pod_logs.output
+	forward_to = [loki.write.default.receiver]
+}
+
+discovery.relabel "kubelet_cadvisor" {
+	targets = discovery.kubernetes.kubelet.targets
+
+	rule {
+		source_labels = ["__meta_kubernetes_node_name"]
+		target_label  = "node"
+	}
+
+	rule {
+		source_labels = ["__meta_kubernetes_node_name"]
+		target_label  = "instance"
+	}
+
+	rule {
+		replacement  = "kubernetes.default.svc:443"
+		target_label = "__address__"
+	}
+
+	rule {
+		source_labels = ["__meta_kubernetes_node_name"]
+		target_label  = "__metrics_path__"
+		replacement   = "/api/v1/nodes/$1/proxy/metrics/cadvisor"
+	}
+
+	rule {
+		replacement  = "kubelet-cadvisor"
+		target_label = "job"
+	}
+}
+
+prometheus.scrape "kubelet_cadvisor" {
+	targets           = discovery.relabel.kubelet_cadvisor.output
+	forward_to        = [prometheus.remote_write.default.receiver]
+	scheme            = "https"
+	bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+
+	tls_config {
+		ca_file = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+	}
+
+	clustering {
+		enabled = true
+	}
+}
+
+discovery.relabel "kubelet_resource" {
+	targets = discovery.kubernetes.kubelet.targets
+
+	rule {
+		source_labels = ["__meta_kubernetes_node_name"]
+		target_label  = "node"
+	}
+
+	rule {
+		source_labels = ["__meta_kubernetes_node_name"]
+		target_label  = "instance"
+	}
+
+	rule {
+		replacement  = "kubernetes.default.svc:443"
+		target_label = "__address__"
+	}
+
+	rule {
+		source_labels = ["__meta_kubernetes_node_name"]
+		target_label  = "__metrics_path__"
+		replacement   = "/api/v1/nodes/$1/proxy/metrics/resource"
+	}
+
+	rule {
+		replacement  = "kubelet-resource"
+		target_label = "job"
+	}
+}
+
+prometheus.scrape "kubelet_resource" {
+	targets           = discovery.relabel.kubelet_resource.output
+	forward_to        = [prometheus.remote_write.default.receiver]
+	scheme            = "https"
+	bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+
+	tls_config {
+		ca_file = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+	}
+
+	clustering {
+		enabled = true
+	}
 }
