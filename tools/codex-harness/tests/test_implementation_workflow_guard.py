@@ -13,6 +13,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 HOOK_SOURCE = REPO_ROOT / ".codex" / "hooks" / "implementation_workflow_guard.sh"
 ACTIVE_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_active_implementation.py"
 PLAN_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_implementation_plan.py"
+ATTESTATION_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_workflow_attestations.py"
 
 
 class ImplementationWorkflowGuardTest(unittest.TestCase):
@@ -40,10 +41,22 @@ class ImplementationWorkflowGuardTest(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Missing .codex/tmp/implementation-plan.yaml", result.stderr)
 
-    def test_post_change_allows_matching_marker_and_plan(self) -> None:
+    def test_post_change_blocks_without_owner_attestation(self) -> None:
         self._switch_to_implementation_branch()
         self._write_marker()
         self._write_plan()
+        (self.root / "README.md").write_text("# changed\n", encoding="utf-8")
+
+        result = self._run_hook()
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Missing .codex/tmp/implementation-owner-attestation.yaml", result.stderr)
+
+    def test_post_change_allows_matching_marker_plan_and_owner_attestation(self) -> None:
+        self._switch_to_implementation_branch()
+        self._write_marker()
+        self._write_plan()
+        self._write_owner_attestation()
         (self.root / "README.md").write_text("# changed\n", encoding="utf-8")
 
         result = self._run_hook()
@@ -97,10 +110,10 @@ class ImplementationWorkflowGuardTest(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Current branch is main", result.stderr)
 
-    def test_preflight_mutation_allows_plan_bootstrap_path(self) -> None:
+    def test_preflight_mutation_allows_workflow_bootstrap_paths(self) -> None:
         result = self._run_hook(
             "--preflight-mutation",
-            {"tool_input": {"path": ".codex/tmp/implementation-plan.yaml"}},
+            {"tool_input": {"path": ".codex/tmp/implementation-owner-attestation.yaml"}},
         )
 
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -126,6 +139,7 @@ class ImplementationWorkflowGuardTest(unittest.TestCase):
         shutil.copy2(HOOK_SOURCE, hook_path)
         shutil.copy2(ACTIVE_VALIDATOR, tool_dir / "validate_active_implementation.py")
         shutil.copy2(PLAN_VALIDATOR, tool_dir / "validate_implementation_plan.py")
+        shutil.copy2(ATTESTATION_VALIDATOR, tool_dir / "validate_workflow_attestations.py")
         hook_path.chmod(0o755)
 
     def _switch_to_implementation_branch(self) -> None:
@@ -149,7 +163,7 @@ class ImplementationWorkflowGuardTest(unittest.TestCase):
                     "role=implementation",
                     f"clone_path={self.root}",
                     "owner_role=implementation-agent",
-                    "owner_agent=codex",
+                    "owner_agent=implementation-agent-deterministic-role-enforcement",
                 ]
             )
             + "\n",
@@ -166,7 +180,7 @@ class ImplementationWorkflowGuardTest(unittest.TestCase):
                     f"branch: {self.branch}",
                     "base: origin/main",
                     f"clone_path: {self.root}",
-                    "owner_agent: codex",
+                    "owner_agent: implementation-agent-deterministic-role-enforcement",
                     "summary: Harden implementation workflow enforcement.",
                     "scope:",
                     "  - Add plan validation.",
@@ -181,6 +195,25 @@ class ImplementationWorkflowGuardTest(unittest.TestCase):
                     "  - Harness tests pass.",
                     "risks:",
                     "  - Conservative command classification.",
+                ]
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+    def _write_owner_attestation(self) -> None:
+        tmp = self.root / ".codex" / "tmp"
+        tmp.mkdir(parents=True, exist_ok=True)
+        (tmp / "implementation-owner-attestation.yaml").write_text(
+            "\n".join(
+                [
+                    f"implementation: {self.implementation}",
+                    f"branch: {self.branch}",
+                    "base: origin/main",
+                    "role: implementation-agent",
+                    "agent_id: implementation-agent-deterministic-role-enforcement",
+                    f"clone_path: {self.root}",
+                    "created_at: 2026-05-11T00:00:00Z",
                 ]
             )
             + "\n",

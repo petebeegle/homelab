@@ -20,7 +20,9 @@ REQUIRED_FIELDS = (
     "owner_role",
     "owner_agent",
 )
-PLANNER_LIKE_OWNER_AGENTS = frozenset({"planner", "parent", "main", "self"})
+GENERIC_OWNER_AGENTS = frozenset(
+    {"assistant", "codex", "main", "orchestrator", "parent", "planner", "self"}
+)
 SIBLING_CLONE_ROOT = Path("/workspaces/homelab-ideas")
 
 
@@ -136,10 +138,10 @@ def validate_marker(
     normalized_owner_agent = owner_agent.strip().lower()
     if owner_agent.strip() == "":
         errors.append("Field 'owner_agent' must identify the implementation owner.")
-    elif normalized_owner_agent in PLANNER_LIKE_OWNER_AGENTS:
+    elif normalized_owner_agent in GENERIC_OWNER_AGENTS:
         errors.append(
-            "Field 'owner_agent' must not be planner-like "
-            f"({', '.join(sorted(PLANNER_LIKE_OWNER_AGENTS))})."
+            "Field 'owner_agent' must not be a generic workflow identity "
+            f"({', '.join(sorted(GENERIC_OWNER_AGENTS))})."
         )
 
     expected_clone = SIBLING_CLONE_ROOT / implementation if implementation else None

@@ -17,8 +17,10 @@ fi
 
 marker=".codex/tmp/active-implementation"
 plan=".codex/tmp/implementation-plan.yaml"
+owner_attestation=".codex/tmp/implementation-owner-attestation.yaml"
 marker_validator="tools/codex-harness/validate_active_implementation.py"
 plan_validator="tools/codex-harness/validate_implementation_plan.py"
+attestation_validator="tools/codex-harness/validate_workflow_attestations.py"
 branch="$(git branch --show-current)"
 
 fail() {
@@ -30,7 +32,8 @@ fail() {
     printf '  2. Create codex/<implementation> from origin/main.\n'
     printf '  3. Record %s with implementation, branch, base, role=implementation, clone_path, owner_role=implementation-agent, and owner_agent.\n' "$marker"
     printf '  4. Record %s with implementation identity, scope, planned changes, docs impact, tests, verification, and risks.\n' "$plan"
-    printf '  5. Make tracked-file changes only inside that sibling clone.\n'
+    printf '  5. Record %s with role=implementation-agent, agent_id matching owner_agent, clone identity, and created_at.\n' "$owner_attestation"
+    printf '  6. Make tracked-file changes only inside that sibling clone.\n'
   } >&2
   exit 1
 }
@@ -59,6 +62,14 @@ validate_workflow() {
   if ! python3 "$plan_validator" --plan "$plan" --marker "$marker" --root "$root" --branch "$branch"; then
     fail "Implementation plan validation failed."
   fi
+
+  if [[ ! -f "$owner_attestation" ]]; then
+    fail "Missing $owner_attestation."
+  fi
+
+  if ! python3 "$attestation_validator" --kind owner --attestation "$owner_attestation" --marker "$marker" --plan "$plan" --root "$root" --branch "$branch"; then
+    fail "Implementation owner attestation validation failed."
+  fi
 }
 
 if [[ "${1:-}" == "--preflight-mutation" ]]; then
@@ -72,6 +83,7 @@ payload = os.environ.get("PAYLOAD", "")
 allowed = {
     ".codex/tmp/active-implementation",
     ".codex/tmp/implementation-plan.yaml",
+    ".codex/tmp/implementation-owner-attestation.yaml",
 }
 
 haystacks = [payload]
@@ -93,7 +105,7 @@ def walk(value):
 walk(data)
 text = "\n".join(haystacks)
 
-paths = set(re.findall(r"(?:/workspaces/homelab-ideas/[^/\s]+/)?\.codex/tmp/(?:active-implementation|implementation-plan\.yaml)", text))
+paths = set(re.findall(r"(?:/workspaces/homelab-ideas/[^/\s]+/)?\.codex/tmp/(?:active-implementation|implementation-plan\.yaml|implementation-owner-attestation\.yaml)", text))
 normalized = {path[path.index(".codex/tmp/") :] for path in paths}
 
 if normalized and normalized <= allowed:

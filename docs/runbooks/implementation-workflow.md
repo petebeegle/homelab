@@ -5,7 +5,7 @@ scope:
   - implementation-workflow
 authority: binding
 created: 2026-05-10
-last_verified: 2026-05-10
+last_verified: 2026-05-11
 ---
 
 # Implementation Workflow
@@ -20,14 +20,16 @@ Use this runbook for every repository code change. The binding decision is `docs
 4. Clone the repo into `/workspaces/homelab-ideas/<implementation>` and create `codex/<implementation>` from `origin/main`.
 5. Before tracked edits, create `.codex/tmp/active-implementation` with `implementation`, `branch`, `base`, `role`, `clone_path`, `owner_role`, and `owner_agent`.
 6. Before tracked edits, create `.codex/tmp/implementation-plan.yaml` with implementation identity, summary, scope, out-of-scope items, planned changes, documentation impact, tests, verification, and risks.
-7. Validate the marker and plan.
-8. Make tracked-file changes only in the sibling clone.
-9. Update docs, generated docs, decision records, runbooks, or agent guidance when behavior changes. If no docs change, record why in `.codex/tmp/pr-summary.md`.
-10. Commit with conventional commits.
-11. Run relevant checks and request verifier review.
-12. Record verifier approval for the exact `HEAD` SHA in `.codex/tmp/verifier-approved`.
-13. Write `.codex/tmp/pr-summary.md` from the plan and final result.
-14. Create the pull request against `main`; delete the sibling clone only after PR creation succeeds.
+7. Before tracked edits, create `.codex/tmp/implementation-owner-attestation.yaml` with implementation identity, role, concrete `agent_id`, clone path, and `created_at`.
+8. Validate the marker, plan, and owner attestation.
+9. Make tracked-file changes only in the sibling clone.
+10. Update docs, generated docs, decision records, runbooks, or agent guidance when behavior changes. If no docs change, record why in `.codex/tmp/pr-summary.md`.
+11. Commit with conventional commits.
+12. Run relevant checks and request verifier review.
+13. Record verifier approval for the exact `HEAD` SHA in `.codex/tmp/verifier-approved`.
+14. Record `.codex/tmp/verifier-attestation.yaml` with verifier identity and `approved_head` equal to the exact `HEAD` SHA. The verifier `agent_id` must differ from the implementation owner `agent_id`.
+15. Write `.codex/tmp/pr-summary.md` from the plan and final result.
+16. Create the pull request against `main`; delete the sibling clone only after PR creation succeeds.
 
 ## Active Marker
 
@@ -40,6 +42,8 @@ clone_path=/workspaces/homelab-ideas/<implementation>
 owner_role=implementation-agent
 owner_agent=<implementation-owner>
 ```
+
+`owner_agent` must be a concrete implementation owner identity. Generic role labels such as `codex`, `assistant`, `planner`, `parent`, `main`, `self`, and `orchestrator` are rejected.
 
 ## Implementation Plan
 
@@ -65,6 +69,41 @@ risks:
   - <known risk or none>
 ```
 
+## Owner Attestation
+
+```yaml
+implementation: <implementation>
+branch: codex/<implementation>
+base: origin/main
+role: implementation-agent
+agent_id: <implementation-owner>
+clone_path: /workspaces/homelab-ideas/<implementation>
+created_at: <UTC timestamp>
+```
+
+`agent_id` must match the active marker `owner_agent` and the implementation plan `owner_agent`.
+
+## Verifier Approval And Attestation
+
+```text
+<exact HEAD SHA>
+```
+
+Write the exact `HEAD` SHA to `.codex/tmp/verifier-approved`.
+
+```yaml
+implementation: <implementation>
+branch: codex/<implementation>
+base: origin/main
+role: verifier-agent
+agent_id: <verifier-agent>
+clone_path: /workspaces/homelab-ideas/<implementation>
+created_at: <UTC timestamp>
+approved_head: <exact HEAD SHA>
+```
+
+The verifier `agent_id` must be concrete, must not use a generic role label, and must differ from the implementation owner `agent_id`.
+
 ## Validation
 
 ```bash
@@ -76,6 +115,23 @@ python3 tools/codex-harness/validate_active_implementation.py \
 python3 tools/codex-harness/validate_implementation_plan.py \
   --plan .codex/tmp/implementation-plan.yaml \
   --marker .codex/tmp/active-implementation \
+  --root "$(pwd)" \
+  --branch "$(git branch --show-current)"
+
+python3 tools/codex-harness/validate_workflow_attestations.py \
+  --kind owner \
+  --attestation .codex/tmp/implementation-owner-attestation.yaml \
+  --marker .codex/tmp/active-implementation \
+  --plan .codex/tmp/implementation-plan.yaml \
+  --root "$(pwd)" \
+  --branch "$(git branch --show-current)"
+
+python3 tools/codex-harness/validate_workflow_attestations.py \
+  --kind verifier \
+  --attestation .codex/tmp/verifier-attestation.yaml \
+  --marker .codex/tmp/active-implementation \
+  --owner-attestation .codex/tmp/implementation-owner-attestation.yaml \
+  --head "$(git rev-parse HEAD)" \
   --root "$(pwd)" \
   --branch "$(git branch --show-current)"
 ```

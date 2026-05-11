@@ -20,6 +20,7 @@ fi
 
 head_sha="$(git rev-parse HEAD)"
 approval_file=".codex/tmp/verifier-approved"
+attestation_file=".codex/tmp/verifier-attestation.yaml"
 if [[ ! -f "$approval_file" ]] || ! grep -Fxq "$head_sha" "$approval_file"; then
   if ((auto)); then
     exit 0
@@ -27,6 +28,18 @@ if [[ ! -f "$approval_file" ]] || ! grep -Fxq "$head_sha" "$approval_file"; then
   {
     printf 'Implementation PR: verifier approval is missing for exact HEAD.\n'
     printf 'Expected %s to contain:\n' "$approval_file"
+    printf '  %s\n' "$head_sha"
+  } >&2
+  exit 1
+fi
+
+if [[ ! -f "$attestation_file" ]]; then
+  if ((auto)); then
+    exit 0
+  fi
+  {
+    printf 'Implementation PR: verifier attestation is missing for exact HEAD.\n'
+    printf 'Expected %s with approved_head:\n' "$attestation_file"
     printf '  %s\n' "$head_sha"
   } >&2
   exit 1
@@ -41,6 +54,12 @@ fi
 validator="tools/codex-harness/validate_active_implementation.py"
 if ! python3 "$validator" --marker "$marker" --root "$root" --branch "$branch"; then
   printf 'Implementation PR: active implementation marker does not match this checkout.\n' >&2
+  exit 1
+fi
+
+attestation_validator="tools/codex-harness/validate_workflow_attestations.py"
+if ! python3 "$attestation_validator" --kind verifier --attestation "$attestation_file" --head "$head_sha" --root "$root" --branch "$branch"; then
+  printf 'Implementation PR: verifier attestation validation failed.\n' >&2
   exit 1
 fi
 

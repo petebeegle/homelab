@@ -26,7 +26,7 @@ def valid_marker() -> dict[str, str]:
         "role": "implementation",
         "clone_path": f"/workspaces/homelab-ideas/{implementation}",
         "owner_role": "implementation-agent",
-        "owner_agent": "codex",
+        "owner_agent": "implementation-agent-deterministic-role-enforcement",
     }
 
 
@@ -82,14 +82,14 @@ class ValidateMarkerTest(unittest.TestCase):
             "Field 'owner_agent' must identify the implementation owner.",
         )
 
-    def test_planner_like_owner_values(self) -> None:
-        for owner_agent in ("planner", "parent", "main", "self"):
+    def test_generic_owner_values(self) -> None:
+        for owner_agent in ("codex", "assistant", "planner", "parent", "main", "self", "orchestrator"):
             with self.subTest(owner_agent=owner_agent):
                 marker = valid_marker()
                 marker["owner_agent"] = owner_agent
                 self.assert_invalid_contains(
                     marker,
-                    "Field 'owner_agent' must not be planner-like",
+                    "Field 'owner_agent' must not be a generic workflow identity",
                 )
 
     def test_cli_reports_invalid_marker(self) -> None:

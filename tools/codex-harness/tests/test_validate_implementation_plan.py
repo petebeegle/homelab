@@ -27,7 +27,7 @@ def valid_marker() -> dict[str, str]:
         "role": "implementation",
         "clone_path": f"/workspaces/homelab-ideas/{implementation}",
         "owner_role": "implementation-agent",
-        "owner_agent": "codex",
+        "owner_agent": "implementation-agent-deterministic-role-enforcement",
     }
 
 
@@ -85,7 +85,7 @@ class ValidateImplementationPlanTest(unittest.TestCase):
 
         self.assert_invalid_contains(
             plan,
-            "Field 'owner_agent' must match active implementation marker value 'codex'",
+            "Field 'owner_agent' must match active implementation marker value 'implementation-agent-deterministic-role-enforcement'",
         )
 
     def test_cli_reports_invalid_plan(self) -> None:
@@ -105,7 +105,7 @@ class ValidateImplementationPlanTest(unittest.TestCase):
                         "branch: codex/other",
                         "base: origin/main",
                         "clone_path: /workspaces/homelab-ideas/harden-implementation-workflow",
-                        "owner_agent: codex",
+                        "owner_agent: implementation-agent-deterministic-role-enforcement",
                         "summary: Harden implementation workflow enforcement.",
                         "scope:",
                         "  - Add plan validation.",
