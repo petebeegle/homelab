@@ -16,12 +16,15 @@ ATTESTATION_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_workfl
 
 class CreateImplementationPrTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.tmpdir = tempfile.TemporaryDirectory(dir="/workspaces/homelab-ideas", prefix="pr-test-")
+        self.temp_parent = tempfile.TemporaryDirectory(prefix="pr-root-")
+        self.sibling_root = Path(self.temp_parent.name) / "homelab-ideas"
+        self.sibling_root.mkdir()
+        self.tmpdir = tempfile.TemporaryDirectory(dir=self.sibling_root, prefix="pr-test-")
         self.root = Path(self.tmpdir.name)
         self.implementation = self.root.name
         self.branch = f"codex/{self.implementation}"
         _init_repo(self.root)
-        _install_harness_files(self.root)
+        _install_harness_files(self.root, self.sibling_root)
         subprocess.run(["git", "switch", "-c", self.branch], cwd=self.root, check=True, stdout=subprocess.DEVNULL)
         _write_marker(self.root, self.implementation)
         _write_owner_attestation(self.root, self.implementation)
@@ -29,6 +32,7 @@ class CreateImplementationPrTest(unittest.TestCase):
 
     def tearDown(self) -> None:
         self.tmpdir.cleanup()
+        self.temp_parent.cleanup()
 
     def test_blocks_without_verifier_attestation(self) -> None:
         _write_verifier_approval(self.root, self.head)
@@ -58,7 +62,7 @@ def _init_repo(root: Path) -> None:
     subprocess.run(["git", "commit", "-m", "test: initialize"], cwd=root, check=True, stdout=subprocess.DEVNULL)
 
 
-def _install_harness_files(root: Path) -> None:
+def _install_harness_files(root: Path, sibling_root: Path) -> None:
     script_path = root / ".codex" / "scripts" / "create_implementation_pr.sh"
     tool_dir = root / "tools" / "codex-harness"
     script_path.parent.mkdir(parents=True, exist_ok=True)
@@ -67,7 +71,24 @@ def _install_harness_files(root: Path) -> None:
     shutil.copy2(ACTIVE_VALIDATOR, tool_dir / "validate_active_implementation.py")
     shutil.copy2(PLAN_VALIDATOR, tool_dir / "validate_implementation_plan.py")
     shutil.copy2(ATTESTATION_VALIDATOR, tool_dir / "validate_workflow_attestations.py")
+    _patch_sibling_root(
+        sibling_root,
+        script_path,
+        tool_dir / "validate_active_implementation.py",
+        tool_dir / "validate_implementation_plan.py",
+    )
     script_path.chmod(0o755)
+
+
+def _patch_sibling_root(sibling_root: Path, *paths: Path) -> None:
+    for path in paths:
+        path.write_text(
+            path.read_text(encoding="utf-8").replace(
+                "/workspaces/homelab-ideas",
+                str(sibling_root),
+            ),
+            encoding="utf-8",
+        )
 
 
 def _write_marker(root: Path, implementation: str) -> None:

@@ -18,10 +18,10 @@ ATTESTATION_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_workfl
 
 class ImplementationWorkflowGuardTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.tmpdir = tempfile.TemporaryDirectory(
-            dir="/workspaces/homelab-ideas",
-            prefix="guard-test-",
-        )
+        self.temp_parent = tempfile.TemporaryDirectory(prefix="guard-root-")
+        self.sibling_root = Path(self.temp_parent.name) / "homelab-ideas"
+        self.sibling_root.mkdir()
+        self.tmpdir = tempfile.TemporaryDirectory(dir=self.sibling_root, prefix="guard-test-")
         self.root = Path(self.tmpdir.name)
         self.implementation = self.root.name
         self.branch = f"codex/{self.implementation}"
@@ -30,6 +30,7 @@ class ImplementationWorkflowGuardTest(unittest.TestCase):
 
     def tearDown(self) -> None:
         self.tmpdir.cleanup()
+        self.temp_parent.cleanup()
 
     def test_post_change_blocks_without_plan(self) -> None:
         self._switch_to_implementation_branch()
@@ -83,7 +84,7 @@ class ImplementationWorkflowGuardTest(unittest.TestCase):
             {
                 "command": (
                     "git clone https://github.com/petebeegle/homelab.git "
-                    "/workspaces/homelab-ideas/bootstrap-test"
+                    f"{self.sibling_root}/bootstrap-test"
                 )
             },
         )
@@ -140,7 +141,22 @@ class ImplementationWorkflowGuardTest(unittest.TestCase):
         shutil.copy2(ACTIVE_VALIDATOR, tool_dir / "validate_active_implementation.py")
         shutil.copy2(PLAN_VALIDATOR, tool_dir / "validate_implementation_plan.py")
         shutil.copy2(ATTESTATION_VALIDATOR, tool_dir / "validate_workflow_attestations.py")
+        self._patch_sibling_root(
+            hook_path,
+            tool_dir / "validate_active_implementation.py",
+            tool_dir / "validate_implementation_plan.py",
+        )
         hook_path.chmod(0o755)
+
+    def _patch_sibling_root(self, *paths: Path) -> None:
+        for path in paths:
+            path.write_text(
+                path.read_text(encoding="utf-8").replace(
+                    "/workspaces/homelab-ideas",
+                    str(self.sibling_root),
+                ),
+                encoding="utf-8",
+            )
 
     def _switch_to_implementation_branch(self) -> None:
         subprocess.run(
