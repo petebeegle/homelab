@@ -36,6 +36,8 @@ fi
 
 head_sha="$(git rev-parse HEAD)"
 approval_file=".codex/tmp/verifier-approved"
+attestation_file=".codex/tmp/verifier-attestation.yaml"
+attestation_validator="tools/codex-harness/validate_workflow_attestations.py"
 
 if [[ ! -f "$approval_file" ]] || ! grep -Fxq "$head_sha" "$approval_file"; then
   {
@@ -44,5 +46,19 @@ if [[ ! -f "$approval_file" ]] || ! grep -Fxq "$head_sha" "$approval_file"; then
     printf '  %s\n' "$head_sha"
     printf 'Run verifier-agent review, resolve any blockers, then record approval for the exact HEAD before pushing.\n'
   } >&2
+  exit 1
+fi
+
+if [[ ! -f "$attestation_file" ]]; then
+  {
+    printf 'Verifier push guard: refusing to push to origin.\n'
+    printf 'Expected %s to contain verifier identity and exact approved_head:\n' "$attestation_file"
+    printf '  %s\n' "$head_sha"
+  } >&2
+  exit 1
+fi
+
+if ! python3 "$attestation_validator" --kind verifier --attestation "$attestation_file" --head "$head_sha"; then
+  printf 'Verifier push guard: verifier attestation validation failed.\n' >&2
   exit 1
 fi

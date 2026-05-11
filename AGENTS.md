@@ -13,19 +13,20 @@ Stack: Terraform, Talos OS, Kubernetes, Flux, Cilium, Gateway API, SOPS/Age, Syn
 - Use StorageClass `nfs-csi-storage` for persistent app storage unless a decision record supersedes it.
 - Manage Talos nodes through `talosctl`; Talos nodes do not support SSH.
 - Preserve other people's work. Check the working tree before editing and avoid unrelated rewrites.
-- All repository code changes must use the mandatory implementation workflow, no questions asked.
+- All repository code changes must use the mandatory implementation workflow in `docs/runbooks/implementation-workflow.md`, as accepted by `docs/decisions/codex-implementation-workflow.md`, no questions asked.
 - Break work into named implementations before editing. Each implementation maps to one PR and may contain multiple conventional commits.
-- New work must always leverage `.codex/memory/approved/2026-05-09-implementation-workflow.md`.
 - Use implementation and verifier subagents by default whenever runtime tooling exposes them. This is a standing opt-out preference, so do not ask whether to use subagents for normal implementation or verifier roles; respect explicit task instructions such as "do not use subagents."
 - Self-implementation or self-verification is acceptable only when subagent tooling is unavailable or higher-priority runtime policy blocks delegation. Record any fallback to self-verification in `.codex/tmp/pr-summary.md`.
 - Every implementation must consider documentation impact. Update stale docs, generated docs, decision records, runbooks, or agent guidance when behavior changes; otherwise record why no docs changed.
 - Before cloning, the planner must stage any required ignored local secret/config files into `.codex/tmp/implementation-secrets/<implementation>/`, preserving their repo-relative paths and never logging secret contents.
 - Implementation agents must clone `https://github.com/petebeegle/homelab.git` into `/workspaces/homelab-ideas/<implementation>`, create `codex/<implementation>` from `origin/main`, and work only in that sibling clone.
 - Before changing tracked files, implementation agents must record `.codex/tmp/active-implementation` with `implementation`, `branch`, `base`, `role`, `clone_path`, `owner_role`, and `owner_agent`; `tools/codex-harness/validate_active_implementation.py` is the enforcement source for marker validity.
-- Multiple helper agents may contribute to one implementation clone only through the single integrator model: helpers may research, test, verify, or prepare patch recommendations, but one implementation owner owns tracked-file edits, commits, `.codex/tmp/active-implementation`, `.codex/tmp/pr-summary.md`, and final branch state.
+- Before changing tracked files, implementation agents must record `.codex/tmp/implementation-plan.yaml`; `tools/codex-harness/validate_implementation_plan.py` is the enforcement source for plan validity.
+- Before changing tracked files, implementation agents must record `.codex/tmp/implementation-owner-attestation.yaml`; `tools/codex-harness/validate_workflow_attestations.py` is the enforcement source for owner and verifier attestation validity.
+- Multiple helper agents may contribute to one implementation clone only through the single integrator model: helpers may research, test, verify, or prepare patch recommendations, but one implementation owner owns tracked-file edits, commits, `.codex/tmp/active-implementation`, `.codex/tmp/implementation-plan.yaml`, `.codex/tmp/implementation-owner-attestation.yaml`, `.codex/tmp/pr-summary.md`, and final branch state.
 - Implementation and verifier agents must install staged secret/config files into identical repo-relative locations in their sibling clones before running commands that need them.
 - Before PR creation, record plan-derived PR text in `.codex/tmp/pr-summary.md` so the automatic PR body includes the implementation summary, important changes from the plan, and a documentation impact note listing docs updated/generated or explaining why none were needed.
-- After verifier sign-off for the exact `HEAD`, create the PR without intervention, then delete the sibling clone only after PR creation succeeds.
+- After verifier sign-off for the exact `HEAD`, record `.codex/tmp/verifier-approved` and `.codex/tmp/verifier-attestation.yaml`; the verifier `agent_id` must differ from the implementation owner `agent_id`. Then create the PR without intervention and delete the sibling clone only after PR creation succeeds.
 
 ## Tool Routing
 
