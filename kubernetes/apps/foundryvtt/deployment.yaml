@@ -23,7 +23,7 @@ spec:
         fsGroup: 421
       containers:
         - name: foundryvtt
-          image: felddy/foundryvtt:14.360
+          image: felddy/foundryvtt:14.361
           imagePullPolicy: IfNotPresent
           env:
             - name: FOUNDRY_ADMIN_KEY
