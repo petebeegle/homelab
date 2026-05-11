@@ -93,7 +93,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "count(kube_node_status_condition{condition=\"Ready\",status=\"true\"} == 0) OR vector(0)",
+          "expr": "sum(max by (node) (kube_node_status_condition{condition=\"Ready\",status=\"true\"} == bool 0)) OR vector(0)",
           "refId": "A"
         }
       ],
@@ -157,7 +157,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(kube_pod_status_phase{phase=\"Failed\"}) OR vector(0)",
+          "expr": "sum(max by (namespace, pod) (kube_pod_status_phase{phase=\"Failed\"} > bool 0)) OR vector(0)",
           "refId": "A"
         }
       ],
@@ -225,7 +225,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(kube_pod_container_status_waiting{reason!=\"ContainerCreating\"}) OR vector(0)",
+          "expr": "sum(max by (namespace, pod, container, reason) (kube_pod_container_status_waiting{reason!=\"ContainerCreating\"} > bool 0)) OR vector(0)",
           "refId": "A"
         }
       ],
@@ -293,7 +293,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(kube_persistentvolumeclaim_status_phase{phase=\"Pending\"}) OR vector(0)",
+          "expr": "sum(max by (namespace, persistentvolumeclaim) (kube_persistentvolumeclaim_status_phase{phase=\"Pending\"} > bool 0)) OR vector(0)",
           "refId": "A"
         }
       ],
@@ -305,7 +305,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Container restarts in the last hour",
+      "description": "Containers with one or more restarts in the last hour",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -361,11 +361,11 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(increase(kube_pod_container_status_restarts_total[1h])) OR vector(0)",
+          "expr": "sum(max by (namespace, pod, container) (increase(kube_pod_container_status_restarts_total[1h]) > bool 0)) OR vector(0)",
           "refId": "A"
         }
       ],
-      "title": "🔄 Restarts (1h)",
+      "title": "🔄 Containers Restarted (1h)",
       "type": "stat"
     },
     {
@@ -425,7 +425,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "count(kube_deployment_status_replicas_available != kube_deployment_spec_replicas) OR vector(0)",
+          "expr": "sum(max by (namespace, deployment) (kube_deployment_status_replicas_available != bool kube_deployment_spec_replicas)) OR vector(0)",
           "refId": "A"
         }
       ],
@@ -556,7 +556,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(kube_pod_status_phase{phase=\"Running\"})",
+          "expr": "sum(max by (namespace, pod) (kube_pod_status_phase{phase=\"Running\"} > bool 0))",
           "refId": "A"
         }
       ],
@@ -763,7 +763,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (phase) (kube_pod_status_phase)",
+          "expr": "sum by (phase) (max by (namespace, pod, phase) (kube_pod_status_phase > bool 0))",
           "legendFormat": "{{phase}}",
           "refId": "A"
         }
@@ -984,7 +984,8 @@
         }
       ],
       "title": "Node Memory Usage %",
-      "type": "timeseries"
+      "type": "timeseries",
+      "description": "Uses MemAvailable/MemTotal so Linux cache is not treated as unavailable memory."
     },
     {
       "collapsed": false,
@@ -993,6 +994,334 @@
         "w": 24,
         "x": 0,
         "y": 24
+      },
+      "id": 15,
+      "panels": [],
+      "title": "Memory Context",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 25
+      },
+      "id": 16,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "node_memory_MemAvailable_bytes",
+          "refId": "A",
+          "legendFormat": "{{instance}} available"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes",
+          "refId": "B",
+          "legendFormat": "{{instance}} raw used"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "node_memory_Cached_bytes + node_memory_Buffers_bytes",
+          "refId": "C",
+          "legendFormat": "{{instance}} cache+buffers"
+        }
+      ],
+      "title": "Node Memory Available, Raw Used, Cache",
+      "type": "timeseries",
+      "description": "Shows the raw node-exporter memory signals behind the MemAvailable-based usage panel."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 25
+      },
+      "id": 17,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "max by (node) (kube_node_status_condition{condition=\"MemoryPressure\",status=\"true\"} > bool 0)",
+          "refId": "A",
+          "legendFormat": "{{node}}"
+        }
+      ],
+      "title": "Kubernetes Node Memory Pressure",
+      "type": "timeseries",
+      "description": "kube-state-metrics MemoryPressure condition; 1 means the node reports pressure."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 33
+      },
+      "id": 18,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "topk(10, sum by (namespace, pod) (container_memory_working_set_bytes{container!=\"\",container!=\"POD\"})) OR on() vector(0)",
+          "refId": "A",
+          "legendFormat": "{{namespace}}/{{pod}} working set"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "topk(10, sum by (namespace, pod) (container_memory_rss{container!=\"\",container!=\"POD\"})) OR on() vector(0)",
+          "refId": "B",
+          "legendFormat": "{{namespace}}/{{pod}} RSS"
+        }
+      ],
+      "title": "Top Pods by Working Set and RSS",
+      "type": "timeseries",
+      "description": "Uses cAdvisor container memory when available; falls back to zero until those metrics are present."
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 41
       },
       "id": 10,
       "panels": [],
@@ -1077,7 +1406,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 33
+        "y": 50
       },
       "id": 11,
       "options": {
@@ -1106,7 +1435,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "kube_pod_container_status_waiting{reason!=\"ContainerCreating\"} > 0",
+          "expr": "max by (namespace, pod, container, reason) (kube_pod_container_status_waiting{reason!=\"ContainerCreating\"} > bool 0)",
           "format": "table",
           "instant": true,
           "refId": "A"
@@ -1242,7 +1571,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 41
+        "y": 58
       },
       "id": 14,
       "options": {
@@ -1271,7 +1600,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "kube_pod_container_status_waiting{reason!=\"ContainerCreating\",namespace=\"monitoring\"} > 0",
+          "expr": "max by (namespace, pod, container, reason) (kube_pod_container_status_waiting{reason!=\"ContainerCreating\",namespace=\"monitoring\"} > bool 0)",
           "format": "table",
           "instant": true,
           "refId": "A"
@@ -1371,7 +1700,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 25
+        "y": 42
       },
       "id": 12,
       "options": {
@@ -1397,7 +1726,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "topk(10, sum by (namespace, pod) (increase(kube_pod_container_status_restarts_total[1h])))",
+          "expr": "topk(10, sum by (namespace, pod) (increase(kube_pod_container_status_restarts_total[1h]) > bool 0))",
           "legendFormat": "{{namespace}}/{{pod}}",
           "refId": "A"
         }
@@ -1463,7 +1792,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 25
+        "y": 42
       },
       "id": 13,
       "options": {
@@ -1487,7 +1816,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (namespace) (kube_pod_status_phase{phase=\"Running\"})",
+          "expr": "sum by (namespace) (max by (namespace, pod) (kube_pod_status_phase{phase=\"Running\"} > bool 0))",
           "legendFormat": "{{namespace}}",
           "refId": "A"
         }
