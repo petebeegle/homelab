@@ -27,8 +27,15 @@ configMapGenerator:
       - dashboard.json=authentik-dashboard.json
     options:
       disableNameSuffixHash: true
+  - name: observability-health-dashboard
+    namespace: grafana
+    files:
+      - dashboard.json=observability-health-dashboard.json
+    options:
+      disableNameSuffixHash: true
 resources:
   - proxmox-dashboard.yaml
   - flux-dashboard.yaml
   - kubernetes-dashboard.yaml
   - authentik-dashboard.yaml
+  - observability-health-dashboard.yaml
