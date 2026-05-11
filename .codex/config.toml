@@ -39,6 +39,12 @@ command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.code
 timeout = 120
 statusMessage = "Checking Terraform apply safety"
 
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/implementation_workflow_guard.sh\" --preflight-bash'"
+timeout = 30
+statusMessage = "Checking implementation workflow for mutating commands"
+
 [[hooks.PreToolUse]]
 matcher = "^(apply_patch|Edit|MultiEdit|Write)$"
 
@@ -47,6 +53,12 @@ type = "command"
 command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/implementation_workflow_guard.sh\" --record'"
 timeout = 10
 statusMessage = "Recording implementation workflow state"
+
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/implementation_workflow_guard.sh\" --preflight-mutation'"
+timeout = 30
+statusMessage = "Checking implementation workflow before editing"
 
 [[hooks.PostToolUse]]
 matcher = "^(Bash|apply_patch|Edit|MultiEdit|Write)$"
