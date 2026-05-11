@@ -39,18 +39,45 @@ spec:
             replication_factor: 1
     distributor:
       replicas: 1
+      service:
+        annotations:
+          prometheus.io/scrape: "true"
+          prometheus.io/port: "8080"
     alertmanager:
       enabled: false
     ingester:
       replicas: 1
+      service:
+        annotations:
+          prometheus.io/scrape: "true"
+          prometheus.io/port: "8080"
       zoneAwareReplication:
         enabled: false
       persistentVolume:
         size: 50Gi
+    querier:
+      service:
+        annotations:
+          prometheus.io/scrape: "true"
+          prometheus.io/port: "8080"
+    query_frontend:
+      service:
+        annotations:
+          prometheus.io/scrape: "true"
+          prometheus.io/port: "8080"
     store_gateway:
       replicas: 1
+      service:
+        annotations:
+          prometheus.io/scrape: "true"
+          prometheus.io/port: "8080"
       zoneAwareReplication:
         enabled: false
+    compactor:
+      service:
+        annotations:
+          prometheus.io/scrape: "true"
+          prometheus.io/port: "8080"
     minio:
       persistence:
         size: 50Gi

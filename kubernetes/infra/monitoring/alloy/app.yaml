@@ -26,6 +26,10 @@ spec:
   values:
     rbac:
       create: true
+    service:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "12345"
     serviceAccount:
       automountServiceAccountToken: true
     controller:

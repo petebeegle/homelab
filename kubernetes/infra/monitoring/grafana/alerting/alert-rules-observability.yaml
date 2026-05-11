@@ -20,7 +20,7 @@ spec:
       annotations:
         description: "Mimir has {{ $values.B.Value }} ACTIVE ingester(s) in the ring. Metrics ingestion or long-term storage may be impaired."
         summary: Mimir ingester is not healthy in the ring
-        runbook: "Start with: kubectl -n mimir get pods -o wide; kubectl -n mimir logs statefulset/mimir-ingester --tail=100; flux debug helmrelease mimir -n mimir --show-values"
+        runbook: "Start with: kubectl -n mimir get pods -o wide; kubectl -n mimir logs statefulset/mimir-ingester --tail=100; flux debug helmrelease mimir -n mimir --show-values. Confirm ring state and recent rollouts before restarting or deleting pods."
       labels:
         severity: critical
         component: observability
@@ -31,7 +31,7 @@ spec:
             to: 0
           datasourceUid: prometheus
           model:
-            expr: sum(cortex_ring_members{name="ingester",state="ACTIVE",job="prometheus.scrape.pods"}) OR vector(0)
+            expr: sum(cortex_ring_members{name="ingester",state="ACTIVE",job="prometheus.scrape.service"}) OR vector(0)
             refId: A
         - refId: B
           relativeTimeRange:

@@ -92,7 +92,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(max by (namespace, pod) (kube_pod_status_phase{namespace=\"authentik\",pod=~\"authentik-server-.*\",phase=\"Running\"} > bool 0)) OR vector(0)",
+          "expr": "sum(max by (exported_namespace, pod) (kube_pod_status_phase{exported_namespace=\"authentik\",pod=~\"authentik-server-.*\",phase=\"Running\"} > bool 0)) OR vector(0)",
           "refId": "A"
         }
       ],
@@ -156,7 +156,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(max by (namespace, pod) (kube_pod_status_phase{namespace=\"authentik\",pod=~\"authentik-worker-.*\",phase=\"Running\"} > bool 0)) OR vector(0)",
+          "expr": "sum(max by (exported_namespace, pod) (kube_pod_status_phase{exported_namespace=\"authentik\",pod=~\"authentik-worker-.*\",phase=\"Running\"} > bool 0)) OR vector(0)",
           "refId": "A"
         }
       ],
@@ -217,7 +217,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(authentik_main_requests_count{namespace=\"authentik\"}[5m])) OR sum(rate(authentik_main_requests_total{namespace=\"authentik\"}[5m])) OR vector(0)",
+          "expr": "sum(rate(authentik_main_request_duration_seconds_count{namespace=\"authentik\"}[5m])) OR vector(0)",
           "refId": "A"
         }
       ],
@@ -310,7 +310,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Request rate over time by destination (backend vs outpost)",
+      "description": "Main Authentik HTTP request rate",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -390,12 +390,12 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (dest) (rate(authentik_main_requests_count{namespace=\"authentik\"}[5m])) OR sum by (dest) (rate(authentik_main_requests_total{namespace=\"authentik\"}[5m]))",
-          "legendFormat": "{{dest}}",
+          "expr": "sum by (method, status) (rate(authentik_main_request_duration_seconds_count{namespace=\"authentik\"}[5m])) OR on() vector(0)",
+          "legendFormat": "{{method}} {{status}}",
           "refId": "A"
         }
       ],
-      "title": "Main Request Rate by Destination",
+      "title": "Main Request Rate",
       "type": "timeseries"
     },
     {
@@ -483,7 +483,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.50, sum(rate(authentik_main_requests_seconds_bucket{namespace=\"authentik\"}[5m])) by (le)) OR histogram_quantile(0.50, sum(rate(authentik_main_requests_bucket{namespace=\"authentik\"}[5m])) by (le)) OR vector(0)",
+          "expr": "histogram_quantile(0.50, sum(rate(authentik_main_request_duration_seconds_bucket{namespace=\"authentik\"}[5m])) by (le)) OR vector(0)",
           "legendFormat": "p50",
           "refId": "A"
         },
@@ -492,7 +492,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.90, sum(rate(authentik_main_requests_seconds_bucket{namespace=\"authentik\"}[5m])) by (le)) OR histogram_quantile(0.90, sum(rate(authentik_main_requests_bucket{namespace=\"authentik\"}[5m])) by (le)) OR vector(0)",
+          "expr": "histogram_quantile(0.90, sum(rate(authentik_main_request_duration_seconds_bucket{namespace=\"authentik\"}[5m])) by (le)) OR vector(0)",
           "legendFormat": "p90",
           "refId": "B"
         },
@@ -501,7 +501,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum(rate(authentik_main_requests_seconds_bucket{namespace=\"authentik\"}[5m])) by (le)) OR histogram_quantile(0.95, sum(rate(authentik_main_requests_bucket{namespace=\"authentik\"}[5m])) by (le)) OR vector(0)",
+          "expr": "histogram_quantile(0.95, sum(rate(authentik_main_request_duration_seconds_bucket{namespace=\"authentik\"}[5m])) by (le)) OR vector(0)",
           "legendFormat": "p95",
           "refId": "C"
         },
@@ -510,7 +510,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.99, sum(rate(authentik_main_requests_seconds_bucket{namespace=\"authentik\"}[5m])) by (le)) OR histogram_quantile(0.99, sum(rate(authentik_main_requests_bucket{namespace=\"authentik\"}[5m])) by (le)) OR vector(0)",
+          "expr": "histogram_quantile(0.99, sum(rate(authentik_main_request_duration_seconds_bucket{namespace=\"authentik\"}[5m])) by (le)) OR vector(0)",
           "legendFormat": "p99",
           "refId": "D"
         }
@@ -528,7 +528,7 @@
       },
       "id": 300,
       "panels": [],
-      "title": "🛡️ Proxy & LDAP Outposts",
+      "title": "🛡️ Outpost Status",
       "type": "row"
     },
     {
@@ -536,7 +536,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Proxy outpost request rate by provider",
+      "description": "Current outpost connection gauge",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -582,7 +582,7 @@
               }
             ]
           },
-          "unit": "reqps"
+          "unit": "short"
         },
         "overrides": []
       },
@@ -615,12 +615,12 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (provider) (rate(authentik_outpost_proxy_requests_count{namespace=\"authentik\"}[5m])) OR sum by (provider) (rate(authentik_outpost_proxy_requests_total{namespace=\"authentik\"}[5m]))",
-          "legendFormat": "{{provider}}",
+          "expr": "authentik_outpost_connection{namespace=\"authentik\"} OR vector(0)",
+          "legendFormat": "{{outpost_name}} {{outpost_type}}",
           "refId": "A"
         }
       ],
-      "title": "Proxy Outpost Request Rate",
+      "title": "Outpost Connection Status",
       "type": "timeseries"
     },
     {
@@ -628,7 +628,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "LDAP outpost request rate by provider and operation type",
+      "description": "Seconds since each outpost last updated",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -674,7 +674,7 @@
               }
             ]
           },
-          "unit": "reqps"
+          "unit": "s"
         },
         "overrides": []
       },
@@ -707,12 +707,12 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (provider, type) (rate(authentik_outpost_ldap_requests_count{namespace=\"authentik\"}[5m])) OR sum by (provider, type) (rate(authentik_outpost_ldap_requests_total{namespace=\"authentik\"}[5m]))",
-          "legendFormat": "{{provider}} - {{type}}",
+          "expr": "time() - authentik_outpost_last_update{namespace=\"authentik\"}",
+          "legendFormat": "{{outpost_name}} {{outpost_type}}",
           "refId": "A"
         }
       ],
-      "title": "LDAP Outpost Request Rate",
+      "title": "Outpost Last Update Age",
       "type": "timeseries"
     },
     {
@@ -720,7 +720,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Proxy outpost request duration percentiles",
+      "description": "Current outpost build and version labels",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -766,13 +766,13 @@
               }
             ]
           },
-          "unit": "s"
+          "unit": "short"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 24,
         "x": 0,
         "y": 24
       },
@@ -800,160 +800,14 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.50, sum(rate(authentik_outpost_proxy_requests_seconds_bucket{namespace=\"authentik\"}[5m])) by (le)) OR histogram_quantile(0.50, sum(rate(authentik_outpost_proxy_requests_bucket{namespace=\"authentik\"}[5m])) by (le)) OR vector(0)",
-          "legendFormat": "p50",
+          "expr": "authentik_outpost_info{namespace=\"authentik\"}",
+          "format": "table",
+          "instant": true,
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "histogram_quantile(0.90, sum(rate(authentik_outpost_proxy_requests_seconds_bucket{namespace=\"authentik\"}[5m])) by (le)) OR histogram_quantile(0.90, sum(rate(authentik_outpost_proxy_requests_bucket{namespace=\"authentik\"}[5m])) by (le)) OR vector(0)",
-          "legendFormat": "p90",
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "histogram_quantile(0.95, sum(rate(authentik_outpost_proxy_requests_seconds_bucket{namespace=\"authentik\"}[5m])) by (le)) OR histogram_quantile(0.95, sum(rate(authentik_outpost_proxy_requests_bucket{namespace=\"authentik\"}[5m])) by (le)) OR vector(0)",
-          "legendFormat": "p95",
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "histogram_quantile(0.99, sum(rate(authentik_outpost_proxy_requests_seconds_bucket{namespace=\"authentik\"}[5m])) by (le)) OR histogram_quantile(0.99, sum(rate(authentik_outpost_proxy_requests_bucket{namespace=\"authentik\"}[5m])) by (le)) OR vector(0)",
-          "legendFormat": "p99",
-          "refId": "D"
         }
       ],
-      "title": "Proxy Request Duration",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "description": "LDAP outpost request duration percentiles",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            },
-            "lineInterpolation": "smooth",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "s"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 24
-      },
-      "id": 304,
-      "options": {
-        "legend": {
-          "calcs": [
-            "last",
-            "mean",
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.1.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "histogram_quantile(0.50, sum(rate(authentik_outpost_ldap_requests_seconds_bucket{namespace=\"authentik\"}[5m])) by (le)) OR histogram_quantile(0.50, sum(rate(authentik_outpost_ldap_requests_bucket{namespace=\"authentik\"}[5m])) by (le)) OR vector(0)",
-          "legendFormat": "p50",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "histogram_quantile(0.90, sum(rate(authentik_outpost_ldap_requests_seconds_bucket{namespace=\"authentik\"}[5m])) by (le)) OR histogram_quantile(0.90, sum(rate(authentik_outpost_ldap_requests_bucket{namespace=\"authentik\"}[5m])) by (le)) OR vector(0)",
-          "legendFormat": "p90",
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "histogram_quantile(0.95, sum(rate(authentik_outpost_ldap_requests_seconds_bucket{namespace=\"authentik\"}[5m])) by (le)) OR histogram_quantile(0.95, sum(rate(authentik_outpost_ldap_requests_bucket{namespace=\"authentik\"}[5m])) by (le)) OR vector(0)",
-          "legendFormat": "p95",
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "histogram_quantile(0.99, sum(rate(authentik_outpost_ldap_requests_seconds_bucket{namespace=\"authentik\"}[5m])) by (le)) OR histogram_quantile(0.99, sum(rate(authentik_outpost_ldap_requests_bucket{namespace=\"authentik\"}[5m])) by (le)) OR vector(0)",
-          "legendFormat": "p99",
-          "refId": "D"
-        }
-      ],
-      "title": "LDAP Request Duration",
-      "type": "timeseries"
+      "title": "Outpost Info",
+      "type": "table"
     },
     {
       "collapsed": false,

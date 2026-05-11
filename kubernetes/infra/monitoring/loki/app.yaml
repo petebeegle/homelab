@@ -56,10 +56,22 @@ spec:
 
     backend:
       replicas: 1
+      service:
+        annotations:
+          prometheus.io/scrape: "true"
+          prometheus.io/port: "3100"
     read:
       replicas: 1
+      service:
+        annotations:
+          prometheus.io/scrape: "true"
+          prometheus.io/port: "3100"
     write:
       replicas: 1
+      service:
+        annotations:
+          prometheus.io/scrape: "true"
+          prometheus.io/port: "3100"
 
     # Enable minio for storage
     minio:

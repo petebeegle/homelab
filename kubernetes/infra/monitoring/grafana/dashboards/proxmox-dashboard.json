@@ -257,7 +257,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "100 * (1 - (rate(proxmox_proxmox_node_cpustat_idle_seconds_total[5m]) / on(proxmox_node) group_left() proxmox_proxmox_node_cpustat_cpus_ratio))",
+          "expr": "100 * proxmox_proxmox_node_cpustat_cpu_percent",
           "legendFormat": "{{proxmox_node}}",
           "refId": "A"
         }
