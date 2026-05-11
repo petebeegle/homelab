@@ -26,7 +26,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.12.13"
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
@@ -60,7 +60,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.12.13"
 
       - name: Run Codex harness tests
         run: python3 -m unittest discover -s tools/codex-harness/tests
@@ -180,7 +180,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "24.15.0"
 
       - name: Install Agnix
         run: npm install --global agnix@0.25.0

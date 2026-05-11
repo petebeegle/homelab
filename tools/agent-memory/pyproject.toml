@@ -1,17 +1,17 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools==82.0.1"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "agent-memory"
 version = "0.1.0"
 description = "Local Codex memory compaction and consolidation scaffold."
-requires-python = ">=3.10"
+requires-python = "==3.14.4"
 dependencies = []
 
 [dependency-groups]
 dev = [
-    "pytest>=9.0.1",
+    "pytest==9.0.3",
 ]
 
 [project.scripts]
