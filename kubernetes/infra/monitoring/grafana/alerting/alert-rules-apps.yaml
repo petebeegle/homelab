@@ -2,81 +2,28 @@
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaAlertRuleGroup
 metadata:
-  name: proxmox
+  name: apps
   namespace: grafana
 spec:
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
-  folderRef: "proxmox"
+  folderRef: "monitoring"
   interval: 1m
   rules:
-    - uid: proxmox-node-down
-      title: Proxmox Node Count Low
-      condition: C
-      for: 5m
-      noDataState: Alerting
-      execErrState: Error
-      annotations:
-        description: "Expected 3 Proxmox nodes, currently detecting {{ $values.B.Value }} node(s)"
-        summary: One or more Proxmox nodes are unreachable
-        runbook: "Start with: kubectl -n otel-collector get pods,svc -o wide; check Proxmox UI for pve01/pve02/pve03; verify OTLP metrics source before changing hosts"
-      labels:
-        severity: critical
-        component: proxmox
-      data:
-        - refId: A
-          relativeTimeRange:
-            from: 600
-            to: 0
-          datasourceUid: prometheus
-          model:
-            expr: count(count by (proxmox_node) (proxmox_proxmox_node_uptime_seconds)) OR on() vector(0)
-            refId: A
-        - refId: B
-          relativeTimeRange:
-            from: 600
-            to: 0
-          datasourceUid: __expr__
-          model:
-            expression: A
-            reducer: last
-            type: reduce
-            refId: B
-        - refId: C
-          relativeTimeRange:
-            from: 600
-            to: 0
-          datasourceUid: __expr__
-          model:
-            expression: B
-            conditions:
-              - evaluator:
-                  params:
-                    - 3
-                  type: lt
-                operator:
-                  type: and
-                query:
-                  params:
-                    - C
-                type: query
-            type: threshold
-            refId: C
-
-    - uid: proxmox-kubernetes-vm-count-low
-      title: Proxmox Kubernetes VM Count Low
+    - uid: authentik-server-not-ready
+      title: Authentik Server Not Ready
       condition: C
       for: 10m
       noDataState: Alerting
       execErrState: Error
       annotations:
-        description: "Expected 5 Kubernetes/Talos VMs in Proxmox metrics, currently detecting {{ $values.B.Value }}."
-        summary: A Kubernetes VM may be missing or down in Proxmox
-        runbook: "Start with: kubectl get nodes -o wide; check Proxmox UI for Talos/Kubernetes VM state; talosctl health --nodes <node-ip>"
+        description: "Authentik server is missing {{ $values.B.Value }} desired available replica(s)."
+        summary: Authentik server availability is degraded
+        runbook: "Start with: kubectl -n authentik get deploy,pods -o wide; kubectl -n authentik describe deploy authentik-server; kubectl -n authentik logs deploy/authentik-server --tail=100"
       labels:
         severity: critical
-        component: proxmox
+        component: apps
       data:
         - refId: A
           relativeTimeRange:
@@ -84,7 +31,7 @@ spec:
             to: 0
           datasourceUid: prometheus
           model:
-            expr: count(proxmox_proxmox_vm_uptime_seconds{name=~"k8s-.+"}) OR vector(0)
+            expr: sum(kube_deployment_spec_replicas{namespace="authentik",deployment="authentik-server"} - kube_deployment_status_replicas_available{namespace="authentik",deployment="authentik-server"}) OR vector(0)
             refId: A
         - refId: B
           relativeTimeRange:
@@ -106,7 +53,113 @@ spec:
             conditions:
               - evaluator:
                   params:
-                    - 5
+                    - 0
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+
+    - uid: authentik-worker-not-ready
+      title: Authentik Worker Not Ready
+      condition: C
+      for: 10m
+      noDataState: Alerting
+      execErrState: Error
+      annotations:
+        description: "Authentik worker is missing {{ $values.B.Value }} desired available replica(s)."
+        summary: Authentik background worker availability is degraded
+        runbook: "Start with: kubectl -n authentik get deploy,pods -o wide; kubectl -n authentik describe deploy authentik-worker; kubectl -n authentik logs deploy/authentik-worker --tail=100"
+      labels:
+        severity: critical
+        component: apps
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: sum(kube_deployment_spec_replicas{namespace="authentik",deployment="authentik-worker"} - kube_deployment_status_replicas_available{namespace="authentik",deployment="authentik-worker"}) OR vector(0)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 0
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+
+    - uid: pihole-availability-low
+      title: Pi-hole Availability Low
+      condition: C
+      for: 10m
+      noDataState: Alerting
+      execErrState: Error
+      annotations:
+        description: "Pi-hole has {{ $values.B.Value }} running pod(s)."
+        summary: Pi-hole DNS availability is degraded
+        runbook: "Start with: kubectl -n pihole get pods,svc -o wide; kubectl -n pihole describe pod <pod>; flux debug helmrelease pihole -n pihole --show-values"
+      labels:
+        severity: critical
+        component: apps
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: sum(kube_pod_status_phase{namespace="pihole",phase="Running"} > bool 0) OR vector(0)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 1
                   type: lt
                 operator:
                   type: and
@@ -117,31 +170,31 @@ spec:
             type: threshold
             refId: C
 
-    - uid: proxmox-host-storage-high
-      title: Proxmox Host Storage High
+    - uid: jellyfin-availability-low
+      title: Jellyfin Availability Low
       condition: C
-      for: 30m
-      noDataState: NoData
+      for: 10m
+      noDataState: Alerting
       execErrState: Error
       annotations:
-        description: "The fullest Proxmox host storage target is {{ $values.B.Value | humanize }}% used."
-        summary: Proxmox host storage usage is high
-        runbook: "Start with: check the Proxmox UI storage view; review proxmox_proxmox_storage_used_bytes by proxmox_node/proxmox_storage; confirm backups or ISO growth before removing data"
+        description: "Jellyfin has {{ $values.B.Value }} running pod(s)."
+        summary: Jellyfin availability is degraded
+        runbook: "Start with: kubectl -n jellyfin get pods,pvc -o wide; kubectl -n jellyfin describe pod <pod>; flux debug helmrelease jellyfin -n jellyfin --show-values"
       labels:
         severity: warning
-        component: proxmox
+        component: apps
       data:
         - refId: A
           relativeTimeRange:
-            from: 1800
+            from: 600
             to: 0
           datasourceUid: prometheus
           model:
-            expr: max(100 * (proxmox_proxmox_storage_used_bytes / proxmox_proxmox_storage_total_bytes)) OR vector(0)
+            expr: sum(kube_pod_status_phase{namespace="jellyfin",phase="Running"} > bool 0) OR vector(0)
             refId: A
         - refId: B
           relativeTimeRange:
-            from: 1800
+            from: 600
             to: 0
           datasourceUid: __expr__
           model:
@@ -151,7 +204,7 @@ spec:
             refId: B
         - refId: C
           relativeTimeRange:
-            from: 1800
+            from: 600
             to: 0
           datasourceUid: __expr__
           model:
@@ -159,8 +212,8 @@ spec:
             conditions:
               - evaluator:
                   params:
-                    - 85
-                  type: gt
+                    - 1
+                  type: lt
                 operator:
                   type: and
                 query:
@@ -170,31 +223,31 @@ spec:
             type: threshold
             refId: C
 
-    - uid: proxmox-host-cpu-high
-      title: Proxmox Host CPU High
+    - uid: valheim-availability-low
+      title: Valheim Availability Low
       condition: C
-      for: 30m
-      noDataState: NoData
+      for: 10m
+      noDataState: Alerting
       execErrState: Error
       annotations:
-        description: "The busiest Proxmox host is at {{ $values.B.Value | humanize }}% CPU over the last 5 minutes."
-        summary: Proxmox host CPU usage is high
-        runbook: "Start with: check the Proxmox UI node summary; review top VM CPU in Grafana; kubectl top nodes can show whether Kubernetes workloads correlate"
+        description: "Valheim has {{ $values.B.Value }} running pod(s)."
+        summary: Valheim server availability is degraded
+        runbook: "Start with: kubectl -n valheim get pods,pvc,svc -o wide; kubectl -n valheim describe pod <pod>; flux debug helmrelease valheim-server -n valheim --show-values"
       labels:
         severity: warning
-        component: proxmox
+        component: apps
       data:
         - refId: A
           relativeTimeRange:
-            from: 1800
+            from: 600
             to: 0
           datasourceUid: prometheus
           model:
-            expr: max(100 * (1 - (rate(proxmox_proxmox_node_cpustat_idle_seconds_total[5m]) / on(proxmox_node) group_left() proxmox_proxmox_node_cpustat_cpus_ratio))) OR vector(0)
+            expr: sum(kube_pod_status_phase{namespace="valheim",phase="Running"} > bool 0) OR vector(0)
             refId: A
         - refId: B
           relativeTimeRange:
-            from: 1800
+            from: 600
             to: 0
           datasourceUid: __expr__
           model:
@@ -204,7 +257,7 @@ spec:
             refId: B
         - refId: C
           relativeTimeRange:
-            from: 1800
+            from: 600
             to: 0
           datasourceUid: __expr__
           model:
@@ -212,61 +265,8 @@ spec:
             conditions:
               - evaluator:
                   params:
-                    - 90
-                  type: gt
-                operator:
-                  type: and
-                query:
-                  params:
-                    - C
-                type: query
-            type: threshold
-            refId: C
-
-    - uid: proxmox-host-memory-high
-      title: Proxmox Host Memory High
-      condition: C
-      for: 30m
-      noDataState: NoData
-      execErrState: Error
-      annotations:
-        description: "The busiest Proxmox host is reporting {{ $values.B.Value | humanize }}% raw host memory used. This is a host observation and may include Linux cache; confirm real pressure before treating it as a workload leak."
-        summary: Proxmox host memory usage is high
-        runbook: "Start with: check the Proxmox UI node memory view; compare VM memory in Grafana; kubectl top nodes can show whether Kubernetes workloads correlate"
-      labels:
-        severity: warning
-        component: proxmox
-      data:
-        - refId: A
-          relativeTimeRange:
-            from: 1800
-            to: 0
-          datasourceUid: prometheus
-          model:
-            expr: max(100 * (proxmox_proxmox_node_memory_memused_bytes / proxmox_proxmox_node_memory_memtotal_bytes)) OR vector(0)
-            refId: A
-        - refId: B
-          relativeTimeRange:
-            from: 1800
-            to: 0
-          datasourceUid: __expr__
-          model:
-            expression: A
-            reducer: last
-            type: reduce
-            refId: B
-        - refId: C
-          relativeTimeRange:
-            from: 1800
-            to: 0
-          datasourceUid: __expr__
-          model:
-            expression: B
-            conditions:
-              - evaluator:
-                  params:
-                    - 90
-                  type: gt
+                    - 1
+                  type: lt
                 operator:
                   type: and
                 query:

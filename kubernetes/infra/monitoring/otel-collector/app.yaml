@@ -82,6 +82,9 @@ spec:
 
     service:
       type: LoadBalancer
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8889"
 
     resources:
       requests:

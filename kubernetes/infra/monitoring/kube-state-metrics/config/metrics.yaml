@@ -26,6 +26,18 @@ rbac:
         - imagepolicies
         - imageupdateautomations
       verbs: ["list", "watch", "get"]
+    - apiGroups:
+        - cert-manager.io
+      resources:
+        - certificates
+      verbs: ["list", "watch", "get"]
+    - apiGroups:
+        - gateway.networking.k8s.io
+      resources:
+        - gateways
+        - httproutes
+        - tlsroutes
+      verbs: ["list", "watch", "get"]
 customResourceState:
   enabled: true
   config:
@@ -273,3 +285,109 @@ customResourceState:
                 ready: [status, conditions, "[type=Ready]", status]
                 suspended: [spec, suspend]
                 source_name: [spec, sourceRef, name]
+        - groupVersionKind:
+            group: cert-manager.io
+            version: v1
+            kind: Certificate
+          metricNamePrefix: certmanager
+          labelsFromPath:
+            name: [metadata, name]
+            exported_namespace: [metadata, namespace]
+          metrics:
+            - name: "certificate_ready_status"
+              help: "The Ready condition for a cert-manager Certificate."
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, conditions]
+                  labelsFromPath:
+                    type: [type]
+                    reason: [reason]
+                  valueFrom: [status]
+            - name: "certificate_expiration_timestamp_seconds"
+              help: "The notAfter timestamp for a cert-manager Certificate."
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, notAfter]
+        - groupVersionKind:
+            group: gateway.networking.k8s.io
+            version: v1
+            kind: Gateway
+          metricNamePrefix: gatewayapi
+          labelsFromPath:
+            name: [metadata, name]
+            exported_namespace: [metadata, namespace]
+          metrics:
+            - name: "gateway_status_condition"
+              help: "Gateway status conditions."
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, conditions]
+                  labelsFromPath:
+                    type: [type]
+                    reason: [reason]
+                  valueFrom: [status]
+        - groupVersionKind:
+            group: gateway.networking.k8s.io
+            version: v1
+            kind: HTTPRoute
+          metricNamePrefix: gatewayapi
+          labelsFromPath:
+            name: [metadata, name]
+            exported_namespace: [metadata, namespace]
+          metrics:
+            - name: "httproute_parent_accepted"
+              help: "HTTPRoute Accepted condition by parent reference."
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, parents]
+                  labelsFromPath:
+                    parent_name: [parentRef, name]
+                    parent_namespace: [parentRef, namespace]
+                    controller_name: [controllerName]
+                  valueFrom: [conditions, "[type=Accepted]", status]
+            - name: "httproute_parent_resolved_refs"
+              help: "HTTPRoute ResolvedRefs condition by parent reference."
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, parents]
+                  labelsFromPath:
+                    parent_name: [parentRef, name]
+                    parent_namespace: [parentRef, namespace]
+                    controller_name: [controllerName]
+                  valueFrom: [conditions, "[type=ResolvedRefs]", status]
+        - groupVersionKind:
+            group: gateway.networking.k8s.io
+            version: v1alpha2
+            kind: TLSRoute
+          metricNamePrefix: gatewayapi
+          labelsFromPath:
+            name: [metadata, name]
+            exported_namespace: [metadata, namespace]
+          metrics:
+            - name: "tlsroute_parent_accepted"
+              help: "TLSRoute Accepted condition by parent reference."
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, parents]
+                  labelsFromPath:
+                    parent_name: [parentRef, name]
+                    parent_namespace: [parentRef, namespace]
+                    controller_name: [controllerName]
+                  valueFrom: [conditions, "[type=Accepted]", status]
+            - name: "tlsroute_parent_resolved_refs"
+              help: "TLSRoute ResolvedRefs condition by parent reference."
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, parents]
+                  labelsFromPath:
+                    parent_name: [parentRef, name]
+                    parent_namespace: [parentRef, namespace]
+                    controller_name: [controllerName]
+                  valueFrom: [conditions, "[type=ResolvedRefs]", status]

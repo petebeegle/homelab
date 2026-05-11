@@ -1,0 +1,436 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaAlertRuleGroup
+metadata:
+  name: kubernetes
+  namespace: grafana
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  folderRef: "kubernetes"
+  interval: 1m
+  rules:
+    - uid: kubernetes-node-not-ready
+      title: Kubernetes Node Not Ready
+      condition: C
+      for: 10m
+      noDataState: Alerting
+      execErrState: Error
+      annotations:
+        description: "{{ $values.B.Value }} Kubernetes node(s) have not reported Ready for at least 10 minutes."
+        summary: Kubernetes node readiness is degraded
+        runbook: "Start with: kubectl get nodes -o wide; kubectl describe node <node>; talosctl health --nodes <node-ip>"
+      labels:
+        severity: critical
+        component: kubernetes
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: sum(kube_node_status_condition{condition="Ready",status="true"} == bool 0) OR vector(0)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 0
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+
+    - uid: kubernetes-node-pressure
+      title: Kubernetes Node Pressure
+      condition: C
+      for: 10m
+      noDataState: NoData
+      execErrState: Error
+      annotations:
+        description: "{{ $values.B.Value }} node pressure condition(s) are active across MemoryPressure, DiskPressure, or PIDPressure."
+        summary: Kubernetes nodes are reporting pressure
+        runbook: "Start with: kubectl get nodes; kubectl describe node <node>; kubectl top nodes"
+      labels:
+        severity: warning
+        component: kubernetes
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: sum(kube_node_status_condition{condition=~"MemoryPressure|DiskPressure|PIDPressure",status="true"} > bool 0) OR vector(0)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 0
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+
+    - uid: kubernetes-failed-pods
+      title: Kubernetes Failed Pods
+      condition: C
+      for: 15m
+      noDataState: NoData
+      execErrState: Error
+      annotations:
+        description: "{{ $values.B.Value }} pod(s) have remained in Failed phase for at least 15 minutes."
+        summary: Failed Kubernetes pods are present
+        runbook: "Start with: kubectl get pods -A --field-selector=status.phase=Failed -o wide; kubectl describe pod -n <namespace> <pod>"
+      labels:
+        severity: warning
+        component: kubernetes
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 900
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: sum(kube_pod_status_phase{phase="Failed"} > bool 0) OR vector(0)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 900
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 900
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 0
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+
+    - uid: kubernetes-container-waiting
+      title: Kubernetes Containers Waiting
+      condition: C
+      for: 15m
+      noDataState: NoData
+      execErrState: Error
+      annotations:
+        description: "{{ $values.B.Value }} container(s) are waiting for reasons other than ContainerCreating."
+        summary: Kubernetes containers are stuck waiting
+        runbook: "Start with: kubectl get pods -A; kubectl describe pod -n <namespace> <pod>; kubectl logs -n <namespace> <pod> --previous --tail=100"
+      labels:
+        severity: warning
+        component: kubernetes
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 900
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: sum(kube_pod_container_status_waiting_reason{reason!="ContainerCreating"} > bool 0) OR sum(kube_pod_container_status_waiting{reason!="ContainerCreating"} > bool 0) OR vector(0)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 900
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 900
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 0
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+
+    - uid: kubernetes-crashlooping-containers
+      title: Kubernetes CrashLooping Containers
+      condition: C
+      for: 5m
+      noDataState: NoData
+      execErrState: Error
+      annotations:
+        description: "{{ $values.B.Value }} container(s) are waiting with CrashLoopBackOff."
+        summary: Kubernetes containers are crash looping
+        runbook: "Start with: kubectl get pods -A | grep CrashLoopBackOff; kubectl describe pod -n <namespace> <pod>; kubectl logs -n <namespace> <pod> --previous --tail=100"
+      labels:
+        severity: critical
+        component: kubernetes
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: sum(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"} > bool 0) OR vector(0)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 0
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+
+    - uid: kubernetes-container-restarts-recent
+      title: Kubernetes Recent Container Restarts
+      condition: C
+      for: 5m
+      noDataState: NoData
+      execErrState: Error
+      annotations:
+        description: "{{ $values.B.Value }} container restart(s) were observed in the last 30 minutes."
+        summary: Kubernetes containers are restarting frequently
+        runbook: "Start with: kubectl get pods -A --sort-by=.status.containerStatuses[0].restartCount; kubectl describe pod -n <namespace> <pod>"
+      labels:
+        severity: warning
+        component: kubernetes
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 1800
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: sum(increase(kube_pod_container_status_restarts_total[30m])) OR vector(0)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 1800
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 1800
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 5
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+
+    - uid: kubernetes-pvc-pending
+      title: Kubernetes PVC Pending
+      condition: C
+      for: 15m
+      noDataState: NoData
+      execErrState: Error
+      annotations:
+        description: "{{ $values.B.Value }} PersistentVolumeClaim(s) have remained Pending for at least 15 minutes."
+        summary: Kubernetes persistent volume claims are pending
+        runbook: "Start with: kubectl get pvc -A; kubectl describe pvc -n <namespace> <pvc>; kubectl get storageclass"
+      labels:
+        severity: warning
+        component: kubernetes
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 900
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: sum(kube_persistentvolumeclaim_status_phase{phase="Pending"} > bool 0) OR vector(0)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 900
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 900
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 0
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+
+    - uid: kubernetes-node-filesystem-high
+      title: Kubernetes Node Filesystem Usage High
+      condition: C
+      for: 15m
+      noDataState: NoData
+      execErrState: Error
+      annotations:
+        description: "Node filesystem usage is {{ $values.B.Value | humanize }}% on the busiest scraped filesystem."
+        summary: Kubernetes node filesystem usage is high
+        runbook: "Start with: kubectl get nodes -o wide; talosctl df --nodes <node-ip>; talosctl usage --nodes <node-ip>"
+      labels:
+        severity: warning
+        component: kubernetes
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 900
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: max(100 * (1 - (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs|ramfs",mountpoint!~"/run.*|/var/lib/kubelet/pods.*"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs|ramfs",mountpoint!~"/run.*|/var/lib/kubelet/pods.*"}))) OR vector(0)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 900
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 900
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 85
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C

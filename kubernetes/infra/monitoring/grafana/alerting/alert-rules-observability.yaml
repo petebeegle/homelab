@@ -1,0 +1,436 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaAlertRuleGroup
+metadata:
+  name: observability
+  namespace: grafana
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  folderRef: "monitoring"
+  interval: 1m
+  rules:
+    - uid: mimir-ingester-unhealthy
+      title: Mimir Ingester Unhealthy
+      condition: C
+      for: 5m
+      noDataState: Alerting
+      execErrState: Error
+      annotations:
+        description: "Mimir has {{ $values.B.Value }} ACTIVE ingester(s) in the ring. Metrics ingestion or long-term storage may be impaired."
+        summary: Mimir ingester is not healthy in the ring
+        runbook: "Start with: kubectl -n mimir get pods -o wide; kubectl -n mimir logs statefulset/mimir-ingester --tail=100; flux debug helmrelease mimir -n mimir --show-values"
+      labels:
+        severity: critical
+        component: observability
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: sum(cortex_ring_members{name="ingester",state="ACTIVE",job="prometheus.scrape.pods"}) OR vector(0)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 1
+                  type: lt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+
+    - uid: mimir-target-down
+      title: Mimir Scrape Target Down
+      condition: C
+      for: 10m
+      noDataState: NoData
+      execErrState: Error
+      annotations:
+        description: "{{ $values.B.Value }} Mimir scrape target(s) are reporting up=0."
+        summary: Mimir component metrics target is down
+        runbook: "Start with: kubectl -n mimir get pods -o wide; kubectl -n mimir get svc; kubectl -n mimir describe pod <pod>"
+      labels:
+        severity: warning
+        component: observability
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: sum(up{namespace="mimir"} == bool 0) OR vector(0)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 0
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+
+    - uid: loki-target-down
+      title: Loki Scrape Target Down
+      condition: C
+      for: 10m
+      noDataState: NoData
+      execErrState: Error
+      annotations:
+        description: "{{ $values.B.Value }} Loki scrape target(s) are reporting up=0."
+        summary: Loki component metrics target is down
+        runbook: "Start with: kubectl -n loki get pods -o wide; kubectl -n loki get svc; kubectl -n loki logs deploy/loki-read --tail=100"
+      labels:
+        severity: warning
+        component: observability
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: sum(up{namespace="loki"} == bool 0) OR vector(0)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 0
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+
+    - uid: loki-server-errors
+      title: Loki Server Errors
+      condition: C
+      for: 10m
+      noDataState: NoData
+      execErrState: Error
+      annotations:
+        description: "Loki is returning {{ $values.B.Value | humanize }} 5xx responses per second."
+        summary: Loki is returning server errors
+        runbook: "Start with: kubectl -n loki get pods -o wide; kubectl -n loki logs deploy/loki-gateway --tail=100; kubectl -n loki logs deploy/loki-write --tail=100"
+      labels:
+        severity: warning
+        component: observability
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: sum(rate(loki_request_duration_seconds_count{status_code=~"5.."}[5m])) OR vector(0)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 0.1
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+
+    - uid: alloy-daemonset-not-ready
+      title: Alloy DaemonSet Not Ready
+      condition: C
+      for: 10m
+      noDataState: Alerting
+      execErrState: Error
+      annotations:
+        description: "{{ $values.B.Value }} Alloy pod(s) are missing from the desired DaemonSet ready count."
+        summary: Alloy log or metric collection is degraded
+        runbook: "Start with: kubectl -n alloy get daemonset,pods -o wide; kubectl -n alloy describe daemonset alloy; kubectl -n alloy logs ds/alloy --tail=100"
+      labels:
+        severity: critical
+        component: observability
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: sum(kube_daemonset_status_desired_number_scheduled{namespace="alloy"} - kube_daemonset_status_number_ready{namespace="alloy"}) OR vector(0)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 0
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+
+    - uid: alloy-scrape-failures
+      title: Alloy Scrape Failures
+      condition: C
+      for: 10m
+      noDataState: NoData
+      execErrState: Error
+      annotations:
+        description: "{{ $values.B.Value }} Alloy-managed Prometheus scrape target(s) are reporting up=0."
+        summary: Alloy is failing to scrape one or more targets
+        runbook: "Start with: kubectl -n alloy logs ds/alloy --tail=200; kubectl get pods -A -o wide; kubectl get svc -A"
+      labels:
+        severity: warning
+        component: observability
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: sum(up{job=~"prometheus.scrape.*|kubelet-.*"} == bool 0) OR vector(0)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 0
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+
+    - uid: grafana-deployment-not-ready
+      title: Grafana Deployment Not Ready
+      condition: C
+      for: 10m
+      noDataState: Alerting
+      execErrState: Error
+      annotations:
+        description: "Grafana is missing {{ $values.B.Value }} desired available replica(s)."
+        summary: Grafana availability is degraded
+        runbook: "Start with: kubectl -n grafana get deploy,pods -o wide; kubectl -n grafana describe deploy grafana; kubectl -n grafana logs deploy/grafana --tail=100"
+      labels:
+        severity: critical
+        component: observability
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: sum(kube_deployment_spec_replicas{namespace="grafana",deployment="grafana"} - kube_deployment_status_replicas_available{namespace="grafana",deployment="grafana"}) OR vector(0)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 0
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+
+    - uid: grafana-server-errors
+      title: Grafana Server Errors
+      condition: C
+      for: 10m
+      noDataState: NoData
+      execErrState: Error
+      annotations:
+        description: "Grafana is returning {{ $values.B.Value | humanize }} 5xx responses per second."
+        summary: Grafana is returning server errors
+        runbook: "Start with: kubectl -n grafana logs deploy/grafana --tail=200; kubectl -n grafana get events --sort-by=.lastTimestamp"
+      labels:
+        severity: warning
+        component: observability
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: sum(rate(grafana_http_request_duration_seconds_count{status_code=~"5.."}[5m])) OR sum(rate(grafana_http_request_duration_seconds_count{status=~"5.."}[5m])) OR vector(0)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 0.05
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C

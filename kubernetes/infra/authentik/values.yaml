@@ -35,6 +35,10 @@ server:
     enabled: false  # Using Gateway API
   metrics:
     enabled: true
+    service:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9300"
     serviceMonitor:
       enabled: true
       interval: 30s
@@ -53,6 +57,10 @@ worker:
       memory: 1Gi
   metrics:
     enabled: true
+    service:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9300"
     serviceMonitor:
       enabled: true
       interval: 30s

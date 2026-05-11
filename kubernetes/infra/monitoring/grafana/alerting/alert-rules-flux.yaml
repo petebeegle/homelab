@@ -20,6 +20,7 @@ spec:
       annotations:
         description: "{{ $value }} Flux resource(s) are currently suspended and will not reconcile"
         summary: Flux resources are suspended
+        runbook: "Start with: flux get all -A --status-selector suspended=true; kubectl get kustomizations,helmreleases -A"
       labels:
         severity: warning
         component: flux
@@ -72,6 +73,7 @@ spec:
       annotations:
         description: "{{ $value }} Flux resource(s) are failing reconciliation"
         summary: Flux resources in failed state
+        runbook: "Start with: flux get all -A; flux logs --level=error --since=30m; flux debug kustomization <name> -n <namespace> --show-vars"
       labels:
         severity: critical
         component: flux
@@ -124,6 +126,7 @@ spec:
       annotations:
         description: "{{ $value }} Flux resource(s) report unknown readiness and may not be reconciling cleanly"
         summary: Flux resource readiness is unknown
+        runbook: "Start with: flux get all -A; kubectl describe kustomization -n <namespace> <name>; kubectl describe helmrelease -n <namespace> <name>"
       labels:
         severity: warning
         component: flux
@@ -176,6 +179,7 @@ spec:
       annotations:
         description: "Flux reconciliation rate is {{ $values.B.Value | humanize }}ops/s (expected > 0.01 ops/s)"
         summary: Flux controllers may not be reconciling
+        runbook: "Start with: kubectl -n flux-system get pods -o wide; flux logs --since=30m; kubectl -n flux-system describe deploy kustomize-controller helm-controller source-controller"
       labels:
         severity: warning
         component: flux

@@ -11,6 +11,9 @@ spec:
   replicas: 2  # You could also consider elastic scaling for this deployment
   template:
     metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "2000"
       labels:
         app: cloudflared
     spec:
