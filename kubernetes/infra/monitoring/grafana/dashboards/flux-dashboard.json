@@ -362,7 +362,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum(rate(gotk_reconcile_duration_seconds_count{namespace=~\"$namespace\",job=\"prometheus.scrape.pods\"}[5m])) OR on() vector(0)",
+          "expr": "sum(rate(gotk_reconcile_duration_seconds_count{job=\"prometheus.scrape.pods\"}[5m])) OR on() vector(0)",
           "refId": "A"
         }
       ],
