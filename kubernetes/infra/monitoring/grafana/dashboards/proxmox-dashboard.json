@@ -926,8 +926,127 @@
           "refId": "A"
         }
       ],
-      "title": "Top 10 VMs by Memory %",
-      "type": "timeseries"
+      "title": "Top 10 VMs by Allocated/Raw Memory %",
+      "type": "timeseries",
+      "description": "Proxmox VM memory is host-observed allocated/raw VM memory, not guest memory pressure. Pair this with node-exporter available memory for Kubernetes/Talos guests."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 39
+      },
+      "id": 306,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max",
+            "last"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Last",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "12.1.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "label_replace(100 * (node_memory_MemAvailable_bytes{node_name=~\"k8s-.+\"} / node_memory_MemTotal_bytes{node_name=~\"k8s-.+\"}), \"guest\", \"$1\", \"node_name\", \"(.*)\") OR label_replace(100 * (node_memory_MemAvailable_bytes{instance=~\"k8s-.+(:[0-9]+)?|.*k8s-.+\"} / node_memory_MemTotal_bytes{instance=~\"k8s-.+(:[0-9]+)?|.*k8s-.+\"}), \"guest\", \"$1\", \"instance\", \"([^.:]+).*\")",
+          "refId": "A",
+          "legendFormat": "{{guest}} available"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "label_replace(100 * (1 - (node_memory_MemAvailable_bytes{node_name=~\"k8s-.+\"} / node_memory_MemTotal_bytes{node_name=~\"k8s-.+\"})), \"guest\", \"$1\", \"node_name\", \"(.*)\") OR label_replace(100 * (1 - (node_memory_MemAvailable_bytes{instance=~\"k8s-.+(:[0-9]+)?|.*k8s-.+\"} / node_memory_MemTotal_bytes{instance=~\"k8s-.+(:[0-9]+)?|.*k8s-.+\"})), \"guest\", \"$1\", \"instance\", \"([^.:]+).*\")",
+          "refId": "B",
+          "legendFormat": "{{guest}} used"
+        }
+      ],
+      "title": "Kubernetes/Talos Guest Available Memory %",
+      "type": "timeseries",
+      "description": "Node-exporter guest memory context for Kubernetes/Talos VM names; available memory explains Linux cache-heavy guests such as k8s-eminent-collie."
     },
     {
       "datasource": {
@@ -990,7 +1109,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 39
+        "y": 47
       },
       "id": 304,
       "options": {
@@ -1087,7 +1206,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 39
+        "y": 47
       },
       "id": 305,
       "options": {

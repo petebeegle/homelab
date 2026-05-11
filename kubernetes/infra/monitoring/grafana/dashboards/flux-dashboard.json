@@ -177,7 +177,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "description": "Resources not reconciled in the last 30 minutes",
+      "description": "Resources whose p95 reconcile duration over 30 minutes exceeds 60 seconds, using gotk_reconcile_duration_seconds buckets.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -232,11 +232,11 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "count((time() - gotk_reconcile_condition{exported_namespace=~\"$namespace\",status=\"True\",type=\"Ready\",job=\"prometheus.scrape.pods\"}) > 1800) OR vector(0)",
+          "expr": "count(histogram_quantile(0.95, sum(rate(gotk_reconcile_duration_seconds_bucket{exported_namespace=~\"$namespace\",job=\"prometheus.scrape.pods\"}[30m])) by (le, exported_namespace, name, kind)) > 60) OR vector(0)",
           "refId": "A"
         }
       ],
-      "title": "⏰ Stale (>30m)",
+      "title": "⏱️ Slow p95 Reconciles (>60s)",
       "type": "stat"
     },
     {
