@@ -92,11 +92,11 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "min(up{namespace=\"grafana\"}) OR vector(0)",
+          "expr": "min(up{job=\"prometheus.scrape.service\",namespace=\"grafana\",service=\"grafana\"}) OR vector(0)",
           "refId": "A"
         }
       ],
-      "title": "Grafana Targets Up",
+      "title": "Grafana Scrape Healthy",
       "type": "stat"
     },
     {
@@ -156,11 +156,11 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "min(up{namespace=\"mimir\"}) OR vector(0)",
+          "expr": "min(up{job=\"prometheus.scrape.service\",namespace=\"mimir\",service=~\"mimir-(distributor|ingester|querier|query-frontend|store-gateway|compactor)\"}) OR vector(0)",
           "refId": "A"
         }
       ],
-      "title": "Mimir Targets Up",
+      "title": "Mimir Scrape Healthy",
       "type": "stat"
     },
     {
@@ -220,11 +220,11 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "min(up{namespace=\"loki\"}) OR vector(0)",
+          "expr": "min(up{job=\"prometheus.scrape.service\",namespace=\"loki\",service=~\"loki-(backend|read|write)\"}) OR vector(0)",
           "refId": "A"
         }
       ],
-      "title": "Loki Targets Up",
+      "title": "Loki Scrape Healthy",
       "type": "stat"
     },
     {
@@ -284,11 +284,11 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "min(up{namespace=\"alloy\"}) OR vector(0)",
+          "expr": "min(up{job=\"prometheus.scrape.service\",namespace=\"alloy\",service=\"alloy\"}) OR vector(0)",
           "refId": "A"
         }
       ],
-      "title": "Alloy Targets Up",
+      "title": "Alloy Scrape Healthy",
       "type": "stat"
     },
     {
@@ -348,11 +348,11 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(up == bool 0) OR vector(0)",
+          "expr": "sum(max by (exported_namespace, pod) (kube_pod_status_phase{exported_namespace=~\"grafana|mimir|loki|alloy\",phase=\"Running\"} > bool 0)) OR vector(0)",
           "refId": "A"
         }
       ],
-      "title": "Scrape Targets Down",
+      "title": "Observability Pods Running",
       "type": "stat"
     },
     {
@@ -412,11 +412,11 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(up == bool 1) OR vector(0)",
+          "expr": "sum(max by (exported_namespace, pod) (kube_pod_status_phase{exported_namespace=~\"grafana|mimir|loki|alloy\",phase=~\"Pending|Failed|Unknown\"} > bool 0)) OR vector(0)",
           "refId": "A"
         }
       ],
-      "title": "Scrape Targets Up",
+      "title": "Observability Pods Unavailable",
       "type": "stat"
     },
     {
@@ -502,12 +502,12 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (job) (up == bool 0) OR on() vector(0)",
+          "expr": "sum by (namespace, service) (up{job=\"prometheus.scrape.service\",namespace=~\"grafana|mimir|loki|alloy\"} == bool 0) OR on() vector(0)",
           "refId": "A",
           "legendFormat": "{{job}}"
         }
       ],
-      "title": "Scrape Failures by Job",
+      "title": "Scrape Failures by Service",
       "type": "timeseries"
     },
     {
@@ -593,12 +593,12 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "topk(15, sum by (job) (scrape_samples_scraped))",
+          "expr": "topk(15, sum by (namespace, service) (scrape_samples_scraped{job=\"prometheus.scrape.service\",namespace=~\"grafana|mimir|loki|alloy\"}))",
           "refId": "A",
           "legendFormat": "{{job}}"
         }
       ],
-      "title": "Scrape Samples by Job",
+      "title": "Scrape Samples by Service",
       "type": "timeseries"
     },
     {

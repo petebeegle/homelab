@@ -102,7 +102,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "count(gotk_resource_info{exported_namespace=~\"$namespace\",suspended=\"true\",job=\"prometheus.scrape.pods\"}) OR vector(0)",
+          "expr": "count(gotk_resource_info{exported_namespace=~\"$namespace\",suspended=\"true\",job=\"prometheus.scrape.service\"}) OR vector(0)",
           "refId": "A"
         }
       ],
@@ -165,7 +165,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "count(gotk_resource_info{exported_namespace=~\"$namespace\",ready=\"False\",job=\"prometheus.scrape.pods\"}) OR vector(0)",
+          "expr": "count(gotk_resource_info{exported_namespace=~\"$namespace\",ready=\"False\",job=\"prometheus.scrape.service\"}) OR vector(0)",
           "refId": "A"
         }
       ],
@@ -295,7 +295,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "count(gotk_resource_info{exported_namespace=~\"$namespace\",ready=\"Unknown\",job=\"prometheus.scrape.pods\"}) OR vector(0)",
+          "expr": "count(gotk_resource_info{exported_namespace=~\"$namespace\",ready=\"Unknown\",job=\"prometheus.scrape.service\"}) OR vector(0)",
           "refId": "A"
         }
       ],
@@ -362,7 +362,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum(rate(gotk_reconcile_duration_seconds_count{namespace=~\"$namespace\",job=\"prometheus.scrape.pods\"}[5m])) OR on() vector(0)",
+          "expr": "sum(rate(gotk_reconcile_duration_seconds_count{job=\"prometheus.scrape.pods\"}[5m])) OR on() vector(0)",
           "refId": "A"
         }
       ],
@@ -421,7 +421,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "count(gotk_resource_info{exported_namespace=~\"$namespace\",customresource_kind=~\"Kustomization|HelmRelease\",job=\"prometheus.scrape.pods\"})",
+          "expr": "count(gotk_resource_info{exported_namespace=~\"$namespace\",customresource_kind=~\"Kustomization|HelmRelease\",job=\"prometheus.scrape.service\"})",
           "refId": "A"
         }
       ],
@@ -571,7 +571,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "count(gotk_resource_info{exported_namespace=~\"$namespace\",ready=\"True\",job=\"prometheus.scrape.pods\"}) OR vector(0)",
+          "expr": "count(gotk_resource_info{exported_namespace=~\"$namespace\",ready=\"True\",job=\"prometheus.scrape.service\"}) OR vector(0)",
           "legendFormat": "Ready",
           "refId": "A"
         },
@@ -580,7 +580,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "count(gotk_resource_info{exported_namespace=~\"$namespace\",ready=\"False\",job=\"prometheus.scrape.pods\"}) OR vector(0)",
+          "expr": "count(gotk_resource_info{exported_namespace=~\"$namespace\",ready=\"False\",job=\"prometheus.scrape.service\"}) OR vector(0)",
           "legendFormat": "Failing",
           "refId": "B"
         },
@@ -589,7 +589,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "count(gotk_resource_info{exported_namespace=~\"$namespace\",ready=\"Unknown\",job=\"prometheus.scrape.pods\"}) OR vector(0)",
+          "expr": "count(gotk_resource_info{exported_namespace=~\"$namespace\",ready=\"Unknown\",job=\"prometheus.scrape.service\"}) OR vector(0)",
           "legendFormat": "Unknown",
           "refId": "C"
         }
@@ -905,7 +905,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "gotk_resource_info{exported_namespace=~\"$namespace\",customresource_kind=~\"$resource_type\",job=\"prometheus.scrape.pods\"}",
+          "expr": "gotk_resource_info{exported_namespace=~\"$namespace\", customresource_kind=~\"$resource_type\"}",
           "format": "table",
           "instant": true,
           "refId": "A"
@@ -1014,7 +1014,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "count by (customresource_kind) (gotk_resource_info{exported_namespace=~\"$namespace\",job=\"prometheus.scrape.pods\"})",
+          "expr": "count by (customresource_kind) (gotk_resource_info{exported_namespace=~\"$namespace\",job=\"prometheus.scrape.service\"})",
           "format": "time_series",
           "legendFormat": "{{customresource_kind}}",
           "refId": "A"
@@ -1106,7 +1106,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "count by (exported_namespace) (gotk_resource_info{exported_namespace=~\"$namespace\",customresource_kind=~\"$resource_type\",job=\"prometheus.scrape.pods\"})",
+          "expr": "count by (exported_namespace) (gotk_resource_info{exported_namespace=~\"$namespace\",customresource_kind=~\"$resource_type\",job=\"prometheus.scrape.service\"})",
           "legendFormat": "{{exported_namespace}}",
           "refId": "A"
         }
@@ -1313,7 +1313,7 @@
           "type": "prometheus",
           "uid": "${DS_PROMETHEUS}"
         },
-        "definition": "label_values(gotk_resource_info{job=\"prometheus.scrape.pods\"}, exported_namespace)",
+        "definition": "label_values(gotk_resource_info{job=\"prometheus.scrape.service\"}, exported_namespace)",
         "hide": 0,
         "includeAll": true,
         "label": "Namespace",
@@ -1321,7 +1321,7 @@
         "name": "namespace",
         "options": [],
         "query": {
-          "query": "label_values(gotk_resource_info{job=\"prometheus.scrape.pods\"}, exported_namespace)",
+          "query": "label_values(gotk_resource_info{job=\"prometheus.scrape.service\"}, exported_namespace)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -1341,7 +1341,7 @@
           "type": "prometheus",
           "uid": "${DS_PROMETHEUS}"
         },
-        "definition": "label_values(gotk_resource_info{exported_namespace=~\"$namespace\",job=\"prometheus.scrape.pods\"}, customresource_kind)",
+        "definition": "label_values(gotk_resource_info{exported_namespace=~\"$namespace\",job=\"prometheus.scrape.service\"}, customresource_kind)",
         "hide": 0,
         "includeAll": true,
         "label": "Resource Type",
@@ -1349,7 +1349,7 @@
         "name": "resource_type",
         "options": [],
         "query": {
-          "query": "label_values(gotk_resource_info{exported_namespace=~\"$namespace\",job=\"prometheus.scrape.pods\"}, customresource_kind)",
+          "query": "label_values(gotk_resource_info{exported_namespace=~\"$namespace\",job=\"prometheus.scrape.service\"}, customresource_kind)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -1369,7 +1369,7 @@
           "type": "prometheus",
           "uid": "${DS_PROMETHEUS}"
         },
-        "definition": "label_values(gotk_resource_info{exported_namespace=~\"$namespace\",customresource_kind=~\"$resource_type\",job=\"prometheus.scrape.pods\"}, name)",
+        "definition": "label_values(gotk_resource_info{exported_namespace=~\"$namespace\",customresource_kind=~\"$resource_type\",job=\"prometheus.scrape.service\"}, name)",
         "hide": 0,
         "includeAll": true,
         "label": "Resource Name",
@@ -1377,7 +1377,7 @@
         "name": "resource_name",
         "options": [],
         "query": {
-          "query": "label_values(gotk_resource_info{exported_namespace=~\"$namespace\",customresource_kind=~\"$resource_type\",job=\"prometheus.scrape.pods\"}, name)",
+          "query": "label_values(gotk_resource_info{exported_namespace=~\"$namespace\",customresource_kind=~\"$resource_type\",job=\"prometheus.scrape.service\"}, name)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
