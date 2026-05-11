@@ -7,7 +7,7 @@
   ],
   "extends": [
     "config:recommended",
-    "group:kubernetes",
+    "group:kubernetesMonorepo",
     ":enablePreCommit",
     ":pinVersions"
   ],
