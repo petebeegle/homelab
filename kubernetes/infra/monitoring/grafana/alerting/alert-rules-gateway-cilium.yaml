@@ -1,0 +1,330 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaAlertRuleGroup
+metadata:
+  name: gateway-cilium
+  namespace: grafana
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  folderRef: "monitoring"
+  interval: 1m
+  rules:
+    - uid: gateway-not-programmed
+      title: Gateway Not Programmed
+      condition: C
+      for: 10m
+      noDataState: NoData
+      execErrState: Error
+      annotations:
+        description: "{{ $values.B.Value }} Gateway resource(s) are not reporting Programmed=True."
+        summary: Gateway API programming is degraded
+        runbook: "Start with: kubectl get gateway -A; kubectl describe gateway -n <namespace> <gateway>; kubectl get events -A --field-selector involvedObject.kind=Gateway"
+      labels:
+        severity: critical
+        component: gateway-cilium
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: sum(gatewayapi_gateway_status_condition{type="Programmed"} == bool 0) OR vector(0)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 0
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+
+    - uid: gateway-route-not-accepted
+      title: Gateway Route Not Accepted
+      condition: C
+      for: 15m
+      noDataState: NoData
+      execErrState: Error
+      annotations:
+        description: "{{ $values.B.Value }} HTTPRoute/TLSRoute parent status entries are not Accepted."
+        summary: Gateway API routes are not accepted
+        runbook: "Start with: kubectl get httproute,tlsroute -A; kubectl describe httproute -n <namespace> <route>; kubectl describe tlsroute -n <namespace> <route>"
+      labels:
+        severity: warning
+        component: gateway-cilium
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 900
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: (sum(gatewayapi_httproute_parent_accepted == bool 0) OR vector(0)) + (sum(gatewayapi_tlsroute_parent_accepted == bool 0) OR vector(0))
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 900
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 900
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 0
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+
+    - uid: gateway-route-refs-unresolved
+      title: Gateway Route References Unresolved
+      condition: C
+      for: 15m
+      noDataState: NoData
+      execErrState: Error
+      annotations:
+        description: "{{ $values.B.Value }} HTTPRoute/TLSRoute parent status entries have unresolved references."
+        summary: Gateway API route references are unresolved
+        runbook: "Start with: kubectl get httproute,tlsroute -A; kubectl describe httproute -n <namespace> <route>; kubectl get referencegrant -A"
+      labels:
+        severity: warning
+        component: gateway-cilium
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 900
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: (sum(gatewayapi_httproute_parent_resolved_refs == bool 0) OR vector(0)) + (sum(gatewayapi_tlsroute_parent_resolved_refs == bool 0) OR vector(0))
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 900
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 900
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 0
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+
+    - uid: cilium-agent-scrape-targets-low
+      title: Cilium Agent Scrape Targets Low
+      condition: C
+      for: 10m
+      noDataState: Alerting
+      execErrState: Error
+      annotations:
+        description: "Only {{ $values.B.Value }} Cilium agent scrape target(s) are currently up; this cluster expects one per Kubernetes node."
+        summary: Cilium agent metrics are missing
+        runbook: "Start with: kubectl -n kube-system get pods -l k8s-app=cilium -o wide; kubectl -n kube-system get svc | grep cilium; kubectl -n kube-system logs ds/cilium --tail=100"
+      labels:
+        severity: critical
+        component: gateway-cilium
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: sum(up{namespace="kube-system",pod=~"cilium-[a-z0-9]{5}"} == bool 1) OR vector(0)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 5
+                  type: lt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+
+    - uid: cilium-operator-scrape-targets-low
+      title: Cilium Operator Scrape Targets Low
+      condition: C
+      for: 10m
+      noDataState: Alerting
+      execErrState: Error
+      annotations:
+        description: "Only {{ $values.B.Value }} Cilium operator scrape target(s) are currently up."
+        summary: Cilium operator metrics are missing
+        runbook: "Start with: kubectl -n kube-system get pods -l io.cilium/app=operator -o wide; kubectl -n kube-system get deploy cilium-operator; kubectl -n kube-system logs deploy/cilium-operator --tail=100"
+      labels:
+        severity: warning
+        component: gateway-cilium
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: sum(up{namespace="kube-system",pod=~"cilium-operator-.+"} == bool 1) OR vector(0)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 1
+                  type: lt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+
+    - uid: cilium-scrape-target-down
+      title: Cilium Scrape Target Down
+      condition: C
+      for: 5m
+      noDataState: NoData
+      execErrState: Error
+      annotations:
+        description: "{{ $values.B.Value }} Cilium scrape target(s) are reporting up=0."
+        summary: Cilium metrics target is down
+        runbook: "Start with: kubectl -n kube-system get pods -l k8s-app=cilium -o wide; kubectl -n kube-system get pods -l io.cilium/app=operator -o wide"
+      labels:
+        severity: warning
+        component: gateway-cilium
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: sum(up{namespace="kube-system",pod=~"cilium-[a-z0-9]{5}|cilium-operator-.+"} == bool 0) OR vector(0)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 0
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C

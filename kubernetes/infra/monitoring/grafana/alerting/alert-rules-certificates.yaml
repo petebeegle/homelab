@@ -1,0 +1,171 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaAlertRuleGroup
+metadata:
+  name: certificates
+  namespace: grafana
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  folderRef: "monitoring"
+  interval: 5m
+  rules:
+    - uid: certificates-not-ready
+      title: Certificates Not Ready
+      condition: C
+      for: 15m
+      noDataState: NoData
+      execErrState: Error
+      annotations:
+        description: "{{ $values.B.Value }} cert-manager Certificate resource(s) are not Ready."
+        summary: Certificate readiness is degraded
+        runbook: "Start with: kubectl get certificates -A; kubectl describe certificate -n <namespace> <certificate>; kubectl get certificaterequests -A"
+      labels:
+        severity: critical
+        component: certificates
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 900
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: sum(certmanager_certificate_ready_status{condition="True"} == bool 0) OR vector(0)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 900
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 900
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 0
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+
+    - uid: certificates-expiring-warning
+      title: Certificates Expiring Soon
+      condition: C
+      for: 30m
+      noDataState: NoData
+      execErrState: Error
+      annotations:
+        description: "The shortest observed certificate lifetime is {{ $values.B.Value | humanize }} days."
+        summary: A certificate expires within 21 days
+        runbook: "Start with: kubectl get certificates -A; kubectl describe certificate -n <namespace> <certificate>; kubectl logs -n cert-manager deploy/cert-manager --tail=200"
+      labels:
+        severity: warning
+        component: certificates
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 1800
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: min((certmanager_certificate_expiration_timestamp_seconds - time()) / 86400) OR vector(365)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 1800
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 1800
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 21
+                  type: lt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+
+    - uid: certificates-expiring-critical
+      title: Certificates Expiring Critical
+      condition: C
+      for: 15m
+      noDataState: NoData
+      execErrState: Error
+      annotations:
+        description: "The shortest observed certificate lifetime is {{ $values.B.Value | humanize }} days."
+        summary: A certificate expires within 7 days
+        runbook: "Start with: kubectl get certificates -A; kubectl describe certificate -n <namespace> <certificate>; kubectl describe clusterissuer -A"
+      labels:
+        severity: critical
+        component: certificates
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 900
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: min((certmanager_certificate_expiration_timestamp_seconds - time()) / 86400) OR vector(365)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 900
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 900
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 7
+                  type: lt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C

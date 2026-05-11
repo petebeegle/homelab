@@ -21,6 +21,7 @@ spec:
       annotations:
         description: "Player logged into Valheim server: {{ $labels.player }}"
         summary: Player connected to Valheim server
+        runbook: "For context only: kubectl -n valheim logs deploy/valheim-server --tail=100; no action is normally required for player login notifications"
       labels:
         severity: notification
         component: valheim

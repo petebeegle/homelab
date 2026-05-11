@@ -3,6 +3,9 @@ kind: Service
 metadata:
   name: snmp-exporter
   namespace: monitoring
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9116"
   labels:
     app: snmp-exporter
 spec:
