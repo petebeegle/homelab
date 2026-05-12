@@ -45,6 +45,9 @@ spec:
     - name: internal
       namespace: gateway
       sectionName: https-gateway
+    - name: external
+      namespace: gateway
+      sectionName: https-gateway
   hostnames:
     - whoami.${cluster_domain}
   rules:

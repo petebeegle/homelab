@@ -109,7 +109,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `HTTPRoute` | `jellyfin/jellyfin` | `jellyfin.${cluster_domain}` | `gateway/internal/https-gateway` | `jellyfin:8096` |
 | `HTTPRoute` | `otel-collector/otel-collector` | `otel.${cluster_domain}` | `gateway/internal/https-gateway` | `otel-collector-opentelemetry-collector:4318` |
 | `HTTPRoute` | `pihole/pihole-httproute` | `pihole.${cluster_domain}` | `gateway/internal/https-gateway` | `pihole-web:80` |
-| `HTTPRoute` | `whoami/whoami` | `whoami.${cluster_domain}` | `gateway/internal/https-gateway` | `whoami:80` |
+| `HTTPRoute` | `whoami/whoami` | `whoami.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `whoami:80` |
 | `HTTPRoute` | `wireguard/wireguard-ui` | `vpn.${cluster_domain}` | `gateway/internal/https-gateway` | `wireguard-http:51821` |
 | `TLSRoute` | `external/pve01-route` | `pve01.petebeegle.com` | `gateway/passthrough` | `pve01:8006` |
 | `TLSRoute` | `external/pve02-route` | `pve02.petebeegle.com` | `gateway/passthrough` | `pve02:8006` |
