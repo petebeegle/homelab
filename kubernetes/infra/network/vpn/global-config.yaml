@@ -33,7 +33,7 @@ data:
 
       const requireFromApp = createRequire("/app/server/package.json");
       const { createClient } = requireFromApp("@libsql/client");
-      const db = createClient({ url: `file:${dbPath}` });
+      const db = createClient({ url: "file:" + dbPath });
 
       try {
         const current = await db.execute({
@@ -69,12 +69,12 @@ data:
 
         args.push(configId);
         await db.execute({
-          sql: `UPDATE user_configs_table SET ${assignments.join(", ")} WHERE id = ?`,
+          sql: "UPDATE user_configs_table SET " + assignments.join(", ") + " WHERE id = ?",
           args,
         });
         console.log("Updated wg-easy global defaults");
       } catch (error) {
-        console.error(`Failed to reconcile wg-easy global defaults: ${error?.message || error}`);
+        console.error("Failed to reconcile wg-easy global defaults: " + (error?.message || error));
         process.exitCode = 1;
       } finally {
         if (typeof db.close === "function") {
@@ -86,7 +86,7 @@ data:
     function parseCsvEnv(name) {
       const value = process.env[name];
       if (!value) {
-        throw new Error(`${name} must be set`);
+        throw new Error(name + " must be set");
       }
 
       return value

@@ -53,6 +53,8 @@ kubectl -n wireguard logs deploy/wireguard --since=10m --all-containers=true
 
 On Talos, `wg-easy` default hooks may fail if they resolve to legacy `iptables` instead of nftables. The desired state provides `/opt/wg-hooks-bin/iptables` and `/opt/wg-hooks-bin/ip6tables` shims and prepends that directory to `PATH`, so the default hooks use `iptables-nft` and `ip6tables-nft`.
 
+Embedded scripts in ConfigMap data must avoid JavaScript template literals because Flux post-build substitution scans that syntax before applying manifests. Use string concatenation in those scripts instead.
+
 After Flux reconciles a fix or after a pod restart, verify:
 
 ```bash
