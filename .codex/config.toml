@@ -1,6 +1,14 @@
 [features]
 hooks = true
 
+[[hooks.UserPromptSubmit]]
+
+[[hooks.UserPromptSubmit.hooks]]
+type = "command"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/user_prompt_submit.sh\"'"
+timeout = 10
+statusMessage = "Checking repository change intent"
+
 [mcp_servers.kubernetes]
 command = "npx"
 args = ["-y", "kubernetes-mcp-server@latest"]
