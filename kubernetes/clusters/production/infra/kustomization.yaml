@@ -9,6 +9,7 @@ resources:
   - cilium.yaml
   - certs.yaml
   - gateway.yaml
+  - vpn.yaml
   - monitoring.yaml
   - loki.yaml
   - mimir.yaml

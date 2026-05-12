@@ -1,0 +1,23 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: external-passthrough
+  namespace: gateway
+spec:
+  gatewayClassName: cilium
+  infrastructure:
+    labels:
+      homelab.petebeegle.com/exposure: external
+    annotations:
+      io.cilium/lb-ipam-ips: ${gateway_external_passthrough_ip}
+  listeners:
+    - protocol: TLS
+      port: 443
+      name: tls-passthrough
+      hostname: "*.${cluster_domain}"
+      tls:
+        mode: Passthrough
+      allowedRoutes:
+        namespaces:
+          from: All

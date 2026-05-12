@@ -1,0 +1,45 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: external
+  namespace: gateway
+  annotations:
+    cert-manager.io/issuer: cloudflare
+spec:
+  gatewayClassName: cilium
+  infrastructure:
+    labels:
+      homelab.petebeegle.com/exposure: external
+    annotations:
+      io.cilium/lb-ipam-ips: ${gateway_external_ip}
+  listeners:
+    - protocol: HTTP
+      port: 80
+      name: http-gateway
+      allowedRoutes:
+        namespaces:
+          from: All
+    - protocol: HTTPS
+      port: 443
+      name: https-gateway
+      hostname: "*.${cluster_domain}"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: ${wildcard_cert_name}
+      allowedRoutes:
+        namespaces:
+          from: All
+    - protocol: HTTPS
+      port: 443
+      name: https-domain-gateway
+      hostname: ${cluster_domain}
+      tls:
+        certificateRefs:
+          - kind: Secret
+            name: ${wildcard_cert_name}
+      allowedRoutes:
+        namespaces:
+          from: All
