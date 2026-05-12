@@ -5,7 +5,8 @@ Use this runbook to check the `wg-easy` deployment that provides VPN access to t
 ## Client Routing Defaults
 
 Global wg-easy client defaults are managed in `kubernetes/infra/network/vpn/global-config.yaml`.
-The desired global `AllowedIPs` default is `192.168.40.0/24`; the desired global DNS defaults are `1.1.1.1` and `2606:4700:4700::1111`.
+The desired global `AllowedIPs` default is `192.168.40.0/24`; the desired global DNS default is `192.168.40.250`.
+That DNS address is the `vpn-dns` LoadBalancer service on the external service plane.
 
 wg-easy v15 stores these defaults in `/etc/wireguard/wg-easy.db`.
 The `wg-easy-defaults` initContainer runs before the main `wireguard` container and reconciles the `user_configs_table` row with `id = "wg0"` without querying or printing client secrets.
@@ -13,6 +14,19 @@ The main container also receives `INIT_ENABLED`, `INIT_ALLOWED_IPS`, and `INIT_D
 
 Existing clients keep the per-client values copied when they were created.
 If a client has the old route or DNS values, regenerate or edit that client once after the global defaults are corrected.
+
+## VPN DNS
+
+The `vpn-dns` CoreDNS service runs in the `wireguard` namespace and requests external LoadBalancer IP `192.168.40.250` from the Cilium external pool.
+It exposes DNS on TCP and UDP port 53 and is selected into that pool with the `homelab.petebeegle.com/exposure: external` service label.
+
+CoreDNS provides split-DNS behavior for VPN clients:
+
+- `*.lab.petebeegle.com` A queries return `192.168.40.241`.
+- All other queries forward to UniFi DNS at `192.168.1.1`.
+
+wg-easy copies the global DNS default into each client when the client is created.
+Existing clients that still use the previous DNS values must be edited or regenerated so their WireGuard profile uses `192.168.40.250`.
 
 Verify the stored defaults without selecting secret-bearing columns:
 
