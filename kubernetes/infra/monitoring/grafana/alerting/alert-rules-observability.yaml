@@ -434,3 +434,109 @@ spec:
                 type: query
             type: threshold
             refId: C
+
+    - uid: pretty-discord-alerts-send-failures
+      title: Pretty Discord Alerts Send Failures
+      condition: C
+      for: 5m
+      noDataState: NoData
+      execErrState: Error
+      annotations:
+        description: "pretty-discord-alerts recorded {{ $values.B.Value }} Discord send failure(s) over the last 10 minutes."
+        summary: Discord alert delivery is failing
+        runbook: "docs/runbooks/discord-alert-delivery-health.md"
+      labels:
+        severity: warning
+        component: observability
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: sum(increase(webhook_discord_send_total{status="failure"}[10m])) OR vector(0)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 0
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+
+    - uid: pretty-discord-alerts-webhook-discord-errors
+      title: Pretty Discord Alerts Webhook Discord Errors
+      condition: C
+      for: 5m
+      noDataState: NoData
+      execErrState: Error
+      annotations:
+        description: "pretty-discord-alerts returned {{ $values.B.Value }} discord_error webhook result(s) over the last 10 minutes."
+        summary: Grafana alert webhook delivery to Discord is failing
+        runbook: "docs/runbooks/discord-alert-delivery-health.md"
+      labels:
+        severity: warning
+        component: observability
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: sum(increase(webhook_requests_total{status="discord_error"}[10m])) OR vector(0)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 0
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
