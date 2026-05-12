@@ -10,7 +10,7 @@ data:
   reconcile-wg-easy-defaults.mjs: |
     import { constants } from "node:fs";
     import { access } from "node:fs/promises";
-    import { createRequire } from "node:module";
+    import { createClient } from "/app/server/node_modules/@libsql/client/lib-esm/node.js";
 
     const dbPath = process.env.WG_EASY_DB_PATH || "/etc/wireguard/wg-easy.db";
     const configId = process.env.WG_EASY_CONFIG_ID || "wg0";
@@ -31,8 +31,6 @@ data:
         throw error;
       }
 
-      const requireFromApp = createRequire("/app/server/package.json");
-      const { createClient } = requireFromApp("@libsql/client");
       const db = createClient({ url: "file:" + dbPath });
 
       try {

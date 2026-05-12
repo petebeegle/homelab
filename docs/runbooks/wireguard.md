@@ -17,9 +17,8 @@ If a client has the old route or DNS values, regenerate or edit that client once
 Verify the stored defaults without selecting secret-bearing columns:
 
 ```bash
-kubectl -n wireguard exec deploy/wireguard -- sh -ec 'cd /app/server && node -e '"'"'
-const { createRequire } = require("node:module");
-const { createClient } = createRequire("/app/server/package.json")("@libsql/client");
+kubectl -n wireguard exec deploy/wireguard -- sh -ec 'node --input-type=module -e '"'"'
+import { createClient } from "/app/server/node_modules/@libsql/client/lib-esm/node.js";
 const db = createClient({ url: "file:/etc/wireguard/wg-easy.db" });
 (async () => {
   const result = await db.execute({
@@ -36,6 +35,8 @@ const db = createClient({ url: "file:/etc/wireguard/wg-easy.db" });
 });
 '"'"''
 ```
+
+If the `wg-easy-defaults` initContainer fails with `Cannot find module` for `@libsql/client/lib-cjs/node.js`, confirm the ConfigMap script imports `createClient` from `/app/server/node_modules/@libsql/client/lib-esm/node.js`. The `ghcr.io/wg-easy/wg-easy:15.2.2` image ships that ESM build, but not the CJS build.
 
 ## Client API Returns 500
 
