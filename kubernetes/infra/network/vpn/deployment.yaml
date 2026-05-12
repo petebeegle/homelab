@@ -19,6 +19,30 @@ spec:
         app.kubernetes.io/name: wireguard
     spec:
       initContainers:
+        - name: wg-easy-defaults
+          image: ghcr.io/wg-easy/wg-easy:15.2.2
+          imagePullPolicy: IfNotPresent
+          workingDir: /app/server
+          command:
+            - node
+            - /opt/wg-easy-defaults/reconcile-wg-easy-defaults.mjs
+          env:
+            - name: WG_EASY_DEFAULT_ALLOWED_IPS
+              valueFrom:
+                configMapKeyRef:
+                  name: wireguard-global-config
+                  key: default_allowed_ips
+            - name: WG_EASY_DEFAULT_DNS
+              valueFrom:
+                configMapKeyRef:
+                  name: wireguard-global-config
+                  key: default_dns
+          volumeMounts:
+            - mountPath: /etc/wireguard
+              name: config
+            - mountPath: /opt/wg-easy-defaults
+              name: wg-easy-defaults
+              readOnly: true
         - name: iptables-nft-shims
           image: ghcr.io/wg-easy/wg-easy:15.2.2
           imagePullPolicy: IfNotPresent
@@ -48,11 +72,18 @@ spec:
                 secretKeyRef:
                   name: wireguard-env
                   key: WG_PORT
-            - name: WG_ALLOWED_IPS
+            - name: INIT_ENABLED
+              value: "true"
+            - name: INIT_ALLOWED_IPS
               valueFrom:
-                secretKeyRef:
-                  name: wireguard-env
-                  key: WG_ALLOWED_IPS
+                configMapKeyRef:
+                  name: wireguard-global-config
+                  key: default_allowed_ips
+            - name: INIT_DNS
+              valueFrom:
+                configMapKeyRef:
+                  name: wireguard-global-config
+                  key: default_dns
           image: ghcr.io/wg-easy/wg-easy:15.2.2
           imagePullPolicy: IfNotPresent
           ports:
@@ -106,6 +137,9 @@ spec:
               name: config
       restartPolicy: Always
       volumes:
+        - name: wg-easy-defaults
+          configMap:
+            name: wireguard-global-config
         - name: wg-hooks-bin
           emptyDir: {}
         - name: config

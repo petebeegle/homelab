@@ -1,0 +1,113 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wireguard-global-config
+  namespace: wireguard
+data:
+  default_allowed_ips: "192.168.40.0/24"
+  default_dns: "1.1.1.1,2606:4700:4700::1111"
+  reconcile-wg-easy-defaults.mjs: |
+    import { constants } from "node:fs";
+    import { access } from "node:fs/promises";
+    import { createRequire } from "node:module";
+
+    const dbPath = process.env.WG_EASY_DB_PATH || "/etc/wireguard/wg-easy.db";
+    const configId = process.env.WG_EASY_CONFIG_ID || "wg0";
+    const allowedIps = parseCsvEnv("WG_EASY_DEFAULT_ALLOWED_IPS");
+    const dns = parseCsvEnv("WG_EASY_DEFAULT_DNS");
+
+    await main();
+
+    async function main() {
+      try {
+        await access(dbPath, constants.F_OK);
+      } catch (error) {
+        if (error?.code === "ENOENT") {
+          console.log("wg-easy database not found; defaults will be reconciled on a later restart");
+          return;
+        }
+
+        throw error;
+      }
+
+      const requireFromApp = createRequire("/app/server/package.json");
+      const { createClient } = requireFromApp("@libsql/client");
+      const db = createClient({ url: `file:${dbPath}` });
+
+      try {
+        const current = await db.execute({
+          sql: "SELECT default_allowed_ips, default_dns FROM user_configs_table WHERE id = ?",
+          args: [configId],
+        });
+        const row = current.rows[0];
+
+        if (!row) {
+          console.log("wg-easy wg0 config row not found; leaving defaults unchanged");
+          return;
+        }
+
+        const desiredAllowedIps = JSON.stringify(allowedIps);
+        const desiredDns = JSON.stringify(dns);
+        const assignments = [];
+        const args = [];
+
+        if (!sameJsonArray(row.default_allowed_ips, allowedIps)) {
+          assignments.push("default_allowed_ips = ?");
+          args.push(desiredAllowedIps);
+        }
+
+        if (!sameJsonArray(row.default_dns, dns)) {
+          assignments.push("default_dns = ?");
+          args.push(desiredDns);
+        }
+
+        if (assignments.length === 0) {
+          console.log("wg-easy global defaults already up to date");
+          return;
+        }
+
+        args.push(configId);
+        await db.execute({
+          sql: `UPDATE user_configs_table SET ${assignments.join(", ")} WHERE id = ?`,
+          args,
+        });
+        console.log("Updated wg-easy global defaults");
+      } catch (error) {
+        console.error(`Failed to reconcile wg-easy global defaults: ${error?.message || error}`);
+        process.exitCode = 1;
+      } finally {
+        if (typeof db.close === "function") {
+          await db.close();
+        }
+      }
+    }
+
+    function parseCsvEnv(name) {
+      const value = process.env[name];
+      if (!value) {
+        throw new Error(`${name} must be set`);
+      }
+
+      return value
+        .split(",")
+        .map((entry) => entry.trim())
+        .filter(Boolean);
+    }
+
+    function sameJsonArray(rawValue, desired) {
+      if (typeof rawValue !== "string") {
+        return false;
+      }
+
+      try {
+        const parsed = JSON.parse(rawValue);
+        return Array.isArray(parsed) && arraysEqual(parsed, desired);
+      } catch {
+        return false;
+      }
+    }
+
+    function arraysEqual(left, right) {
+      return left.length === right.length && left.every((value, index) => value === right[index]);
+    }
