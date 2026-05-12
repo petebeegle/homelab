@@ -8,7 +8,7 @@ This document is generated for agentic repo navigation. It records relationships
 
 - Production root Kustomization: `kubernetes/clusters/production/kustomization.yaml`.
 - Root resources: `flux-system`, `cluster-vars.yaml`, `infra`, `apps`.
-- Infra activation list: `crds.yaml`, `cert-manager.yaml`, `grafana-operator.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `certs.yaml`, `gateway.yaml`, `monitoring.yaml`, `loki.yaml`, `mimir.yaml`, `alloy.yaml`, `grafana.yaml`, `otel-collector.yaml`, `authentik.yaml`.
+- Infra activation list: `crds.yaml`, `cert-manager.yaml`, `grafana-operator.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `certs.yaml`, `gateway.yaml`, `vpn.yaml`, `monitoring.yaml`, `loki.yaml`, `mimir.yaml`, `alloy.yaml`, `grafana.yaml`, `otel-collector.yaml`, `authentik.yaml`.
 - App activation list: `external.yaml`, `pihole.yaml`, `whoami.yaml`, `renovate.yaml`, `cloudflare-tunnels.yaml`, `jellyfin.yaml`, `foundryvtt.yaml`, `valheim.yaml`.
 
 ### Flux Substitution Variables
@@ -17,6 +17,8 @@ This document is generated for agentic repo navigation. It records relationships
 | --- | --- |
 | `cluster_domain` | `lab.petebeegle.com` |
 | `cluster_env` | `production` |
+| `gateway_external_ip` | `192.168.40.241` |
+| `gateway_external_passthrough_ip` | `192.168.40.242` |
 | `gateway_internal_ip` | `192.168.30.241` |
 | `gateway_passthrough_ip` | `192.168.30.242` |
 | `letsencrypt_server` | `https://acme-v02.api.letsencrypt.org/directory` |
@@ -43,6 +45,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `monitoring` | `./kubernetes/infra/monitoring` | (none) | `cluster-vars` | `sops` |
 | `nfs-csi` | `./kubernetes/infra/controllers/nfs-csi` | (none) | `cluster-vars` | `no` |
 | `otel-collector` | `./kubernetes/infra/monitoring/otel-collector` | `crds`, `gateway` | `cluster-vars` | `no` |
+| `vpn` | `./kubernetes/infra/network/vpn` | `cilium`, `nfs-csi`, `gateway` | `cluster-vars` | `sops` |
 
 ### Applications
 
@@ -82,8 +85,8 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/infra/monitoring/snmp-exporter` | `repositories.yaml`, `deployment.yaml`, `service.yaml`, `servicemonitor.yaml` |
 | `kubernetes/infra/network/certs` | `./issuer.yaml` |
 | `kubernetes/infra/network/cilium` | `app.yaml`, `announcement.yaml`, `ip-pool.yaml` |
-| `kubernetes/infra/network/gateway` | `./namespace.yaml`, `./certificate.yaml`, `./gateway-internal.yaml`, `./gateway-passthrough.yaml`, `./https-redirect.yaml`, `./referencegrant.yaml` |
-| `kubernetes/infra/network` | `./cilium`, `./certs`, `./gateway` |
+| `kubernetes/infra/network/gateway` | `./namespace.yaml`, `./certificate.yaml`, `./gateway-internal.yaml`, `./gateway-passthrough.yaml`, `./gateway-external.yaml`, `./gateway-external-passthrough.yaml`, `./https-redirect.yaml`, `./referencegrant.yaml` |
+| `kubernetes/infra/network` | `./cilium`, `./certs`, `./vpn`, `./gateway` |
 | `kubernetes/infra/network/vpn` | `./namespace.yaml`, `./secret.yaml`, `./pvc.yaml`, `./deployment.yaml`, `./service.yaml`, `./httproute.yaml` |
 | `kubernetes/apps/cloudflare-tunnels` | `namespace.yaml`, `secret.yaml`, `deployment.yaml`, `podmonitor.yaml` |
 | `kubernetes/apps/external` | `namespace.yaml`, `synology.yaml` |
@@ -101,7 +104,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `HTTPRoute` | `authentik/authentik` | `authentik.${cluster_domain}` | `gateway/internal/https-gateway` | `authentik-server:80` |
 | `HTTPRoute` | `external/synology-route` | `synology.petebeegle.com` | `gateway/internal/synology-https-gateway` | `synology-proxy:8080` |
 | `HTTPRoute` | `foundryvtt/foundryvtt` | `foundry.${cluster_domain}` | `gateway/internal/https-gateway` | `foundryvtt:80` |
-| `HTTPRoute` | `gateway/https-redirect` | `*.${cluster_domain}, ${cluster_domain}, synology.petebeegle.com` | `gateway/internal/http-gateway` | `(none)` |
+| `HTTPRoute` | `gateway/https-redirect` | `*.${cluster_domain}, ${cluster_domain}, synology.petebeegle.com` | `gateway/internal/http-gateway, gateway/external/http-gateway` | `(none)` |
 | `HTTPRoute` | `grafana/monitoring` | `monitoring.${cluster_domain}` | `gateway/internal/https-gateway` | `grafana:80` |
 | `HTTPRoute` | `jellyfin/jellyfin` | `jellyfin.${cluster_domain}` | `gateway/internal/https-gateway` | `jellyfin:8096` |
 | `HTTPRoute` | `otel-collector/otel-collector` | `otel.${cluster_domain}` | `gateway/internal/https-gateway` | `otel-collector-opentelemetry-collector:4318` |

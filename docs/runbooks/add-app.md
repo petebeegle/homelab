@@ -73,6 +73,8 @@ spec:
 
 ## Internal HTTPRoute Template
 
+Use the internal Gateway for services that should stay on the `192.168.30.x` service plane.
+
 ```yaml
 ---
 apiVersion: gateway.networking.k8s.io/v1
@@ -100,7 +102,7 @@ spec:
 
 ## External Service HTTPRoute Template
 
-Use this pattern for a service outside the cluster when the Gateway should present the trusted certificate or hide the backend port.
+Use this pattern for a service outside the cluster when the internal Gateway should present the trusted certificate or hide the backend port.
 If the backend only accepts HTTPS and cannot present a certificate trusted for the public hostname, add an in-cluster proxy and point the `HTTPRoute` at the proxy. Do not rely on `appProtocol: https` alone to make the Gateway originate HTTPS upstream.
 
 ```yaml
@@ -155,9 +157,38 @@ Add a matching Gateway HTTPS listener and cert-manager `Certificate` when the ho
 
 For HTTPS-only external backends with untrusted certificates or backend redirects that expose ports, use a small proxy Deployment instead of routing directly to the external `EndpointSlice`. The proxy can connect to the backend over HTTPS, set forwarded headers, and normalize redirects or response bodies before returning traffic to the Gateway route.
 
+## WireGuard External HTTPRoute Template
+
+Use this pattern for services that should be reachable on the `192.168.40.x` service plane through WireGuard.
+
+```yaml
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: <app-name>
+  namespace: <app-name>
+spec:
+  parentRefs:
+    - name: external
+      namespace: gateway
+      sectionName: https-gateway
+  hostnames:
+    - <app-name>.${cluster_domain}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: <service-name>
+          port: <port>
+          weight: 1
+```
+
 ## External TLSRoute Template
 
-Use this pattern only when the external service should terminate TLS itself and already presents an acceptable certificate for the hostname.
+Use this pattern only when the external service should terminate TLS itself and already presents an acceptable certificate for the hostname on the internal `192.168.30.x` passthrough Gateway.
 Define the backing `Service` and `EndpointSlice` with the target TLS port, as shown in the external HTTPRoute example.
 
 ```yaml
@@ -171,6 +202,30 @@ spec:
   parentRefs:
     - name: passthrough
       namespace: gateway
+  hostnames:
+    - <hostname>
+  rules:
+    - backendRefs:
+        - name: <service-name>
+          port: <tls-port>
+```
+
+## WireGuard External TLSRoute Template
+
+Use this pattern for TLS passthrough services that should be reachable on the `192.168.40.x` service plane through WireGuard.
+
+```yaml
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TLSRoute
+metadata:
+  name: <service-name>-route
+  namespace: external
+spec:
+  parentRefs:
+    - name: external-passthrough
+      namespace: gateway
+      sectionName: tls-passthrough
   hostnames:
     - <hostname>
   rules:

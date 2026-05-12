@@ -143,6 +143,8 @@ All shared manifests use `${variable}` placeholders instead of hardcoded values.
 | `cluster_env` | `production` | Environment name |
 | `gateway_internal_ip` | `192.168.30.241` | L2 IP for the internal Gateway |
 | `gateway_passthrough_ip` | `192.168.30.242` | L2 IP for the TLS passthrough Gateway |
+| `gateway_external_ip` | `192.168.40.241` | L2 IP for the external WireGuard-reachable Gateway |
+| `gateway_external_passthrough_ip` | `192.168.40.242` | L2 IP for the external WireGuard-reachable TLS passthrough Gateway |
 | `nfs_server` | `192.168.30.99` | NFS server IP for storage |
 | `letsencrypt_server` | `https://acme-v02...` | ACME server URL (use staging for test envs) |
 | `wildcard_cert_name` | `wildcard-lab-petebeegle-com` | Name of the wildcard TLS Secret |

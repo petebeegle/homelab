@@ -8,6 +8,8 @@ spec:
   parentRefs:
     - name: internal
       sectionName: http-gateway
+    - name: external
+      sectionName: http-gateway
   hostnames:
     - "*.${cluster_domain}"
     - ${cluster_domain}
