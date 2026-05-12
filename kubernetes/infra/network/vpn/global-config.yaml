@@ -6,7 +6,7 @@ metadata:
   namespace: wireguard
 data:
   default_allowed_ips: "192.168.40.0/24"
-  default_dns: "1.1.1.1,2606:4700:4700::1111"
+  default_dns: "192.168.40.250"
   reconcile-wg-easy-defaults.mjs: |
     import { constants } from "node:fs";
     import { access } from "node:fs/promises";
