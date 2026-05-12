@@ -18,9 +18,26 @@ spec:
       labels:
         app.kubernetes.io/name: wireguard
     spec:
+      initContainers:
+        - name: iptables-nft-shims
+          image: ghcr.io/wg-easy/wg-easy:15.2.2
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              test -x /usr/sbin/iptables-nft
+              test -x /usr/sbin/ip6tables-nft
+              ln -sf /usr/sbin/iptables-nft /opt/wg-hooks-bin/iptables
+              ln -sf /usr/sbin/ip6tables-nft /opt/wg-hooks-bin/ip6tables
+          volumeMounts:
+            - mountPath: /opt/wg-hooks-bin
+              name: wg-hooks-bin
       containers:
         - name: wireguard
           env:
+            - name: PATH
+              value: /opt/wg-hooks-bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
             - name: WG_HOST
               valueFrom:
                 secretKeyRef:
@@ -83,10 +100,14 @@ spec:
                 - SYS_MODULE
           # Persistent storage location
           volumeMounts:
+            - mountPath: /opt/wg-hooks-bin
+              name: wg-hooks-bin
             - mountPath: /etc/wireguard
               name: config
       restartPolicy: Always
       volumes:
+        - name: wg-hooks-bin
+          emptyDir: {}
         - name: config
           persistentVolumeClaim:
             claimName: wireguard-pvc
