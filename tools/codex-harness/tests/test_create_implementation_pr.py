@@ -114,6 +114,13 @@ def _write_marker(root: Path, implementation: str) -> None:
 def _write_owner_attestation(root: Path, implementation: str) -> None:
     tmp = root / ".codex" / "tmp"
     tmp.mkdir(parents=True, exist_ok=True)
+    _write_delegation_token(
+        root,
+        token_name="implementation-token-deterministic-role-enforcement",
+        implementation=implementation,
+        role="implementation-agent",
+        agent_id="implementation-agent-deterministic-role-enforcement",
+    )
     (tmp / "implementation-owner-attestation.yaml").write_text(
         "\n".join(
             [
@@ -124,6 +131,8 @@ def _write_owner_attestation(root: Path, implementation: str) -> None:
                 "agent_id: implementation-agent-deterministic-role-enforcement",
                 f"clone_path: {root}",
                 "created_at: 2026-05-11T00:00:00Z",
+                "delegation_token: implementation-token-deterministic-role-enforcement",
+                "delegation_token_path: .codex/tmp/delegation-tokens/implementation-agent-deterministic-role-enforcement.token",
             ]
         )
         + "\n",
@@ -140,6 +149,13 @@ def _write_verifier_approval(root: Path, head: str) -> None:
 def _write_verifier_attestation(root: Path, implementation: str, head: str) -> None:
     tmp = root / ".codex" / "tmp"
     tmp.mkdir(parents=True, exist_ok=True)
+    _write_delegation_token(
+        root,
+        token_name="verifier-token-deterministic-role-enforcement",
+        implementation=implementation,
+        role="verifier-agent",
+        agent_id="verifier-agent-deterministic-role-enforcement",
+    )
     (tmp / "verifier-attestation.yaml").write_text(
         "\n".join(
             [
@@ -151,6 +167,33 @@ def _write_verifier_attestation(root: Path, implementation: str, head: str) -> N
                 f"clone_path: {root}",
                 "created_at: 2026-05-11T00:00:00Z",
                 f"approved_head: {head}",
+                "delegation_token: verifier-token-deterministic-role-enforcement",
+                "delegation_token_path: .codex/tmp/delegation-tokens/verifier-agent-deterministic-role-enforcement.token",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+
+def _write_delegation_token(
+    root: Path,
+    *,
+    token_name: str,
+    implementation: str,
+    role: str,
+    agent_id: str,
+) -> None:
+    token_path = root / ".codex" / "tmp" / "delegation-tokens" / f"{agent_id}.token"
+    token_path.parent.mkdir(parents=True, exist_ok=True)
+    token_path.write_text(
+        "\n".join(
+            [
+                f"delegation_token: {token_name}",
+                f"implementation: {implementation}",
+                f"role: {role}",
+                f"agent_id: {agent_id}",
+                "created_at: 2026-05-11T00:00:00Z",
             ]
         )
         + "\n",

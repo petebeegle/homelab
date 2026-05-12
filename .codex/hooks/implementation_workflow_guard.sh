@@ -84,6 +84,7 @@ allowed = {
     ".codex/tmp/active-implementation",
     ".codex/tmp/implementation-plan.yaml",
     ".codex/tmp/implementation-owner-attestation.yaml",
+    ".codex/tmp/repo-change-intent",
 }
 
 haystacks = [payload]
@@ -105,7 +106,7 @@ def walk(value):
 walk(data)
 text = "\n".join(haystacks)
 
-paths = set(re.findall(r"(?:/workspaces/homelab-ideas/[^/\s]+/)?\.codex/tmp/(?:active-implementation|implementation-plan\.yaml|implementation-owner-attestation\.yaml)", text))
+paths = set(re.findall(r"(?:/workspaces/homelab-ideas/[^/\s]+/)?\.codex/tmp/(?:active-implementation|implementation-plan\.yaml|implementation-owner-attestation\.yaml|repo-change-intent)", text))
 normalized = {path[path.index(".codex/tmp/") :] for path in paths}
 
 if normalized and normalized <= allowed:

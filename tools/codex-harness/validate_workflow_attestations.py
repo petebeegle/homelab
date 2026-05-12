@@ -22,9 +22,19 @@ OWNER_REQUIRED_FIELDS = (
     "agent_id",
     "clone_path",
     "created_at",
+    "delegation_token",
+    "delegation_token_path",
 )
 VERIFIER_REQUIRED_FIELDS = OWNER_REQUIRED_FIELDS + ("approved_head",)
+DELEGATION_TOKEN_REQUIRED_FIELDS = (
+    "delegation_token",
+    "implementation",
+    "role",
+    "agent_id",
+    "created_at",
+)
 GENERIC_IDENTITIES = GENERIC_OWNER_AGENTS
+DELEGATION_TOKEN_ROOT = Path(".codex/tmp/delegation-tokens")
 
 
 @dataclass(frozen=True)
@@ -65,6 +75,7 @@ def validate_owner_attestation(
     *,
     marker: Mapping[str, str],
     plan: Mapping[str, object] | None = None,
+    delegation_token: Mapping[str, str] | None = None,
     current_root: Path | str | None = None,
     current_branch: str | None = None,
 ) -> AttestationValidationResult:
@@ -107,6 +118,12 @@ def validate_owner_attestation(
             )
 
     _validate_current_context(attestation, current_root=current_root, current_branch=current_branch, errors=errors)
+    _validate_delegation_token(
+        attestation,
+        delegation_token=delegation_token,
+        expected_role="implementation-agent",
+        errors=errors,
+    )
     return AttestationValidationResult(attestation=attestation, errors=tuple(errors))
 
 
@@ -115,6 +132,8 @@ def validate_verifier_attestation(
     *,
     marker: Mapping[str, str],
     owner_attestation: Mapping[str, str],
+    owner_delegation_token: Mapping[str, str] | None = None,
+    verifier_delegation_token: Mapping[str, str] | None = None,
     current_head: str,
     current_root: Path | str | None = None,
     current_branch: str | None = None,
@@ -124,6 +143,7 @@ def validate_verifier_attestation(
     owner_result = validate_owner_attestation(
         owner_attestation,
         marker=marker,
+        delegation_token=owner_delegation_token,
         current_root=current_root,
         current_branch=current_branch,
     )
@@ -148,6 +168,23 @@ def validate_verifier_attestation(
         errors.append(f"Field 'approved_head' must match current HEAD '{current_head}', got '{approved_head}'.")
 
     _validate_current_context(attestation, current_root=current_root, current_branch=current_branch, errors=errors)
+    _validate_delegation_token(
+        attestation,
+        delegation_token=verifier_delegation_token,
+        expected_role="verifier-agent",
+        errors=errors,
+    )
+
+    owner_token = owner_attestation.get("delegation_token", "")
+    verifier_token = attestation.get("delegation_token", "")
+    if owner_token and verifier_token and owner_token == verifier_token:
+        errors.append("Field 'delegation_token' must differ from implementation owner delegation_token.")
+
+    owner_token_path = owner_attestation.get("delegation_token_path", "")
+    verifier_token_path = attestation.get("delegation_token_path", "")
+    if owner_token_path and verifier_token_path and owner_token_path == verifier_token_path:
+        errors.append("Field 'delegation_token_path' must differ from implementation owner delegation_token_path.")
+
     return AttestationValidationResult(attestation=attestation, errors=tuple(errors))
 
 
@@ -222,10 +259,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         except (OSError, ValueError) as exc:
             print(f"Implementation plan is invalid: {exc}", file=sys.stderr)
             return 1
+        delegation_token = _load_delegation_token(attestation, current_root=current_root)
         result = validate_owner_attestation(
             attestation,
             marker=marker,
             plan=plan,
+            delegation_token=delegation_token,
             current_root=current_root,
             current_branch=current_branch,
         )
@@ -243,10 +282,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         if not current_head:
             print("Unable to determine current HEAD.", file=sys.stderr)
             return 1
+        owner_delegation_token = _load_delegation_token(owner_attestation, current_root=current_root)
+        verifier_delegation_token = _load_delegation_token(attestation, current_root=current_root)
         result = validate_verifier_attestation(
             attestation,
             marker=marker,
             owner_attestation=owner_attestation,
+            owner_delegation_token=owner_delegation_token,
+            verifier_delegation_token=verifier_delegation_token,
             current_head=current_head,
             current_root=current_root,
             current_branch=current_branch,
@@ -287,6 +330,10 @@ def _validate_common_identity(
     if not attestation.get("created_at", "").strip():
         errors.append("Field 'created_at' must not be empty.")
 
+    expected_prefix = f"{expected_role}-"
+    if agent_id.strip() and not agent_id.startswith(expected_prefix):
+        errors.append(f"Field 'agent_id' must start with '{expected_prefix}', got '{agent_id}'.")
+
 
 def _validate_common_matches(
     attestation: Mapping[str, str],
@@ -322,6 +369,42 @@ def _validate_current_context(
             )
 
 
+def _validate_delegation_token(
+    attestation: Mapping[str, str],
+    *,
+    delegation_token: Mapping[str, str] | None,
+    expected_role: str,
+    errors: list[str],
+) -> None:
+    if delegation_token is None:
+        token_path = attestation.get("delegation_token_path", "")
+        if token_path:
+            errors.append(f"Delegation token file not found or invalid: {token_path}.")
+        else:
+            errors.append("Delegation token evidence is required.")
+        return
+
+    for field in DELEGATION_TOKEN_REQUIRED_FIELDS:
+        if field not in delegation_token:
+            errors.append(f"Delegation token: missing required field '{field}'.")
+
+    for field in ("delegation_token", "implementation", "role", "agent_id"):
+        token_value = delegation_token.get(field, "")
+        attestation_value = attestation.get(field, "")
+        if token_value != attestation_value:
+            errors.append(
+                f"Delegation token field '{field}' must match attestation value "
+                f"'{attestation_value}', got '{token_value}'."
+            )
+
+    role = delegation_token.get("role", "")
+    if role and role != expected_role:
+        errors.append(f"Delegation token field 'role' must be '{expected_role}', got '{role}'.")
+
+    if not delegation_token.get("created_at", "").strip():
+        errors.append("Delegation token field 'created_at' must not be empty.")
+
+
 def _git_output(command: Sequence[str], *, cwd: Path, as_path: bool = False):
     try:
         result = subprocess.run(
@@ -345,6 +428,36 @@ def _path(value: str) -> Path:
     if not path.is_absolute():
         path = Path.cwd() / path
     return path
+
+
+def _load_delegation_token(
+    attestation: Mapping[str, str],
+    *,
+    current_root: Path | str | None,
+) -> Mapping[str, str] | None:
+    token_path_value = attestation.get("delegation_token_path", "")
+    if not token_path_value:
+        return None
+
+    token_path = Path(token_path_value)
+    if token_path.is_absolute():
+        return None
+
+    root = Path(current_root) if current_root is not None else Path.cwd()
+    token_root = (root / DELEGATION_TOKEN_ROOT).resolve(strict=False)
+    full_path = (root / token_path).resolve(strict=False)
+    try:
+        full_path.relative_to(token_root)
+    except ValueError:
+        return None
+
+    if not full_path.is_file():
+        return None
+
+    try:
+        return parse_attestation(full_path)
+    except (OSError, ValueError):
+        return None
 
 
 def _string(value: object) -> str:

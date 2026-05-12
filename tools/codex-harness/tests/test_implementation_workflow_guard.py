@@ -11,6 +11,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 HOOK_SOURCE = REPO_ROOT / ".codex" / "hooks" / "implementation_workflow_guard.sh"
+USER_PROMPT_HOOK_SOURCE = REPO_ROOT / ".codex" / "hooks" / "user_prompt_submit.sh"
 ACTIVE_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_active_implementation.py"
 PLAN_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_implementation_plan.py"
 ATTESTATION_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_workflow_attestations.py"
@@ -63,6 +64,19 @@ class ImplementationWorkflowGuardTest(unittest.TestCase):
         result = self._run_hook()
 
         self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_post_change_blocks_after_repo_change_intent_without_workflow(self) -> None:
+        (self.root / ".codex" / "tmp").mkdir(parents=True, exist_ok=True)
+        (self.root / ".codex" / "tmp" / "repo-change-intent").write_text(
+            "repo_change_intent=true\nhook=UserPromptSubmit\n",
+            encoding="utf-8",
+        )
+        (self.root / "README.md").write_text("# changed\n", encoding="utf-8")
+
+        result = self._run_hook()
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Current branch is main", result.stderr)
 
     def test_preflight_bash_blocks_mutating_command_without_plan(self) -> None:
         self._switch_to_implementation_branch()
@@ -119,6 +133,64 @@ class ImplementationWorkflowGuardTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_preflight_mutation_allows_prompt_intent_marker(self) -> None:
+        result = self._run_hook(
+            "--preflight-mutation",
+            {"tool_input": {"path": ".codex/tmp/repo-change-intent"}},
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_user_prompt_submit_marks_repo_change_intent_and_reminds(self) -> None:
+        result = self._run_prompt_hook({"prompt": "Please update the workflow harness tests."})
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("implementation-agent-*", result.stdout)
+        self.assertTrue((self.root / ".codex" / "tmp" / "repo-change-intent").is_file())
+
+    def test_user_prompt_submit_ignores_read_only_prompt(self) -> None:
+        result = self._run_prompt_hook({"prompt": "Please explain the workflow harness tests."})
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual("", result.stdout)
+        self.assertFalse((self.root / ".codex" / "tmp" / "repo-change-intent").exists())
+
+    def test_user_prompt_submit_ignores_explicit_no_edit_review_prompt(self) -> None:
+        result = self._run_prompt_hook({"prompt": "Final verifier pass, review only; do not edit files."})
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual("", result.stdout)
+        self.assertFalse((self.root / ".codex" / "tmp" / "repo-change-intent").exists())
+
+    def test_user_prompt_submit_ignores_pr_review_prompt(self) -> None:
+        result = self._run_prompt_hook({"prompt": "Please review the PR code before approval."})
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual("", result.stdout)
+        self.assertFalse((self.root / ".codex" / "tmp" / "repo-change-intent").exists())
+
+    def test_user_prompt_submit_ignores_review_of_change_prompt(self) -> None:
+        prompts = [
+            "Please review the fix in the code before approval.",
+            "Please review the update to the workflow docs.",
+            "Please inspect the change in the harness tests.",
+        ]
+
+        for prompt in prompts:
+            with self.subTest(prompt=prompt):
+                result = self._run_prompt_hook({"prompt": prompt})
+
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual("", result.stdout)
+                self.assertFalse((self.root / ".codex" / "tmp" / "repo-change-intent").exists())
+
+    def test_user_prompt_submit_marks_review_then_change_prompt(self) -> None:
+        result = self._run_prompt_hook({"prompt": "Please review the workflow tests and update them."})
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("implementation-agent-*", result.stdout)
+        self.assertTrue((self.root / ".codex" / "tmp" / "repo-change-intent").is_file())
+
     def _init_repo(self) -> None:
         self._init_external_repo(self.root)
 
@@ -134,10 +206,12 @@ class ImplementationWorkflowGuardTest(unittest.TestCase):
     def _install_harness_files(self, root: Path | None = None) -> None:
         target_root = root or self.root
         hook_path = target_root / ".codex" / "hooks" / "implementation_workflow_guard.sh"
+        prompt_hook_path = target_root / ".codex" / "hooks" / "user_prompt_submit.sh"
         tool_dir = target_root / "tools" / "codex-harness"
         hook_path.parent.mkdir(parents=True, exist_ok=True)
         tool_dir.mkdir(parents=True, exist_ok=True)
         shutil.copy2(HOOK_SOURCE, hook_path)
+        shutil.copy2(USER_PROMPT_HOOK_SOURCE, prompt_hook_path)
         shutil.copy2(ACTIVE_VALIDATOR, tool_dir / "validate_active_implementation.py")
         shutil.copy2(PLAN_VALIDATOR, tool_dir / "validate_implementation_plan.py")
         shutil.copy2(ATTESTATION_VALIDATOR, tool_dir / "validate_workflow_attestations.py")
@@ -147,6 +221,7 @@ class ImplementationWorkflowGuardTest(unittest.TestCase):
             tool_dir / "validate_implementation_plan.py",
         )
         hook_path.chmod(0o755)
+        prompt_hook_path.chmod(0o755)
 
     def _patch_sibling_root(self, *paths: Path) -> None:
         for path in paths:
@@ -220,6 +295,21 @@ class ImplementationWorkflowGuardTest(unittest.TestCase):
     def _write_owner_attestation(self) -> None:
         tmp = self.root / ".codex" / "tmp"
         tmp.mkdir(parents=True, exist_ok=True)
+        token_path = tmp / "delegation-tokens" / "implementation-agent-deterministic-role-enforcement.token"
+        token_path.parent.mkdir(parents=True, exist_ok=True)
+        token_path.write_text(
+            "\n".join(
+                [
+                    "delegation_token: implementation-token-deterministic-role-enforcement",
+                    f"implementation: {self.implementation}",
+                    "role: implementation-agent",
+                    "agent_id: implementation-agent-deterministic-role-enforcement",
+                    "created_at: 2026-05-11T00:00:00Z",
+                ]
+            )
+            + "\n",
+            encoding="utf-8",
+        )
         (tmp / "implementation-owner-attestation.yaml").write_text(
             "\n".join(
                 [
@@ -230,6 +320,8 @@ class ImplementationWorkflowGuardTest(unittest.TestCase):
                     "agent_id: implementation-agent-deterministic-role-enforcement",
                     f"clone_path: {self.root}",
                     "created_at: 2026-05-11T00:00:00Z",
+                    "delegation_token: implementation-token-deterministic-role-enforcement",
+                    "delegation_token_path: .codex/tmp/delegation-tokens/implementation-agent-deterministic-role-enforcement.token",
                 ]
             )
             + "\n",
@@ -254,6 +346,16 @@ class ImplementationWorkflowGuardTest(unittest.TestCase):
             stderr=subprocess.PIPE,
             text=True,
             env=env,
+        )
+
+    def _run_prompt_hook(self, payload: dict[str, object]) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            ["bash", ".codex/hooks/user_prompt_submit.sh"],
+            cwd=self.root,
+            input=json.dumps(payload),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
         )
 
 
