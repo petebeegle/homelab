@@ -87,7 +87,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/infra/network/cilium` | `app.yaml`, `announcement.yaml`, `ip-pool.yaml` |
 | `kubernetes/infra/network/gateway` | `./namespace.yaml`, `./certificate.yaml`, `./gateway-internal.yaml`, `./gateway-passthrough.yaml`, `./gateway-external.yaml`, `./gateway-external-passthrough.yaml`, `./https-redirect.yaml`, `./referencegrant.yaml` |
 | `kubernetes/infra/network` | `./cilium`, `./certs`, `./vpn`, `./gateway` |
-| `kubernetes/infra/network/vpn` | `./namespace.yaml`, `./secret.yaml`, `./pvc.yaml`, `./deployment.yaml`, `./service.yaml`, `./httproute.yaml` |
+| `kubernetes/infra/network/vpn` | `./namespace.yaml`, `./global-config.yaml`, `./secret.yaml`, `./pvc.yaml`, `./deployment.yaml`, `./service.yaml`, `./httproute.yaml` |
 | `kubernetes/apps/cloudflare-tunnels` | `namespace.yaml`, `secret.yaml`, `deployment.yaml`, `podmonitor.yaml` |
 | `kubernetes/apps/external` | `namespace.yaml`, `synology.yaml` |
 | `kubernetes/apps/foundryvtt` | `namespace.yaml`, `pvc.yaml`, `secret.yaml`, `deployment.yaml`, `service.yaml`, `httproute.yaml` |
