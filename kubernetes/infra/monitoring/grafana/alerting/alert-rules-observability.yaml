@@ -488,7 +488,7 @@ spec:
             type: threshold
             refId: C
 
-    - uid: pretty-discord-alerts-webhook-discord-errors
+    - uid: pretty-discord-webhook-errors
       title: Pretty Discord Alerts Webhook Discord Errors
       condition: C
       for: 5m
