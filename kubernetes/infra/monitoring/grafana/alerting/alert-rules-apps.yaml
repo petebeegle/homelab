@@ -137,7 +137,7 @@ spec:
             to: 0
           datasourceUid: prometheus
           model:
-            expr: sum(kube_pod_status_phase{namespace="pihole",phase="Running"} > bool 0) OR vector(0)
+            expr: sum(kube_pod_status_phase{exported_namespace="pihole",phase="Running"} > bool 0) OR vector(0)
             refId: A
         - refId: B
           relativeTimeRange:
@@ -190,7 +190,7 @@ spec:
             to: 0
           datasourceUid: prometheus
           model:
-            expr: sum(kube_pod_status_phase{namespace="jellyfin",phase="Running"} > bool 0) OR vector(0)
+            expr: sum(kube_pod_status_phase{exported_namespace="jellyfin",phase="Running"} > bool 0) OR vector(0)
             refId: A
         - refId: B
           relativeTimeRange:
@@ -243,7 +243,7 @@ spec:
             to: 0
           datasourceUid: prometheus
           model:
-            expr: sum(kube_pod_status_phase{namespace="valheim",phase="Running"} > bool 0) OR vector(0)
+            expr: sum(kube_pod_status_phase{exported_namespace="valheim",phase="Running"} > bool 0) OR vector(0)
             refId: A
         - refId: B
           relativeTimeRange:
