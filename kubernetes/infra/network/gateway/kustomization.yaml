@@ -4,9 +4,11 @@ kind: Kustomization
 resources:
   - ./namespace.yaml
   - ./certificate.yaml
+  - ./gatewayclass-public-nodeport.yaml
   - ./gateway-internal.yaml
   - ./gateway-passthrough.yaml
   - ./gateway-external.yaml
   - ./gateway-external-passthrough.yaml
+  - ./gateway-public.yaml
   - ./https-redirect.yaml
   - ./referencegrant.yaml
