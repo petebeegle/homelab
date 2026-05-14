@@ -131,9 +131,9 @@ flux build kustomization branch-whoami-example \
 
 The live branch environment path does require a pushed branch when Flux reconciles it, because the in-cluster `GitRepository` source fetches from GitHub. For local-only experiments, use `kubectl diff --server-side --dry-run=server -k <path>` or `kubectl apply --server-side --dry-run=server -k <path>` against the development cluster instead of unsuspending the branch `GitRepository`.
 
-## Development Gateway Overlay
+## Gateway Environment Overlays
 
-The development gateway overlay reuses the shared production gateway base and then removes production-only Synology exposure. `remove-production-only-certificate.yaml` deletes the `synology.petebeegle.com` Certificate, and the JSON6902 listener patches in `kubernetes/clusters/development/overlays/gateway/kustomization.yaml` remove the matching internal Gateway listener, passthrough host listeners for production infrastructure names, and HTTPS redirect hostname. Listener removals are listed from highest array index to lowest because each JSON remove operation shifts later indexes.
+The shared gateway base at `kubernetes/infra/network/gateway` must stay environment-neutral: only `${cluster_domain}`, `*.${cluster_domain}`, `${wildcard_cert_name}`, and shared Gateway plumbing belong there. Production-only hostnames, certificates, listeners, and redirects such as Synology, Proxmox, and Unifi belong in additive overlays under `kubernetes/clusters/production/overlays/gateway`. The development cluster points directly at the shared base so local renders do not need deletion patches for production-only Gateway state.
 
 ## Future Enhancements
 

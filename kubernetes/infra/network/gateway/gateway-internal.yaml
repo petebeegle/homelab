@@ -41,15 +41,3 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
-    - protocol: HTTPS
-      port: 443
-      name: synology-https-gateway
-      hostname: synology.petebeegle.com
-      tls:
-        mode: Terminate
-        certificateRefs:
-          - kind: Secret
-            name: synology-petebeegle-com
-      allowedRoutes:
-        namespaces:
-          from: All

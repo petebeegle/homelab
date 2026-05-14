@@ -13,7 +13,6 @@ spec:
   hostnames:
     - "*.${cluster_domain}"
     - ${cluster_domain}
-    - synology.petebeegle.com
   rules:
     - matches:
         - path:

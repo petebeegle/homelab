@@ -63,7 +63,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `production` | `certs` | `./kubernetes/infra/network/certs` | `cert-manager`, `cilium` | `cluster-vars` | `no` |
 | `production` | `cilium` | `./kubernetes/infra/network/cilium` | `crds` | `cluster-vars` | `no` |
 | `production` | `crds` | `./kubernetes/infra/crds` | (none) | `cluster-vars` | `no` |
-| `production` | `gateway` | `./kubernetes/infra/network/gateway` | `crds`, `cilium`, `certs` | `cluster-vars` | `no` |
+| `production` | `gateway` | `./kubernetes/clusters/production/overlays/gateway` | `crds`, `cilium`, `certs` | `cluster-vars` | `no` |
 | `production` | `grafana-operator` | `./kubernetes/infra/controllers/grafana-operator` | `crds` | `cluster-vars` | `no` |
 | `production` | `grafana` | `./kubernetes/infra/monitoring/grafana` | `gateway`, `grafana-operator`, `loki`, `mimir` | `cluster-vars` | `sops` |
 | `production` | `loki` | `./kubernetes/infra/monitoring/loki` | `crds` | `cluster-vars` | `no` |
@@ -76,7 +76,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `development` | `certs` | `./kubernetes/infra/network/certs` | `cert-manager`, `cilium` | `cluster-vars` | `no` |
 | `development` | `cilium` | `./kubernetes/infra/network/cilium` | `crds` | `cluster-vars` | `no` |
 | `development` | `crds` | `./kubernetes/infra/crds` | (none) | `cluster-vars` | `no` |
-| `development` | `gateway` | `./kubernetes/clusters/development/overlays/gateway` | `crds`, `cilium`, `certs` | `cluster-vars` | `no` |
+| `development` | `gateway` | `./kubernetes/infra/network/gateway` | `crds`, `cilium`, `certs` | `cluster-vars` | `no` |
 | `development` | `nfs-csi` | `./kubernetes/infra/controllers/nfs-csi` | (none) | `cluster-vars` | `no` |
 
 ### Applications
@@ -138,7 +138,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `HTTPRoute` | `authentik/authentik` | `authentik.${cluster_domain}` | `gateway/internal/https-gateway` | `authentik-server:80` |
 | `HTTPRoute` | `external/synology-route` | `synology.petebeegle.com` | `gateway/internal/synology-https-gateway` | `synology-proxy:8080` |
 | `HTTPRoute` | `foundryvtt/foundryvtt` | `foundry.${cluster_domain}` | `gateway/internal/https-gateway` | `foundryvtt:80` |
-| `HTTPRoute` | `gateway/https-redirect` | `*.${cluster_domain}, ${cluster_domain}, synology.petebeegle.com` | `gateway/internal/http-gateway, gateway/external/http-gateway` | `(none)` |
+| `HTTPRoute` | `gateway/https-redirect` | `*.${cluster_domain}, ${cluster_domain}` | `gateway/internal/http-gateway, gateway/external/http-gateway` | `(none)` |
 | `HTTPRoute` | `grafana/monitoring` | `monitoring.${cluster_domain}` | `gateway/internal/https-gateway` | `grafana:80` |
 | `HTTPRoute` | `jellyfin/jellyfin` | `jellyfin.${cluster_domain}` | `gateway/internal/https-gateway` | `jellyfin:8096` |
 | `HTTPRoute` | `otel-collector/otel-collector` | `otel.${cluster_domain}` | `gateway/internal/https-gateway` | `otel-collector-opentelemetry-collector:4318` |
