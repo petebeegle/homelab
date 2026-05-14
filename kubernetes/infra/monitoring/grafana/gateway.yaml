@@ -9,6 +9,9 @@ spec:
     - name: internal
       namespace: gateway
       sectionName: https-gateway
+    - name: external
+      namespace: gateway
+      sectionName: https-gateway
   hostnames:
     - monitoring.${cluster_domain}
   rules:

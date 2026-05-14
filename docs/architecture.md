@@ -123,7 +123,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/infra/network/vpn` | `./namespace.yaml`, `./global-config.yaml`, `./secret.yaml`, `./pvc.yaml`, `./deployment.yaml`, `./service.yaml`, `./vpn-dns.yaml`, `./httproute.yaml` |
 | `kubernetes/apps/cloudflare-tunnels` | `namespace.yaml`, `secret.yaml`, `deployment.yaml`, `podmonitor.yaml` |
 | `kubernetes/apps/external` | `namespace.yaml`, `synology.yaml` |
-| `kubernetes/apps/foundryvtt` | `namespace.yaml`, `pvc.yaml`, `secret.yaml`, `deployment.yaml`, `service.yaml`, `httproute.yaml` |
+| `kubernetes/apps/foundryvtt` | `namespace.yaml`, `pvc.yaml`, `secret.yaml`, `deployment.yaml`, `service.yaml`, `httproute.yaml`, `httproute-public.yaml` |
 | `kubernetes/apps/jellyfin` | `./app.yaml`, `./httproute.yaml` |
 | `kubernetes/apps/pihole` | `app.yaml`, `secret.yaml`, `httproute.yaml` |
 | `kubernetes/apps/renovate` | `app.yaml`, `secret.yaml` |
@@ -135,11 +135,12 @@ This document is generated for agentic repo navigation. It records relationships
 
 | Kind | Route | Hostnames | Parent Gateway | Backend refs |
 | --- | --- | --- | --- | --- |
-| `HTTPRoute` | `authentik/authentik` | `authentik.${cluster_domain}` | `gateway/internal/https-gateway` | `authentik-server:80` |
+| `HTTPRoute` | `authentik/authentik` | `authentik.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `authentik-server:80` |
 | `HTTPRoute` | `external/synology-route` | `synology.petebeegle.com` | `gateway/internal/synology-https-gateway` | `synology-proxy:8080` |
+| `HTTPRoute` | `foundryvtt/foundryvtt-public` | `foundry2.petebeegle.com` | `gateway/public/http-gateway` | `foundryvtt:80` |
 | `HTTPRoute` | `foundryvtt/foundryvtt` | `foundry.${cluster_domain}` | `gateway/internal/https-gateway` | `foundryvtt:80` |
 | `HTTPRoute` | `gateway/https-redirect` | `*.${cluster_domain}, ${cluster_domain}` | `gateway/internal/http-gateway, gateway/external/http-gateway` | `(none)` |
-| `HTTPRoute` | `grafana/monitoring` | `monitoring.${cluster_domain}` | `gateway/internal/https-gateway` | `grafana:80` |
+| `HTTPRoute` | `grafana/monitoring` | `monitoring.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `grafana:80` |
 | `HTTPRoute` | `jellyfin/jellyfin` | `jellyfin.${cluster_domain}` | `gateway/internal/https-gateway` | `jellyfin:8096` |
 | `HTTPRoute` | `otel-collector/otel-collector` | `otel.${cluster_domain}` | `gateway/internal/https-gateway` | `otel-collector-opentelemetry-collector:4318` |
 | `HTTPRoute` | `pihole/pihole-httproute` | `pihole.${cluster_domain}` | `gateway/internal/https-gateway` | `pihole-web:80` |
