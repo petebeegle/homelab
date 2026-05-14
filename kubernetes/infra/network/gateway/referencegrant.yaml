@@ -25,6 +25,9 @@ spec:
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
       namespace: wireguard
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: grafana
   to:
     - group: gateway.networking.k8s.io
       kind: Gateway
