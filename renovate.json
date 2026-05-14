@@ -29,7 +29,7 @@
       "customType": "regex",
       "managerFilePatterns": [
         "/(?:^|/)kubernetes/infra/crds/kustomization\\.ya?ml$/",
-        "/(?:^|/)terraform/cluster/modules/talos-bootstrap/templates/control_plane.yaml.tftpl$/"
+        "/(?:^|/)terraform/modules/talos-bootstrap/templates/control_plane.yaml.tftpl$/"
       ],
       "matchStrings": [
         "https://github.com/(?<depName>[^/]+/[^/]+)//[^?]+\\?ref=(?<currentValue>.*?)\\s",
@@ -41,7 +41,7 @@
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "/(?:^|/)terraform/cluster/terraform.tfvars$/"
+        "/(?:^|/)terraform/production/terraform.tfvars$/"
       ],
       "matchStrings": [
         "talos_version\\s*=\\s*\"(?<currentValue>[^\"]+)\""
@@ -53,7 +53,7 @@
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "/(?:^|/)terraform/cluster/modules/talos-bootstrap/network.tf$/"
+        "/(?:^|/)terraform/modules/talos-bootstrap/network.tf$/"
       ],
       "matchStrings": [
         "chart\\s*=\\s*\"(?<depName>[^\"]+)\"[\\s\\S]*?version\\s*=\\s*\"(?<currentValue>[^\"]+)\""

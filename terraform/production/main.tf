@@ -1,5 +1,5 @@
 module "talos_provision" {
-  source = "./modules/talos-provision"
+  source = "../modules/talos-provision"
 
   talos_version = var.talos_version
 }
@@ -15,7 +15,7 @@ resource "proxmox_virtual_environment_file" "talos_iso" {
 }
 
 module "kubernetes_nodes" {
-  source = "./modules/vm"
+  source = "../modules/vm"
   providers = {
     proxmox = proxmox
   }
@@ -45,7 +45,7 @@ module "kubernetes_nodes" {
 }
 
 module "talos_bootstrap" {
-  source     = "./modules/talos-bootstrap"
+  source     = "../modules/talos-bootstrap"
   depends_on = [module.kubernetes_nodes]
 
   talos_version = var.talos_version

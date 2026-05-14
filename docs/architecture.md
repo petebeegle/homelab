@@ -149,8 +149,8 @@ This lists secret manifest presence only. Secret values are not rendered.
 
 | Type | Name | Source | References |
 | --- | --- | --- | --- |
-| Module | `kubernetes_nodes` | `./modules/vm` | `(none)` |
-| Module | `talos_bootstrap` | `./modules/talos-bootstrap` | `kubernetes_nodes, talos_provision` |
-| Module | `talos_provision` | `./modules/talos-provision` | `(none)` |
+| Module | `kubernetes_nodes` | `../modules/vm` | `(none)` |
+| Module | `talos_bootstrap` | `../modules/talos-bootstrap` | `kubernetes_nodes, talos_provision` |
+| Module | `talos_provision` | `../modules/talos-provision` | `(none)` |
 | Root resource | `proxmox_virtual_environment_file.talos_iso` | `(root)` | `talos_provision` |
 | Root resource | `terraform_data.bootstrap_script` | `(root)` | `talos_bootstrap` |

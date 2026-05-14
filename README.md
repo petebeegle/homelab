@@ -10,7 +10,7 @@
 
 ## Quickstart
 ### 1. Configure terraform
-Create a `terraform/terraform.tfvars`:
+Create a `terraform/production/terraform.tfvars`:
 ```tf
 pm_api_url="https://proxmox:8006/api2/json"
 pm_api_token_id="token-n-smokin"
@@ -39,7 +39,7 @@ This creates an `agent-service-account` Viewer service account in Grafana and ou
 ### 3. Create the cluster
 Create and bootstrap an environment via terraform!
 ```sh
-cd terraform/cluster
+cd terraform/production
 terraform init
 
 # live más
@@ -220,6 +220,7 @@ Random things that have caused me suffering:
 - [Resize a PVC](./.codex/runbooks/resize-pvc.md)
 
 ## Terraform Docs for Nerds
-- [Main Module](./terraform/README.md)
-    - [Create Node](./terraform/modules/node/README.md)
-    - [Talos Image](./terraform/modules/talos/README.md)
+- [Production Root](./terraform/production/README.md)
+    - [VM](./terraform/modules/vm/README.md)
+    - [Talos Bootstrap](./terraform/modules/talos-bootstrap/README.md)
+    - [Talos Provision](./terraform/modules/talos-provision/README.md)
