@@ -63,6 +63,11 @@ variable "talos_version" {
   type        = string
 }
 
+variable "kubernetes_version" {
+  description = "Kubernetes version for Talos-generated component images and bootstrap Cilium template compatibility"
+  type        = string
+}
+
 variable "control_nodes" {
   description = "List of nodes to compose the cluster control plane"
   type        = set(string)

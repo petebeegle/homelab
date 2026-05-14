@@ -1,10 +1,11 @@
 data "talos_machine_configuration" "control_plane_configuration" {
-  for_each         = var.control_nodes
-  cluster_name     = var.cluster.name
-  cluster_endpoint = var.cluster.endpoint
-  talos_version    = var.talos_version
-  machine_type     = "controlplane"
-  machine_secrets  = talos_machine_secrets.this.machine_secrets
+  for_each           = var.control_nodes
+  cluster_name       = var.cluster.name
+  cluster_endpoint   = var.cluster.endpoint
+  talos_version      = var.talos_version
+  kubernetes_version = var.kubernetes_version
+  machine_type       = "controlplane"
+  machine_secrets    = talos_machine_secrets.this.machine_secrets
 }
 
 resource "talos_machine_configuration_apply" "control_plane_apply" {

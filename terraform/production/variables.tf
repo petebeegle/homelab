@@ -82,6 +82,12 @@ variable "talos_version" {
   type        = string
 }
 
+variable "kubernetes_version" {
+  description = "Pins the Talos-generated Kubernetes component images so provider defaults cannot jump ahead of the selected Talos version"
+  type        = string
+  default     = "v1.35.0"
+}
+
 variable "kubeconfig_output_path" {
   description = "Path where the production kubeconfig should be written"
   type        = string
