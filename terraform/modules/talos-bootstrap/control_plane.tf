@@ -16,8 +16,9 @@ resource "talos_machine_configuration_apply" "control_plane_apply" {
 
   config_patches = [
     templatefile("${path.module}/templates/control_plane.yaml.tftpl", {
-      install_image  = var.installer
-      cilium_install = data.helm_template.cilium.manifest
+      install_image                      = var.installer
+      cilium_install                     = data.helm_template.cilium.manifest
+      allow_scheduling_on_control_planes = var.allow_scheduling_on_control_planes
     }),
     templatefile("${path.module}/templates/docker_proxy.yaml.tftpl", {
       docker_user     = var.docker_registry.user

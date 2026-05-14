@@ -2,6 +2,7 @@ machine:
   install:
     image: ${install_image}
 cluster:
+  allowSchedulingOnControlPlanes: ${allow_scheduling_on_control_planes}
   network:
     cni:
       name: none

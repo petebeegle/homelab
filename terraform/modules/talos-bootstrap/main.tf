@@ -50,17 +50,21 @@ resource "talos_cluster_kubeconfig" "this" {
 }
 
 resource "local_file" "kube_config" {
+  count = var.kubeconfig_output_path == null ? 0 : 1
+
   depends_on      = [talos_cluster_kubeconfig.this]
   content         = talos_cluster_kubeconfig.this.kubeconfig_raw
-  filename        = pathexpand("~/.kube/config")
+  filename        = pathexpand(var.kubeconfig_output_path)
   file_permission = "0600"
 }
 
 resource "local_file" "talos_config" {
+  count = var.talosconfig_output_path == null ? 0 : 1
+
   depends_on = [data.talos_client_configuration.this]
 
   content         = data.talos_client_configuration.this.talos_config
-  filename        = pathexpand("~/.talos/config")
+  filename        = pathexpand(var.talosconfig_output_path)
   file_permission = "0600"
 }
 

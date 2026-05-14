@@ -7,10 +7,13 @@ metadata:
 data:
   cluster_domain: "lab.petebeegle.com"
   cluster_env: "production"
+  gateway_internal_pool: "192.168.30.240/28"
+  gateway_external_pool: "192.168.40.240/28"
   gateway_internal_ip: "192.168.30.241"
   gateway_passthrough_ip: "192.168.30.242"
   gateway_external_ip: "192.168.40.241"
   gateway_external_passthrough_ip: "192.168.40.242"
+  cilium_operator_replicas: "3"
   nfs_server: "192.168.30.99"
   letsencrypt_server: "https://acme-v02.api.letsencrypt.org/directory"
   wildcard_cert_name: "wildcard-lab-petebeegle-com"

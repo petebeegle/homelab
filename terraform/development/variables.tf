@@ -21,7 +21,7 @@ variable "docker_password" {
 }
 
 variable "nodes" {
-  description = "List of nodes to create in the cluster"
+  description = "List of nodes to create in the development cluster"
   type = list(object({
     address      = string
     node         = string
@@ -31,6 +31,17 @@ variable "nodes" {
     machine_type = string
     disk_size    = number
   }))
+  default = [
+    {
+      address      = "192.168.30.170"
+      node         = "pve04"
+      vm_id        = 170
+      memory       = 24576
+      cores        = 4
+      machine_type = "controlplane"
+      disk_size    = 180
+    }
+  ]
 
   validation {
     condition = alltrue([
@@ -72,8 +83,8 @@ variable "nodes" {
   validation {
     condition = length([
       for node in var.nodes : node if node.machine_type == "controlplane"
-    ]) >= 1
-    error_message = "At least one controlplane node is required."
+    ]) == 1
+    error_message = "The development cluster expects exactly one controlplane node by default."
   }
 }
 
@@ -83,19 +94,19 @@ variable "talos_version" {
 }
 
 variable "kubeconfig_output_path" {
-  description = "Path where the production kubeconfig should be written"
+  description = "Path where the development kubeconfig should be written"
   type        = string
-  default     = "~/.kube/homelab-production.config"
+  default     = "~/.kube/homelab-development.config"
 }
 
 variable "talosconfig_output_path" {
-  description = "Path where the production talosconfig should be written"
+  description = "Path where the development talosconfig should be written"
   type        = string
-  default     = "~/.talos/homelab-production.config"
+  default     = "~/.talos/homelab-development.config"
 }
 
 variable "flux_bootstrap_path" {
-  description = "Repository path that Flux should bootstrap for production"
+  description = "Repository path that Flux should bootstrap for development"
   type        = string
-  default     = "./kubernetes/clusters/production"
+  default     = "./kubernetes/clusters/development"
 }

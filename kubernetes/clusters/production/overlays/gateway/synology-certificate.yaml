@@ -2,12 +2,12 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: ${wildcard_cert_name}
+  name: synology-petebeegle-com
   namespace: gateway
 spec:
-  secretName: ${wildcard_cert_name}
+  secretName: synology-petebeegle-com
   dnsNames:
-    - "*.${cluster_domain}"
+    - synology.petebeegle.com
   issuerRef:
     name: cloudflare
     kind: ClusterIssuer

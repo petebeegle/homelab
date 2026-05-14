@@ -13,8 +13,14 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 OUTPUT = ROOT / "docs" / "architecture.md"
-PRODUCTION = ROOT / "kubernetes" / "clusters" / "production"
-TERRAFORM_PRODUCTION = ROOT / "terraform" / "production"
+CLUSTERS = {
+    "production": ROOT / "kubernetes" / "clusters" / "production",
+    "development": ROOT / "kubernetes" / "clusters" / "development",
+}
+TERRAFORM_ROOTS = {
+    "production": ROOT / "terraform" / "production",
+    "development": ROOT / "terraform" / "development",
+}
 
 
 @dataclass(frozen=True)
@@ -116,10 +122,10 @@ def manifests_under(*roots: Path) -> list[Manifest]:
     return manifests
 
 
-def production_flux_kustomizations() -> list[Manifest]:
+def cluster_flux_kustomizations(root: Path) -> list[Manifest]:
     items = [
         item
-        for item in manifests_under(PRODUCTION / "infra", PRODUCTION / "apps")
+        for item in manifests_under(root / "infra", root / "apps")
         if item.kind == "Kustomization"
     ]
     return sorted(items, key=lambda item: (item.relpath, item.name))
@@ -131,8 +137,10 @@ def kustomize_resources(path: Path) -> list[str]:
     return list_scalars(read(path), "resources")
 
 
-def cluster_vars() -> list[tuple[str, str]]:
-    path = PRODUCTION / "cluster-vars.yaml"
+def cluster_vars(root: Path) -> list[tuple[str, str]]:
+    path = root / "cluster-vars.yaml"
+    if not path.exists():
+        return []
     text = read(path)
     body = re.search(r"(?ms)^data:\n(?P<body>(?:  .+\n?)*)", text)
     if not body:
@@ -218,15 +226,15 @@ def secret_relationships(manifests: list[Manifest]) -> list[str]:
     return sorted(rows)
 
 
-def flux_table(items: list[Manifest]) -> list[str]:
+def flux_table(items: list[tuple[str, Manifest]]) -> list[str]:
     rows: list[str] = []
-    for item in items:
+    for cluster, item in items:
         path_value = scalar(item.text, "path")
         depends = ", ".join(f"`{dep.get('name', '')}`" for dep in list_maps(item.text, "dependsOn")) or "(none)"
         substitution = ", ".join(ref.get("name", "") for ref in list_maps(item.text, "substituteFrom")) or "(none)"
         decrypts = "sops" if "decryption:" in item.text and "provider: sops" in item.text else "no"
         rows.append(
-            f"| `{item.name}` | `{path_value}` | {depends} | `{substitution}` | `{decrypts}` |"
+            f"| `{cluster}` | `{item.name}` | `{path_value}` | {depends} | `{substitution}` | `{decrypts}` |"
         )
     return rows
 
@@ -268,23 +276,29 @@ def hcl_blocks(text: str, block_type: str) -> list[tuple[str, str]]:
 
 
 def terraform_relationships() -> list[str]:
-    main = read(TERRAFORM_PRODUCTION / "main.tf")
     rows: list[str] = []
-    for name, body in hcl_blocks(main, "module"):
-        source = hcl_attr(body, "source")
-        deps = ", ".join(re.findall(r"module\.([A-Za-z0-9_-]+)", body)) or "(none)"
-        rows.append(f"| Module | `{name}` | `{source}` | `{deps}` |")
-    for name, body in hcl_blocks(main, "resource"):
-        refs = ", ".join(sorted(set(re.findall(r"module\.([A-Za-z0-9_-]+)", body)))) or "(none)"
-        rows.append(f"| Root resource | `{name}` | `(root)` | `{refs}` |")
+    for root_name, root in TERRAFORM_ROOTS.items():
+        main_path = root / "main.tf"
+        if not main_path.exists():
+            continue
+        main = read(main_path)
+        for name, body in hcl_blocks(main, "module"):
+            source = hcl_attr(body, "source")
+            deps = ", ".join(re.findall(r"module\.([A-Za-z0-9_-]+)", body)) or "(none)"
+            rows.append(f"| `{root_name}` | Module | `{name}` | `{source}` | `{deps}` |")
+        for name, body in hcl_blocks(main, "resource"):
+            refs = ", ".join(sorted(set(re.findall(r"module\.([A-Za-z0-9_-]+)", body)))) or "(none)"
+            rows.append(f"| `{root_name}` | Root resource | `{name}` | `(root)` | `{refs}` |")
     return sorted(rows)
 
 
 def render() -> str:
     manifests = manifests_under(ROOT / "kubernetes")
-    infra_flux = production_flux_kustomizations()
-    app_flux = [item for item in infra_flux if "/apps/" in item.relpath]
-    infra_flux = [item for item in infra_flux if "/infra/" in item.relpath]
+    flux_items: list[tuple[str, Manifest]] = []
+    for cluster, root in CLUSTERS.items():
+        flux_items.extend((cluster, item) for item in cluster_flux_kustomizations(root))
+    app_flux = [(cluster, item) for cluster, item in flux_items if "/apps/" in item.relpath]
+    infra_flux = [(cluster, item) for cluster, item in flux_items if "/infra/" in item.relpath]
 
     lines: list[str] = [
         "# Architecture",
@@ -293,19 +307,38 @@ def render() -> str:
         "",
         "This document is generated for agentic repo navigation. It records relationships that must stay aligned with the Kubernetes, Flux, and Terraform source of truth.",
         "",
-        "## Cluster Entrypoint",
+        "## Cluster Entrypoints",
         "",
-        f"- Production root Kustomization: `{relative(PRODUCTION / 'kustomization.yaml')}`.",
-        f"- Root resources: {', '.join(f'`{item}`' for item in kustomize_resources(PRODUCTION / 'kustomization.yaml'))}.",
-        f"- Infra activation list: {', '.join(f'`{item}`' for item in kustomize_resources(PRODUCTION / 'infra' / 'kustomization.yaml'))}.",
-        f"- App activation list: {', '.join(f'`{item}`' for item in kustomize_resources(PRODUCTION / 'apps' / 'kustomization.yaml'))}.",
-        "",
-        "### Flux Substitution Variables",
-        "",
-        "| Variable | Value |",
-        "| --- | --- |",
     ]
-    lines.extend(f"| `{key}` | `{value}` |" for key, value in cluster_vars())
+    for cluster, root in CLUSTERS.items():
+        lines.extend(
+            [
+                f"### {cluster.title()}",
+                "",
+                f"- Root Kustomization: `{relative(root / 'kustomization.yaml')}`.",
+                f"- Root resources: {', '.join(f'`{item}`' for item in kustomize_resources(root / 'kustomization.yaml'))}.",
+                f"- Infra activation list: {', '.join(f'`{item}`' for item in kustomize_resources(root / 'infra' / 'kustomization.yaml'))}.",
+                f"- App activation list: {', '.join(f'`{item}`' for item in kustomize_resources(root / 'apps' / 'kustomization.yaml'))}.",
+                "",
+            ]
+        )
+        branch_templates = root / "branches" / "kustomization.yaml"
+        if branch_templates.exists():
+            lines.append(
+                f"- Branch environment templates: {', '.join(f'`{item}`' for item in kustomize_resources(branch_templates))}."
+            )
+            lines.append("")
+
+    lines.extend(
+        [
+            "### Flux Substitution Variables",
+        "",
+            "| Cluster | Variable | Value |",
+            "| --- | --- | --- |",
+        ]
+    )
+    for cluster, root in CLUSTERS.items():
+        lines.extend(f"| `{cluster}` | `{key}` | `{value}` |" for key, value in cluster_vars(root))
 
     lines.extend(
         [
@@ -314,8 +347,8 @@ def render() -> str:
             "",
             "### Infrastructure",
             "",
-            "| Kustomization | Path | Depends on | Substitute from | SOPS |",
-            "| --- | --- | --- | --- | --- |",
+            "| Cluster | Kustomization | Path | Depends on | Substitute from | SOPS |",
+            "| --- | --- | --- | --- | --- | --- |",
         ]
     )
     lines.extend(flux_table(infra_flux))
@@ -324,8 +357,8 @@ def render() -> str:
             "",
             "### Applications",
             "",
-            "| Kustomization | Path | Depends on | Substitute from | SOPS |",
-            "| --- | --- | --- | --- | --- |",
+            "| Cluster | Kustomization | Path | Depends on | Substitute from | SOPS |",
+            "| --- | --- | --- | --- | --- | --- |",
         ]
     )
     lines.extend(flux_table(app_flux))
@@ -382,8 +415,8 @@ def render() -> str:
             "",
             "## Terraform Substrate",
             "",
-            "| Type | Name | Source | References |",
-            "| --- | --- | --- | --- |",
+            "| Root | Type | Name | Source | References |",
+            "| --- | --- | --- | --- | --- |",
         ]
     )
     lines.extend(terraform_relationships())

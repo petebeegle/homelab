@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-vars
+  namespace: flux-system
+data:
+  cluster_domain: "development.lab.petebeegle.com"
+  cluster_env: "development"
+  gateway_internal_pool: "192.168.30.224/28"
+  gateway_external_pool: "192.168.40.224/28"
+  gateway_internal_ip: "192.168.30.225"
+  gateway_passthrough_ip: "192.168.30.226"
+  gateway_external_ip: "192.168.40.225"
+  gateway_external_passthrough_ip: "192.168.40.226"
+  cilium_operator_replicas: "1"
+  nfs_server: "192.168.30.99"
+  letsencrypt_server: "https://acme-staging-v02.api.letsencrypt.org/directory"
+  wildcard_cert_name: "wildcard-development-lab-petebeegle-com"

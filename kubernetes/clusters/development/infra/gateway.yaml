@@ -7,7 +7,7 @@ metadata:
 spec:
   interval: 2m
   retryInterval: 2m
-  path: ./kubernetes/clusters/production/overlays/gateway
+  path: ./kubernetes/infra/network/gateway
   prune: true
   wait: true
   sourceRef:

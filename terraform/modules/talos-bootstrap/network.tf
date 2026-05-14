@@ -7,6 +7,8 @@ data "helm_template" "cilium" {
   kube_version = "v1.35.0" # version to use for .Compatibilies.KubeVersion
 
   values = [
-    file("${path.root}/../../kubernetes/infra/network/cilium/values.yaml")
+    templatefile("${path.root}/../../kubernetes/infra/network/cilium/values.yaml", {
+      cilium_operator_replicas = var.cilium_operator_replicas
+    })
   ]
 }

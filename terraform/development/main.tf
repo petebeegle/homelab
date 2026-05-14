@@ -41,7 +41,7 @@ module "kubernetes_nodes" {
   memory    = each.value.memory
   disk_size = each.value.disk_size
 
-  additional_tags = [each.value.machine_type]
+  additional_tags = [each.value.machine_type, "development"]
 }
 
 module "talos_bootstrap" {
@@ -52,15 +52,15 @@ module "talos_bootstrap" {
   installer     = module.talos_provision.installer_url
 
   cluster = {
-    name     = "k8s-proxmox-cluster"
-    endpoint = "https://192.168.30.150:6443"
+    name     = "homelab-development"
+    endpoint = "https://192.168.30.170:6443"
   }
 
   control_nodes = [for node in var.nodes : node.address if node.machine_type == "controlplane"]
   worker_nodes  = [for node in var.nodes : node.address if node.machine_type == "worker"]
 
-  allow_scheduling_on_control_planes = false
-  cilium_operator_replicas           = 3
+  allow_scheduling_on_control_planes = true
+  cilium_operator_replicas           = 1
   kubeconfig_output_path             = var.kubeconfig_output_path
   talosconfig_output_path            = var.talosconfig_output_path
 
@@ -94,16 +94,3 @@ resource "terraform_data" "bootstrap_script" {
     command = file("${path.module}/../scripts/flux-install.sh")
   }
 }
-
-# resource "null_resource" "bootstrap_script" {
-#   depends_on = [module.talos]
-
-#   provisioner "local-exec" {
-#     environment = {
-#       GITHUB_TOKEN = var.github_token
-#       GITHUB_USER  = var.github_user
-#     }
-
-#     command = file("${path.module}/scripts/flux-install.sh")
-#   }
-# }
