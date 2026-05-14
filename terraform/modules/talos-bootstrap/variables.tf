@@ -104,3 +104,21 @@ variable "installer" {
   description = "Installer url to load"
   type        = string
 }
+
+variable "allow_scheduling_on_control_planes" {
+  description = "Allow Kubernetes workloads to schedule on control-plane nodes"
+  type        = bool
+  default     = false
+}
+
+variable "kubeconfig_output_path" {
+  description = "Optional path where the generated kubeconfig should be written"
+  type        = string
+  default     = null
+}
+
+variable "talosconfig_output_path" {
+  description = "Optional path where the generated talosconfig should be written"
+  type        = string
+  default     = null
+}

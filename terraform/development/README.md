@@ -1,8 +1,8 @@
-# Production Terraform Root
+# Development Terraform Root
 
-This root provisions the production Talos cluster and bootstraps Flux at `./kubernetes/clusters/production`.
+This root provisions the dedicated single-node development Talos cluster and bootstraps Flux at `./kubernetes/clusters/development`.
 
-The generated kubeconfig and talosconfig are written to cluster-specific paths by default so production and development operator files do not overwrite each other.
+Keep local shared credentials in ignored `terraform/development/terraform.tfvars`; the default development node is declared in `variables.tf` so production nodes are not copied by accident.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -41,16 +41,16 @@ The generated kubeconfig and talosconfig are written to cluster-specific paths b
 | ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_docker_password"></a> [docker\_password](#input\_docker\_password) | Docker password for authenticating to the pass-through docker registry | `string` | n/a | yes |
 | <a name="input_docker_user"></a> [docker\_user](#input\_docker\_user) | Docker user for authenticating to the pass-through docker registry | `string` | n/a | yes |
-| <a name="input_flux_bootstrap_path"></a> [flux\_bootstrap\_path](#input\_flux\_bootstrap\_path) | Repository path that Flux should bootstrap for production | `string` | `"./kubernetes/clusters/production"` | no |
+| <a name="input_flux_bootstrap_path"></a> [flux\_bootstrap\_path](#input\_flux\_bootstrap\_path) | Repository path that Flux should bootstrap for development | `string` | `"./kubernetes/clusters/development"` | no |
 | <a name="input_github_token"></a> [github\_token](#input\_github\_token) | GitHub token to use for the bootstrap script | `string` | n/a | yes |
 | <a name="input_github_user"></a> [github\_user](#input\_github\_user) | GitHub user to use for the bootstrap script | `string` | n/a | yes |
-| <a name="input_kubeconfig_output_path"></a> [kubeconfig\_output\_path](#input\_kubeconfig\_output\_path) | Path where the production kubeconfig should be written | `string` | `"~/.kube/homelab-production.config"` | no |
-| <a name="input_nodes"></a> [nodes](#input\_nodes) | List of nodes to create in the cluster | <pre>list(object({<br/>    address      = string<br/>    node         = string<br/>    vm_id        = number<br/>    memory       = number<br/>    cores        = number<br/>    machine_type = string<br/>    disk_size    = number<br/>  }))</pre> | n/a | yes |
+| <a name="input_kubeconfig_output_path"></a> [kubeconfig\_output\_path](#input\_kubeconfig\_output\_path) | Path where the development kubeconfig should be written | `string` | `"~/.kube/homelab-development.config"` | no |
+| <a name="input_nodes"></a> [nodes](#input\_nodes) | List of nodes to create in the development cluster | <pre>list(object({<br/>    address      = string<br/>    node         = string<br/>    vm_id        = number<br/>    memory       = number<br/>    cores        = number<br/>    machine_type = string<br/>    disk_size    = number<br/>  }))</pre> | <pre>[<br/>  {<br/>    "address": "192.168.30.170",<br/>    "cores": 4,<br/>    "disk_size": 180,<br/>    "machine_type": "controlplane",<br/>    "memory": 24576,<br/>    "node": "pve04",<br/>    "vm_id": 170<br/>  }<br/>]</pre> | no |
 | <a name="input_pm_api_token_id"></a> [pm\_api\_token\_id](#input\_pm\_api\_token\_id) | n/a | `any` | n/a | yes |
 | <a name="input_pm_api_token_secret"></a> [pm\_api\_token\_secret](#input\_pm\_api\_token\_secret) | n/a | `any` | n/a | yes |
 | <a name="input_pm_api_url"></a> [pm\_api\_url](#input\_pm\_api\_url) | n/a | `any` | n/a | yes |
 | <a name="input_talos_version"></a> [talos\_version](#input\_talos\_version) | The version of Talos to use for the cluster | `string` | n/a | yes |
-| <a name="input_talosconfig_output_path"></a> [talosconfig\_output\_path](#input\_talosconfig\_output\_path) | Path where the production talosconfig should be written | `string` | `"~/.talos/homelab-production.config"` | no |
+| <a name="input_talosconfig_output_path"></a> [talosconfig\_output\_path](#input\_talosconfig\_output\_path) | Path where the development talosconfig should be written | `string` | `"~/.talos/homelab-development.config"` | no |
 
 ## Outputs
 

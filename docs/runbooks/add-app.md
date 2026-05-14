@@ -19,7 +19,8 @@ Use this runbook to add a Kubernetes app managed by Flux.
 5. Add `kustomization.yaml` listing the app resources.
 6. Add `kubernetes/clusters/production/apps/<app-name>.yaml` as a Flux Kustomization.
 7. Add the new cluster-layer file to `kubernetes/clusters/production/apps/kustomization.yaml`.
-8. Verify after Flux reconciles.
+8. If the app should be testable in branch environments, add a branch-aware overlay that uses `branch_slug` in names, namespaces, hostnames, and PVC names.
+9. Verify after Flux reconciles.
 
 ## HelmRelease Template
 
@@ -275,6 +276,22 @@ spec:
 ```
 
 Add `- name: nfs-csi` under `dependsOn` when the app uses NFS-backed PVCs.
+
+## Branch-Aware App Overlay
+
+Use `branch_slug`, not slot terminology. Branch app hostnames must follow `<app>-${branch_slug}.development.lab.petebeegle.com`, and branch resources must be unique enough to coexist with the development base and other branch apps.
+
+For raw manifests, create an overlay such as `kubernetes/apps/<app-name>/branch/` with:
+
+- Namespace: `<app-name>-${branch_slug}`
+- Workload and Service names: `<app-name>-${branch_slug}`
+- HTTPRoute hostname: `<app-name>-${branch_slug}.${cluster_domain}`
+- PVC names, if any: `<app-name>-${branch_slug}-<purpose>`
+- A branch-specific `ReferenceGrant` in `gateway` when the route references a shared Gateway from a branch namespace
+
+Cluster-layer branch activations should live under a reviewed development path, point their `sourceRef` at a branch-specific `GitRepository`, set `postBuild.substitute.branch_slug`, and remain `suspend: true` until the referenced branch exists. See `kubernetes/clusters/development/branches/` and `kubernetes/apps/whoami/branch/` for the initial template.
+
+Cluster-scoped changes, including CRDs, controllers, Gateway API shared objects, and storage classes, are tested sequentially on the development base. Do not fan those changes out through parallel branch environments.
 
 ## Verification
 

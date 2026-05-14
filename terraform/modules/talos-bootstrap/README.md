@@ -40,11 +40,14 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
+| <a name="input_allow_scheduling_on_control_planes"></a> [allow\_scheduling\_on\_control\_planes](#input\_allow\_scheduling\_on\_control\_planes) | Allow Kubernetes workloads to schedule on control-plane nodes | `bool` | `false` | no |
 | <a name="input_cluster"></a> [cluster](#input\_cluster) | Information about the cluster to join | <pre>object({<br/>    name     = string<br/>    endpoint = string<br/>  })</pre> | n/a | yes |
 | <a name="input_control_nodes"></a> [control\_nodes](#input\_control\_nodes) | List of nodes to compose the cluster control plane | `set(string)` | n/a | yes |
 | <a name="input_docker_registry"></a> [docker\_registry](#input\_docker\_registry) | Docker registry credentials | <pre>object({<br/>    user     = string<br/>    password = string<br/>  })</pre> | n/a | yes |
 | <a name="input_installer"></a> [installer](#input\_installer) | Installer url to load | `string` | n/a | yes |
+| <a name="input_kubeconfig_output_path"></a> [kubeconfig\_output\_path](#input\_kubeconfig\_output\_path) | Optional path where the generated kubeconfig should be written | `string` | `null` | no |
 | <a name="input_talos_version"></a> [talos\_version](#input\_talos\_version) | The version of Talos to use for the cluster | `string` | n/a | yes |
+| <a name="input_talosconfig_output_path"></a> [talosconfig\_output\_path](#input\_talosconfig\_output\_path) | Optional path where the generated talosconfig should be written | `string` | `null` | no |
 | <a name="input_worker_nodes"></a> [worker\_nodes](#input\_worker\_nodes) | List of nodes to compose the cluster worker plane | `set(string)` | n/a | yes |
 
 ## Outputs

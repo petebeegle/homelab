@@ -1,0 +1,42 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../../../infra/network/gateway
+patches:
+  - path: remove-production-only-certificate.yaml
+  - target:
+      group: gateway.networking.k8s.io
+      version: v1
+      kind: Gateway
+      name: internal
+      namespace: gateway
+    patch: |-
+      - op: remove
+        path: /spec/listeners/3
+  - target:
+      group: gateway.networking.k8s.io
+      version: v1
+      kind: Gateway
+      name: passthrough
+      namespace: gateway
+    patch: |-
+      - op: remove
+        path: /spec/listeners/5
+      - op: remove
+        path: /spec/listeners/4
+      - op: remove
+        path: /spec/listeners/3
+      - op: remove
+        path: /spec/listeners/2
+      - op: remove
+        path: /spec/listeners/1
+  - target:
+      group: gateway.networking.k8s.io
+      version: v1
+      kind: HTTPRoute
+      name: https-redirect
+      namespace: gateway
+    patch: |-
+      - op: remove
+        path: /spec/hostnames/2

@@ -94,6 +94,7 @@ jobs:
           set -euo pipefail
           for dir in \
             terraform/production \
+            terraform/development \
             terraform/external/grafana \
             terraform/external/nexus \
             terraform/external/synology
@@ -131,10 +132,16 @@ jobs:
           kubectl kustomize kubernetes/clusters/production >
           /tmp/homelab-production.yaml
 
+      - name: Render development manifests
+        run: >-
+          kubectl kustomize kubernetes/clusters/development >
+          /tmp/homelab-development.yaml
+
       - name: Validate rendered manifests
         run: >-
           kubeconform -summary -ignore-missing-schemas
           /tmp/homelab-production.yaml
+          /tmp/homelab-development.yaml
 
   secrets:
     name: Secrets
