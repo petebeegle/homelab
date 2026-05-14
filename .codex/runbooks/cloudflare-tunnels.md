@@ -35,7 +35,7 @@ cloudflared tunnel route dns my-tunnel example.com
 ## Route Public Apps
 
 Public Cloudflare hostnames should enter Kubernetes through `gateway/public`.
-Do not point cloudflared ingress rules directly at app Services.
+Cloudflared forwards public traffic to the public Gateway over HTTP, and the app-owned `HTTPRoute` selects the backend Service. Do not point cloudflared ingress rules directly at app Services.
 
 For each public hostname:
 
