@@ -52,6 +52,8 @@ skip {
 
 If you override `nodes`, keep the development node unique from production. The default is the single `192.168.30.170` control-plane VM.
 
+Keep `kubernetes_version` at a version supported by `talos_version`. It defaults to `v1.35.0` so Talos machine configuration generation and bootstrap Cilium rendering stay pinned instead of following newer Terraform provider defaults.
+
 ## Terraform Apply
 
 ```sh
@@ -60,6 +62,8 @@ terraform init
 terraform plan
 terraform apply
 ```
+
+If `terraform apply` fails because Talos rejects a Kubernetes version as too new, check `talos_version` and `kubernetes_version` together before retrying. Do not work around this with live-cluster edits; update the Terraform variables and re-apply through Git.
 
 The Talos bootstrap module writes cluster-specific operator files by default:
 

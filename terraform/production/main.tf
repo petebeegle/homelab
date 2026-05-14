@@ -48,8 +48,9 @@ module "talos_bootstrap" {
   source     = "../modules/talos-bootstrap"
   depends_on = [module.kubernetes_nodes]
 
-  talos_version = var.talos_version
-  installer     = module.talos_provision.installer_url
+  talos_version      = var.talos_version
+  kubernetes_version = var.kubernetes_version
+  installer          = module.talos_provision.installer_url
 
   cluster = {
     name     = "k8s-proxmox-cluster"

@@ -1,10 +1,11 @@
 data "talos_machine_configuration" "workers" {
-  for_each         = var.worker_nodes
-  cluster_name     = var.cluster.name
-  cluster_endpoint = var.cluster.endpoint
-  talos_version    = var.talos_version
-  machine_type     = "worker"
-  machine_secrets  = talos_machine_secrets.this.machine_secrets
+  for_each           = var.worker_nodes
+  cluster_name       = var.cluster.name
+  cluster_endpoint   = var.cluster.endpoint
+  talos_version      = var.talos_version
+  kubernetes_version = var.kubernetes_version
+  machine_type       = "worker"
+  machine_secrets    = talos_machine_secrets.this.machine_secrets
 }
 
 resource "talos_machine_configuration_apply" "worker_apply" {
