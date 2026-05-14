@@ -25,6 +25,12 @@ spec:
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
       namespace: wireguard
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: grafana
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: authentik
   to:
     - group: gateway.networking.k8s.io
       kind: Gateway
