@@ -88,8 +88,10 @@ Primary dependency chain:
 - Apps live in directories under `kubernetes/apps/` with a local Kustomization file, workload or HelmRelease manifests, optional secret manifests, and optional Gateway routes.
 - Apps are activated by Flux Kustomization files under `kubernetes/clusters/production/apps/`, then listed from `kubernetes/clusters/production/apps/kustomization.yaml`.
 - Shared manifests use variables such as `${cluster_domain}` and `${nfs_server}`.
-- Internal HTTP exposure uses `HTTPRoute` parent `gateway/internal`, section `https-gateway`.
-- External TLS passthrough uses `TLSRoute` against the passthrough Gateway for hosts outside the cluster.
+- LAN HTTP exposure uses `HTTPRoute` parent `gateway/internal`, section `https-gateway`.
+- WireGuard service-plane HTTP exposure uses `HTTPRoute` parent `gateway/external`, section `https-gateway`; this is not internet-public exposure.
+- Internet-public HTTP exposure enters through Cloudflare Tunnel to `gateway/public`, section `http-gateway`; public apps also need a cloudflared ingress rule.
+- LAN TLS passthrough uses `TLSRoute` parent `gateway/passthrough` for backends that terminate TLS themselves; `gateway/external-passthrough` is reserved for the same pattern on the WireGuard service plane.
 - Synology CSI runs in the `dataplane` namespace and must be healthy before PVC-backed workloads can schedule.
 
 ## Before Pushing Kubernetes Changes
