@@ -45,6 +45,7 @@ The generated kubeconfig and talosconfig are written to cluster-specific paths b
 | <a name="input_github_token"></a> [github\_token](#input\_github\_token) | GitHub token to use for the bootstrap script | `string` | n/a | yes |
 | <a name="input_github_user"></a> [github\_user](#input\_github\_user) | GitHub user to use for the bootstrap script | `string` | n/a | yes |
 | <a name="input_kubeconfig_output_path"></a> [kubeconfig\_output\_path](#input\_kubeconfig\_output\_path) | Path where the production kubeconfig should be written | `string` | `"~/.kube/homelab-production.config"` | no |
+| <a name="input_kubernetes_version"></a> [kubernetes\_version](#input\_kubernetes\_version) | Pins the Talos-generated Kubernetes component images so provider defaults cannot jump ahead of the selected Talos version | `string` | `"v1.35.0"` | no |
 | <a name="input_nodes"></a> [nodes](#input\_nodes) | List of nodes to create in the cluster | <pre>list(object({<br/>    address      = string<br/>    node         = string<br/>    vm_id        = number<br/>    memory       = number<br/>    cores        = number<br/>    machine_type = string<br/>    disk_size    = number<br/>  }))</pre> | n/a | yes |
 | <a name="input_pm_api_token_id"></a> [pm\_api\_token\_id](#input\_pm\_api\_token\_id) | n/a | `any` | n/a | yes |
 | <a name="input_pm_api_token_secret"></a> [pm\_api\_token\_secret](#input\_pm\_api\_token\_secret) | n/a | `any` | n/a | yes |
