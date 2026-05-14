@@ -85,12 +85,12 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/infra/monitoring/snmp-exporter` | `repositories.yaml`, `deployment.yaml`, `service.yaml`, `servicemonitor.yaml` |
 | `kubernetes/infra/network/certs` | `./issuer.yaml` |
 | `kubernetes/infra/network/cilium` | `app.yaml`, `announcement.yaml`, `ip-pool.yaml` |
-| `kubernetes/infra/network/gateway` | `./namespace.yaml`, `./certificate.yaml`, `./gateway-internal.yaml`, `./gateway-passthrough.yaml`, `./gateway-external.yaml`, `./gateway-external-passthrough.yaml`, `./https-redirect.yaml`, `./referencegrant.yaml` |
+| `kubernetes/infra/network/gateway` | `./namespace.yaml`, `./certificate.yaml`, `./gatewayclass-public-nodeport.yaml`, `./gateway-internal.yaml`, `./gateway-passthrough.yaml`, `./gateway-external.yaml`, `./gateway-external-passthrough.yaml`, `./gateway-public.yaml`, `./https-redirect.yaml`, `./referencegrant.yaml` |
 | `kubernetes/infra/network` | `./cilium`, `./certs`, `./vpn`, `./gateway` |
 | `kubernetes/infra/network/vpn` | `./namespace.yaml`, `./global-config.yaml`, `./secret.yaml`, `./pvc.yaml`, `./deployment.yaml`, `./service.yaml`, `./vpn-dns.yaml`, `./httproute.yaml` |
 | `kubernetes/apps/cloudflare-tunnels` | `namespace.yaml`, `secret.yaml`, `deployment.yaml`, `podmonitor.yaml` |
 | `kubernetes/apps/external` | `namespace.yaml`, `synology.yaml` |
-| `kubernetes/apps/foundryvtt` | `namespace.yaml`, `pvc.yaml`, `secret.yaml`, `deployment.yaml`, `service.yaml`, `httproute.yaml` |
+| `kubernetes/apps/foundryvtt` | `namespace.yaml`, `pvc.yaml`, `secret.yaml`, `deployment.yaml`, `service.yaml`, `httproute.yaml`, `httproute-public.yaml` |
 | `kubernetes/apps/jellyfin` | `./app.yaml`, `./httproute.yaml` |
 | `kubernetes/apps/pihole` | `app.yaml`, `secret.yaml`, `httproute.yaml` |
 | `kubernetes/apps/renovate` | `app.yaml`, `secret.yaml` |
@@ -103,6 +103,7 @@ This document is generated for agentic repo navigation. It records relationships
 | --- | --- | --- | --- | --- |
 | `HTTPRoute` | `authentik/authentik` | `authentik.${cluster_domain}` | `gateway/internal/https-gateway` | `authentik-server:80` |
 | `HTTPRoute` | `external/synology-route` | `synology.petebeegle.com` | `gateway/internal/synology-https-gateway` | `synology-proxy:8080` |
+| `HTTPRoute` | `foundryvtt/foundryvtt-public` | `foundry2.petebeegle.com` | `gateway/public/http-gateway` | `foundryvtt:80` |
 | `HTTPRoute` | `foundryvtt/foundryvtt` | `foundry.${cluster_domain}` | `gateway/internal/https-gateway` | `foundryvtt:80` |
 | `HTTPRoute` | `gateway/https-redirect` | `*.${cluster_domain}, ${cluster_domain}, synology.petebeegle.com` | `gateway/internal/http-gateway, gateway/external/http-gateway` | `(none)` |
 | `HTTPRoute` | `grafana/monitoring` | `monitoring.${cluster_domain}` | `gateway/internal/https-gateway` | `grafana:80` |

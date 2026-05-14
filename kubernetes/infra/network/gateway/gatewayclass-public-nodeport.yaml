@@ -1,0 +1,22 @@
+---
+apiVersion: cilium.io/v2alpha1
+kind: CiliumGatewayClassConfig
+metadata:
+  name: public-nodeport
+  namespace: gateway
+spec:
+  service:
+    type: NodePort
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: cilium-public-nodeport
+spec:
+  controllerName: io.cilium/gateway-controller
+  description: Cilium GatewayClass for Cloudflare Tunnel public origins.
+  parametersRef:
+    group: cilium.io
+    kind: CiliumGatewayClassConfig
+    name: public-nodeport
+    namespace: gateway

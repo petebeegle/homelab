@@ -31,3 +31,20 @@ Create a proxied `CNAME` route for the tunnel:
 ```sh
 cloudflared tunnel route dns my-tunnel example.com
 ```
+
+## Route Public Apps
+
+Public Cloudflare hostnames should enter Kubernetes through `gateway/public`.
+Do not point cloudflared ingress rules directly at app Services.
+
+For each public hostname:
+
+1. Add a cloudflared ingress rule that sends the hostname to the public Gateway:
+
+   ```yaml
+   - hostname: app.petebeegle.com
+     service: http://cilium-gateway-public.gateway.svc.cluster.local:80
+   ```
+
+2. Add an app-owned `HTTPRoute` with `parentRefs` set to `gateway/public` and `sectionName: http-gateway`.
+3. Keep the final cloudflared fallback rule as `service: http_status:404`.

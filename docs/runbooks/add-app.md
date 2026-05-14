@@ -6,7 +6,7 @@ Use this runbook to add a Kubernetes app managed by Flux.
 
 - App name and namespace.
 - Deployment style: raw manifests or HelmRelease.
-- Exposure model: no route, Gateway-terminated `HTTPRoute`, or `TLSRoute` passthrough.
+- Exposure model: no route, LAN-only `internal` Gateway route, VPN-only `external` Gateway route, Cloudflare-open `public` Gateway route, or `TLSRoute` passthrough.
 - Storage needs, especially whether PVCs require `nfs-csi-storage`.
 - Secret needs; if present, also follow `docs/runbooks/add-secret.md`.
 
@@ -15,7 +15,7 @@ Use this runbook to add a Kubernetes app managed by Flux.
 1. Create `kubernetes/apps/<app-name>/`.
 2. Add `namespace.yaml` or include the Namespace in `app.yaml`.
 3. Add the workload manifest or HelmRelease.
-4. Add `httproute.yaml` for Gateway-terminated HTTP(S), or `tlsroute.yaml` for TLS passthrough.
+4. Add `httproute.yaml` for Gateway-terminated HTTP(S), `httproute-public.yaml` for Cloudflare-open HTTP exposure, or `tlsroute.yaml` for TLS passthrough.
 5. Add `kustomization.yaml` listing the app resources.
 6. Add `kubernetes/clusters/production/apps/<app-name>.yaml` as a Flux Kustomization.
 7. Add the new cluster-layer file to `kubernetes/clusters/production/apps/kustomization.yaml`.
@@ -99,6 +99,37 @@ spec:
           port: <port>
           weight: 1
 ```
+
+## Public Cloudflare HTTPRoute Template
+
+Use the public Gateway only for hostnames intentionally opened through Cloudflare Tunnel. Cloudflared forwards matching public DNS names to `gateway/public` over in-cluster HTTP, and the app owns the `HTTPRoute` that selects the backend Service.
+
+```yaml
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: <app-name>-public
+  namespace: <app-name>
+spec:
+  parentRefs:
+    - name: public
+      namespace: gateway
+      sectionName: http-gateway
+  hostnames:
+    - <public-hostname>
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: <service-name>
+          port: <port>
+          weight: 1
+```
+
+Add or update the corresponding `ConfigMap/cloudflared` ingress rule so the public hostname targets `http://cilium-gateway-public.gateway.svc.cluster.local:80`, not the app Service directly.
 
 ## External Service HTTPRoute Template
 
