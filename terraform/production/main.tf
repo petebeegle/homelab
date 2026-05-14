@@ -60,6 +60,7 @@ module "talos_bootstrap" {
   worker_nodes  = [for node in var.nodes : node.address if node.machine_type == "worker"]
 
   allow_scheduling_on_control_planes = false
+  cilium_operator_replicas           = 3
   kubeconfig_output_path             = var.kubeconfig_output_path
   talosconfig_output_path            = var.talosconfig_output_path
 

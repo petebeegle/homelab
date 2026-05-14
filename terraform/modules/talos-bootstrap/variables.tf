@@ -111,6 +111,16 @@ variable "allow_scheduling_on_control_planes" {
   default     = false
 }
 
+variable "cilium_operator_replicas" {
+  description = "Concrete Cilium operator replica count to render into bootstrap Helm values"
+  type        = number
+
+  validation {
+    condition     = var.cilium_operator_replicas >= 1
+    error_message = "Cilium operator replicas must be at least 1."
+  }
+}
+
 variable "kubeconfig_output_path" {
   description = "Optional path where the generated kubeconfig should be written"
   type        = string

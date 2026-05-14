@@ -4,6 +4,10 @@ kind: Kustomization
 resources:
   - ../../../../infra/network/gateway
 patches:
+  # The development cluster reuses the production gateway base but does not
+  # serve production-only hostnames such as synology.petebeegle.com. Delete the
+  # corresponding Certificate, listeners, and redirect hostname here so local
+  # renders show the exact Gateway surface that Flux will reconcile.
   - path: remove-production-only-certificate.yaml
   - target:
       group: gateway.networking.k8s.io
@@ -12,6 +16,8 @@ patches:
       name: internal
       namespace: gateway
     patch: |-
+      # Remove the synology.petebeegle.com HTTPS listener. It references a
+      # production-only certificate that is intentionally absent in development.
       - op: remove
         path: /spec/listeners/3
   - target:
@@ -21,6 +27,9 @@ patches:
       name: passthrough
       namespace: gateway
     patch: |-
+      # Keep only the wildcard development passthrough listener. JSON6902 array
+      # removals run against the current document, so remove higher indexes
+      # first to avoid shifting the remaining production-only listeners.
       - op: remove
         path: /spec/listeners/5
       - op: remove
@@ -38,5 +47,6 @@ patches:
       name: https-redirect
       namespace: gateway
     patch: |-
+      # Drop the production-only Synology redirect hostname.
       - op: remove
         path: /spec/hostnames/2

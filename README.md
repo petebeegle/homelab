@@ -23,6 +23,8 @@ github_user = "urnamehere"
 
 For the development cluster, copy the shared non-node values into `terraform/development/terraform.tfvars`. Keep `nodes` out of the development tfvars unless you intentionally override the single-node default documented in [Development Cluster](./docs/runbooks/development-cluster.md).
 
+Terraform roots assume their ignored `terraform.tfvars` files contain local credentials and any site-specific overrides. If a tfvars file is missing, create it from your local secret source; do not commit these files.
+
 ### 2. Configure external dependencies
 The following external dependencies also include terraform modules for easier configuration.
 
@@ -171,6 +173,8 @@ All shared manifests use `${variable}` placeholders instead of hardcoded values.
 6. Apply a per-environment SOPS age key as the `sops-age` Secret in `flux-system`
 
 The development environment starts at `kubernetes/clusters/development`, uses `development.lab.petebeegle.com`, ACME staging, reduced Cilium operator replicas, and only the resource-conscious base plus whoami. Heavy production services stay out of the base until a test explicitly needs them.
+
+Production Terraform writes operator config to `~/.kube/homelab-production.config` and `~/.talos/homelab-production.config` by default instead of overwriting `~/.kube/config` or `~/.talos/config`. Export `KUBECONFIG` and `TALOSCONFIG` to those cluster-specific files for local production workflows, or override the Terraform output path variables if you intentionally want the old global locations.
 
 ### SOPS & Secrets
 - We use [SOPS](https://github.com/getsops/sops) and [age](https://github.com/FiloSottile/age) for secret encryption.

@@ -110,7 +110,34 @@ Branch environments are for app-scoped validation on the development cluster. Us
 <app>-${branch_slug}.development.lab.petebeegle.com
 ```
 
-The initial template is in `kubernetes/clusters/development/branches/`, and the first branch-aware app overlay is `kubernetes/apps/whoami/branch/`. The template is not referenced from the live development entrypoint and is suspended by default. To activate one, copy it into a reviewed cluster-layer path, set the real branch name and slug, and unsuspend both the `GitRepository` and Flux `Kustomization`.
+The initial activation template is in `kubernetes/clusters/development/branches/`, and the first branch-aware app payload overlay is `kubernetes/apps/whoami/branch/`. The cluster-layer template creates the Flux `GitRepository` and `Kustomization` that point at a branch; the app overlay is the rendered workload payload that Flux applies after substituting `${branch_slug}`. The template is not referenced from the live development entrypoint and is suspended by default. To activate one, copy it into a reviewed cluster-layer path, set the real branch name and slug, and unsuspend both the `GitRepository` and Flux `Kustomization`.
+
+Local manifest verification does not require pushing a branch:
+
+```sh
+export branch_slug=example
+export cluster_domain=development.lab.petebeegle.com
+kubectl kustomize kubernetes/apps/whoami/branch | flux envsubst --strict
+
+kubectl kustomize kubernetes/clusters/development
+
+cp kubernetes/clusters/development/branches/whoami-template.yaml /tmp/whoami-branch.yaml
+perl -0pi -e 's/\$\{branch_name\}/my-branch/g; s/\$\{branch_slug\}/example/g' /tmp/whoami-branch.yaml
+flux build kustomization branch-whoami-example \
+  --path=./kubernetes/apps/whoami/branch \
+  --kustomization-file=/tmp/whoami-branch.yaml \
+  --dry-run
+```
+
+The live branch environment path does require a pushed branch when Flux reconciles it, because the in-cluster `GitRepository` source fetches from GitHub. For local-only experiments, use `kubectl diff --server-side --dry-run=server -k <path>` or `kubectl apply --server-side --dry-run=server -k <path>` against the development cluster instead of unsuspending the branch `GitRepository`.
+
+## Development Gateway Overlay
+
+The development gateway overlay reuses the shared production gateway base and then removes production-only Synology exposure. `remove-production-only-certificate.yaml` deletes the `synology.petebeegle.com` Certificate, and the JSON6902 listener patches in `kubernetes/clusters/development/overlays/gateway/kustomization.yaml` remove the matching internal Gateway listener, passthrough host listeners for production infrastructure names, and HTTPS redirect hostname. Listener removals are listed from highest array index to lowest because each JSON remove operation shifts later indexes.
+
+## Future Enhancements
+
+A small helper script or CLI should eventually create and remove branch environments from a branch name and slug. That tool can copy the activation template, fill `branch_name` and `branch_slug`, unsuspend or suspend the Flux resources, and clean up the activation when the branch test is done.
 
 ## Cluster-Scoped Testing
 

@@ -2,7 +2,7 @@
 
 This root provisions the production Talos cluster and bootstraps Flux at `./kubernetes/clusters/production`.
 
-The generated kubeconfig and talosconfig are written to cluster-specific paths by default so production and development operator files do not overwrite each other.
+The generated kubeconfig and talosconfig are written to cluster-specific paths by default so production and development operator files do not overwrite each other. Production no longer writes to `~/.kube/config` or `~/.talos/config` unless you override the output path variables; use `KUBECONFIG=~/.kube/homelab-production.config` and `TALOSCONFIG=~/.talos/homelab-production.config` for existing local workflows that expect the active cluster config.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements

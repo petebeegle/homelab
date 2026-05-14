@@ -4,4 +4,8 @@ kind: Certificate
 metadata:
   name: synology-petebeegle-com
   namespace: gateway
+# The shared gateway base includes a production Synology certificate because
+# production exposes synology.petebeegle.com through the internal Gateway.
+# Development does not own that hostname, so this overlay deletes the
+# certificate and paired listeners/redirect hostnames in kustomization.yaml.
 $patch: delete
