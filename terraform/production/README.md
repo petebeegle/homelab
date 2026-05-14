@@ -18,9 +18,9 @@
 
 | Name | Source | Version |
 | ---- | ------ | ------- |
-| <a name="module_kubernetes_nodes"></a> [kubernetes\_nodes](#module\_kubernetes\_nodes) | ./modules/vm | n/a |
-| <a name="module_talos_bootstrap"></a> [talos\_bootstrap](#module\_talos\_bootstrap) | ./modules/talos-bootstrap | n/a |
-| <a name="module_talos_provision"></a> [talos\_provision](#module\_talos\_provision) | ./modules/talos-provision | n/a |
+| <a name="module_kubernetes_nodes"></a> [kubernetes\_nodes](#module\_kubernetes\_nodes) | ../modules/vm | n/a |
+| <a name="module_talos_bootstrap"></a> [talos\_bootstrap](#module\_talos\_bootstrap) | ../modules/talos-bootstrap | n/a |
+| <a name="module_talos_provision"></a> [talos\_provision](#module\_talos\_provision) | ../modules/talos-provision | n/a |
 
 ## Resources
 

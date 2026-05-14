@@ -29,7 +29,7 @@ class TerraformPlanHookTest(unittest.TestCase):
         self.tmpdir.cleanup()
 
     def test_uninitialized_selected_root_blocks_apply(self) -> None:
-        self._write_terraform_root("terraform/cluster")
+        self._write_terraform_root("terraform/production")
 
         result = self._run_hook("terraform apply")
 
@@ -38,7 +38,7 @@ class TerraformPlanHookTest(unittest.TestCase):
         self.assertFalse(self.log_path.exists())
 
     def test_initialized_selected_root_runs_plan_before_apply(self) -> None:
-        root = self._write_terraform_root("terraform/cluster")
+        root = self._write_terraform_root("terraform/production")
         (root / ".terraform").mkdir()
 
         result = self._run_hook("terraform apply")
@@ -50,11 +50,11 @@ class TerraformPlanHookTest(unittest.TestCase):
         )
 
     def test_targeted_chdir_apply_ignores_unrelated_uninitialized_roots(self) -> None:
-        target = self._write_terraform_root("terraform/cluster")
+        target = self._write_terraform_root("terraform/production")
         (target / ".terraform").mkdir()
         self._write_terraform_root("terraform/external/grafana")
 
-        result = self._run_hook("terraform -chdir=terraform/cluster apply")
+        result = self._run_hook("terraform -chdir=terraform/production apply")
 
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(
@@ -63,11 +63,11 @@ class TerraformPlanHookTest(unittest.TestCase):
         )
 
     def test_targeted_chdir_space_apply_uses_target_root(self) -> None:
-        target = self._write_terraform_root("terraform/cluster")
+        target = self._write_terraform_root("terraform/production")
         (target / ".terraform").mkdir()
         self._write_terraform_root("terraform/external/grafana")
 
-        result = self._run_hook("terraform -chdir terraform/cluster apply")
+        result = self._run_hook("terraform -chdir terraform/production apply")
 
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(
@@ -76,7 +76,7 @@ class TerraformPlanHookTest(unittest.TestCase):
         )
 
     def test_plan_failure_blocks_apply(self) -> None:
-        root = self._write_terraform_root("terraform/cluster")
+        root = self._write_terraform_root("terraform/production")
         (root / ".terraform").mkdir()
 
         result = self._run_hook("terraform apply", extra_env={"TF_FAKE_EXIT": "1"})

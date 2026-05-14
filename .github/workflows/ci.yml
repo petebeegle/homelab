@@ -93,7 +93,7 @@ jobs:
         run: |
           set -euo pipefail
           for dir in \
-            terraform/cluster \
+            terraform/production \
             terraform/external/grafana \
             terraform/external/nexus \
             terraform/external/synology

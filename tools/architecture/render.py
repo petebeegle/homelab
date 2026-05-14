@@ -14,6 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 OUTPUT = ROOT / "docs" / "architecture.md"
 PRODUCTION = ROOT / "kubernetes" / "clusters" / "production"
+TERRAFORM_PRODUCTION = ROOT / "terraform" / "production"
 
 
 @dataclass(frozen=True)
@@ -267,7 +268,7 @@ def hcl_blocks(text: str, block_type: str) -> list[tuple[str, str]]:
 
 
 def terraform_relationships() -> list[str]:
-    main = read(ROOT / "terraform" / "cluster" / "main.tf")
+    main = read(TERRAFORM_PRODUCTION / "main.tf")
     rows: list[str] = []
     for name, body in hcl_blocks(main, "module"):
         source = hcl_attr(body, "source")
