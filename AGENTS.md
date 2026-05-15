@@ -8,6 +8,7 @@ Stack: Terraform, Talos OS, Kubernetes, Flux, Cilium, Gateway API, SOPS/Age, Syn
 
 - Treat Git as the source of truth. Change desired state in this repo, then let Flux reconcile it.
 - Keep live-cluster changes temporary unless a runbook explicitly says otherwise.
+- Codex may run Terraform and Flux against the development cluster for validation and repair when a task calls for it. Production remains GitOps-first; development live changes must still be made durable through repository changes.
 - Commit only SOPS-encrypted secret manifests. Kubernetes Secret files use repo path names ending with the standard secret manifest filenames matched by `.sops.yaml`.
 - Use Gateway API with Cilium for ingress. Prefer `HTTPRoute` or `TLSRoute` resources instead of traditional Kubernetes Ingress resources.
 - Use StorageClass `nfs-csi-storage` for persistent app storage unless a decision record supersedes it.
