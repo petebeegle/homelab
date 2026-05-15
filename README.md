@@ -176,6 +176,20 @@ The development environment starts at `kubernetes/clusters/development`, uses `d
 
 Production Terraform writes operator config to `~/.kube/homelab-production.config` and `~/.talos/homelab-production.config` by default instead of overwriting `~/.kube/config` or `~/.talos/config`. Export `KUBECONFIG` and `TALOSCONFIG` to those cluster-specific files for local production workflows, or override the Terraform output path variables if you intentionally want the old global locations.
 
+For opt-in kubectl shortcuts that do not mutate the shell's active `KUBECONFIG`, source the shared helper:
+
+```sh
+. scripts/kube-aliases.sh
+kd get nodes
+kp get nodes
+```
+
+The `kd` helper runs kubectl with `~/.kube/homelab-development.config`; `kp` runs kubectl with `~/.kube/homelab-production.config`. Add the source line to your shell dotfiles if you want the shortcuts in every new Bash or Zsh session:
+
+```sh
+[ -f "$HOME/homelab/scripts/kube-aliases.sh" ] && . "$HOME/homelab/scripts/kube-aliases.sh"
+```
+
 ### SOPS & Secrets
 - We use [SOPS](https://github.com/getsops/sops) and [age](https://github.com/FiloSottile/age) for secret encryption.
 - Update `.sops.yaml` to reference your age key fingerprint as needed.
