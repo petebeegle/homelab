@@ -83,11 +83,12 @@ export KUBECONFIG=~/.kube/homelab-development.config
 export TALOSCONFIG=~/.talos/homelab-development.config
 ```
 
-For kubectl-only development checks, source the opt-in shortcuts and use `kd` without changing the shell's active `KUBECONFIG`:
+For development checks, source the opt-in shortcuts and use `kd` or `fd` without changing the shell's active `KUBECONFIG`:
 
 ```sh
 . scripts/kube-aliases.sh
 kd get nodes -o wide
+fd get kustomizations
 ```
 
 ## Flux Bootstrap
@@ -113,10 +114,10 @@ flux bootstrap github \
 After bootstrap, check the base:
 
 ```sh
-flux get kustomizations
-kubectl get nodes -o wide
-kubectl get gateway -n gateway
-kubectl get httproute -A
+fd get kustomizations
+kd get nodes -o wide
+kd get gateway -n gateway
+kd get httproute -A
 ```
 
 ## Branch Environments
