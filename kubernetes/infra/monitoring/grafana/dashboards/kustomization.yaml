@@ -33,10 +33,10 @@ configMapGenerator:
       - dashboard.json=observability-health-dashboard.json
     options:
       disableNameSuffixHash: true
-  - name: codex-workflow-dashboard
+  - name: codex-operations-dashboard
     namespace: grafana
     files:
-      - dashboard.json=codex-workflow-dashboard.json
+      - dashboard.json=codex-operations-dashboard.json
     options:
       disableNameSuffixHash: true
 resources:
@@ -45,4 +45,4 @@ resources:
   - kubernetes-dashboard.yaml
   - authentik-dashboard.yaml
   - observability-health-dashboard.yaml
-  - codex-workflow-dashboard.yaml
+  - codex-operations-dashboard.yaml
