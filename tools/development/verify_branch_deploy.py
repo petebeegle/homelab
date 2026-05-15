@@ -95,9 +95,13 @@ def validate_app(app: str) -> str:
 def validate_branch(branch: str) -> str:
     if not branch or branch.startswith("/") or branch.endswith("/") or "//" in branch:
         raise argparse.ArgumentTypeError("branch must be a non-empty Git branch name")
-    if branch.startswith("-") or not BRANCH_PATTERN.fullmatch(branch):
+    if branch.startswith("-"):
+        raise argparse.ArgumentTypeError("branch must not start with '-'")
+    if ".." in branch or branch.endswith(".") or "@{" in branch:
+        raise argparse.ArgumentTypeError("branch must be valid for git check-ref-format --branch")
+    if not BRANCH_PATTERN.fullmatch(branch):
         raise argparse.ArgumentTypeError("branch may contain only letters, numbers, '.', '_', '-', and '/'")
-    if any(part in {"", ".", ".."} or part.endswith(".lock") for part in branch.split("/")):
+    if any(part.startswith(".") or part.endswith(".lock") for part in branch.split("/")):
         raise argparse.ArgumentTypeError("branch contains an invalid path component")
     return branch
 

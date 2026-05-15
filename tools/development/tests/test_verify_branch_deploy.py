@@ -85,6 +85,26 @@ class FakeRunner:
 
 
 class VerifyBranchDeployTest(unittest.TestCase):
+    def test_branch_validation_accepts_common_git_branch_name(self) -> None:
+        self.assertEqual(verify.validate_branch("codex/example-change"), "codex/example-change")
+
+    def test_branch_validation_rejects_git_invalid_patterns(self) -> None:
+        for branch in (
+            "bad..branch",
+            ".bad",
+            "good/.bad",
+            "bad.",
+            "good/bad.",
+            "good/bad.lock",
+            "bad//branch",
+            "bad@{branch",
+            "bad branch",
+            "-bad",
+        ):
+            with self.subTest(branch=branch):
+                with self.assertRaises(argparse.ArgumentTypeError):
+                    verify.validate_branch(branch)
+
     def test_slug_validation_accepts_dns_safe_slug(self) -> None:
         self.assertEqual(verify.validate_slug("example-change"), "example-change")
         self.assertEqual(verify.validate_slug("a1"), "a1")
