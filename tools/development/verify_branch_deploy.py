@@ -20,6 +20,15 @@ DEFAULT_KUBECONFIG = Path("~/.kube/homelab-development.config").expanduser()
 DEFAULT_TIMEOUT = "10m"
 FLUX_NAMESPACE = "flux-system"
 SUPPORTED_APPS = {"whoami"}
+DEVELOPMENT_BASE_KUSTOMIZATIONS = (
+    "crds",
+    "cert-manager",
+    "nfs-csi",
+    "cilium",
+    "certs",
+    "gateway",
+    "app-whoami",
+)
 
 BRANCH_PATTERN = re.compile(r"^[A-Za-z0-9._/-]+$")
 SLUG_PATTERN = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,54}[a-z0-9])?$")
@@ -41,6 +50,7 @@ class AppConfig:
     timeout: Duration
     push: bool
     terraform_apply: bool
+    include_cluster_base: bool
     keep: bool
 
     @property
@@ -137,6 +147,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--slug", required=True, type=validate_slug)
     parser.add_argument("--push", action="store_true", help="Push current HEAD to origin as --branch before activation.")
     parser.add_argument("--terraform-apply", action="store_true", help="Run terraform apply after a successful plan.")
+    parser.add_argument(
+        "--include-cluster-base",
+        action="store_true",
+        help="Temporarily reconcile the development base from --branch before branch app verification.",
+    )
     parser.add_argument("--kubeconfig", type=Path, default=DEFAULT_KUBECONFIG)
     parser.add_argument("--timeout", type=parse_duration, default=parse_duration(DEFAULT_TIMEOUT))
     parser.add_argument("--keep", action="store_true", help="Keep branch Flux resources for debugging.")
@@ -158,6 +173,9 @@ def run_acceptance(
             push_branch(config, runner=runner, repo_root=repo_root)
 
         run_terraform(config, runner=runner, repo_root=repo_root)
+
+        if config.include_cluster_base:
+            verify_cluster_base(config, runner=runner)
 
         rendered = render_activation_template(
             template_text
@@ -285,13 +303,135 @@ def reconcile_flux(config: AppConfig, *, runner: Runner) -> None:
     )
 
 
+def verify_cluster_base(config: AppConfig, *, runner: Runner) -> None:
+    failure: BaseException | None = None
+    try:
+        pin_flux_system_source(config, branch=config.branch, runner=runner)
+        reconcile_flux_system_source(config, runner=runner)
+        reconcile_flux_kustomization(config, "flux-system", runner=runner)
+
+        pin_flux_system_source(config, branch=config.branch, runner=runner)
+        reconcile_flux_system_source(config, runner=runner)
+        for kustomization in DEVELOPMENT_BASE_KUSTOMIZATIONS:
+            reconcile_flux_kustomization(config, kustomization, runner=runner)
+
+        wait_for_active_pods_ready(
+            config,
+            runner=runner,
+            namespace=None,
+            require_non_terminated=False,
+            context="development cluster",
+        )
+    except BaseException as exc:
+        failure = exc
+    finally:
+        try:
+            restore_flux_system_source(config, runner=runner)
+        except BaseException as restore_exc:
+            if failure is None:
+                failure = restore_exc
+            else:
+                failure = VerificationError(f"{failure}; additionally failed to restore flux-system GitRepository: {restore_exc}")
+
+    if failure is not None:
+        raise failure
+
+
+def pin_flux_system_source(config: AppConfig, *, branch: str, runner: Runner) -> None:
+    patch = json.dumps({"spec": {"ref": {"branch": branch}}})
+    run_command(
+        kubectl(
+            config,
+            "-n",
+            FLUX_NAMESPACE,
+            "patch",
+            "gitrepository.source.toolkit.fluxcd.io/flux-system",
+            "--type=merge",
+            "-p",
+            patch,
+        ),
+        runner=runner,
+        timeout=config.timeout,
+    )
+
+
+def reconcile_flux_system_source(config: AppConfig, *, runner: Runner) -> None:
+    run_command(
+        flux(
+            config,
+            "reconcile",
+            "source",
+            "git",
+            "flux-system",
+            "--namespace",
+            FLUX_NAMESPACE,
+            "--timeout",
+            config.timeout.raw,
+        ),
+        runner=runner,
+        timeout=config.timeout,
+    )
+    run_command(
+        kubectl(
+            config,
+            "-n",
+            FLUX_NAMESPACE,
+            "wait",
+            "gitrepository.source.toolkit.fluxcd.io/flux-system",
+            "--for=condition=Ready",
+            f"--timeout={config.timeout.raw}",
+        ),
+        runner=runner,
+        timeout=config.timeout,
+    )
+
+
+def restore_flux_system_source(config: AppConfig, *, runner: Runner) -> None:
+    pin_flux_system_source(config, branch="main", runner=runner)
+    reconcile_flux_system_source(config, runner=runner)
+    reconcile_flux_kustomization(config, "flux-system", runner=runner)
+
+
+def reconcile_flux_kustomization(config: AppConfig, name: str, *, runner: Runner) -> None:
+    run_command(
+        flux(
+            config,
+            "reconcile",
+            "kustomization",
+            name,
+            "--namespace",
+            FLUX_NAMESPACE,
+            "--with-source",
+            "--timeout",
+            config.timeout.raw,
+        ),
+        runner=runner,
+        timeout=config.timeout,
+    )
+    run_command(
+        kubectl(
+            config,
+            "-n",
+            FLUX_NAMESPACE,
+            "wait",
+            f"kustomization.kustomize.toolkit.fluxcd.io/{name}",
+            "--for=condition=Ready",
+            f"--timeout={config.timeout.raw}",
+        ),
+        runner=runner,
+        timeout=config.timeout,
+    )
+
+
 def assert_whoami(config: AppConfig, *, runner: Runner) -> None:
     name = config.namespace
     run_command(kubectl(config, "get", "namespace", name), runner=runner, timeout=config.timeout)
-    run_command(
-        kubectl(config, "-n", name, "rollout", "status", f"deployment/{name}", f"--timeout={config.timeout.raw}"),
+    wait_for_active_pods_ready(
+        config,
         runner=runner,
-        timeout=config.timeout,
+        namespace=name,
+        require_non_terminated=True,
+        context=f"namespace {name}",
     )
     run_command(kubectl(config, "-n", name, "get", "service", name), runner=runner, timeout=config.timeout)
     route = run_command(
@@ -301,6 +441,91 @@ def assert_whoami(config: AppConfig, *, runner: Runner) -> None:
         capture_output=True,
     )
     assert_httproute_ready(str(getattr(route, "stdout", "")), route_name=name)
+
+
+def wait_for_active_pods_ready(
+    config: AppConfig,
+    *,
+    runner: Runner,
+    namespace: str | None,
+    require_non_terminated: bool,
+    context: str,
+) -> None:
+    if namespace is None:
+        pod_list = run_command(
+            kubectl(config, "get", "pods", "--all-namespaces", "-o", "json"),
+            runner=runner,
+            timeout=config.timeout,
+            capture_output=True,
+        )
+    else:
+        pod_list = run_command(
+            kubectl(config, "-n", namespace, "get", "pods", "-o", "json"),
+            runner=runner,
+            timeout=config.timeout,
+            capture_output=True,
+        )
+
+    pods = parse_pods(str(getattr(pod_list, "stdout", "")), context=context)
+    non_terminated = [pod for pod in pods if not is_pod_deleting(pod) and pod_phase(pod) not in {"Succeeded", "Failed"}]
+    if require_non_terminated and not non_terminated:
+        raise VerificationError(f"{context} has no non-terminated pods")
+
+    for pod in pods:
+        if is_pod_deleting(pod) or pod_phase(pod) == "Succeeded":
+            continue
+        name = pod_name(pod)
+        pod_namespace = pod_namespace_name(pod, default=namespace)
+        if pod_namespace is None:
+            raise VerificationError(f"{context} pod {name} did not include a namespace")
+        run_command(
+            kubectl(config, "-n", pod_namespace, "wait", f"pod/{name}", "--for=condition=Ready", f"--timeout={config.timeout.raw}"),
+            runner=runner,
+            timeout=config.timeout,
+        )
+
+
+def parse_pods(pods_json: str, *, context: str) -> list[dict[str, object]]:
+    try:
+        pod_list = json.loads(pods_json)
+    except json.JSONDecodeError as exc:
+        raise VerificationError(f"{context} pods did not return valid JSON: {exc}") from exc
+
+    items = pod_list.get("items")
+    if not isinstance(items, list):
+        raise VerificationError(f"{context} pods JSON did not contain an items list")
+    return [pod for pod in items if isinstance(pod, dict)]
+
+
+def is_pod_deleting(pod: dict[str, object]) -> bool:
+    metadata = pod.get("metadata", {})
+    return isinstance(metadata, dict) and bool(metadata.get("deletionTimestamp"))
+
+
+def pod_phase(pod: dict[str, object]) -> str:
+    status = pod.get("status", {})
+    if not isinstance(status, dict):
+        return ""
+    phase = status.get("phase")
+    return str(phase) if phase is not None else ""
+
+
+def pod_name(pod: dict[str, object]) -> str:
+    metadata = pod.get("metadata", {})
+    if not isinstance(metadata, dict):
+        raise VerificationError("pod did not include metadata")
+    name = metadata.get("name")
+    if not name:
+        raise VerificationError("pod did not include metadata.name")
+    return str(name)
+
+
+def pod_namespace_name(pod: dict[str, object], *, default: str | None) -> str | None:
+    metadata = pod.get("metadata", {})
+    if not isinstance(metadata, dict):
+        return default
+    namespace = metadata.get("namespace")
+    return str(namespace) if namespace else default
 
 
 def assert_httproute_ready(route_json: str, *, route_name: str) -> None:
@@ -405,6 +630,7 @@ def config_from_args(args: argparse.Namespace) -> AppConfig:
         timeout=args.timeout,
         push=args.push,
         terraform_apply=args.terraform_apply,
+        include_cluster_base=args.include_cluster_base,
         keep=args.keep,
     )
 
