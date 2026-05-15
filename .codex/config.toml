@@ -5,7 +5,7 @@ hooks = true
 
 [[hooks.UserPromptSubmit.hooks]]
 type = "command"
-command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/user_prompt_submit.sh\"'"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase user_prompt_submit --hook repo_change_intent --session-start -- \"$root/.codex/hooks/user_prompt_submit.sh\"'"
 timeout = 10
 statusMessage = "Checking repository change intent"
 
@@ -31,25 +31,25 @@ matcher = "^Bash$"
 
 [[hooks.PreToolUse.hooks]]
 type = "command"
-command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/implementation_workflow_guard.sh\" --record'"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase pre_tool --hook implementation_workflow_record -- \"$root/.codex/hooks/implementation_workflow_guard.sh\" --record'"
 timeout = 10
 statusMessage = "Recording implementation workflow state"
 
 [[hooks.PreToolUse.hooks]]
 type = "command"
-command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/sops_guard.sh\"'"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase pre_tool --hook sops_guard -- \"$root/.codex/hooks/sops_guard.sh\"'"
 timeout = 30
 statusMessage = "Checking SOPS safety"
 
 [[hooks.PreToolUse.hooks]]
 type = "command"
-command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/terraform_plan.sh\"'"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase pre_tool --hook terraform_plan_guard -- \"$root/.codex/hooks/terraform_plan.sh\"'"
 timeout = 120
 statusMessage = "Checking Terraform apply safety"
 
 [[hooks.PreToolUse.hooks]]
 type = "command"
-command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/implementation_workflow_guard.sh\" --preflight-bash'"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase pre_tool --hook implementation_workflow_preflight_bash -- \"$root/.codex/hooks/implementation_workflow_guard.sh\" --preflight-bash'"
 timeout = 30
 statusMessage = "Checking implementation workflow for mutating commands"
 
@@ -58,13 +58,13 @@ matcher = "^(apply_patch|Edit|MultiEdit|Write)$"
 
 [[hooks.PreToolUse.hooks]]
 type = "command"
-command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/implementation_workflow_guard.sh\" --record'"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase pre_tool --hook implementation_workflow_record -- \"$root/.codex/hooks/implementation_workflow_guard.sh\" --record'"
 timeout = 10
 statusMessage = "Recording implementation workflow state"
 
 [[hooks.PreToolUse.hooks]]
 type = "command"
-command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/implementation_workflow_guard.sh\" --preflight-mutation'"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase pre_tool --hook implementation_workflow_preflight_mutation -- \"$root/.codex/hooks/implementation_workflow_guard.sh\" --preflight-mutation'"
 timeout = 30
 statusMessage = "Checking implementation workflow before editing"
 
@@ -73,25 +73,25 @@ matcher = "^(Bash|apply_patch|Edit|MultiEdit|Write)$"
 
 [[hooks.PostToolUse.hooks]]
 type = "command"
-command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/implementation_workflow_guard.sh\"'"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase post_tool --hook implementation_workflow_guard -- \"$root/.codex/hooks/implementation_workflow_guard.sh\"'"
 timeout = 30
 statusMessage = "Checking implementation workflow"
 
 [[hooks.PostToolUse.hooks]]
 type = "command"
-command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/sops_guard.sh\"'"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase post_tool --hook sops_guard -- \"$root/.codex/hooks/sops_guard.sh\"'"
 timeout = 60
 statusMessage = "Checking secret files"
 
 [[hooks.PostToolUse.hooks]]
 type = "command"
-command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/pre_commit_check.sh\"'"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase post_tool --hook pre_commit_check -- \"$root/.codex/hooks/pre_commit_check.sh\"'"
 timeout = 300
 statusMessage = "Running pre-commit checks"
 
 [[hooks.PostToolUse.hooks]]
 type = "command"
-command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/flux_reminder.sh\"'"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase post_tool --hook flux_reminder -- \"$root/.codex/hooks/flux_reminder.sh\"'"
 timeout = 10
 statusMessage = "Checking Flux follow-up"
 
@@ -99,12 +99,12 @@ statusMessage = "Checking Flux follow-up"
 
 [[hooks.Stop.hooks]]
 type = "command"
-command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/stop_self_verify.sh\"'"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase stop --hook stop_self_verify -- \"$root/.codex/hooks/stop_self_verify.sh\"'"
 timeout = 120
 statusMessage = "Running Codex harness self-check"
 
 [[hooks.Stop.hooks]]
 type = "command"
-command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/scripts/create_implementation_pr.sh\" --auto'"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase stop --hook create_implementation_pr --session-end -- \"$root/.codex/scripts/create_implementation_pr.sh\" --auto'"
 timeout = 300
 statusMessage = "Creating implementation PR"
