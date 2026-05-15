@@ -67,6 +67,8 @@ terraform apply
 
 If `terraform apply` fails because Talos rejects a Kubernetes version as too new, check `talos_version` and `kubernetes_version` together before retrying. Do not work around this with live-cluster edits; update the Terraform variables and re-apply through Git.
 
+The Talos bootstrap module intentionally renders Cilium with a Terraform-only values overlay that disables Hubble, Hubble Relay, and Hubble UI. This keeps the inline bootstrap manifest deterministic by avoiding Helm-generated TLS Secrets marked as non-idempotent. Flux later reconciles the full Cilium install from `kubernetes/infra/network/cilium/values.yaml`, including the Hubble settings used by the cluster.
+
 If Terraform bootstrap fails with `/bin/sh: set: Illegal option -o pipefail`, the Flux bootstrap script is being executed by Terraform's default inline `local-exec` shell. The shared `terraform/scripts/flux-install.sh` script is Bash and requires `pipefail`, so the `terraform_data.bootstrap_script` provisioner must set `interpreter = ["/usr/bin/env", "bash", "-c"]`.
 
 The Talos bootstrap module writes cluster-specific operator files by default:

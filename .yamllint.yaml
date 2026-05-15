@@ -21,7 +21,7 @@ rules:
   hyphens: enable
   indentation:
     ignore: |
-      kubernetes/clusters/production/flux-system/gotk-*.yaml
+      kubernetes/clusters/*/flux-system/gotk-*.yaml
   key-duplicates: enable
   key-ordering: disable
   line-length: disable

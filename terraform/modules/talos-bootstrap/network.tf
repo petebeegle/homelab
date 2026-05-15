@@ -9,6 +9,7 @@ data "helm_template" "cilium" {
   values = [
     templatefile("${path.root}/../../kubernetes/infra/network/cilium/values.yaml", {
       cilium_operator_replicas = var.cilium_operator_replicas
-    })
+    }),
+    file("${path.module}/templates/cilium-bootstrap-values.yaml")
   ]
 }
