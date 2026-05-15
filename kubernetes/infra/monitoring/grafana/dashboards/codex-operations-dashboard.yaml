@@ -2,7 +2,7 @@
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
-  name: codex-workflow
+  name: codex-operations
   namespace: grafana
 spec:
   instanceSelector:
@@ -10,5 +10,5 @@ spec:
       dashboards: "grafana"
   folderRef: "monitoring"
   configMapRef:
-    name: codex-workflow-dashboard
+    name: codex-operations-dashboard
     key: dashboard.json
