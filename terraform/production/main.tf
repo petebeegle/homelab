@@ -85,6 +85,8 @@ resource "terraform_data" "bootstrap_script" {
   depends_on = [module.talos_bootstrap]
 
   provisioner "local-exec" {
+    interpreter = ["/usr/bin/env", "bash", "-c"]
+
     environment = {
       FLUX_BOOTSTRAP_PATH = var.flux_bootstrap_path
       GITHUB_TOKEN        = var.github_token
