@@ -92,6 +92,26 @@ jobs:
       - name: Validate Terraform root modules
         run: |
           set -euo pipefail
+
+          terraform_init_with_retry() {
+            local dir="$1"
+            local attempt
+
+            for attempt in 1 2 3; do
+              if terraform -chdir="${dir}" init -backend=false -input=false -no-color; then
+                return 0
+              fi
+
+              if [ "${attempt}" -eq 3 ]; then
+                echo "::error::terraform init failed for ${dir} after ${attempt} attempts"
+                return 1
+              fi
+
+              echo "terraform init failed for ${dir}; retrying in 10 seconds (attempt $((attempt + 1))/3)"
+              sleep 10
+            done
+          }
+
           for dir in \
             terraform/production \
             terraform/development \
@@ -100,7 +120,7 @@ jobs:
             terraform/external/synology
           do
             echo "::group::${dir}"
-            terraform -chdir="${dir}" init -backend=false -input=false -no-color
+            terraform_init_with_retry "${dir}"
             terraform -chdir="${dir}" validate -no-color
             echo "::endgroup::"
           done
