@@ -83,6 +83,13 @@ export KUBECONFIG=~/.kube/homelab-development.config
 export TALOSCONFIG=~/.talos/homelab-development.config
 ```
 
+For kubectl-only development checks, source the opt-in shortcuts and use `kd` without changing the shell's active `KUBECONFIG`:
+
+```sh
+. scripts/kube-aliases.sh
+kd get nodes -o wide
+```
+
 ## Flux Bootstrap
 
 The development Terraform root runs the shared bootstrap script with `FLUX_BOOTSTRAP_PATH=./kubernetes/clusters/development`.
