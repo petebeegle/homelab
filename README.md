@@ -184,11 +184,13 @@ kd get nodes
 kp get nodes
 ```
 
-The `kd` helper runs kubectl with `~/.kube/homelab-development.config`; `kp` runs kubectl with `~/.kube/homelab-production.config`. Add the source line to your shell dotfiles if you want the shortcuts in every new Bash or Zsh session:
+The `kd` helper runs kubectl with `~/.kube/homelab-development.config`; `kp` runs kubectl with `~/.kube/homelab-production.config`. Devcontainer startup installs this source line in `~/.aliases.zsh` automatically:
 
 ```sh
-[ -f "$HOME/homelab/scripts/kube-aliases.sh" ] && . "$HOME/homelab/scripts/kube-aliases.sh"
+[ -f /workspaces/homelab/scripts/kube-aliases.sh ] && . /workspaces/homelab/scripts/kube-aliases.sh
 ```
+
+Outside the devcontainer, the aliases remain opt-in. Source `scripts/kube-aliases.sh` directly in a shell, or add a source line for your local checkout path to your shell dotfiles.
 
 ### SOPS & Secrets
 - We use [SOPS](https://github.com/getsops/sops) and [age](https://github.com/FiloSottile/age) for secret encryption.

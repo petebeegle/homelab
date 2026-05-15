@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+alias_file="${HOME}/.aliases.zsh"
+kube_alias_source='[ -f /workspaces/homelab/scripts/kube-aliases.sh ] && . /workspaces/homelab/scripts/kube-aliases.sh'
+
+mkdir -p "$(dirname "$alias_file")"
+touch "$alias_file"
+if ! grep -Fxq "$kube_alias_source" "$alias_file"; then
+  printf '%s\n' "$kube_alias_source" >> "$alias_file"
+fi
+
 # Extract terraform output to a file with restricted permissions
 tf_output_to_file() {
   local dir="$1"
