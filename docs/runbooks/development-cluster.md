@@ -128,7 +128,7 @@ Branch environments are for app-scoped validation on the development cluster. Us
 <app>-${branch_slug}.development.lab.petebeegle.com
 ```
 
-Use `tools/development/verify_branch_deploy.py` as the canonical path for future branch validation. V1 supports `whoami` only. The tool renders the activation template, applies it directly to the development cluster, forces Flux reconciliation, checks the branch-scoped app resources, and then removes the temporary branch Flux resources unless `--keep` is set.
+Use `tools/development/verify_branch_deploy.py` as the canonical path for future branch validation. V1 supports `whoami` only. The tool renders the activation template, applies it directly to the development cluster, forces Flux reconciliation, checks the branch namespace and active pods, checks the whoami Service and HTTPRoute, and then removes the temporary branch Flux resources unless `--keep` is set.
 
 The initial activation template is in `kubernetes/clusters/development/branches/`, and the first branch-aware app payload overlay is `kubernetes/apps/whoami/branch/`. The cluster-layer template creates the Flux `GitRepository` and `Kustomization` that point at a branch; the app overlay is the rendered workload payload that Flux applies after substituting `${branch_slug}`. The template is not referenced from the live development entrypoint and is suspended by default. The verification tool fills `branch_name` and `branch_slug`, sets both Flux objects to `suspend: false`, and applies the rendered activation temporarily.
 
@@ -154,6 +154,14 @@ Run Terraform apply first when the development cluster base may need to be creat
 python3 tools/development/verify_branch_deploy.py --app whoami --branch codex/example-change --slug example-change --push --terraform-apply
 ```
 
+Include a sequential development base reconcile from the target branch when validating cluster-scoped changes before the branch app test:
+
+```sh
+python3 tools/development/verify_branch_deploy.py --app whoami --branch codex/example-change --slug example-change --push --include-cluster-base
+```
+
+With `--include-cluster-base`, the tool temporarily points the development `flux-system` GitRepository at `--branch`, reconciles the root `flux-system` Kustomization, re-pins the source to the branch, reconciles `crds`, `cert-manager`, `nfs-csi`, `cilium`, `certs`, `gateway`, and `app-whoami` in order, waits for active pods across the cluster to report Ready, and restores the `flux-system` GitRepository to `main` even when validation fails.
+
 Use a custom kubeconfig:
 
 ```sh
@@ -174,7 +182,7 @@ kubectl --kubeconfig ~/.kube/homelab-development.config wait namespace/whoami-ex
 kubectl --kubeconfig ~/.kube/homelab-development.config -n flux-system delete gitrepository.source.toolkit.fluxcd.io/branch-example-change
 ```
 
-This proves that the pushed branch can be fetched by Flux, the whoami branch overlay can reconcile on the development cluster, the Deployment rolls out, the Service exists, and the HTTPRoute reports `Accepted` and `ResolvedRefs`. It does not prove production readiness, cross-app behavior, cluster-scoped changes, public Cloudflare routing, or apps other than `whoami`.
+This proves that the pushed branch can be fetched by Flux, the whoami branch overlay can reconcile on the development cluster, the branch namespace exists, at least one branch app pod is active, active branch app pods report Ready, the Service exists, and the HTTPRoute reports `Accepted` and `ResolvedRefs`. Without `--include-cluster-base`, it does not prove production readiness, cross-app behavior, cluster-scoped changes, public Cloudflare routing, or apps other than `whoami`.
 
 Local manifest verification does not require pushing a branch:
 
@@ -201,7 +209,7 @@ The shared gateway base at `kubernetes/infra/network/gateway` must stay environm
 
 ## Cluster-Scoped Testing
 
-Test cluster-scoped changes sequentially on the development base. CRDs, controllers, Gateway API shared objects, storage classes, and other cluster-wide resources should not be tested in parallel branch environments because they share reconciliation and ownership boundaries.
+Test cluster-scoped changes sequentially on the development base. CRDs, controllers, Gateway API shared objects, storage classes, and other cluster-wide resources should not be tested in parallel branch environments because they share reconciliation and ownership boundaries. Use `--include-cluster-base` with the branch verifier when the target branch changes shared development base resources and the branch app acceptance should run after that live base reconcile.
 
 ## Cleanup
 

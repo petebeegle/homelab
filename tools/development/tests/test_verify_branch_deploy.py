@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import json
 import subprocess
 import sys
 import tempfile
@@ -33,6 +34,51 @@ READY_HTTPROUTE = """{
   }
 }"""
 
+READY_PODS = json.dumps(
+    {
+        "items": [
+            {
+                "metadata": {"name": "whoami-example-change-7d9c4", "namespace": "whoami-example-change"},
+                "status": {"phase": "Running", "conditions": [{"type": "Ready", "status": "True"}]},
+            }
+        ]
+    }
+)
+
+MIXED_PODS = json.dumps(
+    {
+        "items": [
+            {
+                "metadata": {"name": "complete", "namespace": "whoami-example-change"},
+                "status": {"phase": "Succeeded", "conditions": [{"type": "Ready", "status": "False"}]},
+            },
+            {
+                "metadata": {
+                    "name": "deleting",
+                    "namespace": "whoami-example-change",
+                    "deletionTimestamp": "2026-05-15T00:00:00Z",
+                },
+                "status": {"phase": "Running", "conditions": [{"type": "Ready", "status": "False"}]},
+            },
+            {
+                "metadata": {"name": "active", "namespace": "whoami-example-change"},
+                "status": {"phase": "Running", "conditions": [{"type": "Ready", "status": "True"}]},
+            },
+        ]
+    }
+)
+
+NO_ACTIVE_PODS = json.dumps(
+    {
+        "items": [
+            {
+                "metadata": {"name": "complete", "namespace": "whoami-example-change"},
+                "status": {"phase": "Succeeded"},
+            }
+        ]
+    }
+)
+
 
 TEMPLATE = """---
 apiVersion: source.toolkit.fluxcd.io/v1
@@ -60,10 +106,20 @@ spec:
 class FakeRunner:
     quiet = True
 
-    def __init__(self, *, plan_returncode: int = 0, fail_on_rollout: bool = False, timeout_on: str | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        plan_returncode: int = 0,
+        fail_on: str | None = None,
+        timeout_on: str | None = None,
+        pods_json: str = READY_PODS,
+        cluster_pods_json: str = READY_PODS,
+    ) -> None:
         self.plan_returncode = plan_returncode
-        self.fail_on_rollout = fail_on_rollout
+        self.fail_on = fail_on
         self.timeout_on = timeout_on
+        self.pods_json = pods_json
+        self.cluster_pods_json = cluster_pods_json
         self.calls: list[tuple[list[str], dict[str, object]]] = []
 
     def __call__(self, args: list[str], **kwargs: object) -> SimpleNamespace:
@@ -71,11 +127,15 @@ class FakeRunner:
         command = " ".join(args)
         if self.timeout_on and self.timeout_on in command:
             raise subprocess.TimeoutExpired(args, kwargs.get("timeout"))
+        if self.fail_on and self.fail_on in command:
+            return SimpleNamespace(returncode=1, stdout="")
         if args[0] == "terraform" and "plan" in args:
             return SimpleNamespace(returncode=self.plan_returncode, stdout="")
-        if self.fail_on_rollout and "rollout status" in command:
-            return SimpleNamespace(returncode=1, stdout="")
-        if args[-2:] == ["-o", "json"]:
+        if args[-5:] == ["get", "pods", "--all-namespaces", "-o", "json"]:
+            return SimpleNamespace(returncode=0, stdout=self.cluster_pods_json)
+        if args[-4:] == ["get", "pods", "-o", "json"]:
+            return SimpleNamespace(returncode=0, stdout=self.pods_json)
+        if args[-4:] == ["get", "httproute", "whoami-example-change", "-o"] or args[-2:] == ["-o", "json"]:
             return SimpleNamespace(returncode=0, stdout=READY_HTTPROUTE)
         return SimpleNamespace(returncode=0, stdout="")
 
@@ -158,7 +218,10 @@ class VerifyBranchDeployTest(unittest.TestCase):
         )
         self.assertTrue(any("terraform -chdir=" in command and " apply -input=false -no-color -auto-approve" in command for command in commands))
         self.assertTrue(any("flux --kubeconfig /tmp/kubeconfig reconcile source git branch-example-change" in command for command in commands))
-        self.assertTrue(any("rollout status deployment/whoami-example-change" in command for command in commands))
+        self.assertTrue(any("get pods -o json" in command for command in commands))
+        self.assertTrue(any("wait pod/whoami-example-change-7d9c4 --for=condition=Ready" in command for command in commands))
+        self.assertTrue(any("get service whoami-example-change" in command for command in commands))
+        self.assertTrue(any("get httproute whoami-example-change -o json" in command for command in commands))
         self.assertTrue(any("delete kustomization.kustomize.toolkit.fluxcd.io/branch-whoami-example-change" in command for command in commands))
         self.assertTrue(any("wait namespace/whoami-example-change --for=delete" in command for command in commands))
         self.assertTrue(any("delete gitrepository.source.toolkit.fluxcd.io/branch-example-change" in command for command in commands))
@@ -187,11 +250,95 @@ class VerifyBranchDeployTest(unittest.TestCase):
         with self.assertRaisesRegex(verify.VerificationError, "Accepted and ResolvedRefs"):
             verify.assert_httproute_ready(missing_resolved_refs, route_name="whoami-example-change")
 
+    def test_pod_readiness_waits_for_active_pods(self) -> None:
+        runner = FakeRunner()
+        config = self._config()
+
+        verify.wait_for_active_pods_ready(
+            config,
+            runner=runner,
+            namespace=config.namespace,
+            require_non_terminated=True,
+            context=f"namespace {config.namespace}",
+        )
+
+        commands = [" ".join(command) for command in runner.commands]
+        self.assertEqual(commands[0], "kubectl --kubeconfig /tmp/kubeconfig -n whoami-example-change get pods -o json")
+        self.assertTrue(any("wait pod/whoami-example-change-7d9c4 --for=condition=Ready" in command for command in commands))
+
+    def test_pod_readiness_ignores_completed_and_deleting_pods(self) -> None:
+        runner = FakeRunner(pods_json=MIXED_PODS)
+        config = self._config()
+
+        verify.wait_for_active_pods_ready(
+            config,
+            runner=runner,
+            namespace=config.namespace,
+            require_non_terminated=True,
+            context=f"namespace {config.namespace}",
+        )
+
+        commands = [" ".join(command) for command in runner.commands]
+        self.assertTrue(any("wait pod/active --for=condition=Ready" in command for command in commands))
+        self.assertFalse(any("wait pod/complete" in command for command in commands))
+        self.assertFalse(any("wait pod/deleting" in command for command in commands))
+
+    def test_branch_app_pods_require_at_least_one_non_terminated_pod(self) -> None:
+        runner = FakeRunner(pods_json=NO_ACTIVE_PODS)
+
+        with self.assertRaisesRegex(verify.VerificationError, "no non-terminated pods"):
+            verify.assert_whoami(self._config(), runner=runner)
+
+    def test_whoami_assert_preserves_service_and_route_checks(self) -> None:
+        runner = FakeRunner()
+        config = self._config()
+
+        verify.assert_whoami(config, runner=runner)
+
+        commands = [" ".join(command) for command in runner.commands]
+        self.assertTrue(any("get service whoami-example-change" in command for command in commands))
+        self.assertTrue(any("get httproute whoami-example-change -o json" in command for command in commands))
+
+    def test_cluster_base_reconciles_in_order_and_restores_main_on_success(self) -> None:
+        runner = FakeRunner(cluster_pods_json=READY_PODS)
+
+        verify.verify_cluster_base(self._config(include_cluster_base=True), runner=runner)
+
+        commands = [" ".join(command) for command in runner.commands]
+        branch_patch_indices = [
+            index
+            for index, command in enumerate(commands)
+            if "patch gitrepository.source.toolkit.fluxcd.io/flux-system" in command and '"branch": "codex/example-change"' in command
+        ]
+        self.assertEqual(len(branch_patch_indices), 2)
+        root_index = self._index_containing(commands, "reconcile kustomization flux-system")
+        child_indices = [
+            self._index_containing(commands, f"reconcile kustomization {name}")
+            for name in verify.DEVELOPMENT_BASE_KUSTOMIZATIONS
+        ]
+        self.assertLess(branch_patch_indices[0], root_index)
+        self.assertLess(root_index, branch_patch_indices[1])
+        self.assertEqual(child_indices, sorted(child_indices))
+        self.assertTrue(any("get pods --all-namespaces -o json" in command for command in commands))
+        self.assertTrue(any("wait pod/whoami-example-change-7d9c4 --for=condition=Ready" in command for command in commands))
+        self.assertTrue(any('"branch": "main"' in command for command in commands))
+        self.assertGreater(commands[-2].find("reconcile kustomization flux-system"), -1)
+
+    def test_cluster_base_restores_main_on_failure(self) -> None:
+        runner = FakeRunner(fail_on="reconcile kustomization gateway")
+
+        with self.assertRaisesRegex(verify.VerificationError, "command failed"):
+            verify.verify_cluster_base(self._config(include_cluster_base=True), runner=runner)
+
+        commands = [" ".join(command) for command in runner.commands]
+        self.assertTrue(any('"branch": "main"' in command for command in commands))
+        self.assertTrue(any("reconcile kustomization flux-system" in command for command in commands[-2:]))
+
     def test_cleanup_is_attempted_after_activation_failure_unless_keep_is_set(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / "terraform" / "development").mkdir(parents=True)
-            runner = FakeRunner(fail_on_rollout=True)
+            runner = FakeRunner(fail_on="wait pod/whoami-example-change-7d9c4")
 
             with self.assertRaises(verify.VerificationError):
                 verify.run_acceptance(self._config(), runner=runner, repo_root=root, template_text=TEMPLATE)
@@ -203,7 +350,7 @@ class VerifyBranchDeployTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / "terraform" / "development").mkdir(parents=True)
-            runner = FakeRunner(fail_on_rollout=True)
+            runner = FakeRunner(fail_on="wait pod/whoami-example-change-7d9c4")
 
             with self.assertRaises(verify.VerificationError):
                 verify.run_acceptance(self._config(keep=True), runner=runner, repo_root=root, template_text=TEMPLATE)
@@ -222,15 +369,32 @@ class VerifyBranchDeployTest(unittest.TestCase):
         text += "\n"
         text += (REPO_ROOT / "docs/runbooks/development-cluster.md").read_text(encoding="utf-8")
 
-        for flag in ("--app", "--branch", "--slug", "--push", "--terraform-apply", "--kubeconfig", "--timeout", "--keep"):
+        for flag in (
+            "--app",
+            "--branch",
+            "--slug",
+            "--push",
+            "--terraform-apply",
+            "--include-cluster-base",
+            "--kubeconfig",
+            "--timeout",
+            "--keep",
+        ):
             self.assertIn(flag, text)
             self.assertIn(flag, option_strings)
+
+    def _index_containing(self, commands: list[str], needle: str) -> int:
+        for index, command in enumerate(commands):
+            if needle in command:
+                return index
+        self.fail(f"missing command containing {needle!r}")
 
     def _config(
         self,
         *,
         push: bool = False,
         terraform_apply: bool = False,
+        include_cluster_base: bool = False,
         keep: bool = False,
     ) -> verify.AppConfig:
         return verify.AppConfig(
@@ -241,6 +405,7 @@ class VerifyBranchDeployTest(unittest.TestCase):
             timeout=verify.parse_duration("2m"),
             push=push,
             terraform_apply=terraform_apply,
+            include_cluster_base=include_cluster_base,
             keep=keep,
         )
 
