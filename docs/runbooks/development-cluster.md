@@ -127,7 +127,53 @@ Branch environments are for app-scoped validation on the development cluster. Us
 <app>-${branch_slug}.development.lab.petebeegle.com
 ```
 
-The initial activation template is in `kubernetes/clusters/development/branches/`, and the first branch-aware app payload overlay is `kubernetes/apps/whoami/branch/`. The cluster-layer template creates the Flux `GitRepository` and `Kustomization` that point at a branch; the app overlay is the rendered workload payload that Flux applies after substituting `${branch_slug}`. The template is not referenced from the live development entrypoint and is suspended by default. To activate one, copy it into a reviewed cluster-layer path, set the real branch name and slug, and unsuspend both the `GitRepository` and Flux `Kustomization`.
+Use `tools/development/verify_branch_deploy.py` as the canonical path for future branch validation. V1 supports `whoami` only. The tool renders the activation template, applies it directly to the development cluster, forces Flux reconciliation, checks the branch-scoped app resources, and then removes the temporary branch Flux resources unless `--keep` is set.
+
+The initial activation template is in `kubernetes/clusters/development/branches/`, and the first branch-aware app payload overlay is `kubernetes/apps/whoami/branch/`. The cluster-layer template creates the Flux `GitRepository` and `Kustomization` that point at a branch; the app overlay is the rendered workload payload that Flux applies after substituting `${branch_slug}`. The template is not referenced from the live development entrypoint and is suspended by default. The verification tool fills `branch_name` and `branch_slug`, sets both Flux objects to `suspend: false`, and applies the rendered activation temporarily.
+
+### Live App Acceptance
+
+Prerequisites:
+
+- The development cluster exists and the base Flux path is healthy.
+- `terraform`, `kubectl`, and `flux` are installed locally.
+- The default kubeconfig exists at `~/.kube/homelab-development.config`, or pass `--kubeconfig <path>`.
+- The branch named by `--branch` is available on origin. Use `--push` to push the current HEAD to origin as that branch before activation.
+- `--slug` is deterministic and DNS-safe: lowercase letters, numbers, and hyphens; starts and ends with an alphanumeric character; and is short enough for `whoami-${branch_slug}` Kubernetes names.
+
+Normal live verification:
+
+```sh
+python3 tools/development/verify_branch_deploy.py --app whoami --branch codex/example-change --slug example-change --push
+```
+
+Run Terraform apply first when the development cluster base may need to be created or repaired:
+
+```sh
+python3 tools/development/verify_branch_deploy.py --app whoami --branch codex/example-change --slug example-change --push --terraform-apply
+```
+
+Use a custom kubeconfig:
+
+```sh
+python3 tools/development/verify_branch_deploy.py --app whoami --branch codex/example-change --slug example-change --push --kubeconfig ~/.kube/alternate-development.config
+```
+
+Keep the branch environment for debugging:
+
+```sh
+python3 tools/development/verify_branch_deploy.py --app whoami --branch codex/example-change --slug example-change --push --keep --timeout 20m
+```
+
+When `--keep` is not set, cleanup is attempted after activation even if verification fails. Cleanup deletes the branch `Kustomization`, waits for the branch namespace to be pruned, and then deletes the branch `GitRepository`. If `--keep` is set, manually delete the Flux resources and confirm the namespace is gone before reusing the slug:
+
+```sh
+kubectl --kubeconfig ~/.kube/homelab-development.config -n flux-system delete kustomization.kustomize.toolkit.fluxcd.io/branch-whoami-example-change
+kubectl --kubeconfig ~/.kube/homelab-development.config wait namespace/whoami-example-change --for=delete --timeout=10m
+kubectl --kubeconfig ~/.kube/homelab-development.config -n flux-system delete gitrepository.source.toolkit.fluxcd.io/branch-example-change
+```
+
+This proves that the pushed branch can be fetched by Flux, the whoami branch overlay can reconcile on the development cluster, the Deployment rolls out, the Service exists, and the HTTPRoute reports `Accepted` and `ResolvedRefs`. It does not prove production readiness, cross-app behavior, cluster-scoped changes, public Cloudflare routing, or apps other than `whoami`.
 
 Local manifest verification does not require pushing a branch:
 
@@ -151,10 +197,6 @@ The live branch environment path does require a pushed branch when Flux reconcil
 ## Gateway Environment Overlays
 
 The shared gateway base at `kubernetes/infra/network/gateway` must stay environment-neutral: only `${cluster_domain}`, `*.${cluster_domain}`, `${wildcard_cert_name}`, and shared Gateway plumbing belong there. Production-only hostnames, certificates, listeners, and redirects such as Synology, Proxmox, and Unifi belong in additive overlays under `kubernetes/clusters/production/overlays/gateway`. The development cluster points directly at the shared base so local renders do not need deletion patches for production-only Gateway state.
-
-## Future Enhancements
-
-A small helper script or CLI should eventually create and remove branch environments from a branch name and slug. That tool can copy the activation template, fill `branch_name` and `branch_slug`, unsuspend or suspend the Flux resources, and clean up the activation when the branch test is done.
 
 ## Cluster-Scoped Testing
 
