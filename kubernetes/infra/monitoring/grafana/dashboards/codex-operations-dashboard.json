@@ -108,7 +108,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Number of completed Codex workflow sessions observed in the selected range.",
+      "description": "Completed Codex workflow sessions observed total in the selected range.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -147,7 +147,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(increase(proxmox_codex_workflow_session_runs_total[$__range])) OR vector(0)",
+          "expr": "sum(max_over_time(proxmox_codex_workflow_session_runs_total[$__range])) OR vector(0)",
           "refId": "A"
         }
       ],
@@ -159,7 +159,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Number of completed Codex workflow sessions observed in the selected range.",
+      "description": "Observed telemetry delivery failure total reported on successful OTLP requests.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -198,7 +198,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(increase(proxmox_codex_workflow_telemetry_delivery_failures_total[$__range])) OR vector(0)",
+          "expr": "sum(max_over_time(proxmox_codex_workflow_telemetry_delivery_failures_total[$__range])) OR vector(0)",
           "refId": "A"
         }
       ],
@@ -292,7 +292,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Hook execution volume by phase.",
+      "description": "Observed hook run totals by phase in the selected range.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -360,7 +360,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (phase) (increase(proxmox_codex_workflow_hook_runs_total[$__rate_interval]))",
+          "expr": "sum by (phase) (max_over_time(proxmox_codex_workflow_hook_runs_total[$__range]))",
           "refId": "A",
           "legendFormat": "{{phase}}"
         }
@@ -373,7 +373,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Slowest observed hook durations by phase and hook.",
+      "description": "Recent session durations over time.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -468,7 +468,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Hook execution volume by phase.",
+      "description": "Completed session totals grouped by final status in the selected range.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -536,7 +536,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (status) (increase(proxmox_codex_workflow_session_runs_total[$__rate_interval]))",
+          "expr": "sum by (status) (max_over_time(proxmox_codex_workflow_session_runs_total[$__range]))",
           "refId": "A",
           "legendFormat": "{{status}}"
         }
@@ -549,7 +549,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Hook execution volume by phase.",
+      "description": "Observed failed hook run totals by phase and hook in the selected range.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -617,7 +617,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (phase, hook) (increase(proxmox_codex_workflow_hook_runs_total{status=\"failure\"}[$__rate_interval]))",
+          "expr": "sum by (phase, hook) (max_over_time(proxmox_codex_workflow_hook_runs_total{status=\"failure\"}[$__range]))",
           "refId": "A",
           "legendFormat": "{{phase}} / {{hook}}"
         }
@@ -630,7 +630,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Hook execution volume by phase.",
+      "description": "Highest observed failed hook totals in the selected range.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -698,7 +698,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "topk(10, sum by (hook) (increase(proxmox_codex_workflow_hook_runs_total{status=\"failure\"}[$__range])))",
+          "expr": "topk(10, sum by (hook) (max_over_time(proxmox_codex_workflow_hook_runs_total{status=\"failure\"}[$__range])))",
           "refId": "A",
           "legendFormat": "{{hook}}"
         }
@@ -711,7 +711,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Hook execution volume by phase.",
+      "description": "Automatic PR creation totals grouped by status in the selected range.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -779,7 +779,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (status) (increase(proxmox_codex_workflow_hook_runs_total{hook=\"create_implementation_pr\"}[$__range]))",
+          "expr": "sum by (status) (max_over_time(proxmox_codex_workflow_hook_runs_total{hook=\"create_implementation_pr\"}[$__range]))",
           "refId": "A",
           "legendFormat": "{{status}}"
         }
@@ -805,7 +805,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Slowest observed hook durations by phase and hook.",
+      "description": "Pre-commit hook duration and observed run total.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -883,7 +883,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(increase(proxmox_codex_workflow_hook_runs_total{hook=\"pre_commit_check\"}[$__rate_interval]))",
+          "expr": "sum(max_over_time(proxmox_codex_workflow_hook_runs_total{hook=\"pre_commit_check\"}[$__range])) OR vector(0)",
           "refId": "B",
           "legendFormat": "runs"
         }
@@ -896,7 +896,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Slowest observed hook durations by phase and hook.",
+      "description": "Implementation workflow guard duration and observed failed-run total.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -974,7 +974,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(increase(proxmox_codex_workflow_hook_runs_total{hook=~\"implementation_workflow.*\",status=\"failure\"}[$__rate_interval]))",
+          "expr": "sum(max_over_time(proxmox_codex_workflow_hook_runs_total{hook=~\"implementation_workflow.*\",status=\"failure\"}[$__range])) OR vector(0)",
           "refId": "B",
           "legendFormat": "failures"
         }
@@ -987,7 +987,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Slowest observed hook durations by phase and hook.",
+      "description": "Latest observed runtime for mutation and safety guardrail hooks.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1069,7 +1069,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Hook execution volume by phase.",
+      "description": "Observed failed guardrail hook totals in the selected range.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1137,7 +1137,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (hook) (increase(proxmox_codex_workflow_hook_runs_total{hook=~\"implementation_workflow_preflight_bash|implementation_workflow_preflight_mutation|implementation_workflow_guard|sops_guard|terraform_plan_guard\",status=\"failure\"}[$__rate_interval]))",
+          "expr": "sum by (hook) (max_over_time(proxmox_codex_workflow_hook_runs_total{hook=~\"implementation_workflow_preflight_bash|implementation_workflow_preflight_mutation|implementation_workflow_guard|sops_guard|terraform_plan_guard\",status=\"failure\"}[$__range]))",
           "refId": "A",
           "legendFormat": "{{hook}}"
         }
@@ -1150,7 +1150,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Slowest observed hook durations by phase and hook.",
+      "description": "Stop-phase self-check and automatic PR creation durations.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1245,7 +1245,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Hook execution volume by phase.",
+      "description": "Observed hook run totals grouped by triggering tool in the selected range.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1313,7 +1313,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (tool_name) (increase(proxmox_codex_workflow_hook_runs_total[$__range]))",
+          "expr": "sum by (tool_name) (max_over_time(proxmox_codex_workflow_hook_runs_total[$__range]))",
           "refId": "A",
           "legendFormat": "{{tool_name}}"
         }
@@ -1326,7 +1326,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Hook execution volume by phase.",
+      "description": "Completed session totals grouped by implementation in the selected range.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1394,7 +1394,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (implementation) (increase(proxmox_codex_workflow_session_runs_total[$__range]))",
+          "expr": "sum by (implementation) (max_over_time(proxmox_codex_workflow_session_runs_total[$__range]))",
           "refId": "A",
           "legendFormat": "{{implementation}}"
         }
