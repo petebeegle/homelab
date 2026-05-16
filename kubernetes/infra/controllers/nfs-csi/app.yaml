@@ -51,3 +51,10 @@ spec:
     externalProvisioner:
       volumeBindingMode: Immediate
       reclaimPolicy: Retain
+    externalSnapshotter:
+      enabled: true
+      customResourceDefinitions:
+        enabled: false
+      deletionPolicy: Retain
+    volumeSnapshotClass:
+      create: false

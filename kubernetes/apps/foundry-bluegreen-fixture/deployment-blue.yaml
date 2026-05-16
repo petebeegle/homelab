@@ -1,0 +1,55 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: foundry-fixture-blue
+  namespace: foundry-bluegreen-fixture
+  labels:
+    app: foundry-bluegreen-fixture
+    foundryvtt.petebeegle.com/color: blue
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: foundry-bluegreen-fixture
+      foundryvtt.petebeegle.com/color: blue
+  template:
+    metadata:
+      labels:
+        app: foundry-bluegreen-fixture
+        foundryvtt.petebeegle.com/color: blue
+    spec:
+      initContainers:
+        - name: write-page
+          image: busybox:1.37.0
+          command:
+            - /bin/sh
+            - -c
+            - |
+              cat >/work/index.html <<'EOF'
+              foundry blue fixture
+              EOF
+          volumeMounts:
+            - name: webroot
+              mountPath: /work
+      containers:
+        - name: http
+          image: nginx:1.29.4-alpine
+          ports:
+            - name: http
+              containerPort: 80
+          volumeMounts:
+            - name: webroot
+              mountPath: /usr/share/nginx/html
+              readOnly: true
+          resources:
+            requests:
+              cpu: 5m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+      volumes:
+        - name: webroot
+          persistentVolumeClaim:
+            claimName: foundry-fixture-blue

@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: foundry-fixture-green
+  namespace: foundry-bluegreen-fixture
+  labels:
+    app: foundry-bluegreen-fixture
+    foundryvtt.petebeegle.com/color: green
+spec:
+  selector:
+    app: foundry-bluegreen-fixture
+    foundryvtt.petebeegle.com/color: green
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

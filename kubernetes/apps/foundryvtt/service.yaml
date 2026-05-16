@@ -9,6 +9,7 @@ metadata:
 spec:
   selector:
     app: foundryvtt
+    foundryvtt.petebeegle.com/color: blue
   ports:
     - name: web
       port: 80
