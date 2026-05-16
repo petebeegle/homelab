@@ -20,6 +20,7 @@ Use this runbook for Foundry VTT image upgrades. Production changes stay GitOps-
 - Rehearsal evidence is written to `.codex/tmp/foundry-bluegreen-dev-rehearse.json` and is valid only for the current tool/config version.
 - `prepare` pauses the blue Foundry deployment before creating the NFS CSI snapshot desired state.
 - `Service/foundryvtt` remains the stable production backend for the existing public and internal routes.
+- The original blue `Deployment/foundryvtt` selector intentionally stays app-only for Kubernetes selector immutability and compatibility with the existing live Deployment. Color labels live on pod templates and Services so switching can move traffic without mutating the blue Deployment selector.
 - Green preview traffic uses the internal Gateway only at `foundry-green.${cluster_domain}`.
 - The development fixture preview is LAN-only at `foundry-green-preview.development.lab.petebeegle.com`.
 - After `promote`, inactive blue remains scaled to zero until an explicit `retire`.

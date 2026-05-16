@@ -11,6 +11,7 @@ from pathlib import Path
 
 
 MODULE_PATH = Path(__file__).resolve().parents[1] / "foundry_bluegreen.py"
+REPO_ROOT = MODULE_PATH.parents[1]
 SPEC = importlib.util.spec_from_file_location("foundry_bluegreen", MODULE_PATH)
 foundry_bluegreen = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
@@ -198,6 +199,19 @@ resources:
                 self.root, Path(".codex/tmp/foundry-bluegreen-dev-rehearse.json")
             )
         )
+
+    def test_production_blue_deployment_keeps_immutable_selector_app_only(self) -> None:
+        deployment = (
+            REPO_ROOT / "kubernetes/apps/foundryvtt/deployment.yaml"
+        ).read_text(encoding="utf-8")
+
+        selector = deployment.split("  selector:\n", 1)[1].split("  template:\n", 1)[0]
+        template_labels = deployment.split("    metadata:\n", 1)[1].split("    spec:\n", 1)[0]
+
+        self.assertIn("      app: foundryvtt", selector)
+        self.assertNotIn("foundryvtt.petebeegle.com/color", selector)
+        self.assertIn("        app: foundryvtt", template_labels)
+        self.assertIn("        foundryvtt.petebeegle.com/color: blue", template_labels)
 
 
 if __name__ == "__main__":
