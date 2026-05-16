@@ -45,6 +45,33 @@ READY_PODS = json.dumps(
     }
 )
 
+READY_JELLYFIN_PODS = json.dumps(
+    {
+        "items": [
+            {
+                "metadata": {"name": "jellyfin-example-change-75f8d", "namespace": "jellyfin-example-change"},
+                "status": {"phase": "Running", "conditions": [{"type": "Ready", "status": "True"}]},
+            }
+        ]
+    }
+)
+
+READY_PVC = json.dumps(
+    {
+        "metadata": {"name": "jellyfin-config-example-change", "namespace": "jellyfin-example-change"},
+        "spec": {"storageClassName": "nfs-csi-storage"},
+        "status": {"phase": "Bound"},
+    }
+)
+
+PENDING_PVC = json.dumps(
+    {
+        "metadata": {"name": "jellyfin-config-example-change", "namespace": "jellyfin-example-change"},
+        "spec": {"storageClassName": "nfs-csi-storage"},
+        "status": {"phase": "Pending"},
+    }
+)
+
 MIXED_PODS = json.dumps(
     {
         "items": [
@@ -114,12 +141,14 @@ class FakeRunner:
         timeout_on: str | None = None,
         pods_json: str = READY_PODS,
         cluster_pods_json: str = READY_PODS,
+        pvc_json: str = READY_PVC,
     ) -> None:
         self.plan_returncode = plan_returncode
         self.fail_on = fail_on
         self.timeout_on = timeout_on
         self.pods_json = pods_json
         self.cluster_pods_json = cluster_pods_json
+        self.pvc_json = pvc_json
         self.calls: list[tuple[list[str], dict[str, object]]] = []
 
     def __call__(self, args: list[str], **kwargs: object) -> SimpleNamespace:
@@ -135,8 +164,10 @@ class FakeRunner:
             return SimpleNamespace(returncode=0, stdout=self.cluster_pods_json)
         if args[-4:] == ["get", "pods", "-o", "json"]:
             return SimpleNamespace(returncode=0, stdout=self.pods_json)
-        if args[-4:] == ["get", "httproute", "whoami-example-change", "-o"] or args[-2:] == ["-o", "json"]:
+        if "get" in args and "httproute" in args and args[-2:] == ["-o", "json"]:
             return SimpleNamespace(returncode=0, stdout=READY_HTTPROUTE)
+        if "get" in args and "pvc" in args and args[-2:] == ["-o", "json"]:
+            return SimpleNamespace(returncode=0, stdout=self.pvc_json)
         return SimpleNamespace(returncode=0, stdout="")
 
     @property
@@ -145,6 +176,32 @@ class FakeRunner:
 
 
 class VerifyBranchDeployTest(unittest.TestCase):
+    def test_profile_loading_discovers_whoami_and_jellyfin(self) -> None:
+        profiles = verify.load_smoke_profiles()
+
+        self.assertEqual(set(profiles), {"jellyfin", "whoami"})
+        self.assertEqual(profiles["whoami"].activation_template, "kubernetes/clusters/development/branches/whoami-template.yaml")
+        self.assertEqual(profiles["whoami"].git_repository, "branch-${branch_slug}")
+        self.assertEqual(profiles["jellyfin"].git_repository, "branch-jellyfin-${branch_slug}")
+        self.assertEqual(profiles["jellyfin"].pvcs[0].name, "jellyfin-config-${branch_slug}")
+
+    def test_supported_apps_are_loaded_from_profile_json(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            profile_dir = Path(tmp)
+            (profile_dir / "custom.json").write_text(
+                json.dumps(
+                    {
+                        "app": "custom",
+                        "activationTemplate": "template.yaml",
+                        "namespace": "custom-${branch_slug}",
+                        "checks": {"services": ["custom-${branch_slug}"]},
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            self.assertEqual(verify.supported_apps(profile_dir), frozenset({"custom"}))
+
     def test_branch_validation_accepts_common_git_branch_name(self) -> None:
         self.assertEqual(verify.validate_branch("codex/example-change"), "codex/example-change")
 
@@ -299,6 +356,50 @@ class VerifyBranchDeployTest(unittest.TestCase):
         self.assertTrue(any("get service whoami-example-change" in command for command in commands))
         self.assertTrue(any("get httproute whoami-example-change -o json" in command for command in commands))
 
+    def test_jellyfin_profile_checks_helm_pvc_service_route_and_http_probe(self) -> None:
+        runner = FakeRunner(pods_json=READY_JELLYFIN_PODS)
+        config = self._config(app="jellyfin")
+
+        verify.assert_smoke_profile(config, verify.load_smoke_profile("jellyfin"), runner=runner)
+
+        commands = [" ".join(command) for command in runner.commands]
+        self.assertTrue(any("get namespace jellyfin-example-change" in command for command in commands))
+        self.assertTrue(any("wait helmrelease.helm.toolkit.fluxcd.io/jellyfin-example-change" in command for command in commands))
+        self.assertTrue(any("get pvc jellyfin-config-example-change -o json" in command for command in commands))
+        self.assertTrue(any("get service jellyfin-example-change" in command for command in commands))
+        self.assertTrue(any("get httproute jellyfin-example-change -o json" in command for command in commands))
+        self.assertTrue(any("run probe-example-change" in command and "curlimages/curl:8.16.0" in command for command in commands))
+
+    def test_pvc_assert_requires_bound_phase_and_expected_storage_class(self) -> None:
+        verify.assert_pvc_bound(READY_PVC, pvc_name="jellyfin-config-example-change", storage_class="nfs-csi-storage")
+
+        with self.assertRaisesRegex(verify.VerificationError, "not Bound"):
+            verify.assert_pvc_bound(PENDING_PVC, pvc_name="jellyfin-config-example-change", storage_class="nfs-csi-storage")
+
+        with self.assertRaisesRegex(verify.VerificationError, "storageClassName"):
+            verify.assert_pvc_bound(READY_PVC, pvc_name="jellyfin-config-example-change", storage_class="other")
+
+    def test_jellyfin_http_probe_command_targets_service_and_matches_web_shell(self) -> None:
+        config = self._config(app="jellyfin")
+
+        command = verify.build_http_probe_command(
+            config,
+            namespace=config.namespace,
+            probe=verify.HttpProbe(
+                service="jellyfin-${branch_slug}",
+                port=8096,
+                path="/",
+                body_regex="Jellyfin|Please sign in|Wizard|Login",
+            ),
+            probe_index=0,
+            total_probes=1,
+        )
+
+        self.assertIn("probe-example-change", command)
+        self.assertIn("--image=curlimages/curl:8.16.0", command)
+        self.assertIn("http://jellyfin-example-change.jellyfin-example-change.svc.cluster.local:8096/", command[-1])
+        self.assertIn("Jellyfin|Please sign in|Wizard|Login", command[-1])
+
     def test_cluster_base_reconciles_in_order_and_restores_main_on_success(self) -> None:
         runner = FakeRunner(cluster_pods_json=READY_PODS)
 
@@ -392,13 +493,14 @@ class VerifyBranchDeployTest(unittest.TestCase):
     def _config(
         self,
         *,
+        app: str = "whoami",
         push: bool = False,
         terraform_apply: bool = False,
         include_cluster_base: bool = False,
         keep: bool = False,
     ) -> verify.AppConfig:
         return verify.AppConfig(
-            app="whoami",
+            app=app,
             branch="codex/example-change",
             slug="example-change",
             kubeconfig=Path("/tmp/kubeconfig"),

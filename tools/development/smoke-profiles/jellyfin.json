@@ -1,0 +1,31 @@
+{
+  "app": "jellyfin",
+  "gitRepository": "branch-jellyfin-${branch_slug}",
+  "activationTemplate": "kubernetes/clusters/development/branches/jellyfin-template.yaml",
+  "namespace": "jellyfin-${branch_slug}",
+  "checks": {
+    "helmReleases": [
+      "jellyfin-${branch_slug}"
+    ],
+    "pvcs": [
+      {
+        "name": "jellyfin-config-${branch_slug}",
+        "storageClass": "nfs-csi-storage"
+      }
+    ],
+    "services": [
+      "jellyfin-${branch_slug}"
+    ],
+    "httpRoutes": [
+      "jellyfin-${branch_slug}"
+    ],
+    "httpProbes": [
+      {
+        "service": "jellyfin-${branch_slug}",
+        "port": 8096,
+        "path": "/",
+        "bodyRegex": "Jellyfin|Please sign in|Wizard|Login"
+      }
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "app": "whoami",
+  "gitRepository": "branch-${branch_slug}",
+  "activationTemplate": "kubernetes/clusters/development/branches/whoami-template.yaml",
+  "namespace": "whoami-${branch_slug}",
+  "checks": {
+    "services": [
+      "whoami-${branch_slug}"
+    ],
+    "httpRoutes": [
+      "whoami-${branch_slug}"
+    ]
+  }
+}

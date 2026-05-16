@@ -1,6 +1,7 @@
 persistence:
   config:
     enabled: true
+    existingClaim: jellyfin-config-v2
     storageClass: nfs-csi-storage
   media:
     enabled: false

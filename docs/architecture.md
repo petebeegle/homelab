@@ -20,7 +20,7 @@ This document is generated for agentic repo navigation. It records relationships
 - Infra activation list: `crds.yaml`, `cert-manager.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `certs.yaml`, `gateway.yaml`.
 - App activation list: `whoami.yaml`, `foundry-bluegreen-fixture.yaml`.
 
-- Branch environment templates: `whoami-template.yaml`.
+- Branch environment templates: `whoami-template.yaml`, `jellyfin-template.yaml`.
 
 ### Flux Substitution Variables
 
@@ -127,7 +127,8 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/apps/external` | `namespace.yaml`, `synology.yaml` |
 | `kubernetes/apps/foundry-bluegreen-fixture` | `namespace.yaml`, `pvc-blue.yaml`, `pvc-green.yaml`, `deployment-blue.yaml`, `deployment-green.yaml`, `service-blue.yaml`, `service-green.yaml`, `httproute-green-preview.yaml` |
 | `kubernetes/apps/foundryvtt` | `namespace.yaml`, `pvc.yaml`, `secret.yaml`, `deployment.yaml`, `service.yaml`, `httproute.yaml`, `httproute-public.yaml` |
-| `kubernetes/apps/jellyfin` | `./app.yaml`, `./httproute.yaml` |
+| `kubernetes/apps/jellyfin/branch` | `jellyfin.yaml` |
+| `kubernetes/apps/jellyfin` | `./app.yaml`, `./pvc.yaml`, `./httproute.yaml` |
 | `kubernetes/apps/pihole` | `app.yaml`, `secret.yaml`, `httproute.yaml` |
 | `kubernetes/apps/renovate` | `app.yaml`, `secret.yaml` |
 | `kubernetes/apps/synthetics` | `namespace.yaml`, `cronjob.yaml` |
@@ -146,7 +147,8 @@ This document is generated for agentic repo navigation. It records relationships
 | `HTTPRoute` | `foundryvtt/foundryvtt` | `foundry.${cluster_domain}` | `gateway/internal/https-gateway` | `foundryvtt:80` |
 | `HTTPRoute` | `gateway/https-redirect` | `*.${cluster_domain}, ${cluster_domain}` | `gateway/internal/http-gateway, gateway/external/http-gateway` | `(none)` |
 | `HTTPRoute` | `grafana/monitoring` | `monitoring.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `grafana:80` |
-| `HTTPRoute` | `jellyfin/jellyfin` | `jellyfin.${cluster_domain}` | `gateway/internal/https-gateway` | `jellyfin:8096` |
+| `HTTPRoute` | `jellyfin-${branch_slug}/jellyfin-${branch_slug}` | `jellyfin-${branch_slug}.${cluster_domain}` | `gateway/internal/https-gateway` | `jellyfin-${branch_slug}:8096` |
+| `HTTPRoute` | `jellyfin/jellyfin` | `jellyfin.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `jellyfin:8096` |
 | `HTTPRoute` | `otel-collector/otel-collector` | `otel.${cluster_domain}` | `gateway/internal/https-gateway` | `otel-collector-opentelemetry-collector:4318` |
 | `HTTPRoute` | `pihole/pihole-httproute` | `pihole.${cluster_domain}` | `gateway/internal/https-gateway` | `pihole-web:80` |
 | `HTTPRoute` | `whoami-${branch_slug}/whoami-${branch_slug}` | `whoami-${branch_slug}.${cluster_domain}` | `gateway/internal/https-gateway` | `whoami-${branch_slug}:80` |
@@ -162,10 +164,13 @@ This document is generated for agentic repo navigation. It records relationships
 
 | Source | Owner | StorageClass | Path |
 | --- | --- | --- | --- |
+| HelmRelease values | `jellyfin-${branch_slug}/jellyfin-${branch_slug}` | `nfs-csi-storage` | `kubernetes/apps/jellyfin/branch/jellyfin.yaml` |
 | HelmRelease values | `valheim/valheim-server` | `nfs-csi-storage` | `kubernetes/apps/valheim/app.yaml` |
 | PVC | `foundry-bluegreen-fixture/foundry-fixture-blue` | `nfs-csi-storage` | `kubernetes/apps/foundry-bluegreen-fixture/pvc-blue.yaml` |
 | PVC | `foundry-bluegreen-fixture/foundry-fixture-green` | `nfs-csi-storage` | `kubernetes/apps/foundry-bluegreen-fixture/pvc-green.yaml` |
 | PVC | `foundryvtt/foundryvtt-data-pvc` | `nfs-csi-storage` | `kubernetes/apps/foundryvtt/pvc.yaml` |
+| PVC | `jellyfin-${branch_slug}/jellyfin-config-${branch_slug}` | `nfs-csi-storage` | `kubernetes/apps/jellyfin/branch/jellyfin.yaml` |
+| PVC | `jellyfin/jellyfin-config-v2` | `nfs-csi-storage` | `kubernetes/apps/jellyfin/pvc.yaml` |
 | PVC | `wireguard/wireguard-pvc` | `nfs-csi-storage` | `kubernetes/infra/network/vpn/pvc.yaml` |
 | Values file | `authentik` | `nfs-csi-storage` | `kubernetes/infra/authentik/values.yaml` |
 | Values file | `jellyfin` | `nfs-csi-storage` | `kubernetes/apps/jellyfin/values.yaml` |
