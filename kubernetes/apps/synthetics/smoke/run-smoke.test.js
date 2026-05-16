@@ -5,31 +5,46 @@ const test = require("node:test");
 
 const scriptPath = path.join(__dirname, "run-smoke.sh");
 
-function runWrapper(command) {
+function runWrapper(command, env = {}) {
   return spawnSync("bash", [scriptPath], {
     cwd: __dirname,
     encoding: "utf8",
     env: {
       ...process.env,
+      SMOKE_RUN_NAME: "",
+      HOSTNAME: "synthetic-smoke-hostname",
+      ...env,
       SMOKE_PLAYWRIGHT_COMMAND: command
     }
   });
 }
 
 test("wrapper preserves a successful reporter summary without adding another line", () => {
-  const result = runWrapper("printf '%s\\n' 'SMOKE_RUN_SUMMARY status=success failed_count=0 failed_tests=\"\" duration_seconds=37'");
+  const result = runWrapper("printf '%s\\n' 'SMOKE_RUN_SUMMARY run=\"synthetic-smoke-28925520\" status=success failed_count=0 failed_tests=\"\" duration_seconds=37'");
   const summaryLines = result.stdout.split("\n").filter((line) => line.startsWith("SMOKE_RUN_SUMMARY "));
 
   assert.equal(result.status, 0);
-  assert.deepEqual(summaryLines, ['SMOKE_RUN_SUMMARY status=success failed_count=0 failed_tests="" duration_seconds=37']);
+  assert.deepEqual(summaryLines, ['SMOKE_RUN_SUMMARY run="synthetic-smoke-28925520" status=success failed_count=0 failed_tests="" duration_seconds=37']);
 });
 
 test("wrapper emits one fallback summary and preserves non-zero exit when Playwright fails before reporter output", () => {
-  const result = runWrapper("printf '%s\\n' 'setup exploded'; exit 42");
+  const result = runWrapper("printf '%s\\n' 'setup exploded'; exit 42", {
+    SMOKE_RUN_NAME: 'synthetic "manual" run \\ 123'
+  });
   const output = result.stdout + result.stderr;
   const summaryLines = output.split("\n").filter((line) => line.startsWith("SMOKE_RUN_SUMMARY "));
 
   assert.equal(result.status, 42);
   assert.equal(summaryLines.length, 1);
-  assert.match(summaryLines[0], /^SMOKE_RUN_SUMMARY status=failed failed_count=0 failed_tests="playwright execution failed before reporter summary" duration_seconds=\d+$/);
+  assert.match(summaryLines[0], /^SMOKE_RUN_SUMMARY run="synthetic \\"manual\\" run \\\\ 123" status=failed failed_count=0 failed_tests="playwright execution failed before reporter summary" duration_seconds=\d+$/);
+});
+
+test("wrapper fallback uses hostname when smoke run name is unavailable", () => {
+  const result = runWrapper("exit 42");
+  const output = result.stdout + result.stderr;
+  const summaryLines = output.split("\n").filter((line) => line.startsWith("SMOKE_RUN_SUMMARY "));
+
+  assert.equal(result.status, 42);
+  assert.equal(summaryLines.length, 1);
+  assert.match(summaryLines[0], /^SMOKE_RUN_SUMMARY run="synthetic-smoke-hostname" status=failed /);
 });

@@ -41,10 +41,10 @@ kubectl logs -n synthetics -l app.kubernetes.io/name=synthetic-smoke --tail=200
 Every completed run should emit exactly one bounded summary line:
 
 ```text
-SMOKE_RUN_SUMMARY status=success failed_count=0 failed_tests="" duration_seconds=37
+SMOKE_RUN_SUMMARY run="synthetic-smoke-28925520" status=success failed_count=0 failed_tests="" duration_seconds=37
 ```
 
-Failed runs use `status=failed` and include the final failed Playwright test names after retries in `failed_tests`. If Playwright fails before the custom reporter can run, the wrapper emits a fallback `SMOKE_RUN_SUMMARY status=failed` line and preserves the non-zero process exit.
+Failed runs use `status=failed` and include the final failed Playwright test names after retries in `failed_tests`. The `run` field is the Kubernetes Job name when available, then the pod hostname, then `unknown`. If Playwright fails before the custom reporter can run, the wrapper emits a fallback `SMOKE_RUN_SUMMARY run="..." status=failed` line and preserves the non-zero process exit.
 
 ## Common Failures
 
@@ -83,7 +83,7 @@ Grafana owns the `Synthetics` folder, `Synthetic Smoke` dashboard, and `syntheti
 
 - `Recent Status` counts recent `status=failed` summary lines.
 - `Smoke Runs` counts `status=success` and `status=failed` summary lines over the panel interval.
-- `Job Duration` unwraps `duration_seconds` from the summary line.
+- `Job Duration` unwraps `duration_seconds` from the summary line and labels each series by `run`.
 - `Smoke Logs` includes `SMOKE_RUN_SUMMARY` lines alongside Playwright failure output.
 
 The alert fires only when summary lines report more than one failed run in the last hour. A single failed run should be investigated, but it is not enough to alert by itself. The alert intentionally remains one aggregate alert instance; it does not group by `failed_tests`, because grouping that label in the alert condition would create separate alert instances per failed test text. Use the failed-test LogQL above from Grafana Explore when the aggregate alert fires.

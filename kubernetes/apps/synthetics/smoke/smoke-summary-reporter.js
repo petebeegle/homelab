@@ -1,4 +1,5 @@
 const MAX_FAILED_TESTS_LENGTH = 512;
+const MAX_RUN_NAME_LENGTH = 128;
 
 function sanitizeLogfmtValue(value) {
   return String(value)
@@ -21,6 +22,10 @@ function quoteLogfmt(value) {
   return '"' + sanitizeLogfmtValue(value).replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
 }
 
+function smokeRunName(env = process.env) {
+  return env.SMOKE_RUN_NAME || env.HOSTNAME || "unknown";
+}
+
 function testTitle(test) {
   if (typeof test.titlePath === "function") {
     const parts = test.titlePath().filter(Boolean);
@@ -39,10 +44,12 @@ function finalFailedTests(suite) {
     .map(testTitle);
 }
 
-function formatSummary({ status, failedTests, durationSeconds }) {
+function formatSummary({ status, failedTests, durationSeconds, runName = smokeRunName() }) {
   const failedTestText = truncate(failedTests.map(sanitizeLogfmtValue).join("; "));
+  const runNameText = truncate(sanitizeLogfmtValue(runName), MAX_RUN_NAME_LENGTH);
   return [
     "SMOKE_RUN_SUMMARY",
+    "run=" + quoteLogfmt(runNameText),
     "status=" + status,
     "failed_count=" + failedTests.length,
     "failed_tests=" + quoteLogfmt(failedTestText),
@@ -73,6 +80,8 @@ class SmokeSummaryReporter {
 
 module.exports = SmokeSummaryReporter;
 module.exports.MAX_FAILED_TESTS_LENGTH = MAX_FAILED_TESTS_LENGTH;
+module.exports.MAX_RUN_NAME_LENGTH = MAX_RUN_NAME_LENGTH;
 module.exports.finalFailedTests = finalFailedTests;
 module.exports.formatSummary = formatSummary;
 module.exports.quoteLogfmt = quoteLogfmt;
+module.exports.smokeRunName = smokeRunName;

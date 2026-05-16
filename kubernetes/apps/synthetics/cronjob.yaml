@@ -54,6 +54,10 @@ spec:
                   value: "1"
                 - name: SMOKE_BASE_DOMAIN
                   value: "${cluster_domain}"
+                - name: SMOKE_RUN_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.labels['batch.kubernetes.io/job-name']
               command:
                 - /bin/bash
                 - -ceu
