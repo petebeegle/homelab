@@ -53,8 +53,9 @@ kubectl logs -n synthetics -l app.kubernetes.io/name=synthetic-smoke --tail=200
 2. Prefer unauthenticated page-shell checks that prove the user-facing route works without storing secrets.
 3. Match durable text, titles, or redirects instead of brittle CSS classes.
 4. Mirror the same smoke files under `kubernetes/apps/synthetics/smoke/`; Flux cannot load ConfigMap files from outside the app kustomization root.
-5. Add the app Flux Kustomization to `app-synthetics` `dependsOn` when the probe requires that app to exist first.
-6. Run the suite locally when the route is reachable, then create a manual Job after Flux applies the change.
+5. Avoid raw `${...}` syntax in mirrored smoke files unless Flux should substitute it; Flux post-build substitution scans the generated ConfigMap data.
+6. Add the app Flux Kustomization to `app-synthetics` `dependsOn` when the probe requires that app to exist first.
+7. Run the suite locally when the route is reachable, then create a manual Job after Flux applies the change.
 
 ## Dashboard And Alert
 

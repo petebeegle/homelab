@@ -3,13 +3,13 @@ const { expect, test } = require("@playwright/test");
 const baseDomain = process.env.SMOKE_BASE_DOMAIN || "lab.petebeegle.com";
 
 function urlFor(host, path = "/") {
-  return `https://${host}.${baseDomain}${path}`;
+  return "https://" + host + "." + baseDomain + path;
 }
 
 async function gotoOk(page, url) {
   const response = await page.goto(url, { waitUntil: "domcontentloaded" });
-  expect(response, `${url} should return an HTTP response`).not.toBeNull();
-  expect(response.status(), `${url} should not return a server error`).toBeLessThan(500);
+  expect(response, url + " should return an HTTP response").not.toBeNull();
+  expect(response.status(), url + " should not return a server error").toBeLessThan(500);
   return response;
 }
 
