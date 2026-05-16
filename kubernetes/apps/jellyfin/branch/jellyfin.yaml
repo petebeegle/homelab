@@ -76,6 +76,27 @@ spec:
         storageClass: nfs-csi-storage
       media:
         enabled: false
+    startupProbe:
+      httpGet:
+        path: /health
+        port: http
+      failureThreshold: 60
+      periodSeconds: 10
+      timeoutSeconds: 5
+    livenessProbe:
+      httpGet:
+        path: /health
+        port: http
+      failureThreshold: 6
+      periodSeconds: 10
+      timeoutSeconds: 5
+    readinessProbe:
+      httpGet:
+        path: /health
+        port: http
+      failureThreshold: 6
+      periodSeconds: 10
+      timeoutSeconds: 5
 ---
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: ReferenceGrant

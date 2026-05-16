@@ -406,10 +406,23 @@ class VerifyBranchDeployTest(unittest.TestCase):
         overrides = json.loads(verify.probe_pod_overrides("probe-example-change"))
 
         self.assertTrue(overrides["spec"]["securityContext"]["runAsNonRoot"])
+        self.assertEqual(overrides["spec"]["securityContext"]["runAsUser"], 1000)
         self.assertEqual(overrides["spec"]["securityContext"]["seccompProfile"]["type"], "RuntimeDefault")
         self.assertEqual(overrides["spec"]["containers"][0]["image"], "curlimages/curl:8.16.0")
         self.assertFalse(overrides["spec"]["containers"][0]["securityContext"]["allowPrivilegeEscalation"])
         self.assertEqual(overrides["spec"]["containers"][0]["securityContext"]["capabilities"]["drop"], ["ALL"])
+        self.assertEqual(overrides["spec"]["containers"][0]["securityContext"]["runAsUser"], 1000)
+
+    def test_jellyfin_fresh_start_values_wait_for_http_health_before_liveness(self) -> None:
+        production_values = (REPO_ROOT / "kubernetes/apps/jellyfin/values.yaml").read_text(encoding="utf-8")
+        branch_values = (REPO_ROOT / "kubernetes/apps/jellyfin/branch/jellyfin.yaml").read_text(encoding="utf-8")
+
+        for text in (production_values, branch_values):
+            self.assertIn("startupProbe:", text)
+            self.assertIn("httpGet:", text)
+            self.assertIn("path: /health", text)
+            self.assertIn("failureThreshold: 60", text)
+            self.assertNotIn("tcpSocket:", text)
 
     def test_cluster_base_reconciles_in_order_and_restores_main_on_success(self) -> None:
         runner = FakeRunner(cluster_pods_json=READY_PODS)

@@ -704,6 +704,7 @@ def probe_pod_overrides(pod_name: str, image: str = "curlimages/curl:8.16.0") ->
             "spec": {
                 "securityContext": {
                     "runAsNonRoot": True,
+                    "runAsUser": 1000,
                     "seccompProfile": {"type": "RuntimeDefault"},
                 },
                 "containers": [
@@ -714,6 +715,7 @@ def probe_pod_overrides(pod_name: str, image: str = "curlimages/curl:8.16.0") ->
                             "allowPrivilegeEscalation": False,
                             "capabilities": {"drop": ["ALL"]},
                             "runAsNonRoot": True,
+                            "runAsUser": 1000,
                         },
                     }
                 ],
