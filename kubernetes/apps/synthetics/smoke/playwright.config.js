@@ -9,7 +9,7 @@ module.exports = defineConfig({
   fullyParallel: false,
   workers: 1,
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? [["list"], ["json", { outputFile: "test-results.json" }]] : "list",
+  reporter: process.env.CI ? [["list"], ["./smoke-summary-reporter.js"]] : "list",
   use: {
     baseURL: "https://whoami." + (process.env.SMOKE_BASE_DOMAIN || "lab.petebeegle.com"),
     trace: "retain-on-failure",

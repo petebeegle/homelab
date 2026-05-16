@@ -38,6 +38,14 @@ Read the Playwright output:
 kubectl logs -n synthetics -l app.kubernetes.io/name=synthetic-smoke --tail=200
 ```
 
+Every completed run should emit exactly one bounded summary line:
+
+```text
+SMOKE_RUN_SUMMARY status=success failed_count=0 failed_tests="" duration_seconds=37
+```
+
+Failed runs use `status=failed` and include the final failed Playwright test names after retries in `failed_tests`. If Playwright fails before the custom reporter can run, the wrapper emits a fallback `SMOKE_RUN_SUMMARY status=failed` line and preserves the non-zero process exit.
+
 ## Common Failures
 
 - DNS failure: confirm the hostname resolves from a pod in `synthetics`.
@@ -46,6 +54,18 @@ kubectl logs -n synthetics -l app.kubernetes.io/name=synthetic-smoke --tail=200
 - HTTP 5xx: check the backend Service, endpoints, pods, and app logs.
 - Missing text or selector: confirm whether the app upgraded or changed its unauthenticated page shell.
 - Dependency install failure: check outbound network access from the cluster; the Playwright image is pinned, and the npm dependencies are pinned by `tests/smoke/package-lock.json`.
+
+Find recent final failed test names in Loki:
+
+```logql
+{namespace="synthetics", app="synthetic-smoke"} |= "SMOKE_RUN_SUMMARY" | logfmt | status="failed"
+```
+
+Group recent failures by final failed test text:
+
+```logql
+sum by (failed_tests) (count_over_time({namespace="synthetics", app="synthetic-smoke"} |= "SMOKE_RUN_SUMMARY" | logfmt | status="failed" [1h]))
+```
 
 ## Add A Probe
 
@@ -59,8 +79,13 @@ kubectl logs -n synthetics -l app.kubernetes.io/name=synthetic-smoke --tail=200
 
 ## Dashboard And Alert
 
-Grafana owns the `Synthetics` folder, `Synthetic Smoke` dashboard, and `synthetics` alert rule group. The dashboard shows recent pass/fail counts, Job duration, pod termination reasons, and Loki log excerpts for `namespace="synthetics"`.
+Grafana owns the `Synthetics` folder, `Synthetic Smoke` dashboard, and `synthetics` alert rule group. The dashboard derives smoke run status from Loki `SMOKE_RUN_SUMMARY` lines for `namespace="synthetics", app="synthetic-smoke"`:
 
-The alert fires only when smoke Jobs fail more than once in the last hour. A single failed run should be investigated, but it is not enough to alert by itself.
+- `Recent Status` counts recent `status=failed` summary lines.
+- `Smoke Runs` counts `status=success` and `status=failed` summary lines over the panel interval.
+- `Job Duration` unwraps `duration_seconds` from the summary line.
+- `Smoke Logs` includes `SMOKE_RUN_SUMMARY` lines alongside Playwright failure output.
+
+The alert fires only when summary lines report more than one failed run in the last hour. A single failed run should be investigated, but it is not enough to alert by itself. The alert intentionally remains one aggregate alert instance; it does not group by `failed_tests`, because grouping that label in the alert condition would create separate alert instances per failed test text. Use the failed-test LogQL above from Grafana Explore when the aggregate alert fires.
 
 Failed `synthetic-smoke-*` pods in the `synthetics` namespace are excluded from the generic `Kubernetes Failed Pods` alert because repeated synthetic failures are covered by `Synthetic Smoke Repeated Failures`.

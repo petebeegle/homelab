@@ -15,10 +15,10 @@ spec:
       title: Synthetic Smoke Repeated Failures
       condition: C
       for: 0s
-      noDataState: NoData
-      execErrState: Error
+      noDataState: OK
+      execErrState: OK
       annotations:
-        description: "Synthetic smoke tests have failed {{ $values.B.Value }} time(s) in the last hour."
+        description: "Synthetic smoke tests have failed {{ $values.B.Value }} time(s) in the last hour. See the runbook LogQL for recent failed_tests summary text."
         summary: In-cluster Playwright smoke checks are failing repeatedly
         runbook: "docs/runbooks/synthetic-smoke-tests.md"
       labels:
@@ -29,9 +29,9 @@ spec:
           relativeTimeRange:
             from: 3600
             to: 0
-          datasourceUid: prometheus
+          datasourceUid: loki
           model:
-            expr: sum(increase(kube_job_status_failed{namespace="synthetics",job_name=~"synthetic-smoke-.+"}[1h])) OR sum(increase(kube_job_status_failed{exported_namespace="synthetics",job_name=~"synthetic-smoke-.+"}[1h])) OR vector(0)
+            expr: 'sum(count_over_time({namespace="synthetics", app="synthetic-smoke"} |= "SMOKE_RUN_SUMMARY" | logfmt | status="failed" [1h]))'
             refId: A
         - refId: B
           relativeTimeRange:

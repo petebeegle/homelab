@@ -61,7 +61,7 @@ spec:
                   cp -R /smoke-src/. /workdir
                   cd /workdir
                   npm ci --no-audit --no-fund
-                  npm run test -- --reporter=list
+                  bash ./run-smoke.sh
               resources:
                 requests:
                   cpu: 250m
