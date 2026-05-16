@@ -70,6 +70,18 @@
   },
   "packageRules": [
     {
+      "groupName": "fluxcd",
+      "matchFileNames": [
+        "kubernetes/clusters/**/flux-system/gotk-components.yaml",
+        "kubernetes/clusters/**/flux-system/gotk-components.yml"
+      ],
+      "matchPackageNames": [
+        "fluxcd/flux2",
+        "ghcr.io/fluxcd/**",
+        "docker.io/fluxcd/**"
+      ]
+    },
+    {
       "groupName": "cilium",
       "matchPackageNames": [
         "cilium"
@@ -77,6 +89,24 @@
       "matchDatasources": [
         "helm"
       ]
+    },
+    {
+      "description": "Regenerate Terraform docs after Terraform dependency updates",
+      "matchManagers": [
+        "terraform"
+      ],
+      "matchFileNames": [
+        "terraform/**"
+      ],
+      "postUpgradeTasks": {
+        "commands": [
+          "./tools/renovate/update-terraform-docs.sh"
+        ],
+        "fileFilters": [
+          "terraform/**/README.md"
+        ],
+        "executionMode": "update"
+      }
     }
   ]
 }
