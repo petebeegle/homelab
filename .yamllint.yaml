@@ -19,9 +19,7 @@ rules:
   empty-values: disable
   float-values: disable
   hyphens: enable
-  indentation:
-    ignore: |
-      kubernetes/clusters/*/flux-system/gotk-*.yaml
+  indentation: enable
   key-duplicates: enable
   key-ordering: disable
   line-length: disable
@@ -35,3 +33,4 @@ rules:
 
 ignore: |
   .github/
+  kubernetes/clusters/*/flux-system/gotk-*.yaml

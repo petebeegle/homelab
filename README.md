@@ -217,6 +217,10 @@ sops secret.yaml
 
 ### Dependency Management (Renovate)
 - Renovate runs as a cronjob in the `renovate` namespace.
+- Flux component updates from generated `gotk-components.yaml` files are grouped
+  into one `fluxcd` PR.
+- Terraform dependency updates run `tools/renovate/update-terraform-docs.sh` to
+  refresh generated Terraform READMEs with pinned `terraform-docs` v0.23.0.
 
 Manual run:
 ```sh

@@ -51,6 +51,9 @@ spec:
           "platform": "github",
           "repositories": ["petebeegle/homelab"],
           "baseBranches": ["main"],
+          "allowedCommands": [
+            "^\\./tools/renovate/update-terraform-docs\\.sh$"
+          ]
         }
     envFrom:
       - secretRef:
