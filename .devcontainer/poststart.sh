@@ -15,17 +15,33 @@ tf_output_to_file() {
   local dir="$1"
   local output_key="$2"
   local output_file="$3"
+  local tmp_file
 
   mkdir -p "$(dirname "$output_file")"
-  if terraform -chdir="$dir" output -raw "$output_key" > "$output_file" 2>/dev/null; then
-    chmod 600 "$output_file"
+  tmp_file="$(mktemp "${output_file}.tmp.XXXXXX")"
+  if terraform -chdir="$dir" output -raw "$output_key" > "$tmp_file" 2>/dev/null; then
+    chmod 600 "$tmp_file"
+    mv "$tmp_file" "$output_file"
     return 0
   fi
+  rm -f "$tmp_file"
   return 1
 }
 
-# Kubeconfig from Terraform output
-tf_output_to_file "terraform/cluster" "kubeconfig" ~/.kube/config
+# Operator files from Terraform outputs
+operator_files=(
+  "development|terraform/development|kubeconfig|${HOME}/.kube/homelab-development.config"
+  "development|terraform/development|talosconfig|${HOME}/.talos/homelab-development.config"
+  "production|terraform/production|kubeconfig|${HOME}/.kube/homelab-production.config"
+  "production|terraform/production|talosconfig|${HOME}/.talos/homelab-production.config"
+)
+
+for operator_file in "${operator_files[@]}"; do
+  IFS='|' read -r environment dir output_key output_file <<< "$operator_file"
+  if ! tf_output_to_file "$dir" "$output_key" "$output_file"; then
+    echo "WARNING: ${environment} ${output_key} output is unavailable from ${dir}; leaving ${output_file} unchanged"
+  fi
+done
 
 # Grafana MCP token
 GRAFANA_SERVICE_ACCOUNT_TOKEN=$(tfo -state=terraform/external/grafana/terraform.tfstate -raw mcp_token 2>/dev/null || true)
