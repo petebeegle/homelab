@@ -7,12 +7,13 @@ import argparse
 import hashlib
 import json
 import re
+import socket
 import subprocess
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterable, Sequence
+from typing import Callable, Iterable, Sequence
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -20,6 +21,9 @@ APP_DIR = Path("kubernetes/apps/foundryvtt")
 FIXTURE_DIR = Path("kubernetes/apps/foundry-bluegreen-fixture")
 EVIDENCE_PATH = Path(".codex/tmp/foundry-bluegreen-dev-rehearse.json")
 DEV_KUBECONFIG = Path.home() / ".kube/homelab-development.config"
+DEVELOPMENT_PREVIEW_HOSTNAME = "foundry-green-preview.development.lab.petebeegle.com"
+DEVELOPMENT_GATEWAY_INTERNAL_IP = "192.168.30.225"
+PRODUCTION_GATEWAY_INTERNAL_IP = "192.168.30.241"
 PRODUCTION_COMMANDS = {"prepare", "promote", "rollback", "retire"}
 CONFIG_VERSION_GLOBS = [
     "tools/foundry_bluegreen.py",
@@ -117,6 +121,40 @@ def require_development_kubeconfig(kubeconfig: str | Path) -> Path:
             f"dev-rehearse requires development kubeconfig {expected}; got {actual}"
         )
     return actual
+
+
+def local_a_records(hostname: str) -> list[str]:
+    try:
+        answers = socket.getaddrinfo(hostname, None, socket.AF_INET, socket.SOCK_STREAM)
+    except socket.gaierror:
+        return []
+    return sorted({answer[4][0] for answer in answers})
+
+
+def require_development_preview_dns(
+    resolver: Callable[[str], Sequence[str]] = local_a_records,
+) -> list[str]:
+    records = sorted(set(resolver(DEVELOPMENT_PREVIEW_HOSTNAME)))
+    expected = DEVELOPMENT_GATEWAY_INTERNAL_IP
+    rendered = ", ".join(records) if records else "none"
+    if not records:
+        raise FoundryBlueGreenError(
+            "development DNS preflight failed: "
+            f"{DEVELOPMENT_PREVIEW_HOSTNAME} has no A records; expected {expected}"
+        )
+    if PRODUCTION_GATEWAY_INTERNAL_IP in records:
+        raise FoundryBlueGreenError(
+            "development DNS preflight failed: "
+            f"{DEVELOPMENT_PREVIEW_HOSTNAME} resolves to production Gateway "
+            f"{PRODUCTION_GATEWAY_INTERNAL_IP}; expected development Gateway {expected}"
+        )
+    if records != [expected]:
+        raise FoundryBlueGreenError(
+            "development DNS preflight failed: "
+            f"{DEVELOPMENT_PREVIEW_HOSTNAME} has unexpected A record(s) {rendered}; "
+            f"expected only {expected}"
+        )
+    return records
 
 
 def read(path: Path) -> str:
@@ -378,9 +416,14 @@ def command_status(args: argparse.Namespace) -> int:
     return 0
 
 
-def command_dev_rehearse(args: argparse.Namespace, runner: CommandRunner) -> int:
+def command_dev_rehearse(
+    args: argparse.Namespace,
+    runner: CommandRunner,
+    resolver: Callable[[str], Sequence[str]] = local_a_records,
+) -> int:
     root = args.root
     kubeconfig = require_development_kubeconfig(args.kubeconfig)
+    require_development_preview_dns(resolver)
     fixture = root / FIXTURE_DIR
     namespace = "foundry-bluegreen-fixture"
     runner.run(["kubectl", "kustomize", str(fixture)])

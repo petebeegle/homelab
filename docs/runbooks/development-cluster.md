@@ -27,6 +27,24 @@ Use this runbook to create, bootstrap, test, and clean up the dedicated developm
 
 The development base intentionally includes CRDs, Cilium, cert-manager/certs, Gateway API, NFS CSI, and whoami. Authentik, games/media apps, Cloudflare tunnels, Renovate, VPN, and the full monitoring stack are omitted to keep the single-node cluster resource-conscious and to avoid production-only secrets or traffic paths unless a test explicitly needs them.
 
+## LAN DNS
+
+Development HTTPS previews are hostname-based, matching production Gateway behavior. The operator's LAN resolver must provide:
+
+```text
+*.development.lab.petebeegle.com A 192.168.30.225
+```
+
+This repository does not currently manage the user's LAN resolver, router, or Pi-hole configuration. Keep that DNS record outside GitOps unless a future decision record explicitly adds resolver management.
+
+Verify the local resolver before running development preview checks:
+
+```sh
+getent hosts foundry-green-preview.development.lab.petebeegle.com
+```
+
+The expected A record is `192.168.30.225`. If the hostname resolves to production `192.168.30.241`, another IP, or no A records, fix local DNS before applying live development preview resources. Browser checks should use `https://foundry-green-preview.development.lab.petebeegle.com/`; that route is expected to land on the development internal Gateway `192.168.30.225`.
+
 ## Local Tfvars
 
 Do not commit `terraform/development/terraform.tfvars`; it is ignored by Git.

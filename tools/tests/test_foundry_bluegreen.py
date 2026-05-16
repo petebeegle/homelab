@@ -27,6 +27,16 @@ class FakeRunner:
         return foundry_bluegreen.CommandResult(args=args)
 
 
+class FakeResolver:
+    def __init__(self, addresses: list[str]) -> None:
+        self.addresses = addresses
+        self.hostnames: list[str] = []
+
+    def __call__(self, hostname: str) -> list[str]:
+        self.hostnames.append(hostname)
+        return self.addresses
+
+
 class FoundryBlueGreenTests(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
@@ -164,13 +174,16 @@ resources:
 
     def test_dev_rehearse_uses_fixture_and_writes_current_evidence(self) -> None:
         runner = FakeRunner()
+        resolver = FakeResolver([foundry_bluegreen.DEVELOPMENT_GATEWAY_INTERNAL_IP])
 
         self.quiet(
             foundry_bluegreen.command_dev_rehearse,
             self.args("dev-rehearse", kubeconfig=str(foundry_bluegreen.DEV_KUBECONFIG)),
             runner,
+            resolver,
         )
 
+        self.assertEqual([foundry_bluegreen.DEVELOPMENT_PREVIEW_HOSTNAME], resolver.hostnames)
         commands = [" ".join(call[0]) for call in runner.calls]
         self.assertIn("kubectl kustomize " + str(self.root / foundry_bluegreen.FIXTURE_DIR), commands)
         self.assertTrue(any("apply -k" in command for command in commands))
@@ -185,11 +198,54 @@ resources:
 
     def test_dev_rehearse_rejects_non_development_kubeconfig_before_kubectl(self) -> None:
         runner = FakeRunner()
+        resolver = FakeResolver([foundry_bluegreen.DEVELOPMENT_GATEWAY_INTERNAL_IP])
 
         with self.assertRaisesRegex(foundry_bluegreen.FoundryBlueGreenError, "development kubeconfig"):
             foundry_bluegreen.command_dev_rehearse(
                 self.args("dev-rehearse", kubeconfig="~/.kube/homelab-production.config"),
                 runner,
+                resolver,
+            )
+
+        self.assertEqual([], resolver.hostnames)
+        self.assertEqual([], runner.calls)
+        self.assertIsNone(
+            foundry_bluegreen.read_evidence(
+                self.root, Path(".codex/tmp/foundry-bluegreen-dev-rehearse.json")
+            )
+        )
+
+    def test_development_preview_dns_preflight_accepts_development_gateway(self) -> None:
+        resolver = FakeResolver([foundry_bluegreen.DEVELOPMENT_GATEWAY_INTERNAL_IP])
+
+        foundry_bluegreen.require_development_preview_dns(resolver)
+
+        self.assertEqual([foundry_bluegreen.DEVELOPMENT_PREVIEW_HOSTNAME], resolver.hostnames)
+
+    def test_development_preview_dns_preflight_rejects_production_gateway(self) -> None:
+        resolver = FakeResolver([foundry_bluegreen.PRODUCTION_GATEWAY_INTERNAL_IP])
+
+        with self.assertRaisesRegex(
+            foundry_bluegreen.FoundryBlueGreenError,
+            "production Gateway 192\\.168\\.30\\.241",
+        ):
+            foundry_bluegreen.require_development_preview_dns(resolver)
+
+    def test_development_preview_dns_preflight_rejects_no_a_records(self) -> None:
+        resolver = FakeResolver([])
+
+        with self.assertRaisesRegex(foundry_bluegreen.FoundryBlueGreenError, "has no A records"):
+            foundry_bluegreen.require_development_preview_dns(resolver)
+
+    def test_dev_rehearse_rejects_dns_mismatch_before_kubectl_or_evidence(self) -> None:
+        runner = FakeRunner()
+        resolver = FakeResolver(["192.168.30.250"])
+
+        with self.assertRaisesRegex(foundry_bluegreen.FoundryBlueGreenError, "unexpected A record"):
+            foundry_bluegreen.command_dev_rehearse(
+                self.args("dev-rehearse", kubeconfig=str(foundry_bluegreen.DEV_KUBECONFIG)),
+                runner,
+                resolver,
             )
 
         self.assertEqual([], runner.calls)
