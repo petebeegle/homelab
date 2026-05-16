@@ -11,6 +11,8 @@ configMapGenerator:
       - package.json=smoke/package.json
       - package-lock.json=smoke/package-lock.json
       - playwright.config.js=smoke/playwright.config.js
+      - run-smoke.sh=smoke/run-smoke.sh
       - routes.spec.js=smoke/routes.spec.js
+      - smoke-summary-reporter.js=smoke/smoke-summary-reporter.js
     options:
       disableNameSuffixHash: true
