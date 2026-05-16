@@ -79,6 +79,73 @@ NO_ACTIVE_PODS = json.dumps(
     }
 )
 
+READY_CONFIGMAP = json.dumps(
+    {
+        "metadata": {"name": "synthetic-smoke-source", "namespace": "synthetics-example-change"},
+        "data": {
+            "package.json": "{}",
+            "package-lock.json": "{}",
+            "playwright.config.js": "module.exports = {};",
+            "run-smoke.sh": "echo ok",
+            "routes.spec.js": "test('ok', () => {});",
+            "smoke-summary-reporter.js": "module.exports = {};",
+        },
+    }
+)
+
+MISSING_CONFIGMAP_KEY = json.dumps(
+    {
+        "metadata": {"name": "synthetic-smoke-source", "namespace": "synthetics-example-change"},
+        "data": {
+            "package.json": "{}",
+        },
+    }
+)
+
+READY_CRONJOB = json.dumps(
+    {
+        "metadata": {"name": "synthetic-smoke-example-change", "namespace": "synthetics-example-change"},
+        "spec": {
+            "suspend": True,
+            "jobTemplate": {
+                "spec": {
+                    "template": {
+                        "spec": {
+                            "restartPolicy": "Never",
+                            "containers": [
+                                {
+                                    "name": "playwright",
+                                    "env": [
+                                        {"name": "CI", "value": "true"},
+                                        {"name": "SMOKE_BASE_DOMAIN", "value": "development.lab.petebeegle.com"},
+                                    ],
+                                    "volumeMounts": [
+                                        {"name": "smoke-source", "mountPath": "/smoke-src", "readOnly": True}
+                                    ],
+                                }
+                            ],
+                            "volumes": [
+                                {"name": "smoke-source", "configMap": {"name": "synthetic-smoke-source"}},
+                                {"name": "workdir", "emptyDir": {}},
+                            ],
+                        }
+                    }
+                }
+            },
+        },
+    }
+)
+
+UNSUSPENDED_CRONJOB = json.dumps(
+    {
+        **json.loads(READY_CRONJOB),
+        "spec": {
+            **json.loads(READY_CRONJOB)["spec"],
+            "suspend": False,
+        },
+    }
+)
+
 
 TEMPLATE = """---
 apiVersion: source.toolkit.fluxcd.io/v1
@@ -102,6 +169,28 @@ spec:
     name: branch-${branch_slug}
 """
 
+SYNTHETICS_TEMPLATE = """---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: branch-synthetics-${branch_slug}
+  namespace: flux-system
+spec:
+  suspend: true
+  ref:
+    branch: ${branch_name}
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: branch-synthetics-${branch_slug}
+  namespace: flux-system
+spec:
+  suspend: true
+  sourceRef:
+    name: branch-synthetics-${branch_slug}
+"""
+
 
 class FakeRunner:
     quiet = True
@@ -114,12 +203,16 @@ class FakeRunner:
         timeout_on: str | None = None,
         pods_json: str = READY_PODS,
         cluster_pods_json: str = READY_PODS,
+        configmap_json: str = READY_CONFIGMAP,
+        cronjob_json: str = READY_CRONJOB,
     ) -> None:
         self.plan_returncode = plan_returncode
         self.fail_on = fail_on
         self.timeout_on = timeout_on
         self.pods_json = pods_json
         self.cluster_pods_json = cluster_pods_json
+        self.configmap_json = configmap_json
+        self.cronjob_json = cronjob_json
         self.calls: list[tuple[list[str], dict[str, object]]] = []
 
     def __call__(self, args: list[str], **kwargs: object) -> SimpleNamespace:
@@ -135,6 +228,12 @@ class FakeRunner:
             return SimpleNamespace(returncode=0, stdout=self.cluster_pods_json)
         if args[-4:] == ["get", "pods", "-o", "json"]:
             return SimpleNamespace(returncode=0, stdout=self.pods_json)
+        if "get" in args and "configmap" in args:
+            return SimpleNamespace(returncode=0, stdout=self.configmap_json)
+        if "get" in args and "cronjob" in args:
+            return SimpleNamespace(returncode=0, stdout=self.cronjob_json)
+        if "logs" in args:
+            return SimpleNamespace(returncode=0, stdout="javascript blew up")
         if args[-4:] == ["get", "httproute", "whoami-example-change", "-o"] or args[-2:] == ["-o", "json"]:
             return SimpleNamespace(returncode=0, stdout=READY_HTTPROUTE)
         return SimpleNamespace(returncode=0, stdout="")
@@ -190,6 +289,45 @@ class VerifyBranchDeployTest(unittest.TestCase):
         with self.assertRaises(argparse.ArgumentTypeError):
             verify.parse_duration("soon")
 
+    def test_synthetics_profile_loads_and_is_supported(self) -> None:
+        profile = verify.load_profile("synthetics")
+
+        self.assertIn("synthetics", verify.supported_apps())
+        self.assertEqual(profile.namespace, "synthetics-${branch_slug}")
+        self.assertEqual(profile.max_slug_length, 44)
+        self.assertEqual(profile.javascript_validity_jobs[0]["command"], "npm run test -- --list")
+
+    def test_synthetics_profile_rejects_slug_too_long_for_job_names(self) -> None:
+        config = verify.AppConfig(
+            app="synthetics",
+            branch="codex/example-change",
+            slug="a" * 45,
+            kubeconfig=Path("/tmp/kubeconfig"),
+            timeout=verify.parse_duration("2m"),
+            push=False,
+            terraform_apply=False,
+            include_cluster_base=False,
+            keep=False,
+        )
+
+        with self.assertRaisesRegex(verify.VerificationError, "too long"):
+            verify.assert_profile(config, verify.load_profile("synthetics"), runner=FakeRunner())
+
+    def test_synthetics_branch_smoke_sources_mirror_production_sources(self) -> None:
+        for name in (
+            "package.json",
+            "package-lock.json",
+            "playwright.config.js",
+            "run-smoke.sh",
+            "routes.spec.js",
+            "smoke-summary-reporter.js",
+        ):
+            with self.subTest(name=name):
+                production = REPO_ROOT / "kubernetes/apps/synthetics/smoke" / name
+                branch = REPO_ROOT / "kubernetes/apps/synthetics/branch/smoke" / name
+
+                self.assertEqual(branch.read_text(encoding="utf-8"), production.read_text(encoding="utf-8"))
+
     def test_run_command_wraps_subprocess_timeout(self) -> None:
         config = self._config()
         runner = FakeRunner(timeout_on="rollout")
@@ -225,6 +363,18 @@ class VerifyBranchDeployTest(unittest.TestCase):
         self.assertTrue(any("delete kustomization.kustomize.toolkit.fluxcd.io/branch-whoami-example-change" in command for command in commands))
         self.assertTrue(any("wait namespace/whoami-example-change --for=delete" in command for command in commands))
         self.assertTrue(any("delete gitrepository.source.toolkit.fluxcd.io/branch-example-change" in command for command in commands))
+
+    def test_synthetics_acceptance_uses_profile_git_repository_and_cleanup(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "terraform" / "development").mkdir(parents=True)
+            runner = FakeRunner()
+
+            verify.run_acceptance(self._config(app="synthetics"), runner=runner, repo_root=root, template_text=SYNTHETICS_TEMPLATE)
+
+        commands = [" ".join(command) for command in runner.commands]
+        self.assertTrue(any("reconcile source git branch-synthetics-example-change" in command for command in commands))
+        self.assertTrue(any("delete gitrepository.source.toolkit.fluxcd.io/branch-synthetics-example-change" in command for command in commands))
 
     def test_apply_uses_rendered_activation_stdin(self) -> None:
         runner = FakeRunner()
@@ -298,6 +448,50 @@ class VerifyBranchDeployTest(unittest.TestCase):
         commands = [" ".join(command) for command in runner.commands]
         self.assertTrue(any("get service whoami-example-change" in command for command in commands))
         self.assertTrue(any("get httproute whoami-example-change -o json" in command for command in commands))
+
+    def test_synthetics_assert_checks_configmap_cronjob_and_javascript_job(self) -> None:
+        runner = FakeRunner()
+        config = self._config(app="synthetics")
+
+        verify.assert_profile(config, verify.load_profile("synthetics"), runner=runner)
+
+        commands = [" ".join(command) for command in runner.commands]
+        self.assertTrue(any("get namespace synthetics-example-change" in command for command in commands))
+        self.assertTrue(any("get configmap synthetic-smoke-source -o json" in command for command in commands))
+        self.assertTrue(any("get cronjob synthetic-smoke-example-change -o json" in command for command in commands))
+        self.assertTrue(any("wait job/synthetic-smoke-js-example-change --for=condition=Complete" in command for command in commands))
+        self.assertTrue(any("delete job/synthetic-smoke-js-example-change" in command for command in commands))
+
+        applied_jobs = [
+            json.loads(str(kwargs["input"]))
+            for command, kwargs in runner.calls
+            if command[-3:] == ["apply", "-f", "-"] and "input" in kwargs
+        ]
+        self.assertEqual(applied_jobs[0]["kind"], "Job")
+        env = applied_jobs[0]["spec"]["template"]["spec"]["containers"][0]["env"]
+        self.assertIn({"name": "SMOKE_PLAYWRIGHT_COMMAND", "value": "npm run test -- --list"}, env)
+
+    def test_synthetics_configmap_assert_requires_all_source_keys(self) -> None:
+        runner = FakeRunner(configmap_json=MISSING_CONFIGMAP_KEY)
+
+        with self.assertRaisesRegex(verify.VerificationError, "missing required key"):
+            verify.assert_profile(self._config(app="synthetics"), verify.load_profile("synthetics"), runner=runner)
+
+    def test_synthetics_cronjob_must_be_suspended(self) -> None:
+        runner = FakeRunner(cronjob_json=UNSUSPENDED_CRONJOB)
+
+        with self.assertRaisesRegex(verify.VerificationError, "suspend"):
+            verify.assert_profile(self._config(app="synthetics"), verify.load_profile("synthetics"), runner=runner)
+
+    def test_javascript_validity_job_cleanup_runs_after_failure(self) -> None:
+        runner = FakeRunner(fail_on="wait job/synthetic-smoke-js-example-change")
+
+        with self.assertRaisesRegex(verify.VerificationError, "javascript blew up"):
+            verify.assert_profile(self._config(app="synthetics"), verify.load_profile("synthetics"), runner=runner)
+
+        commands = [" ".join(command) for command in runner.commands]
+        self.assertTrue(any("logs job/synthetic-smoke-js-example-change" in command for command in commands))
+        self.assertTrue(any("delete job/synthetic-smoke-js-example-change" in command for command in commands))
 
     def test_cluster_base_reconciles_in_order_and_restores_main_on_success(self) -> None:
         runner = FakeRunner(cluster_pods_json=READY_PODS)
@@ -392,13 +586,14 @@ class VerifyBranchDeployTest(unittest.TestCase):
     def _config(
         self,
         *,
+        app: str = "whoami",
         push: bool = False,
         terraform_apply: bool = False,
         include_cluster_base: bool = False,
         keep: bool = False,
     ) -> verify.AppConfig:
         return verify.AppConfig(
-            app="whoami",
+            app=app,
             branch="codex/example-change",
             slug="example-change",
             kubeconfig=Path("/tmp/kubeconfig"),

@@ -128,11 +128,11 @@ Branch environments are for app-scoped validation on the development cluster. Us
 <app>-${branch_slug}.development.lab.petebeegle.com
 ```
 
-Use `tools/development/verify_branch_deploy.py` as the canonical path for future branch validation. V1 supports `whoami` only. The tool renders the activation template, applies it directly to the development cluster, forces Flux reconciliation, checks the branch namespace and active pods, checks the whoami Service and HTTPRoute, and then removes the temporary branch Flux resources unless `--keep` is set.
+Use `tools/development/verify_branch_deploy.py` as the canonical path for branch validation. The tool loads JSON smoke profiles from `tools/development/smoke-profiles/`, renders the selected activation template, applies it directly to the development cluster, forces Flux reconciliation, runs profile-specific checks, and then removes the temporary branch Flux resources unless `--keep` is set.
 
-The current deployment verifier is intentionally limited to the `whoami` smoke path while the app profile model is expanded. Treat non-`whoami` app smoke as manual or helper-run evidence for now: use the matrix below, record the exact commands and observations, and document any missing profile instead of adding ad hoc harness behavior.
+The current automated profiles are `whoami` and `synthetics`. Treat apps without a profile as manual or helper-run evidence for now: use the matrix below, record the exact commands and observations, and document any missing profile instead of adding ad hoc harness behavior.
 
-The initial activation template is in `kubernetes/clusters/development/branches/`, and the first branch-aware app payload overlay is `kubernetes/apps/whoami/branch/`. The cluster-layer template creates the Flux `GitRepository` and `Kustomization` that point at a branch; the app overlay is the rendered workload payload that Flux applies after substituting `${branch_slug}`. The template is not referenced from the live development entrypoint and is suspended by default. The verification tool fills `branch_name` and `branch_slug`, sets both Flux objects to `suspend: false`, and applies the rendered activation temporarily.
+Activation templates live in `kubernetes/clusters/development/branches/`, and branch-aware app payload overlays live under app directories such as `kubernetes/apps/whoami/branch/` and `kubernetes/apps/synthetics/branch/`. The cluster-layer template creates the Flux `GitRepository` and `Kustomization` that point at a branch; the app overlay is the rendered workload payload that Flux applies after substituting `${branch_slug}`. Templates are not referenced from the live development entrypoint and are suspended by default. The verification tool fills `branch_name` and `branch_slug`, sets both Flux objects to `suspend: false`, and applies the rendered activation temporarily.
 
 ### Dev-First Requirement
 
@@ -156,6 +156,12 @@ Normal live verification:
 
 ```sh
 python3 tools/development/verify_branch_deploy.py --app whoami --branch codex/example-change --slug example-change --push
+```
+
+Synthetic smoke deployment verification:
+
+```sh
+python3 tools/development/verify_branch_deploy.py --app synthetics --branch codex/example-change --slug example-change --push
 ```
 
 Run Terraform apply first when the development cluster base may need to be created or repaired:
@@ -192,7 +198,7 @@ kubectl --kubeconfig ~/.kube/homelab-development.config wait namespace/whoami-ex
 kubectl --kubeconfig ~/.kube/homelab-development.config -n flux-system delete gitrepository.source.toolkit.fluxcd.io/branch-example-change
 ```
 
-This proves that the pushed branch can be fetched by Flux, the whoami branch overlay can reconcile on the development cluster, the branch namespace exists, at least one branch app pod is active, active branch app pods report Ready, the Service exists, and the HTTPRoute reports `Accepted` and `ResolvedRefs`. Without `--include-cluster-base`, it does not prove production readiness, cross-app behavior, cluster-scoped changes, public Cloudflare routing, or apps other than `whoami`.
+The `whoami` profile proves that the pushed branch can be fetched by Flux, the whoami branch overlay can reconcile on the development cluster, the branch namespace exists, at least one branch app pod is active, active branch app pods report Ready, the Service exists, and the HTTPRoute reports `Accepted` and `ResolvedRefs`. The `synthetics` profile proves the synthetic smoke CronJob deploys suspended, the smoke source ConfigMap contains the expected files, `SMOKE_BASE_DOMAIN` is substituted to the development domain, and a temporary Job can run Playwright test discovery with `npm run test -- --list` without executing route probes. Without `--include-cluster-base`, these profiles do not prove production readiness, cross-app behavior, cluster-scoped changes, public Cloudflare routing, or apps outside the selected profile.
 
 ### Touched-App Smoke Matrix
 
@@ -211,9 +217,10 @@ For each implementation that changes app behavior, manifests, Gateway routing, s
 
 The target model is a config-driven smoke profile per app. A profile should name the app, branch overlay path, activation template, expected namespace, workloads, Services, routes, PVCs, app-specific probes, cleanup expectations, and any required development-only secret/config prerequisites. Profiles should allow the verifier to choose consistent checks without hard-coding each app into the harness.
 
-Until profile expansion lands, use `whoami` as the only automated profile and document one of:
+Current automated profiles:
 
 - `smoke_profile: whoami` with the exact `verify_branch_deploy.py` command and result.
+- `smoke_profile: synthetics` with the exact `verify_branch_deploy.py` command and result. This profile deploys the branch CronJob suspended and validates JavaScript discovery; it does not run route probes.
 - `smoke_profile: manual` with commands and observations for the touched app.
 - `smoke_profile: none` with the reason, such as docs-only, local-only, unavailable development cluster or credentials, missing app branch overlay that cannot be safely emulated manually, or production-only integration.
 

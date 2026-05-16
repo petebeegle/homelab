@@ -1,0 +1,13 @@
+{
+  "app": "whoami",
+  "activation_template": "kubernetes/clusters/development/branches/whoami-template.yaml",
+  "namespace": "whoami-${branch_slug}",
+  "max_slug_length": 56,
+  "require_active_pods": true,
+  "services": [
+    "whoami-${branch_slug}"
+  ],
+  "httproutes": [
+    "whoami-${branch_slug}"
+  ]
+}

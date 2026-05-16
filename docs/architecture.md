@@ -20,7 +20,7 @@ This document is generated for agentic repo navigation. It records relationships
 - Infra activation list: `crds.yaml`, `cert-manager.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `certs.yaml`, `gateway.yaml`.
 - App activation list: `whoami.yaml`, `foundry-bluegreen-fixture.yaml`.
 
-- Branch environment templates: `whoami-template.yaml`.
+- Branch environment templates: `whoami-template.yaml`, `synthetics-template.yaml`.
 
 ### Flux Substitution Variables
 
@@ -130,6 +130,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/apps/jellyfin` | `./app.yaml`, `./httproute.yaml` |
 | `kubernetes/apps/pihole` | `app.yaml`, `secret.yaml`, `httproute.yaml` |
 | `kubernetes/apps/renovate` | `app.yaml`, `secret.yaml` |
+| `kubernetes/apps/synthetics/branch` | `namespace.yaml`, `cronjob.yaml` |
 | `kubernetes/apps/synthetics` | `namespace.yaml`, `cronjob.yaml` |
 | `kubernetes/apps/valheim` | `./app.yaml`, `./secret.yaml` |
 | `kubernetes/apps/whoami/branch` | `whoami.yaml` |

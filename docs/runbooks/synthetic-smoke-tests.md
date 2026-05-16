@@ -8,6 +8,8 @@ Use this runbook when the in-cluster Playwright smoke checks fail or when adding
 
 The checks are intentionally deeper than pod readiness and lighter than full authenticated end-to-end tests. They do not use credentials in v1.
 
+Development branch validation uses `tools/development/verify_branch_deploy.py --app synthetics`. That profile deploys a branch-scoped synthetic smoke CronJob in a suspended state, verifies the generated ConfigMap and development-domain substitution, and runs a temporary Job with `SMOKE_PLAYWRIGHT_COMMAND='npm run test -- --list'` to prove the JavaScript and Playwright configuration load. It intentionally does not run route probes in development.
+
 ## Targets
 
 - `whoami.${cluster_domain}` verifies the baseline Gateway TLS path.
@@ -72,10 +74,12 @@ sum by (failed_tests) (count_over_time({namespace="synthetics", app="synthetic-s
 1. Add the routed app to `tests/smoke/routes.spec.js`.
 2. Prefer unauthenticated page-shell checks that prove the user-facing route works without storing secrets.
 3. Match durable text, titles, or redirects instead of brittle CSS classes.
-4. Mirror the same smoke files under `kubernetes/apps/synthetics/smoke/`; Flux cannot load ConfigMap files from outside the app kustomization root.
+4. Mirror the same smoke files under `kubernetes/apps/synthetics/smoke/` and `kubernetes/apps/synthetics/branch/smoke/`; Flux cannot load ConfigMap files from outside the app kustomization root.
 5. Avoid raw `${...}` syntax in mirrored smoke files unless Flux should substitute it; Flux post-build substitution scans the generated ConfigMap data.
 6. Add the app Flux Kustomization to `app-synthetics` `dependsOn` when the probe requires that app to exist first.
 7. Run the suite locally when the route is reachable, then create a manual Job after Flux applies the change.
+
+For smoke source or CronJob changes, also run the `synthetics` development smoke profile before production-oriented completion so deploy-time ConfigMap, Flux substitution, and JavaScript discovery errors are caught before production.
 
 ## Dashboard And Alert
 

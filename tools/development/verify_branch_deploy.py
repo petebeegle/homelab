@@ -12,14 +12,14 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Callable, Sequence
+from typing import Any, Callable, Sequence
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+PROFILE_DIR = REPO_ROOT / "tools" / "development" / "smoke-profiles"
 DEFAULT_KUBECONFIG = Path("~/.kube/homelab-development.config").expanduser()
 DEFAULT_TIMEOUT = "10m"
 FLUX_NAMESPACE = "flux-system"
-SUPPORTED_APPS = {"whoami"}
 DEVELOPMENT_BASE_KUSTOMIZATIONS = (
     "crds",
     "cert-manager",
@@ -66,6 +66,21 @@ class AppConfig:
         return f"{self.app}-{self.slug}"
 
 
+@dataclass(frozen=True)
+class SmokeProfile:
+    app: str
+    activation_template: str
+    git_repository: str
+    namespace: str
+    require_active_pods: bool
+    services: tuple[str, ...]
+    httproutes: tuple[str, ...]
+    configmaps: tuple[dict[str, Any], ...]
+    cronjobs: tuple[dict[str, Any], ...]
+    javascript_validity_jobs: tuple[dict[str, Any], ...]
+    max_slug_length: int | None
+
+
 class VerificationError(RuntimeError):
     """Raised when validation or a live verification step fails."""
 
@@ -96,9 +111,14 @@ def parse_duration(value: str) -> Duration:
     return Duration(raw=value, seconds=seconds)
 
 
+def supported_apps(profile_dir: Path = PROFILE_DIR) -> set[str]:
+    return {path.stem for path in profile_dir.glob("*.json")}
+
+
 def validate_app(app: str) -> str:
-    if app not in SUPPORTED_APPS:
-        raise argparse.ArgumentTypeError(f"unsupported app {app!r}; supported apps: {', '.join(sorted(SUPPORTED_APPS))}")
+    apps = supported_apps()
+    if app not in apps:
+        raise argparse.ArgumentTypeError(f"unsupported app {app!r}; supported apps: {', '.join(sorted(apps))}")
     return app
 
 
@@ -125,6 +145,72 @@ def validate_slug(slug: str) -> str:
     return slug
 
 
+def load_profile(app: str, *, repo_root: Path = REPO_ROOT) -> SmokeProfile:
+    path = repo_root / "tools" / "development" / "smoke-profiles" / f"{app}.json"
+    if not path.exists() and repo_root != REPO_ROOT:
+        path = REPO_ROOT / "tools" / "development" / "smoke-profiles" / f"{app}.json"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise VerificationError(f"smoke profile {app!r} not found at {path}") from exc
+    except json.JSONDecodeError as exc:
+        raise VerificationError(f"smoke profile {app!r} is not valid JSON: {exc}") from exc
+
+    if data.get("app") != app:
+        raise VerificationError(f"smoke profile {path} app does not match {app!r}")
+    return SmokeProfile(
+        app=app,
+        activation_template=require_string(data, "activation_template", path),
+        git_repository=str(data.get("git_repository", "branch-${branch_slug}")),
+        namespace=require_string(data, "namespace", path),
+        require_active_pods=bool(data.get("require_active_pods", False)),
+        services=tuple(require_string_list(data.get("services", []), f"{path}: services")),
+        httproutes=tuple(require_string_list(data.get("httproutes", []), f"{path}: httproutes")),
+        configmaps=tuple(require_dict_list(data.get("configmaps", []), f"{path}: configmaps")),
+        cronjobs=tuple(require_dict_list(data.get("cronjobs", []), f"{path}: cronjobs")),
+        javascript_validity_jobs=tuple(
+            require_dict_list(data.get("javascript_validity_jobs", []), f"{path}: javascript_validity_jobs")
+        ),
+        max_slug_length=optional_positive_int(data.get("max_slug_length"), f"{path}: max_slug_length"),
+    )
+
+
+def require_string(data: dict[str, Any], key: str, path: Path) -> str:
+    value = data.get(key)
+    if not isinstance(value, str) or not value:
+        raise VerificationError(f"smoke profile {path} requires non-empty string key {key!r}")
+    return value
+
+
+def require_string_list(value: Any, context: str) -> list[str]:
+    if not isinstance(value, list) or not all(isinstance(item, str) and item for item in value):
+        raise VerificationError(f"{context} must be a list of non-empty strings")
+    return value
+
+
+def require_dict_list(value: Any, context: str) -> list[dict[str, Any]]:
+    if not isinstance(value, list) or not all(isinstance(item, dict) for item in value):
+        raise VerificationError(f"{context} must be a list of objects")
+    return value
+
+
+def optional_positive_int(value: Any, context: str) -> int | None:
+    if value is None:
+        return None
+    if not isinstance(value, int) or value <= 0:
+        raise VerificationError(f"{context} must be a positive integer")
+    return value
+
+
+def render_value(value: str, config: AppConfig) -> str:
+    return (
+        value.replace("${branch_name}", config.branch)
+        .replace("${branch_slug}", config.slug)
+        .replace("${app}", config.app)
+        .replace("${namespace}", config.namespace)
+    )
+
+
 def render_activation_template(template_text: str, *, branch: str, slug: str) -> str:
     validate_branch(branch)
     validate_slug(slug)
@@ -140,9 +226,9 @@ def render_activation_template(template_text: str, *, branch: str, slug: str) ->
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Verify a whoami branch environment on the homelab development cluster."
+        description="Verify an app branch environment on the homelab development cluster."
     )
-    parser.add_argument("--app", required=True, type=validate_app, choices=sorted(SUPPORTED_APPS))
+    parser.add_argument("--app", required=True, type=validate_app, choices=sorted(supported_apps()))
     parser.add_argument("--branch", required=True, type=validate_branch)
     parser.add_argument("--slug", required=True, type=validate_slug)
     parser.add_argument("--push", action="store_true", help="Push current HEAD to origin as --branch before activation.")
@@ -167,8 +253,11 @@ def run_acceptance(
 ) -> None:
     activated = False
     failure: BaseException | None = None
+    profile: SmokeProfile | None = None
 
     try:
+        profile = load_profile(config.app, repo_root=repo_root)
+        validate_profile_slug(profile, config)
         if config.push:
             push_branch(config, runner=runner, repo_root=repo_root)
 
@@ -180,21 +269,21 @@ def run_acceptance(
         rendered = render_activation_template(
             template_text
             if template_text is not None
-            else (repo_root / "kubernetes/clusters/development/branches/whoami-template.yaml").read_text(encoding="utf-8"),
+            else (repo_root / profile.activation_template).read_text(encoding="utf-8"),
             branch=config.branch,
             slug=config.slug,
         )
         apply_activation(config, rendered, runner=runner)
         activated = True
 
-        reconcile_flux(config, runner=runner)
-        assert_whoami(config, runner=runner)
+        reconcile_flux(config, profile=profile, runner=runner)
+        assert_profile(config, profile, runner=runner)
     except BaseException as exc:
         failure = exc
     finally:
         if activated and not config.keep:
             try:
-                cleanup_branch_environment(config, runner=runner)
+                cleanup_branch_environment(config, profile=profile, runner=runner)
             except BaseException as cleanup_exc:
                 if failure is None:
                     failure = cleanup_exc
@@ -254,9 +343,10 @@ def apply_activation(config: AppConfig, rendered: str, *, runner: Runner) -> Non
     )
 
 
-def reconcile_flux(config: AppConfig, *, runner: Runner) -> None:
+def reconcile_flux(config: AppConfig, *, profile: SmokeProfile | None = None, runner: Runner) -> None:
+    git_repository = profile_git_repository(config, profile)
     run_command(
-        flux(config, "reconcile", "source", "git", config.git_repository, "--namespace", FLUX_NAMESPACE, "--timeout", config.timeout.raw),
+        flux(config, "reconcile", "source", "git", git_repository, "--namespace", FLUX_NAMESPACE, "--timeout", config.timeout.raw),
         runner=runner,
         timeout=config.timeout,
     )
@@ -266,7 +356,7 @@ def reconcile_flux(config: AppConfig, *, runner: Runner) -> None:
             "-n",
             FLUX_NAMESPACE,
             "wait",
-            f"gitrepository.source.toolkit.fluxcd.io/{config.git_repository}",
+            f"gitrepository.source.toolkit.fluxcd.io/{git_repository}",
             "--for=condition=Ready",
             f"--timeout={config.timeout.raw}",
         ),
@@ -423,24 +513,225 @@ def reconcile_flux_kustomization(config: AppConfig, name: str, *, runner: Runner
     )
 
 
+def assert_profile(config: AppConfig, profile: SmokeProfile, *, runner: Runner) -> None:
+    validate_profile_slug(profile, config)
+    namespace = render_value(profile.namespace, config)
+    run_command(kubectl(config, "get", "namespace", namespace), runner=runner, timeout=config.timeout)
+    if profile.require_active_pods:
+        wait_for_active_pods_ready(
+            config,
+            runner=runner,
+            namespace=namespace,
+            require_non_terminated=True,
+            context=f"namespace {namespace}",
+        )
+    for service in profile.services:
+        run_command(kubectl(config, "-n", namespace, "get", "service", render_value(service, config)), runner=runner, timeout=config.timeout)
+    for route in profile.httproutes:
+        route_name = render_value(route, config)
+        route_result = run_command(
+            kubectl(config, "-n", namespace, "get", "httproute", route_name, "-o", "json"),
+            runner=runner,
+            timeout=config.timeout,
+            capture_output=True,
+        )
+        assert_httproute_ready(str(getattr(route_result, "stdout", "")), route_name=route_name)
+    for configmap in profile.configmaps:
+        assert_configmap(config, namespace, configmap, runner=runner)
+    for cronjob in profile.cronjobs:
+        assert_cronjob(config, namespace, cronjob, runner=runner)
+    for job in profile.javascript_validity_jobs:
+        run_javascript_validity_job(config, namespace, job, runner=runner)
+
+
 def assert_whoami(config: AppConfig, *, runner: Runner) -> None:
-    name = config.namespace
-    run_command(kubectl(config, "get", "namespace", name), runner=runner, timeout=config.timeout)
-    wait_for_active_pods_ready(
-        config,
-        runner=runner,
-        namespace=name,
-        require_non_terminated=True,
-        context=f"namespace {name}",
+    assert_profile(config, whoami_profile(), runner=runner)
+
+
+def whoami_profile() -> SmokeProfile:
+    return SmokeProfile(
+        app="whoami",
+        activation_template="kubernetes/clusters/development/branches/whoami-template.yaml",
+        git_repository="branch-${branch_slug}",
+        namespace="whoami-${branch_slug}",
+        require_active_pods=True,
+        services=("whoami-${branch_slug}",),
+        httproutes=("whoami-${branch_slug}",),
+        configmaps=(),
+        cronjobs=(),
+        javascript_validity_jobs=(),
+        max_slug_length=56,
     )
-    run_command(kubectl(config, "-n", name, "get", "service", name), runner=runner, timeout=config.timeout)
-    route = run_command(
-        kubectl(config, "-n", name, "get", "httproute", name, "-o", "json"),
+
+
+def validate_profile_slug(profile: SmokeProfile, config: AppConfig) -> None:
+    if profile.max_slug_length is not None and len(config.slug) > profile.max_slug_length:
+        raise VerificationError(
+            f"slug {config.slug!r} is too long for {profile.app}; maximum length is {profile.max_slug_length}"
+        )
+
+
+def assert_configmap(config: AppConfig, namespace: str, check: dict[str, Any], *, runner: Runner) -> None:
+    name = render_value(require_check_string(check, "name", "ConfigMap check"), config)
+    result = get_json_resource(config, namespace, "configmap", name, runner=runner)
+    data = result.get("data")
+    if not isinstance(data, dict):
+        raise VerificationError(f"ConfigMap {namespace}/{name} has no data")
+    for key in require_string_list(check.get("required_keys", []), f"ConfigMap {namespace}/{name} required_keys"):
+        if key not in data:
+            raise VerificationError(f"ConfigMap {namespace}/{name} missing required key {key!r}")
+
+
+def assert_cronjob(config: AppConfig, namespace: str, check: dict[str, Any], *, runner: Runner) -> None:
+    name = render_value(require_check_string(check, "name", "CronJob check"), config)
+    cronjob = get_json_resource(config, namespace, "cronjob", name, runner=runner)
+    if check.get("suspend") is not None and cronjob.get("spec", {}).get("suspend") is not bool(check["suspend"]):
+        raise VerificationError(f"CronJob {namespace}/{name} suspend did not equal {bool(check['suspend'])}")
+
+    pod_spec = cronjob.get("spec", {}).get("jobTemplate", {}).get("spec", {}).get("template", {}).get("spec", {})
+    if not isinstance(pod_spec, dict):
+        raise VerificationError(f"CronJob {namespace}/{name} has no pod template spec")
+    containers = pod_spec.get("containers")
+    if not isinstance(containers, list) or not containers:
+        raise VerificationError(f"CronJob {namespace}/{name} has no containers")
+    container = containers[0]
+    if not isinstance(container, dict):
+        raise VerificationError(f"CronJob {namespace}/{name} first container is not an object")
+
+    for volume_name, configmap_name in check.get("configmap_volumes", {}).items():
+        assert_configmap_volume(pod_spec, volume_name, render_value(str(configmap_name), config), cronjob_name=f"{namespace}/{name}")
+    for env_name, env_value in check.get("env", {}).items():
+        assert_container_env(container, str(env_name), render_value(str(env_value), config), cronjob_name=f"{namespace}/{name}")
+
+
+def assert_configmap_volume(pod_spec: dict[str, Any], volume_name: str, configmap_name: str, *, cronjob_name: str) -> None:
+    volumes = pod_spec.get("volumes")
+    if not isinstance(volumes, list):
+        raise VerificationError(f"CronJob {cronjob_name} has no volumes")
+    for volume in volumes:
+        if isinstance(volume, dict) and volume.get("name") == volume_name:
+            actual = volume.get("configMap", {}).get("name")
+            if actual == configmap_name:
+                return
+            raise VerificationError(f"CronJob {cronjob_name} volume {volume_name!r} references {actual!r}, not {configmap_name!r}")
+    raise VerificationError(f"CronJob {cronjob_name} missing volume {volume_name!r}")
+
+
+def assert_container_env(container: dict[str, Any], name: str, value: str, *, cronjob_name: str) -> None:
+    env = container.get("env")
+    if not isinstance(env, list):
+        raise VerificationError(f"CronJob {cronjob_name} container has no env list")
+    for item in env:
+        if isinstance(item, dict) and item.get("name") == name:
+            if item.get("value") == value:
+                return
+            raise VerificationError(f"CronJob {cronjob_name} env {name!r} is {item.get('value')!r}, not {value!r}")
+    raise VerificationError(f"CronJob {cronjob_name} missing env {name!r}")
+
+
+def run_javascript_validity_job(config: AppConfig, namespace: str, check: dict[str, Any], *, runner: Runner) -> None:
+    cronjob_name = render_value(require_check_string(check, "cronjob", "JavaScript validity job"), config)
+    job_name = render_value(require_check_string(check, "name", "JavaScript validity job"), config)
+    command = require_check_string(check, "command", "JavaScript validity job")
+    cronjob = get_json_resource(config, namespace, "cronjob", cronjob_name, runner=runner)
+    job = job_from_cronjob(cronjob, namespace=namespace, job_name=job_name, command=command)
+    failure: BaseException | None = None
+
+    try:
+        run_command(
+            kubectl(config, "apply", "-f", "-"),
+            runner=runner,
+            timeout=config.timeout,
+            input_text=json.dumps(job),
+        )
+        run_command(
+            kubectl(config, "-n", namespace, "wait", f"job/{job_name}", "--for=condition=Complete", f"--timeout={config.timeout.raw}"),
+            runner=runner,
+            timeout=config.timeout,
+        )
+    except BaseException as exc:
+        failure = exc
+        logs = run_command(
+            kubectl(config, "-n", namespace, "logs", f"job/{job_name}", "--all-containers=true", "--tail=200"),
+            runner=runner,
+            timeout=config.timeout,
+            capture_output=True,
+            success_codes=(0, 1),
+        )
+        output = str(getattr(logs, "stdout", "")).strip()
+        raise VerificationError(f"JavaScript validity Job {namespace}/{job_name} failed: {output or failure}") from exc
+    finally:
+        try:
+            run_command(
+                kubectl(
+                    config,
+                    "-n",
+                    namespace,
+                    "delete",
+                    f"job/{job_name}",
+                    "--ignore-not-found=true",
+                    "--wait=true",
+                    f"--timeout={config.timeout.raw}",
+                ),
+                runner=runner,
+                timeout=config.timeout,
+            )
+        except BaseException as cleanup_exc:
+            if failure is None:
+                raise cleanup_exc
+            print(f"JavaScript validity Job cleanup failed after primary error: {cleanup_exc}", file=sys.stderr)
+
+
+def job_from_cronjob(cronjob: dict[str, Any], *, namespace: str, job_name: str, command: str) -> dict[str, Any]:
+    job_spec = cronjob.get("spec", {}).get("jobTemplate", {}).get("spec")
+    if not isinstance(job_spec, dict):
+        raise VerificationError("CronJob has no job template spec")
+    spec = json.loads(json.dumps(job_spec))
+    pod_spec = spec.get("template", {}).get("spec", {})
+    containers = pod_spec.get("containers")
+    if not isinstance(containers, list) or not containers or not isinstance(containers[0], dict):
+        raise VerificationError("CronJob job template has no first container")
+    env = containers[0].setdefault("env", [])
+    if not isinstance(env, list):
+        raise VerificationError("CronJob first container env is not a list")
+    env[:] = [item for item in env if not (isinstance(item, dict) and item.get("name") == "SMOKE_PLAYWRIGHT_COMMAND")]
+    env.append({"name": "SMOKE_PLAYWRIGHT_COMMAND", "value": command})
+    return {
+        "apiVersion": "batch/v1",
+        "kind": "Job",
+        "metadata": {
+            "name": job_name,
+            "namespace": namespace,
+            "labels": {
+                "app.kubernetes.io/name": "synthetic-smoke",
+                "app.kubernetes.io/component": "javascript-validity",
+            },
+        },
+        "spec": spec,
+    }
+
+
+def require_check_string(check: dict[str, Any], key: str, context: str) -> str:
+    value = check.get(key)
+    if not isinstance(value, str) or not value:
+        raise VerificationError(f"{context} requires non-empty string key {key!r}")
+    return value
+
+
+def get_json_resource(config: AppConfig, namespace: str, kind: str, name: str, *, runner: Runner) -> dict[str, Any]:
+    result = run_command(
+        kubectl(config, "-n", namespace, "get", kind, name, "-o", "json"),
         runner=runner,
         timeout=config.timeout,
         capture_output=True,
     )
-    assert_httproute_ready(str(getattr(route, "stdout", "")), route_name=name)
+    try:
+        resource = json.loads(str(getattr(result, "stdout", "")))
+    except json.JSONDecodeError as exc:
+        raise VerificationError(f"{kind} {namespace}/{name} did not return valid JSON: {exc}") from exc
+    if not isinstance(resource, dict):
+        raise VerificationError(f"{kind} {namespace}/{name} did not return a JSON object")
+    return resource
 
 
 def wait_for_active_pods_ready(
@@ -485,7 +776,7 @@ def wait_for_active_pods_ready(
         )
 
 
-def parse_pods(pods_json: str, *, context: str) -> list[dict[str, object]]:
+def parse_pods(pods_json: str, *, context: str) -> list[dict[str, Any]]:
     try:
         pod_list = json.loads(pods_json)
     except json.JSONDecodeError as exc:
@@ -497,12 +788,12 @@ def parse_pods(pods_json: str, *, context: str) -> list[dict[str, object]]:
     return [pod for pod in items if isinstance(pod, dict)]
 
 
-def is_pod_deleting(pod: dict[str, object]) -> bool:
+def is_pod_deleting(pod: dict[str, Any]) -> bool:
     metadata = pod.get("metadata", {})
     return isinstance(metadata, dict) and bool(metadata.get("deletionTimestamp"))
 
 
-def pod_phase(pod: dict[str, object]) -> str:
+def pod_phase(pod: dict[str, Any]) -> str:
     status = pod.get("status", {})
     if not isinstance(status, dict):
         return ""
@@ -510,7 +801,7 @@ def pod_phase(pod: dict[str, object]) -> str:
     return str(phase) if phase is not None else ""
 
 
-def pod_name(pod: dict[str, object]) -> str:
+def pod_name(pod: dict[str, Any]) -> str:
     metadata = pod.get("metadata", {})
     if not isinstance(metadata, dict):
         raise VerificationError("pod did not include metadata")
@@ -520,7 +811,7 @@ def pod_name(pod: dict[str, object]) -> str:
     return str(name)
 
 
-def pod_namespace_name(pod: dict[str, object], *, default: str | None) -> str | None:
+def pod_namespace_name(pod: dict[str, Any], *, default: str | None) -> str | None:
     metadata = pod.get("metadata", {})
     if not isinstance(metadata, dict):
         return default
@@ -545,7 +836,13 @@ def assert_httproute_ready(route_json: str, *, route_name: str) -> None:
     raise VerificationError(f"HTTPRoute {route_name} has no parent with Accepted and ResolvedRefs conditions")
 
 
-def cleanup_branch_environment(config: AppConfig, *, runner: Runner) -> None:
+def profile_git_repository(config: AppConfig, profile: SmokeProfile | None) -> str:
+    if profile is None:
+        return config.git_repository
+    return render_value(profile.git_repository, config)
+
+
+def cleanup_branch_environment(config: AppConfig, *, profile: SmokeProfile | None = None, runner: Runner) -> None:
     run_command(
         kubectl(
             config,
@@ -571,7 +868,7 @@ def cleanup_branch_environment(config: AppConfig, *, runner: Runner) -> None:
             "-n",
             FLUX_NAMESPACE,
             "delete",
-            f"gitrepository.source.toolkit.fluxcd.io/{config.git_repository}",
+            f"gitrepository.source.toolkit.fluxcd.io/{profile_git_repository(config, profile)}",
             "--ignore-not-found=true",
             "--wait=true",
             f"--timeout={config.timeout.raw}",

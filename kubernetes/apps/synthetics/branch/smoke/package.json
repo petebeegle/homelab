@@ -1,0 +1,12 @@
+{
+  "name": "homelab-smoke-tests",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:unit": "node --test smoke-summary-reporter.test.js run-smoke.test.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.60.0"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "app": "synthetics",
+  "activation_template": "kubernetes/clusters/development/branches/synthetics-template.yaml",
+  "git_repository": "branch-synthetics-${branch_slug}",
+  "namespace": "synthetics-${branch_slug}",
+  "max_slug_length": 44,
+  "configmaps": [
+    {
+      "name": "synthetic-smoke-source",
+      "required_keys": [
+        "package.json",
+        "package-lock.json",
+        "playwright.config.js",
+        "run-smoke.sh",
+        "routes.spec.js",
+        "smoke-summary-reporter.js"
+      ]
+    }
+  ],
+  "cronjobs": [
+    {
+      "name": "synthetic-smoke-${branch_slug}",
+      "suspend": true,
+      "configmap_volumes": {
+        "smoke-source": "synthetic-smoke-source"
+      },
+      "env": {
+        "SMOKE_BASE_DOMAIN": "development.lab.petebeegle.com"
+      }
+    }
+  ],
+  "javascript_validity_jobs": [
+    {
+      "name": "synthetic-smoke-js-${branch_slug}",
+      "cronjob": "synthetic-smoke-${branch_slug}",
+      "command": "npm run test -- --list"
+    }
+  ]
+}

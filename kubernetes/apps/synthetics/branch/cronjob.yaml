@@ -1,0 +1,99 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: synthetic-smoke-${branch_slug}
+  namespace: synthetics-${branch_slug}
+  labels:
+    app: synthetic-smoke
+    app.kubernetes.io/name: synthetic-smoke
+    app.kubernetes.io/component: synthetic-test
+    app.kubernetes.io/part-of: branch-environment
+    homelab.petebeegle.com/branch-slug: ${branch_slug}
+spec:
+  schedule: "*/15 * * * *"
+  suspend: true
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 300
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    metadata:
+      labels:
+        app: synthetic-smoke
+        app.kubernetes.io/name: synthetic-smoke
+        app.kubernetes.io/component: synthetic-test
+        app.kubernetes.io/part-of: branch-environment
+        homelab.petebeegle.com/branch-slug: ${branch_slug}
+    spec:
+      backoffLimit: 0
+      ttlSecondsAfterFinished: 3600
+      template:
+        metadata:
+          labels:
+            app: synthetic-smoke
+            app.kubernetes.io/name: synthetic-smoke
+            app.kubernetes.io/component: synthetic-test
+            app.kubernetes.io/part-of: branch-environment
+            homelab.petebeegle.com/branch-slug: ${branch_slug}
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+            runAsGroup: 1001
+            fsGroup: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: playwright
+              image: mcr.microsoft.com/playwright:v1.60.0-noble
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: CI
+                  value: "true"
+                - name: HOME
+                  value: /tmp
+                - name: npm_config_cache
+                  value: /workdir/.npm
+                - name: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD
+                  value: "1"
+                - name: SMOKE_BASE_DOMAIN
+                  value: "${cluster_domain}"
+                - name: SMOKE_RUN_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.labels['batch.kubernetes.io/job-name']
+              command:
+                - /bin/bash
+                - -ceu
+                - |
+                  cp -R /smoke-src/. /workdir
+                  cd /workdir
+                  npm ci --no-audit --no-fund
+                  bash ./run-smoke.sh
+              resources:
+                requests:
+                  cpu: 250m
+                  memory: 512Mi
+                limits:
+                  cpu: "1"
+                  memory: 1Gi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - name: smoke-source
+                  mountPath: /smoke-src
+                  readOnly: true
+                - name: workdir
+                  mountPath: /workdir
+          volumes:
+            - name: smoke-source
+              configMap:
+                name: synthetic-smoke-source
+            - name: workdir
+              emptyDir: {}
