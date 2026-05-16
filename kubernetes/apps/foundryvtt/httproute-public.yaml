@@ -10,7 +10,7 @@ spec:
       namespace: gateway
       sectionName: http-gateway
   hostnames:
-    - foundry2.petebeegle.com
+    - foundry.petebeegle.com
   rules:
     - matches:
         - path:
