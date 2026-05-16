@@ -44,7 +44,7 @@ for operator_file in "${operator_files[@]}"; do
 done
 
 # Grafana MCP token
-GRAFANA_SERVICE_ACCOUNT_TOKEN=$(tfo -state=terraform/external/grafana/terraform.tfstate -raw mcp_token 2>/dev/null || true)
+GRAFANA_SERVICE_ACCOUNT_TOKEN=$(terraform output -state=terraform/external/grafana/terraform.tfstate -raw mcp_token 2>/dev/null || true)
 if [[ -z "$GRAFANA_SERVICE_ACCOUNT_TOKEN" ]]; then
   echo "WARNING: GRAFANA_SERVICE_ACCOUNT_TOKEN is empty — run 'terraform apply' in terraform/external/grafana/ to provision the token"
 fi
