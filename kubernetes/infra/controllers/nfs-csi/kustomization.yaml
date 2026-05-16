@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - app.yaml
   - storageclass.yaml
+  - volumesnapshotclass.yaml

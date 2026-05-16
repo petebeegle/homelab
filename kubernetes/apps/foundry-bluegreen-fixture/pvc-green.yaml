@@ -2,15 +2,15 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: foundryvtt-data-pvc
-  namespace: foundryvtt
+  name: foundry-fixture-green
+  namespace: foundry-bluegreen-fixture
   labels:
-    app: foundryvtt
-    foundryvtt.petebeegle.com/color: blue
+    app: foundry-bluegreen-fixture
+    foundryvtt.petebeegle.com/color: green
 spec:
   storageClassName: nfs-csi-storage
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 40G
+      storage: 1Gi

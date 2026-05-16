@@ -1,0 +1,22 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: foundry-fixture-green-preview
+  namespace: foundry-bluegreen-fixture
+spec:
+  parentRefs:
+    - name: internal
+      namespace: gateway
+      sectionName: https-gateway
+  hostnames:
+    - foundry-green-preview.development.lab.petebeegle.com
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: foundry-fixture-green
+          port: 80
+          weight: 1

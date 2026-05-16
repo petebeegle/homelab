@@ -6,16 +6,19 @@ metadata:
   name: foundryvtt
   labels:
     app: foundryvtt
+    foundryvtt.petebeegle.com/color: blue
 
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: foundryvtt
+      foundryvtt.petebeegle.com/color: blue
   template:
     metadata:
       labels:
         app: foundryvtt
+        foundryvtt.petebeegle.com/color: blue
     spec:
       securityContext:
         runAsUser: 421
