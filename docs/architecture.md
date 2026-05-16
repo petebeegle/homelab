@@ -142,7 +142,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `HTTPRoute` | `authentik/authentik` | `authentik.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `authentik-server:80` |
 | `HTTPRoute` | `external/synology-route` | `synology.petebeegle.com` | `gateway/internal/synology-https-gateway` | `synology-proxy:8080` |
 | `HTTPRoute` | `foundry-bluegreen-fixture/foundry-fixture-green-preview` | `foundry-green-preview.development.lab.petebeegle.com` | `gateway/internal/https-gateway` | `foundry-fixture-green:80` |
-| `HTTPRoute` | `foundryvtt/foundryvtt-public` | `foundry2.petebeegle.com` | `gateway/public/http-gateway` | `foundryvtt:80` |
+| `HTTPRoute` | `foundryvtt/foundryvtt-public` | `foundry.petebeegle.com` | `gateway/public/http-gateway` | `foundryvtt:80` |
 | `HTTPRoute` | `foundryvtt/foundryvtt` | `foundry.${cluster_domain}` | `gateway/internal/https-gateway` | `foundryvtt:80` |
 | `HTTPRoute` | `gateway/https-redirect` | `*.${cluster_domain}, ${cluster_domain}` | `gateway/internal/http-gateway, gateway/external/http-gateway` | `(none)` |
 | `HTTPRoute` | `grafana/monitoring` | `monitoring.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `grafana:80` |
