@@ -204,8 +204,8 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "max_over_time({namespace=\"synthetics\", app=\"synthetic-smoke\"} |= \"SMOKE_RUN_SUMMARY\" | logfmt | unwrap duration_seconds [$__interval])",
-          "legendFormat": "duration_seconds",
+          "expr": "max by (run) (max_over_time({namespace=\"synthetics\", app=\"synthetic-smoke\"} |= \"SMOKE_RUN_SUMMARY\" | logfmt | unwrap duration_seconds [$__interval]))",
+          "legendFormat": "{{run}}",
           "refId": "A"
         }
       ],
