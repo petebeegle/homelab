@@ -18,9 +18,8 @@ command = "npx"
 args = ["-y", "terraform-mcp-server@latest"]
 
 [mcp_servers.grafana]
-command = "uvx"
-args = ["mcp-grafana"]
-env = { GRAFANA_URL = "https://monitoring.lab.petebeegle.com" }
+command = ".codex/scripts/run_grafana_mcp.sh"
+args = []
 
 [mcp_servers.context7]
 command = "npx"
