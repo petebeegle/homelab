@@ -670,7 +670,7 @@ def build_http_probe_command(
     url = f"http://{service}.{namespace}.svc.cluster.local:{probe.port}{probe.path}"
     script = (
         "for attempt in $(seq 1 60); do "
-        f"if body=$(curl -fsS --max-time 20 {shlex.quote(url)}); then "
+        f"if body=$(curl -LfsS --max-time 20 {shlex.quote(url)}); then "
         f"printf '%s' \"$body\" | grep -E {shlex.quote(probe.body_regex)} >/dev/null && exit 0; "
         "fi; "
         "sleep 5; "

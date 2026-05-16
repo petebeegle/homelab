@@ -402,6 +402,7 @@ class VerifyBranchDeployTest(unittest.TestCase):
         self.assertEqual(overrides["spec"]["containers"][0]["command"], ["sh", "-ec"])
         script = overrides["spec"]["containers"][0]["args"][0]
         self.assertIn("http://jellyfin-example-change.jellyfin-example-change.svc.cluster.local:8096/", script)
+        self.assertIn("curl -LfsS", script)
         self.assertIn("Jellyfin|Please sign in|Wizard|Login", script)
         self.assertIn("seq 1 60", script)
 
