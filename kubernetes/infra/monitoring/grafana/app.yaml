@@ -35,6 +35,8 @@ spec:
       server:
         domain: monitoring.${cluster_domain}
         root_url: https://monitoring.${cluster_domain}
+      dashboards:
+        default_home_dashboard_path: /var/lib/grafana/dashboards/home/monitoring-radar.json
       metrics:
         enabled: true
       auth.generic_oauth:
@@ -53,6 +55,12 @@ spec:
         secretName: grafana-credentials
         defaultMode: 0440
         mountPath: /etc/secrets
+        readOnly: true
+    extraConfigmapMounts:
+      - name: monitoring-radar-dashboard
+        configMap: monitoring-radar-dashboard
+        mountPath: /var/lib/grafana/dashboards/home/monitoring-radar.json
+        subPath: dashboard.json
         readOnly: true
     sidecar:
       dashboards:

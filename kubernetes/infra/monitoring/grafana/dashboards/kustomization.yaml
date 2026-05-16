@@ -45,6 +45,12 @@ configMapGenerator:
       - dashboard.json=synthetic-smoke-dashboard.json
     options:
       disableNameSuffixHash: true
+  - name: monitoring-radar-dashboard
+    namespace: grafana
+    files:
+      - dashboard.json=monitoring-radar-dashboard.json
+    options:
+      disableNameSuffixHash: true
 resources:
   - proxmox-dashboard.yaml
   - flux-dashboard.yaml
@@ -53,3 +59,4 @@ resources:
   - observability-health-dashboard.yaml
   - codex-operations-dashboard.yaml
   - synthetic-smoke-dashboard.yaml
+  - monitoring-radar-dashboard.yaml
