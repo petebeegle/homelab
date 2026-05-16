@@ -6,6 +6,7 @@ persistence:
   media:
     enabled: false
 startupProbe:
+  tcpSocket: null
   httpGet:
     path: /health
     port: http

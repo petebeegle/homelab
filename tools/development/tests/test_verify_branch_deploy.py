@@ -419,10 +419,10 @@ class VerifyBranchDeployTest(unittest.TestCase):
 
         for text in (production_values, branch_values):
             self.assertIn("startupProbe:", text)
+            self.assertIn("tcpSocket: null", text)
             self.assertIn("httpGet:", text)
             self.assertIn("path: /health", text)
             self.assertIn("failureThreshold: 60", text)
-            self.assertNotIn("tcpSocket:", text)
 
     def test_cluster_base_reconciles_in_order_and_restores_main_on_success(self) -> None:
         runner = FakeRunner(cluster_pods_json=READY_PODS)
