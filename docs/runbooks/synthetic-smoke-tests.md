@@ -87,3 +87,5 @@ Grafana owns the `Synthetics` folder, `Synthetic Smoke` dashboard, and `syntheti
 - `Smoke Logs` includes `SMOKE_RUN_SUMMARY` lines alongside Playwright failure output.
 
 The alert fires only when summary lines report more than one failed run in the last hour. A single failed run should be investigated, but it is not enough to alert by itself. The alert intentionally remains one aggregate alert instance; it does not group by `failed_tests`, because grouping that label in the alert condition would create separate alert instances per failed test text. Use the failed-test LogQL above from Grafana Explore when the aggregate alert fires.
+
+Failed `synthetic-smoke-*` pods in the `synthetics` namespace are excluded from the generic `Kubernetes Failed Pods` alert because repeated synthetic failures are covered by `Synthetic Smoke Repeated Failures`.

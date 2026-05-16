@@ -13,7 +13,6 @@ spec:
   selector:
     matchLabels:
       app: foundryvtt
-      foundryvtt.petebeegle.com/color: blue
   template:
     metadata:
       labels:
