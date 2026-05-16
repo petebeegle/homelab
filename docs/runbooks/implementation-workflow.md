@@ -19,13 +19,13 @@ Use this runbook for every repository code change. The binding decision is `docs
 3. If ignored local secrets or configs are required, stage them under `.codex/tmp/implementation-secrets/<implementation>/` in the main checkout, preserving repo-relative paths and never logging contents.
 4. Clone the repo into `/workspaces/homelab-ideas/<implementation>` and create `codex/<implementation>` from `origin/main`.
 5. Before tracked edits, create `.codex/tmp/active-implementation` with `implementation`, `branch`, `base`, `role`, `clone_path`, `owner_role`, and `owner_agent`.
-6. Before tracked edits, create `.codex/tmp/implementation-plan.yaml` with implementation identity, summary, scope, out-of-scope items, planned changes, documentation impact, tests, verification, and risks. Tests, verification, and risks must declare the risk-tiered TDD and development smoke expectations for the implementation, or explain why they do not apply.
+6. Before tracked edits, create `.codex/tmp/implementation-plan.yaml` with implementation identity, summary, scope, out-of-scope items, planned changes, documentation impact, tests, verification, and risks. Tests, verification, and risks must declare the risk-tiered TDD and development validation expectations for the implementation, or explain why they do not apply.
 7. Before tracked edits, create `.codex/tmp/implementation-owner-attestation.yaml` with implementation identity, role, concrete `agent_id`, clone path, `created_at`, and matching delegation token evidence under `.codex/tmp/delegation-tokens/`.
 8. Validate the marker, plan, and owner attestation.
 9. Make tracked-file changes only in the sibling clone.
 10. Update docs, generated docs, decision records, runbooks, or agent guidance when behavior changes. If no docs change, record why in `.codex/tmp/pr-summary.md`.
 11. Commit with conventional commits.
-12. Run relevant checks, collect TDD and development smoke evidence expected by the plan, and request verifier review.
+12. Run relevant checks, collect TDD evidence, and collect required development-cluster validation evidence for covered cluster-affecting changes before requesting verifier review.
 13. Record verifier approval for the exact `HEAD` SHA in `.codex/tmp/verifier-approved`.
 14. Record `.codex/tmp/verifier-attestation.yaml` with verifier identity, separate delegation token evidence, and `approved_head` equal to the exact `HEAD` SHA. The verifier `agent_id`, `delegation_token`, and `delegation_token_path` must differ from the implementation owner evidence.
 15. Write `.codex/tmp/pr-summary.md` from the plan and final result.
@@ -154,9 +154,9 @@ Helper subagents may research, test, run smoke checks, or recommend patches thro
 
 If subagent tooling is unavailable or higher-priority runtime policy blocks delegation, blocked delegation is not automatic permission for main-agent self-work. The user must explicitly consent to self-implementation or self-verification for that task, and the approved fallback must be recorded in `.codex/tmp/pr-summary.md`.
 
-## Risk-Tiered TDD And Smoke Evidence
+## Risk-Tiered TDD And Development Validation
 
-TDD and development smoke evidence is advisory in v1. It is still expected for normal work, but it is documented and reviewed rather than enforced by hard harness gates. See `docs/decisions/tdd-and-development-smoke-evidence.md`.
+TDD evidence remains risk-tiered and documented. Development-cluster validation is required for covered cluster-affecting changes before production-oriented PR completion, but it is enforced by implementation and verifier review rather than hard harness gates. See `docs/decisions/tdd-and-development-smoke-evidence.md`.
 
 Declare a risk tier in the plan:
 
@@ -172,30 +172,39 @@ TDD expectations by tier:
 - `medium`: prefer a red-green flow for behavior changes, including local render tests or focused unit tests for Kubernetes/Terraform tooling where applicable.
 - `high`: use a test-helper lane by default to identify or prepare failing tests before implementation, plus broader verification after the change. If no useful failing test can be made, record why.
 
-Development smoke expectations by tier:
+Development validation expectations by tier:
 
 - `docs-only`: no live development smoke required.
-- `low`: smoke only when the changed path affects live app rendering or operator commands.
-- `medium`: use a smoke-helper lane by default for touched apps or explain why local verification is enough.
-- `high`: run development cluster smoke for the affected app or base path when credentials and cluster health allow it; otherwise record the blocker and the safest substitute evidence.
+- `low`: run development validation when the changed path affects live app rendering or operator commands.
+- `medium`: run development validation for Kubernetes manifests, Terraform, Flux wiring, Gateway routes, storage, secrets references, and app behavior changes. Use a smoke-helper lane by default for touched apps when delegation is available.
+- `high`: run development validation for the affected app or base path. For shared cluster base changes, include a sequential development base reconcile before app acceptance.
+
+If the development cluster, kubeconfig, required staged development secrets, or required credentials are unavailable, record a documented exception with the blocker and safest substitute checks. A real development validation failure is not an exception; fix the change, rerun validation, or leave the PR incomplete.
+
+Default development validation paths:
+
+- `smoke_profile: whoami`: run `python3 tools/development/verify_branch_deploy.py --app whoami --branch <branch> --slug <slug> --push` when the `whoami` branch profile fits the touched app or acceptance path.
+- `--include-cluster-base`: add this flag when the implementation changes resources under `kubernetes/clusters/development`, shared CRDs, controller installs, Gateway base objects, Cilium, cert-manager, NFS CSI, Flux dependency ordering, or app dependencies that must reconcile before branch app validation.
+- `smoke_profile: manual`: for apps without automated profiles, run manual development smoke checks that prove the relevant workload, Service, route, storage, secret reference, and app-specific behavior. Record exact commands and observations.
+- `smoke_profile: none`: use only for docs-only or local-only changes, unavailable development infrastructure or credentials, missing development branch coverage that cannot be safely emulated manually, or production-only integrations that development cannot represent. Include substitute checks and a follow-up when coverage should be added.
 
 ## Helper Lanes
 
 Use helper lanes without breaking the single-owner model:
 
 - `test-helper`: researches risk, proposes or runs failing tests, and reports command output or patch recommendations. The implementation owner remains the only role that applies tracked-file edits.
-- `smoke-helper`: prepares or runs development cluster smoke checks, captures exact branch and `HEAD` evidence, and recommends cleanup. The implementation owner remains responsible for final branch state and PR notes.
+- `smoke-helper`: prepares or runs development cluster validation, captures exact branch and `HEAD` evidence, and recommends cleanup. The implementation owner remains responsible for final branch state and PR notes.
 
 Helper output belongs in `.codex/tmp/pr-summary.md` or an equivalent local note when it affects verifier review. Include commands, outcomes, skipped checks, and exceptions. Do not create verifier approval files from helper lanes.
 
 ## Evidence Audit
 
-Before requesting verifier review, the implementation owner should audit:
+Before requesting verifier review, the implementation owner must audit:
 
-- The plan declares the intended TDD and smoke expectations for the risk tier.
-- Any skipped failing test, missing smoke profile, unavailable development cluster, or other exception is recorded with a reason.
+- The plan declares the intended TDD and development validation expectations for the risk tier.
+- Any skipped failing test, missing smoke profile, unavailable development cluster, unavailable credentials, or other exception is recorded with a reason and substitute checks.
 - Test evidence includes the exact commands run and pass/fail result.
-- Development smoke evidence includes app name, branch, branch slug, exact `HEAD`, smoke profile or documented exception, report path if one was produced, cleanup status, and whether stale reports were ignored or removed.
+- Development validation evidence includes app name, branch, branch slug, exact `HEAD`, smoke profile or documented exception, report path if one was produced, cleanup status, and whether stale reports were ignored or removed.
 - Parent/process evidence is internally consistent: active marker, plan, owner attestation, delegation token, branch, clone path, and PR summary all point at the same implementation.
 
-Verifier review should audit the same evidence. If declared TDD or smoke evidence is stale, missing, or inconsistent with the risk tier, the verifier should request a rerun, run a spot check, or record the residual risk before sign-off.
+Verifier review must audit the same evidence. If required development validation is stale, missing, or inconsistent with the risk tier, the verifier must request a rerun, run a spot check, or confirm a documented exception before sign-off.

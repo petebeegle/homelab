@@ -9,6 +9,7 @@ Stack: Terraform, Talos OS, Kubernetes, Flux, Cilium, Gateway API, SOPS/Age, Syn
 - Treat Git as the source of truth. Change desired state in this repo, then let Flux reconcile it.
 - Keep live-cluster changes temporary unless a runbook explicitly says otherwise.
 - Codex may run Terraform and Flux against the development cluster for validation and repair when a task calls for it. Production remains GitOps-first; development live changes must still be made durable through repository changes.
+- For Kubernetes, Terraform, Flux, Gateway, storage, secrets references, and app behavior changes, run the implementation through the development cluster before production-oriented PR completion. Use the `whoami` branch deployment verifier when it fits, add `--include-cluster-base` for shared base changes, and record manual development smoke evidence for apps without automated profiles. If development cluster access or required credentials are unavailable, document the exception and substitute checks in the implementation plan, PR summary, and verifier notes.
 - Commit only SOPS-encrypted secret manifests. Kubernetes Secret files use repo path names ending with the standard secret manifest filenames matched by `.sops.yaml`.
 - Use Gateway API with Cilium for ingress. Prefer `HTTPRoute` or `TLSRoute` resources instead of traditional Kubernetes Ingress resources.
 - Use StorageClass `nfs-csi-storage` for persistent app storage unless a decision record supersedes it.
@@ -97,6 +98,7 @@ Primary dependency chain:
 
 ## Before Pushing Kubernetes Changes
 
+- Confirm covered cluster-affecting changes have development-cluster validation evidence, or a documented exception for unavailable development infrastructure or credentials with substitute checks.
 - Confirm HelmRelease `dependsOn` covers required CRDs, storage, and ingress dependencies.
 - Confirm PVCs use `nfs-csi-storage` unless intentionally using another storage class.
 - Confirm Gateway routes reference an existing Gateway and section.
