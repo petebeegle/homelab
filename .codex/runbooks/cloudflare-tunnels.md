@@ -37,6 +37,18 @@ cloudflared tunnel route dns my-tunnel example.com
 Public Cloudflare hostnames should enter Kubernetes through `gateway/public`.
 Cloudflared forwards public traffic to the public Gateway over HTTP, and the app-owned `HTTPRoute` selects the backend Service. Do not point cloudflared ingress rules directly at app Services.
 
+The `gateway/public` Gateway intentionally uses a Cilium NodePort service so it
+stays an in-cluster Cloudflare origin instead of receiving a LAN-advertised
+LoadBalancer IP. Cilium may report this Gateway as `Programmed=False` with
+`reason=AddressNotAssigned`; that condition is expected only for
+`gateway/public` while its service remains NodePort.
+
+Cloudflare can also apply remotely managed tunnel ingress configuration. When
+debugging a public hostname, compare the repo-managed `ConfigMap/cloudflared`
+with cloudflared pod logs and Cloudflare-side tunnel settings. The expected
+origin is `http://cilium-gateway-public.gateway.svc.cluster.local:80`; direct
+origins such as `http://foundryvtt.foundryvtt:80` bypass `gateway/public`.
+
 For each public hostname:
 
 1. Add a cloudflared ingress rule that sends the hostname to the public Gateway:

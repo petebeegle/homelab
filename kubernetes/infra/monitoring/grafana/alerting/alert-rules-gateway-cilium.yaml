@@ -31,7 +31,12 @@ spec:
             to: 0
           datasourceUid: prometheus
           model:
-            expr: sum(gatewayapi_gateway_status_condition{type="Programmed"} == bool 0) OR vector(0)
+            expr: >-
+              sum(
+                (gatewayapi_gateway_status_condition{type="Programmed"} == bool 0)
+                unless on(exported_namespace, name, type)
+                gatewayapi_gateway_status_condition{type="Programmed",exported_namespace="gateway",name="public",reason="AddressNotAssigned"}
+              ) OR vector(0)
             refId: A
         - refId: B
           relativeTimeRange:
