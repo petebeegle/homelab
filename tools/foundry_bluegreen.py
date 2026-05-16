@@ -105,6 +105,20 @@ def require_current_dev_rehearsal(root: Path, evidence_path: Path) -> dict[str, 
     return evidence
 
 
+def resolved_path(path: str | Path) -> Path:
+    return Path(path).expanduser().resolve()
+
+
+def require_development_kubeconfig(kubeconfig: str | Path) -> Path:
+    actual = resolved_path(kubeconfig)
+    expected = resolved_path(DEV_KUBECONFIG)
+    if actual != expected:
+        raise FoundryBlueGreenError(
+            f"dev-rehearse requires development kubeconfig {expected}; got {actual}"
+        )
+    return actual
+
+
 def read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
@@ -366,7 +380,7 @@ def command_status(args: argparse.Namespace) -> int:
 
 def command_dev_rehearse(args: argparse.Namespace, runner: CommandRunner) -> int:
     root = args.root
-    kubeconfig = Path(args.kubeconfig)
+    kubeconfig = require_development_kubeconfig(args.kubeconfig)
     fixture = root / FIXTURE_DIR
     namespace = "foundry-bluegreen-fixture"
     runner.run(["kubectl", "kustomize", str(fixture)])

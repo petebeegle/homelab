@@ -16,6 +16,7 @@ Use this runbook for Foundry VTT image upgrades. Production changes stay GitOps-
 
 - Development rehearsal is mandatory before production `prepare`, `promote`, `rollback`, or `retire`.
 - `dev-rehearse` uses the small development-only fixture in `kubernetes/apps/foundry-bluegreen-fixture`, not real Foundry and not Foundry secrets.
+- `dev-rehearse` only accepts the development kubeconfig at `~/.kube/homelab-development.config` after path expansion and resolution.
 - Rehearsal evidence is written to `.codex/tmp/foundry-bluegreen-dev-rehearse.json` and is valid only for the current tool/config version.
 - `prepare` pauses the blue Foundry deployment before creating the NFS CSI snapshot desired state.
 - `Service/foundryvtt` remains the stable production backend for the existing public and internal routes.

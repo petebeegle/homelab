@@ -167,7 +167,7 @@ resources:
 
         self.quiet(
             foundry_bluegreen.command_dev_rehearse,
-            self.args("dev-rehearse", kubeconfig="/tmp/dev.config"),
+            self.args("dev-rehearse", kubeconfig=str(foundry_bluegreen.DEV_KUBECONFIG)),
             runner,
         )
 
@@ -182,6 +182,22 @@ resources:
         self.assertIsNotNone(evidence)
         self.assertEqual(evidence["status"], "succeeded")
         self.assertEqual(evidence["config_version"], foundry_bluegreen.config_version(self.root))
+
+    def test_dev_rehearse_rejects_non_development_kubeconfig_before_kubectl(self) -> None:
+        runner = FakeRunner()
+
+        with self.assertRaisesRegex(foundry_bluegreen.FoundryBlueGreenError, "development kubeconfig"):
+            foundry_bluegreen.command_dev_rehearse(
+                self.args("dev-rehearse", kubeconfig="~/.kube/homelab-production.config"),
+                runner,
+            )
+
+        self.assertEqual([], runner.calls)
+        self.assertIsNone(
+            foundry_bluegreen.read_evidence(
+                self.root, Path(".codex/tmp/foundry-bluegreen-dev-rehearse.json")
+            )
+        )
 
 
 if __name__ == "__main__":
