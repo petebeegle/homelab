@@ -25,7 +25,9 @@ tf_output_to_file() {
 }
 
 # Kubeconfig from Terraform output
-tf_output_to_file "terraform/cluster" "kubeconfig" ~/.kube/config
+if ! tf_output_to_file "terraform/cluster" "kubeconfig" ~/.kube/config; then
+  echo "WARNING: kubeconfig output is unavailable — run 'terraform apply' in terraform/cluster/ to provision it"
+fi
 
 # Grafana MCP token
 GRAFANA_SERVICE_ACCOUNT_TOKEN=$(tfo -state=terraform/external/grafana/terraform.tfstate -raw mcp_token 2>/dev/null || true)
