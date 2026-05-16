@@ -398,9 +398,12 @@ class VerifyBranchDeployTest(unittest.TestCase):
         self.assertIn("probe-example-change", command)
         self.assertIn("--image=curlimages/curl:8.16.0", command)
         self.assertIn("--overrides", command)
-        self.assertIn("http://jellyfin-example-change.jellyfin-example-change.svc.cluster.local:8096/", command[-1])
-        self.assertIn("Jellyfin|Please sign in|Wizard|Login", command[-1])
-        self.assertIn("seq 1 60", command[-1])
+        overrides = json.loads(command[command.index("--overrides") + 1])
+        self.assertEqual(overrides["spec"]["containers"][0]["command"], ["sh", "-ec"])
+        script = overrides["spec"]["containers"][0]["args"][0]
+        self.assertIn("http://jellyfin-example-change.jellyfin-example-change.svc.cluster.local:8096/", script)
+        self.assertIn("Jellyfin|Please sign in|Wizard|Login", script)
+        self.assertIn("seq 1 60", script)
 
     def test_probe_pod_overrides_use_restricted_security_context(self) -> None:
         overrides = json.loads(verify.probe_pod_overrides("probe-example-change"))

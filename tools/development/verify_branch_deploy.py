@@ -687,18 +687,33 @@ def build_http_probe_command(
         "--restart=Never",
         "--rm=true",
         "--overrides",
-        probe_pod_overrides(pod_name),
+        probe_pod_overrides(pod_name, command=["sh", "-ec"], args=[script]),
         "-i",
         "--quiet",
-        "--command",
-        "--",
-        "sh",
-        "-ec",
-        script,
     )
 
 
-def probe_pod_overrides(pod_name: str, image: str = "curlimages/curl:8.16.0") -> str:
+def probe_pod_overrides(
+    pod_name: str,
+    image: str = "curlimages/curl:8.16.0",
+    command: Sequence[str] | None = None,
+    args: Sequence[str] | None = None,
+) -> str:
+    container: dict[str, object] = {
+        "name": pod_name,
+        "image": image,
+        "securityContext": {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        },
+    }
+    if command is not None:
+        container["command"] = list(command)
+    if args is not None:
+        container["args"] = list(args)
+
     return json.dumps(
         {
             "spec": {
@@ -708,16 +723,7 @@ def probe_pod_overrides(pod_name: str, image: str = "curlimages/curl:8.16.0") ->
                     "seccompProfile": {"type": "RuntimeDefault"},
                 },
                 "containers": [
-                    {
-                        "name": pod_name,
-                        "image": image,
-                        "securityContext": {
-                            "allowPrivilegeEscalation": False,
-                            "capabilities": {"drop": ["ALL"]},
-                            "runAsNonRoot": True,
-                            "runAsUser": 1000,
-                        },
-                    }
+                    container
                 ],
             }
         },
