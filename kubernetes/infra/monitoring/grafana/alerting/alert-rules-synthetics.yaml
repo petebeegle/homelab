@@ -1,0 +1,65 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaAlertRuleGroup
+metadata:
+  name: synthetics
+  namespace: grafana
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  folderRef: "synthetics"
+  interval: 1m
+  rules:
+    - uid: synthetic-smoke-repeated-failures
+      title: Synthetic Smoke Repeated Failures
+      condition: C
+      for: 0s
+      noDataState: NoData
+      execErrState: Error
+      annotations:
+        description: "Synthetic smoke tests have failed {{ $values.B.Value }} time(s) in the last hour."
+        summary: In-cluster Playwright smoke checks are failing repeatedly
+        runbook: "docs/runbooks/synthetic-smoke-tests.md"
+      labels:
+        severity: warning
+        component: synthetics
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 3600
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: sum(increase(kube_job_status_failed{namespace="synthetics",job_name=~"synthetic-smoke-.+"}[1h])) OR sum(increase(kube_job_status_failed{exported_namespace="synthetics",job_name=~"synthetic-smoke-.+"}[1h])) OR vector(0)
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 3600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 3600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 1
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C

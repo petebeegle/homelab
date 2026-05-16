@@ -11,7 +11,7 @@ This document is generated for agentic repo navigation. It records relationships
 - Root Kustomization: `kubernetes/clusters/production/kustomization.yaml`.
 - Root resources: `flux-system`, `cluster-vars.yaml`, `infra`, `apps`.
 - Infra activation list: `crds.yaml`, `cert-manager.yaml`, `grafana-operator.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `certs.yaml`, `gateway.yaml`, `vpn.yaml`, `monitoring.yaml`, `loki.yaml`, `mimir.yaml`, `alloy.yaml`, `grafana.yaml`, `otel-collector.yaml`, `authentik.yaml`.
-- App activation list: `external.yaml`, `pihole.yaml`, `whoami.yaml`, `renovate.yaml`, `cloudflare-tunnels.yaml`, `jellyfin.yaml`, `foundryvtt.yaml`, `valheim.yaml`.
+- App activation list: `external.yaml`, `pihole.yaml`, `whoami.yaml`, `renovate.yaml`, `cloudflare-tunnels.yaml`, `jellyfin.yaml`, `foundryvtt.yaml`, `valheim.yaml`, `synthetics.yaml`.
 
 ### Development
 
@@ -89,6 +89,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `production` | `app-jellyfin` | `./kubernetes/apps/jellyfin` | `gateway`, `nfs-csi` | `cluster-vars` | `no` |
 | `production` | `app-pihole` | `./kubernetes/apps/pihole` | `gateway` | `cluster-vars` | `sops` |
 | `production` | `app-renovate` | `./kubernetes/apps/renovate` | `gateway` | `cluster-vars` | `sops` |
+| `production` | `app-synthetics` | `./kubernetes/apps/synthetics` | `gateway`, `grafana`, `authentik`, `app-whoami`, `app-jellyfin`, `app-pihole`, `app-foundryvtt` | `cluster-vars` | `no` |
 | `production` | `app-valheim` | `./kubernetes/apps/valheim` | `gateway`, `nfs-csi` | `cluster-vars` | `sops` |
 | `production` | `app-whoami` | `./kubernetes/apps/whoami` | `gateway` | `cluster-vars` | `no` |
 | `development` | `app-whoami` | `./kubernetes/apps/whoami` | `gateway` | `cluster-vars` | `no` |
@@ -106,8 +107,8 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/infra/crds` | `https://github.com/kubernetes-csi/external-snapshotter//client/config/crd?ref=v8.5.0`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/standard/gateway.networking.k8s.io_gatewayclasses.yaml`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/experimental/gateway.networking.k8s.io_gateways.yaml`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/standard/gateway.networking.k8s.io_httproutes.yaml`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/standard/gateway.networking.k8s.io_referencegrants.yaml`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/standard/gateway.networking.k8s.io_grpcroutes.yaml`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/experimental/gateway.networking.k8s.io_tlsroutes.yaml`, `prometheus`, `grafana` |
 | `kubernetes/infra/crds/prometheus` | `app.yaml` |
 | `kubernetes/infra/monitoring/alloy` | `repositories.yaml`, `namespace.yaml`, `app.yaml` |
-| `kubernetes/infra/monitoring/grafana/alerting` | `alert-rules-kubernetes.yaml`, `alert-rules-certificates.yaml`, `alert-rules-gateway-cilium.yaml`, `alert-rules-observability.yaml`, `alert-rules-apps.yaml`, `alert-rules-proxmox.yaml`, `alert-rules-flux.yaml`, `alert-rules-valheim.yaml` |
-| `kubernetes/infra/monitoring/grafana/dashboards` | `proxmox-dashboard.yaml`, `flux-dashboard.yaml`, `kubernetes-dashboard.yaml`, `authentik-dashboard.yaml`, `observability-health-dashboard.yaml`, `codex-operations-dashboard.yaml` |
+| `kubernetes/infra/monitoring/grafana/alerting` | `alert-rules-kubernetes.yaml`, `alert-rules-certificates.yaml`, `alert-rules-gateway-cilium.yaml`, `alert-rules-observability.yaml`, `alert-rules-apps.yaml`, `alert-rules-proxmox.yaml`, `alert-rules-flux.yaml`, `alert-rules-valheim.yaml`, `alert-rules-synthetics.yaml` |
+| `kubernetes/infra/monitoring/grafana/dashboards` | `proxmox-dashboard.yaml`, `flux-dashboard.yaml`, `kubernetes-dashboard.yaml`, `authentik-dashboard.yaml`, `observability-health-dashboard.yaml`, `codex-operations-dashboard.yaml`, `synthetic-smoke-dashboard.yaml` |
 | `kubernetes/infra/monitoring/grafana` | `namespace.yaml`, `repositories.yaml`, `app.yaml`, `secret.yaml`, `grafana-env.yaml`, `gateway.yaml`, `grafana-instance.yaml`, `folders.yaml`, `dashboards`, `alerting` |
 | `kubernetes/infra/monitoring/kube-state-metrics` | `repositories.yaml`, `app.yaml` |
 | `kubernetes/infra/monitoring` | `namespace.yaml`, `kube-state-metrics`, `snmp-exporter`, `pretty-discord-alerts` |
@@ -127,6 +128,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/apps/jellyfin` | `./app.yaml`, `./httproute.yaml` |
 | `kubernetes/apps/pihole` | `app.yaml`, `secret.yaml`, `httproute.yaml` |
 | `kubernetes/apps/renovate` | `app.yaml`, `secret.yaml` |
+| `kubernetes/apps/synthetics` | `namespace.yaml`, `cronjob.yaml` |
 | `kubernetes/apps/valheim` | `./app.yaml`, `./secret.yaml` |
 | `kubernetes/apps/whoami/branch` | `whoami.yaml` |
 | `kubernetes/apps/whoami` | `namespace.yaml`, `whoami.yaml` |
