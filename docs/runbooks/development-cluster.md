@@ -130,9 +130,17 @@ Branch environments are for app-scoped validation on the development cluster. Us
 
 Use `tools/development/verify_branch_deploy.py` as the canonical path for future branch validation. V1 supports `whoami` only. The tool renders the activation template, applies it directly to the development cluster, forces Flux reconciliation, checks the branch namespace and active pods, checks the whoami Service and HTTPRoute, and then removes the temporary branch Flux resources unless `--keep` is set.
 
-The current deployment verifier is intentionally limited to the `whoami` smoke path while the app profile model is expanded. Treat non-`whoami` app smoke as manual or helper-run evidence for now: use the matrix below, record the exact commands and observations, and document any missing profile as an exception rather than adding ad hoc harness behavior.
+The current deployment verifier is intentionally limited to the `whoami` smoke path while the app profile model is expanded. Treat non-`whoami` app smoke as manual or helper-run evidence for now: use the matrix below, record the exact commands and observations, and document any missing profile instead of adding ad hoc harness behavior.
 
 The initial activation template is in `kubernetes/clusters/development/branches/`, and the first branch-aware app payload overlay is `kubernetes/apps/whoami/branch/`. The cluster-layer template creates the Flux `GitRepository` and `Kustomization` that point at a branch; the app overlay is the rendered workload payload that Flux applies after substituting `${branch_slug}`. The template is not referenced from the live development entrypoint and is suspended by default. The verification tool fills `branch_name` and `branch_slug`, sets both Flux objects to `suspend: false`, and applies the rendered activation temporarily.
+
+### Dev-First Requirement
+
+Run covered cluster-affecting changes through the development cluster before production-oriented PR completion. Covered changes include Kubernetes manifests, Terraform, Flux wiring, Gateway routes, storage, secrets references, branch overlays, and app behavior. Docs-only and purely local tooling changes do not require live development validation unless they alter cluster behavior.
+
+Use the `whoami` branch verifier when the supported profile fits the change. Use manual development smoke evidence for apps without automated profiles. Add `--include-cluster-base` for shared cluster base changes before app acceptance. Production remains GitOps-first; development live validation is evidence, not a substitute for durable repository changes.
+
+If the development cluster, kubeconfig, staged development secrets, or required credentials are unavailable, record `smoke_profile: none` with the blocker, substitute checks, and any follow-up needed. Do not treat an actual development validation failure as an exception; fix the change and rerun validation before production-oriented completion.
 
 ### Live App Acceptance
 
@@ -190,7 +198,7 @@ This proves that the pushed branch can be fetched by Flux, the whoami branch ove
 
 For each implementation that changes app behavior, manifests, Gateway routing, storage, secrets references, or branch overlays, list touched apps in the implementation plan or PR summary and choose one smoke path per app:
 
-| Change type | Minimum development smoke evidence |
+| Change type | Minimum development validation evidence |
 | --- | --- |
 | Branch overlay only | Render the branch overlay locally; when supported, run `verify_branch_deploy.py` for the app profile. |
 | Workload, Service, or route | Confirm workload readiness, Service presence, and `HTTPRoute` or `TLSRoute` attachment in a development branch namespace. |
@@ -203,18 +211,18 @@ For each implementation that changes app behavior, manifests, Gateway routing, s
 
 The target model is a config-driven smoke profile per app. A profile should name the app, branch overlay path, activation template, expected namespace, workloads, Services, routes, PVCs, app-specific probes, cleanup expectations, and any required development-only secret/config prerequisites. Profiles should allow the verifier to choose consistent checks without hard-coding each app into the harness.
 
-Until profile expansion lands, use `whoami` as the only automated profile and document either:
+Until profile expansion lands, use `whoami` as the only automated profile and document one of:
 
 - `smoke_profile: whoami` with the exact `verify_branch_deploy.py` command and result.
 - `smoke_profile: manual` with commands and observations for the touched app.
-- `smoke_profile: none` with the reason, such as docs-only, unavailable development cluster, missing app branch overlay, or production-only integration.
+- `smoke_profile: none` with the reason, such as docs-only, local-only, unavailable development cluster or credentials, missing app branch overlay that cannot be safely emulated manually, or production-only integration.
 
 An exact-`HEAD` smoke report should include:
 
 - implementation name, app name, branch, branch slug, and exact commit SHA tested;
 - smoke profile name or documented exception;
 - whether `--push`, `--terraform-apply`, `--include-cluster-base`, or `--keep` was used;
-- readiness, route, storage, secret-reference, and app-specific probe results that apply to the app;
+- readiness, route, storage, secret reference, and app-specific probe results that apply to the app;
 - cleanup status, including any namespaces, Flux resources, or PVCs intentionally left behind;
 - timestamp and kubeconfig or context used, without secret contents.
 
