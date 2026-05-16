@@ -173,7 +173,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Flux resources with Ready=False across Kustomizations, HelmReleases, and source resources.",
+      "description": "Firing Grafana-managed warning and critical alerts when the ALERTS metric is present.",
       "fieldConfig": {
         "defaults": {
           "mappings": [],
@@ -185,7 +185,7 @@
                 "value": null
               },
               {
-                "color": "red",
+                "color": "orange",
                 "value": 1
               }
             ]
@@ -222,11 +222,11 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "count(gotk_resource_info{ready=\"False\",job=\"prometheus.scrape.service\"}) OR vector(0)",
+          "expr": "sum(ALERTS{alertstate=\"firing\",severity=~\"warning|critical\"} == 1) OR vector(0)",
           "refId": "A"
         }
       ],
-      "title": "Flux Failing",
+      "title": "Alerts Firing",
       "type": "stat"
     },
     {
@@ -356,7 +356,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Pods outside infrastructure namespaces that are Pending, Failed, or Unknown.",
+      "description": "Pods currently in Failed or Pending phase across the cluster.",
       "fieldConfig": {
         "defaults": {
           "mappings": [],
@@ -405,19 +405,19 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(max by (exported_namespace, pod, phase) (kube_pod_status_phase{exported_namespace!~\"kube-system|flux-system|grafana|mimir|loki|alloy\",phase=~\"Pending|Failed|Unknown\"} > bool 0)) OR vector(0)",
+          "expr": "sum(max by (namespace, pod, phase) (kube_pod_status_phase{phase=~\"Failed|Pending\"} > bool 0)) OR vector(0)",
           "refId": "A"
         }
       ],
-      "title": "App Pods Unavailable",
+      "title": "Failed Or Pending Pods",
       "type": "stat"
     },
     {
       "datasource": {
-        "type": "loki",
-        "uid": "loki"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
-      "description": "Synthetic smoke failures in the last hour from the scheduled Playwright smoke job.",
+      "description": "Containers with at least one restart in the last hour.",
       "fieldConfig": {
         "defaults": {
           "mappings": [],
@@ -463,14 +463,14 @@
       "targets": [
         {
           "datasource": {
-            "type": "loki",
-            "uid": "loki"
+            "type": "prometheus",
+            "uid": "prometheus"
           },
-          "expr": "sum(count_over_time({namespace=\"synthetics\", app=\"synthetic-smoke\"} |= \"SMOKE_RUN_SUMMARY\" | logfmt | status=\"failed\" [1h])) OR vector(0)",
+          "expr": "sum(max by (namespace, pod, container) (increase(kube_pod_container_status_restarts_total[1h]) > bool 0)) OR vector(0)",
           "refId": "A"
         }
       ],
-      "title": "Synthetic Failures",
+      "title": "Recent Restarts",
       "type": "stat"
     },
     {
@@ -2392,7 +2392,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Running pod counts for common user-facing app namespaces.",
+      "description": "Running pod counts for Authentik, Pi-hole, Jellyfin, FoundryVTT, Valheim, Renovate, cloudflared, and synthetics namespaces.",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -2445,12 +2445,12 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (exported_namespace) (kube_pod_status_phase{exported_namespace=~\"authentik|pihole|jellyfin|valheim|synthetics\",phase=\"Running\"} > bool 0) OR on() vector(0)",
+          "expr": "sum by (exported_namespace) (kube_pod_status_phase{exported_namespace=~\"authentik|pihole|jellyfin|foundryvtt|valheim|renovate|cloudflare|synthetics\",phase=\"Running\"} > bool 0) OR on() vector(0)",
           "legendFormat": "{{exported_namespace}}",
           "refId": "A"
         }
       ],
-      "title": "App Running Pods",
+      "title": "Activated App Running Pods",
       "type": "timeseries"
     },
     {
@@ -2458,7 +2458,7 @@
         "type": "loki",
         "uid": "loki"
       },
-      "description": "Application logs matching common failure terms across app and synthetic namespaces.",
+      "description": "Application logs matching common failure terms across Authentik, Pi-hole, Jellyfin, FoundryVTT, Valheim, Renovate, cloudflared, and synthetics namespaces.",
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -2483,7 +2483,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "{namespace=~\"authentik|pihole|jellyfin|valheim|synthetics\"} |~ \"(?i)(error|failed|panic|timeout|unhealthy|denied|exception)\"",
+          "expr": "{namespace=~\"authentik|pihole|jellyfin|foundryvtt|valheim|renovate|cloudflare|synthetics\"} |~ \"(?i)(error|failed|panic|timeout|unhealthy|denied|exception)\"",
           "queryType": "range",
           "refId": "A"
         }
