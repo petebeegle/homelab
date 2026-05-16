@@ -34,11 +34,16 @@ bounded_logfmt_quote() {
 }
 
 smoke_run_name() {
-  local run_name="${SMOKE_RUN_NAME-}"
+  local run_name
+
+  set +u
+  run_name="$SMOKE_RUN_NAME"
 
   if [ -z "$run_name" ]; then
-    run_name="${HOSTNAME-}"
+    run_name="$HOSTNAME"
   fi
+  set -u
+
   if [ -z "$run_name" ]; then
     run_name="unknown"
   fi
