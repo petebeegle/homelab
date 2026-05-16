@@ -36,7 +36,7 @@ test.describe("homelab routed services", () => {
 
   test("pihole root redirects to the admin shell", async ({ page }) => {
     await gotoOk(page, urlFor("pihole"));
-    await expect(page).toHaveURL(/\/admin\/?$/);
+    await expect(page).toHaveURL(/\/admin(?:\/|\/login)?$/);
     await expect(page.locator("body")).toContainText(/Pi-hole|Sign in|Login|Password/i);
   });
 

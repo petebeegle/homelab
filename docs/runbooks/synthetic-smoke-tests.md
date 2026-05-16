@@ -14,7 +14,7 @@ The checks are intentionally deeper than pod readiness and lighter than full aut
 - `authentik.${cluster_domain}` verifies the SSO start or login page.
 - `monitoring.${cluster_domain}` verifies the Grafana login or landing shell.
 - `jellyfin.${cluster_domain}` verifies the Jellyfin web shell.
-- `pihole.${cluster_domain}` verifies the root redirect to `/admin`.
+- `pihole.${cluster_domain}` verifies the root redirect reaches the Pi-hole admin/login shell.
 - `foundry.${cluster_domain}` verifies the Foundry application shell.
 
 ## Manual Run
