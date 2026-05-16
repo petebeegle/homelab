@@ -416,15 +416,14 @@ class VerifyBranchDeployTest(unittest.TestCase):
         self.assertEqual(overrides["spec"]["containers"][0]["securityContext"]["capabilities"]["drop"], ["ALL"])
         self.assertEqual(overrides["spec"]["containers"][0]["securityContext"]["runAsUser"], 1000)
 
-    def test_jellyfin_fresh_start_values_wait_for_http_health_before_liveness(self) -> None:
+    def test_jellyfin_fresh_start_values_do_not_use_flaky_health_for_pod_readiness(self) -> None:
         production_values = (REPO_ROOT / "kubernetes/apps/jellyfin/values.yaml").read_text(encoding="utf-8")
         branch_values = (REPO_ROOT / "kubernetes/apps/jellyfin/branch/jellyfin.yaml").read_text(encoding="utf-8")
 
         for text in (production_values, branch_values):
             self.assertIn("startupProbe:", text)
-            self.assertIn("tcpSocket: null", text)
-            self.assertIn("httpGet:", text)
-            self.assertIn("path: /health", text)
+            self.assertIn("tcpSocket:", text)
+            self.assertIn("httpGet: null", text)
             self.assertIn("failureThreshold: 60", text)
 
     def test_cluster_base_reconciles_in_order_and_restores_main_on_success(self) -> None:

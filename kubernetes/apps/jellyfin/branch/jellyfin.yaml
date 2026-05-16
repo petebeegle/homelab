@@ -77,23 +77,21 @@ spec:
       media:
         enabled: false
     startupProbe:
-      tcpSocket: null
-      httpGet:
-        path: /health
+      tcpSocket:
         port: http
       failureThreshold: 60
       periodSeconds: 10
       timeoutSeconds: 5
     livenessProbe:
-      httpGet:
-        path: /health
+      httpGet: null
+      tcpSocket:
         port: http
       failureThreshold: 6
       periodSeconds: 10
       timeoutSeconds: 5
     readinessProbe:
-      httpGet:
-        path: /health
+      httpGet: null
+      tcpSocket:
         port: http
       failureThreshold: 6
       periodSeconds: 10
