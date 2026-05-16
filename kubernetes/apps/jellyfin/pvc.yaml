@@ -1,0 +1,13 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jellyfin-config-v2
+  namespace: jellyfin
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs-csi-storage
+  resources:
+    requests:
+      storage: 5Gi

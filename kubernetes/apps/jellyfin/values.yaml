@@ -1,9 +1,30 @@
 persistence:
   config:
     enabled: true
+    existingClaim: jellyfin-config-v2
     storageClass: nfs-csi-storage
   media:
     enabled: false
+startupProbe:
+  tcpSocket:
+    port: http
+  failureThreshold: 60
+  periodSeconds: 10
+  timeoutSeconds: 5
+livenessProbe:
+  httpGet: null
+  tcpSocket:
+    port: http
+  failureThreshold: 6
+  periodSeconds: 10
+  timeoutSeconds: 5
+readinessProbe:
+  httpGet: null
+  tcpSocket:
+    port: http
+  failureThreshold: 6
+  periodSeconds: 10
+  timeoutSeconds: 5
 volumes:
   - name: custom-media
     nfs:

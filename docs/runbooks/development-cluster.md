@@ -128,17 +128,17 @@ Branch environments are for app-scoped validation on the development cluster. Us
 <app>-${branch_slug}.development.lab.petebeegle.com
 ```
 
-Use `tools/development/verify_branch_deploy.py` as the canonical path for future branch validation. V1 supports `whoami` only. The tool renders the activation template, applies it directly to the development cluster, forces Flux reconciliation, checks the branch namespace and active pods, checks the whoami Service and HTTPRoute, and then removes the temporary branch Flux resources unless `--keep` is set.
+Use `tools/development/verify_branch_deploy.py` as the canonical path for future branch validation. The tool loads JSON smoke profiles from `tools/development/smoke-profiles/`, renders the matching activation template, applies it directly to the development cluster, forces Flux reconciliation, checks the branch namespace and active pods, runs profile resource checks, and then removes the temporary branch Flux resources unless `--keep` is set. Automated profiles currently cover `whoami` and `jellyfin`.
 
-The current deployment verifier is intentionally limited to the `whoami` smoke path while the app profile model is expanded. Treat non-`whoami` app smoke as manual or helper-run evidence for now: use the matrix below, record the exact commands and observations, and document any missing profile instead of adding ad hoc harness behavior.
+The `whoami` profile checks the branch namespace, active pods, Service, and HTTPRoute. The `jellyfin` profile checks the branch namespace, branch Flux Kustomization readiness, HelmRelease readiness, active pods, config PVC binding on `nfs-csi-storage`, Service, HTTPRoute, and an in-cluster HTTP probe for the Jellyfin web shell.
 
-The initial activation template is in `kubernetes/clusters/development/branches/`, and the first branch-aware app payload overlay is `kubernetes/apps/whoami/branch/`. The cluster-layer template creates the Flux `GitRepository` and `Kustomization` that point at a branch; the app overlay is the rendered workload payload that Flux applies after substituting `${branch_slug}`. The template is not referenced from the live development entrypoint and is suspended by default. The verification tool fills `branch_name` and `branch_slug`, sets both Flux objects to `suspend: false`, and applies the rendered activation temporarily.
+Activation templates are in `kubernetes/clusters/development/branches/`, and branch-aware app payload overlays live under paths such as `kubernetes/apps/whoami/branch/` and `kubernetes/apps/jellyfin/branch/`. The cluster-layer template creates the Flux `GitRepository` and `Kustomization` that point at a branch; the app overlay is the rendered workload payload that Flux applies after substituting `${branch_slug}`. The templates are not referenced from the live development entrypoint and are suspended by default. The verification tool fills `branch_name` and `branch_slug`, sets both Flux objects to `suspend: false`, and applies the rendered activation temporarily.
 
 ### Dev-First Requirement
 
 Run covered cluster-affecting changes through the development cluster before production-oriented PR completion. Covered changes include Kubernetes manifests, Terraform, Flux wiring, Gateway routes, storage, secrets references, branch overlays, and app behavior. Docs-only and purely local tooling changes do not require live development validation unless they alter cluster behavior.
 
-Use the `whoami` branch verifier when the supported profile fits the change. Use manual development smoke evidence for apps without automated profiles. Add `--include-cluster-base` for shared cluster base changes before app acceptance. Production remains GitOps-first; development live validation is evidence, not a substitute for durable repository changes.
+Use the matching branch verifier profile when it fits the change, such as `--app whoami` or `--app jellyfin`. Use manual development smoke evidence for apps without automated profiles. Add `--include-cluster-base` for shared cluster base changes before app acceptance. Production remains GitOps-first; development live validation is evidence, not a substitute for durable repository changes.
 
 If the development cluster, kubeconfig, staged development secrets, or required credentials are unavailable, record `smoke_profile: none` with the blocker, substitute checks, and any follow-up needed. Do not treat an actual development validation failure as an exception; fix the change and rerun validation before production-oriented completion.
 
@@ -150,12 +150,18 @@ Prerequisites:
 - `terraform`, `kubectl`, and `flux` are installed locally.
 - The default kubeconfig exists at `~/.kube/homelab-development.config`, or pass `--kubeconfig <path>`.
 - The branch named by `--branch` is available on origin. Use `--push` to push the current HEAD to origin as that branch before activation.
-- `--slug` is deterministic and DNS-safe: lowercase letters, numbers, and hyphens; starts and ends with an alphanumeric character; and is short enough for `whoami-${branch_slug}` Kubernetes names.
+- `--slug` is deterministic and DNS-safe: lowercase letters, numbers, and hyphens; starts and ends with an alphanumeric character; and is short enough for the selected app's `${app}-${branch_slug}` Kubernetes names.
 
-Normal live verification:
+Normal live verification for whoami:
 
 ```sh
 python3 tools/development/verify_branch_deploy.py --app whoami --branch codex/example-change --slug example-change --push
+```
+
+Normal live verification for Jellyfin:
+
+```sh
+python3 tools/development/verify_branch_deploy.py --app jellyfin --branch codex/jellyfin-change --slug jellyfin-change --push
 ```
 
 Run Terraform apply first when the development cluster base may need to be created or repaired:
@@ -192,7 +198,7 @@ kubectl --kubeconfig ~/.kube/homelab-development.config wait namespace/whoami-ex
 kubectl --kubeconfig ~/.kube/homelab-development.config -n flux-system delete gitrepository.source.toolkit.fluxcd.io/branch-example-change
 ```
 
-This proves that the pushed branch can be fetched by Flux, the whoami branch overlay can reconcile on the development cluster, the branch namespace exists, at least one branch app pod is active, active branch app pods report Ready, the Service exists, and the HTTPRoute reports `Accepted` and `ResolvedRefs`. Without `--include-cluster-base`, it does not prove production readiness, cross-app behavior, cluster-scoped changes, public Cloudflare routing, or apps other than `whoami`.
+This proves that the pushed branch can be fetched by Flux, the selected app branch overlay can reconcile on the development cluster, the branch namespace exists, at least one branch app pod is active, active branch app pods report Ready, and the selected profile checks pass. For `whoami`, that includes Service existence and an HTTPRoute with `Accepted` and `ResolvedRefs`. For `jellyfin`, that also includes HelmRelease readiness, config PVC binding, and an in-cluster Jellyfin web-shell probe. Without `--include-cluster-base`, it does not prove production readiness, cross-app behavior, cluster-scoped changes, public Cloudflare routing, or apps without a selected smoke profile.
 
 ### Touched-App Smoke Matrix
 
@@ -209,11 +215,12 @@ For each implementation that changes app behavior, manifests, Gateway routing, s
 
 ### Smoke Profiles
 
-The target model is a config-driven smoke profile per app. A profile should name the app, branch overlay path, activation template, expected namespace, workloads, Services, routes, PVCs, app-specific probes, cleanup expectations, and any required development-only secret/config prerequisites. Profiles should allow the verifier to choose consistent checks without hard-coding each app into the harness.
+Smoke profiles are JSON files under `tools/development/smoke-profiles/`. A profile names the app, branch GitRepository, activation template, expected namespace, Services, routes, PVCs, HelmReleases, app-specific probes, and any other checks the verifier can run consistently for that app.
 
-Until profile expansion lands, use `whoami` as the only automated profile and document one of:
+Document one of:
 
 - `smoke_profile: whoami` with the exact `verify_branch_deploy.py` command and result.
+- `smoke_profile: jellyfin` with the exact `verify_branch_deploy.py` command and result.
 - `smoke_profile: manual` with commands and observations for the touched app.
 - `smoke_profile: none` with the reason, such as docs-only, local-only, unavailable development cluster or credentials, missing app branch overlay that cannot be safely emulated manually, or production-only integration.
 
@@ -234,6 +241,7 @@ Local manifest verification does not require pushing a branch:
 export branch_slug=example
 export cluster_domain=development.lab.petebeegle.com
 kubectl kustomize kubernetes/apps/whoami/branch | flux envsubst --strict
+kubectl kustomize kubernetes/apps/jellyfin/branch | flux envsubst --strict
 
 kubectl kustomize kubernetes/clusters/development
 

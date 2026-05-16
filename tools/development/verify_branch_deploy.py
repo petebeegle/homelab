@@ -12,14 +12,14 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Callable, Sequence
+from typing import Callable, Mapping, Sequence
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+PROFILE_DIR = Path(__file__).resolve().parent / "smoke-profiles"
 DEFAULT_KUBECONFIG = Path("~/.kube/homelab-development.config").expanduser()
 DEFAULT_TIMEOUT = "10m"
 FLUX_NAMESPACE = "flux-system"
-SUPPORTED_APPS = {"whoami"}
 DEVELOPMENT_BASE_KUSTOMIZATIONS = (
     "crds",
     "cert-manager",
@@ -73,6 +73,33 @@ class VerificationError(RuntimeError):
 Runner = Callable[..., subprocess.CompletedProcess[str] | SimpleNamespace]
 
 
+@dataclass(frozen=True)
+class PvcCheck:
+    name: str
+    storage_class: str | None = None
+
+
+@dataclass(frozen=True)
+class HttpProbe:
+    service: str
+    port: int
+    path: str
+    body_regex: str
+
+
+@dataclass(frozen=True)
+class SmokeProfile:
+    app: str
+    git_repository: str
+    activation_template: str
+    namespace: str
+    helm_releases: tuple[str, ...]
+    services: tuple[str, ...]
+    http_routes: tuple[str, ...]
+    pvcs: tuple[PvcCheck, ...]
+    http_probes: tuple[HttpProbe, ...]
+
+
 def parse_duration(value: str) -> Duration:
     if not value:
         raise argparse.ArgumentTypeError("duration must not be empty")
@@ -97,8 +124,9 @@ def parse_duration(value: str) -> Duration:
 
 
 def validate_app(app: str) -> str:
-    if app not in SUPPORTED_APPS:
-        raise argparse.ArgumentTypeError(f"unsupported app {app!r}; supported apps: {', '.join(sorted(SUPPORTED_APPS))}")
+    apps = supported_apps()
+    if app not in apps:
+        raise argparse.ArgumentTypeError(f"unsupported app {app!r}; supported apps: {', '.join(sorted(apps))}")
     return app
 
 
@@ -138,11 +166,121 @@ def render_activation_template(template_text: str, *, branch: str, slug: str) ->
     return rendered
 
 
+def load_smoke_profiles(profile_dir: Path = PROFILE_DIR) -> dict[str, SmokeProfile]:
+    profiles: dict[str, SmokeProfile] = {}
+    if not profile_dir.is_dir():
+        raise VerificationError(f"smoke profile directory not found: {profile_dir}")
+
+    for path in sorted(profile_dir.glob("*.json")):
+        profile = load_smoke_profile_file(path)
+        if profile.app in profiles:
+            raise VerificationError(f"duplicate smoke profile for app {profile.app!r}")
+        profiles[profile.app] = profile
+    if not profiles:
+        raise VerificationError(f"no smoke profiles found in {profile_dir}")
+    return profiles
+
+
+def load_smoke_profile_file(path: Path) -> SmokeProfile:
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise VerificationError(f"smoke profile {path} is not valid JSON: {exc}") from exc
+    if not isinstance(raw, dict):
+        raise VerificationError(f"smoke profile {path} must be a JSON object")
+
+    checks = _mapping(raw.get("checks", {}), f"{path}:checks")
+    app = _required_string(raw, "app", path)
+    profile = SmokeProfile(
+        app=app,
+        git_repository=raw.get("gitRepository") if isinstance(raw.get("gitRepository"), str) else "branch-${branch_slug}",
+        activation_template=_required_string(raw, "activationTemplate", path),
+        namespace=_required_string(raw, "namespace", path),
+        helm_releases=tuple(_string_list(checks.get("helmReleases", []), f"{path}:checks.helmReleases")),
+        services=tuple(_string_list(checks.get("services", []), f"{path}:checks.services")),
+        http_routes=tuple(_string_list(checks.get("httpRoutes", []), f"{path}:checks.httpRoutes")),
+        pvcs=tuple(_pvc_checks(checks.get("pvcs", []), path)),
+        http_probes=tuple(_http_probes(checks.get("httpProbes", []), path)),
+    )
+    return profile
+
+
+def load_smoke_profile(app: str, profile_dir: Path = PROFILE_DIR) -> SmokeProfile:
+    profiles = load_smoke_profiles(profile_dir)
+    try:
+        return profiles[app]
+    except KeyError as exc:
+        raise VerificationError(f"unsupported app {app!r}; supported apps: {', '.join(sorted(profiles))}") from exc
+
+
+def supported_apps(profile_dir: Path = PROFILE_DIR) -> frozenset[str]:
+    try:
+        return frozenset(load_smoke_profiles(profile_dir))
+    except VerificationError:
+        return frozenset()
+
+
+def _required_string(raw: Mapping[str, object], key: str, path: Path) -> str:
+    value = raw.get(key)
+    if not isinstance(value, str) or not value:
+        raise VerificationError(f"smoke profile {path} field {key!r} must be a non-empty string")
+    return value
+
+
+def _mapping(value: object, field: str) -> Mapping[str, object]:
+    if not isinstance(value, dict):
+        raise VerificationError(f"{field} must be an object")
+    return value
+
+
+def _string_list(value: object, field: str) -> list[str]:
+    if not isinstance(value, list) or not all(isinstance(item, str) and item for item in value):
+        raise VerificationError(f"{field} must be a list of non-empty strings")
+    return list(value)
+
+
+def _pvc_checks(value: object, path: Path) -> list[PvcCheck]:
+    if not isinstance(value, list):
+        raise VerificationError(f"{path}:checks.pvcs must be a list")
+    checks: list[PvcCheck] = []
+    for index, item in enumerate(value):
+        field = f"{path}:checks.pvcs[{index}]"
+        raw = _mapping(item, field)
+        checks.append(
+            PvcCheck(
+                name=_required_string(raw, "name", path),
+                storage_class=raw.get("storageClass") if isinstance(raw.get("storageClass"), str) else None,
+            )
+        )
+    return checks
+
+
+def _http_probes(value: object, path: Path) -> list[HttpProbe]:
+    if not isinstance(value, list):
+        raise VerificationError(f"{path}:checks.httpProbes must be a list")
+    probes: list[HttpProbe] = []
+    for index, item in enumerate(value):
+        field = f"{path}:checks.httpProbes[{index}]"
+        raw = _mapping(item, field)
+        port = raw.get("port")
+        if not isinstance(port, int) or port <= 0:
+            raise VerificationError(f"{field}.port must be a positive integer")
+        probes.append(
+            HttpProbe(
+                service=_required_string(raw, "service", path),
+                port=port,
+                path=_required_string(raw, "path", path),
+                body_regex=_required_string(raw, "bodyRegex", path),
+            )
+        )
+    return probes
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Verify a whoami branch environment on the homelab development cluster."
+        description="Verify an app branch environment on the homelab development cluster."
     )
-    parser.add_argument("--app", required=True, type=validate_app, choices=sorted(SUPPORTED_APPS))
+    parser.add_argument("--app", required=True, type=validate_app, choices=sorted(supported_apps()))
     parser.add_argument("--branch", required=True, type=validate_branch)
     parser.add_argument("--slug", required=True, type=validate_slug)
     parser.add_argument("--push", action="store_true", help="Push current HEAD to origin as --branch before activation.")
@@ -167,6 +305,7 @@ def run_acceptance(
 ) -> None:
     activated = False
     failure: BaseException | None = None
+    profile = load_smoke_profile(config.app)
 
     try:
         if config.push:
@@ -180,21 +319,21 @@ def run_acceptance(
         rendered = render_activation_template(
             template_text
             if template_text is not None
-            else (repo_root / "kubernetes/clusters/development/branches/whoami-template.yaml").read_text(encoding="utf-8"),
+            else (repo_root / profile.activation_template).read_text(encoding="utf-8"),
             branch=config.branch,
             slug=config.slug,
         )
         apply_activation(config, rendered, runner=runner)
         activated = True
 
-        reconcile_flux(config, runner=runner)
-        assert_whoami(config, runner=runner)
+        reconcile_flux(config, profile, runner=runner)
+        assert_smoke_profile(config, profile, runner=runner)
     except BaseException as exc:
         failure = exc
     finally:
         if activated and not config.keep:
             try:
-                cleanup_branch_environment(config, runner=runner)
+                cleanup_branch_environment(config, profile, runner=runner)
             except BaseException as cleanup_exc:
                 if failure is None:
                     failure = cleanup_exc
@@ -254,9 +393,10 @@ def apply_activation(config: AppConfig, rendered: str, *, runner: Runner) -> Non
     )
 
 
-def reconcile_flux(config: AppConfig, *, runner: Runner) -> None:
+def reconcile_flux(config: AppConfig, profile: SmokeProfile, *, runner: Runner) -> None:
+    git_repository = render_profile_value(profile.git_repository, config=config, field="gitRepository")
     run_command(
-        flux(config, "reconcile", "source", "git", config.git_repository, "--namespace", FLUX_NAMESPACE, "--timeout", config.timeout.raw),
+        flux(config, "reconcile", "source", "git", git_repository, "--namespace", FLUX_NAMESPACE, "--timeout", config.timeout.raw),
         runner=runner,
         timeout=config.timeout,
     )
@@ -266,7 +406,7 @@ def reconcile_flux(config: AppConfig, *, runner: Runner) -> None:
             "-n",
             FLUX_NAMESPACE,
             "wait",
-            f"gitrepository.source.toolkit.fluxcd.io/{config.git_repository}",
+            f"gitrepository.source.toolkit.fluxcd.io/{git_repository}",
             "--for=condition=Ready",
             f"--timeout={config.timeout.raw}",
         ),
@@ -423,9 +563,24 @@ def reconcile_flux_kustomization(config: AppConfig, name: str, *, runner: Runner
     )
 
 
-def assert_whoami(config: AppConfig, *, runner: Runner) -> None:
-    name = config.namespace
+def assert_smoke_profile(config: AppConfig, profile: SmokeProfile, *, runner: Runner) -> None:
+    name = render_profile_value(profile.namespace, config=config, field="namespace")
     run_command(kubectl(config, "get", "namespace", name), runner=runner, timeout=config.timeout)
+    for helm_release in profile.helm_releases:
+        resource_name = render_profile_value(helm_release, config=config, field="helmRelease")
+        run_command(
+            kubectl(
+                config,
+                "-n",
+                name,
+                "wait",
+                f"helmrelease.helm.toolkit.fluxcd.io/{resource_name}",
+                "--for=condition=Ready",
+                f"--timeout={config.timeout.raw}",
+            ),
+            runner=runner,
+            timeout=config.timeout,
+        )
     wait_for_active_pods_ready(
         config,
         runner=runner,
@@ -433,14 +588,147 @@ def assert_whoami(config: AppConfig, *, runner: Runner) -> None:
         require_non_terminated=True,
         context=f"namespace {name}",
     )
-    run_command(kubectl(config, "-n", name, "get", "service", name), runner=runner, timeout=config.timeout)
-    route = run_command(
-        kubectl(config, "-n", name, "get", "httproute", name, "-o", "json"),
+    for pvc in profile.pvcs:
+        resource_name = render_profile_value(pvc.name, config=config, field="pvc")
+        assert_pvc_ready(config, namespace=name, pvc_name=resource_name, storage_class=pvc.storage_class, runner=runner)
+    for service in profile.services:
+        resource_name = render_profile_value(service, config=config, field="service")
+        run_command(kubectl(config, "-n", name, "get", "service", resource_name), runner=runner, timeout=config.timeout)
+    for http_route in profile.http_routes:
+        resource_name = render_profile_value(http_route, config=config, field="httpRoute")
+        route = run_command(
+            kubectl(config, "-n", name, "get", "httproute", resource_name, "-o", "json"),
+            runner=runner,
+            timeout=config.timeout,
+            capture_output=True,
+        )
+        assert_httproute_ready(str(getattr(route, "stdout", "")), route_name=resource_name)
+    for index, probe in enumerate(profile.http_probes):
+        run_command(
+            build_http_probe_command(config, namespace=name, probe=probe, probe_index=index, total_probes=len(profile.http_probes)),
+            runner=runner,
+            timeout=config.timeout,
+        )
+
+
+def assert_whoami(config: AppConfig, *, runner: Runner) -> None:
+    assert_smoke_profile(config, load_smoke_profile("whoami"), runner=runner)
+
+
+def render_profile_value(value: str, *, config: AppConfig, field: str) -> str:
+    rendered = (
+        value.replace("${branch_slug}", config.slug)
+        .replace("${branch_name}", config.branch)
+        .replace("${app}", config.app)
+    )
+    if "${" in rendered:
+        raise VerificationError(f"profile field {field} has an unsubstituted placeholder: {value}")
+    return rendered
+
+
+def assert_pvc_ready(
+    config: AppConfig,
+    *,
+    namespace: str,
+    pvc_name: str,
+    storage_class: str | None,
+    runner: Runner,
+) -> None:
+    pvc = run_command(
+        kubectl(config, "-n", namespace, "get", "pvc", pvc_name, "-o", "json"),
         runner=runner,
         timeout=config.timeout,
         capture_output=True,
     )
-    assert_httproute_ready(str(getattr(route, "stdout", "")), route_name=name)
+    assert_pvc_bound(str(getattr(pvc, "stdout", "")), pvc_name=pvc_name, storage_class=storage_class)
+
+
+def assert_pvc_bound(pvc_json: str, *, pvc_name: str, storage_class: str | None) -> None:
+    try:
+        pvc = json.loads(pvc_json)
+    except json.JSONDecodeError as exc:
+        raise VerificationError(f"PVC {pvc_name} did not return valid JSON: {exc}") from exc
+
+    phase = pvc.get("status", {}).get("phase")
+    if phase != "Bound":
+        raise VerificationError(f"PVC {pvc_name} is not Bound; observed phase {phase!r}")
+    if storage_class is not None and pvc.get("spec", {}).get("storageClassName") != storage_class:
+        observed = pvc.get("spec", {}).get("storageClassName")
+        raise VerificationError(f"PVC {pvc_name} storageClassName is {observed!r}, expected {storage_class!r}")
+
+
+def build_http_probe_command(
+    config: AppConfig,
+    *,
+    namespace: str,
+    probe: HttpProbe,
+    probe_index: int,
+    total_probes: int,
+) -> list[str]:
+    service = render_profile_value(probe.service, config=config, field="httpProbe.service")
+    pod_name = f"probe-{config.slug}" if total_probes == 1 else f"p{probe_index}-{config.slug}"
+    url = f"http://{service}.{namespace}.svc.cluster.local:{probe.port}{probe.path}"
+    script = (
+        "for attempt in $(seq 1 60); do "
+        f"if body=$(curl -LfsS --max-time 20 {shlex.quote(url)}); then "
+        f"printf '%s' \"$body\" | grep -E {shlex.quote(probe.body_regex)} >/dev/null && exit 0; "
+        "fi; "
+        "sleep 5; "
+        "done; "
+        "exit 1"
+    )
+    return kubectl(
+        config,
+        "-n",
+        namespace,
+        "run",
+        pod_name,
+        "--image=curlimages/curl:8.16.0",
+        "--restart=Never",
+        "--rm=true",
+        "--overrides",
+        probe_pod_overrides(pod_name, command=["sh", "-ec"], args=[script]),
+        "-i",
+        "--quiet",
+    )
+
+
+def probe_pod_overrides(
+    pod_name: str,
+    image: str = "curlimages/curl:8.16.0",
+    command: Sequence[str] | None = None,
+    args: Sequence[str] | None = None,
+) -> str:
+    container: dict[str, object] = {
+        "name": pod_name,
+        "image": image,
+        "securityContext": {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        },
+    }
+    if command is not None:
+        container["command"] = list(command)
+    if args is not None:
+        container["args"] = list(args)
+
+    return json.dumps(
+        {
+            "spec": {
+                "securityContext": {
+                    "runAsNonRoot": True,
+                    "runAsUser": 1000,
+                    "seccompProfile": {"type": "RuntimeDefault"},
+                },
+                "containers": [
+                    container
+                ],
+            }
+        },
+        separators=(",", ":"),
+    )
 
 
 def wait_for_active_pods_ready(
@@ -545,7 +833,8 @@ def assert_httproute_ready(route_json: str, *, route_name: str) -> None:
     raise VerificationError(f"HTTPRoute {route_name} has no parent with Accepted and ResolvedRefs conditions")
 
 
-def cleanup_branch_environment(config: AppConfig, *, runner: Runner) -> None:
+def cleanup_branch_environment(config: AppConfig, profile: SmokeProfile, *, runner: Runner) -> None:
+    git_repository = render_profile_value(profile.git_repository, config=config, field="gitRepository")
     run_command(
         kubectl(
             config,
@@ -571,7 +860,7 @@ def cleanup_branch_environment(config: AppConfig, *, runner: Runner) -> None:
             "-n",
             FLUX_NAMESPACE,
             "delete",
-            f"gitrepository.source.toolkit.fluxcd.io/{config.git_repository}",
+            f"gitrepository.source.toolkit.fluxcd.io/{git_repository}",
             "--ignore-not-found=true",
             "--wait=true",
             f"--timeout={config.timeout.raw}",
