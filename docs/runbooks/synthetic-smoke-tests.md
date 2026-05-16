@@ -62,3 +62,5 @@ kubectl logs -n synthetics -l app.kubernetes.io/name=synthetic-smoke --tail=200
 Grafana owns the `Synthetics` folder, `Synthetic Smoke` dashboard, and `synthetics` alert rule group. The dashboard shows recent pass/fail counts, Job duration, pod termination reasons, and Loki log excerpts for `namespace="synthetics"`.
 
 The alert fires only when smoke Jobs fail more than once in the last hour. A single failed run should be investigated, but it is not enough to alert by itself.
+
+Failed `synthetic-smoke-*` pods in the `synthetics` namespace are excluded from the generic `Kubernetes Failed Pods` alert because repeated synthetic failures are covered by `Synthetic Smoke Repeated Failures`.

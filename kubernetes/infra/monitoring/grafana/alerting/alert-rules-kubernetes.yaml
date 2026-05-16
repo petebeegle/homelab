@@ -137,7 +137,7 @@ spec:
             to: 0
           datasourceUid: prometheus
           model:
-            expr: sum(kube_pod_status_phase{phase="Failed"} > bool 0) OR vector(0)
+            expr: sum((kube_pod_status_phase{phase="Failed"} unless kube_pod_status_phase{phase="Failed",namespace="synthetics",pod=~"synthetic-smoke-.+"} unless kube_pod_status_phase{phase="Failed",exported_namespace="synthetics",pod=~"synthetic-smoke-.+"}) > bool 0) OR vector(0)
             refId: A
         - refId: B
           relativeTimeRange:
