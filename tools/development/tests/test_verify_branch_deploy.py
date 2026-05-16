@@ -407,6 +407,7 @@ class VerifyBranchDeployTest(unittest.TestCase):
 
         self.assertTrue(overrides["spec"]["securityContext"]["runAsNonRoot"])
         self.assertEqual(overrides["spec"]["securityContext"]["seccompProfile"]["type"], "RuntimeDefault")
+        self.assertEqual(overrides["spec"]["containers"][0]["image"], "curlimages/curl:8.16.0")
         self.assertFalse(overrides["spec"]["containers"][0]["securityContext"]["allowPrivilegeEscalation"])
         self.assertEqual(overrides["spec"]["containers"][0]["securityContext"]["capabilities"]["drop"], ["ALL"])
 

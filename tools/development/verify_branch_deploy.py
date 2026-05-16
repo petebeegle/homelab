@@ -698,7 +698,7 @@ def build_http_probe_command(
     )
 
 
-def probe_pod_overrides(pod_name: str) -> str:
+def probe_pod_overrides(pod_name: str, image: str = "curlimages/curl:8.16.0") -> str:
     return json.dumps(
         {
             "spec": {
@@ -709,6 +709,7 @@ def probe_pod_overrides(pod_name: str) -> str:
                 "containers": [
                     {
                         "name": pod_name,
+                        "image": image,
                         "securityContext": {
                             "allowPrivilegeEscalation": False,
                             "capabilities": {"drop": ["ALL"]},
