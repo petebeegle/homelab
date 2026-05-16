@@ -397,8 +397,18 @@ class VerifyBranchDeployTest(unittest.TestCase):
 
         self.assertIn("probe-example-change", command)
         self.assertIn("--image=curlimages/curl:8.16.0", command)
+        self.assertIn("--overrides", command)
         self.assertIn("http://jellyfin-example-change.jellyfin-example-change.svc.cluster.local:8096/", command[-1])
         self.assertIn("Jellyfin|Please sign in|Wizard|Login", command[-1])
+        self.assertIn("seq 1 60", command[-1])
+
+    def test_probe_pod_overrides_use_restricted_security_context(self) -> None:
+        overrides = json.loads(verify.probe_pod_overrides("probe-example-change"))
+
+        self.assertTrue(overrides["spec"]["securityContext"]["runAsNonRoot"])
+        self.assertEqual(overrides["spec"]["securityContext"]["seccompProfile"]["type"], "RuntimeDefault")
+        self.assertFalse(overrides["spec"]["containers"][0]["securityContext"]["allowPrivilegeEscalation"])
+        self.assertEqual(overrides["spec"]["containers"][0]["securityContext"]["capabilities"]["drop"], ["ALL"])
 
     def test_cluster_base_reconciles_in_order_and_restores_main_on_success(self) -> None:
         runner = FakeRunner(cluster_pods_json=READY_PODS)

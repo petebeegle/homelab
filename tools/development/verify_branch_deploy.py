@@ -669,8 +669,13 @@ def build_http_probe_command(
     pod_name = f"probe-{config.slug}" if total_probes == 1 else f"p{probe_index}-{config.slug}"
     url = f"http://{service}.{namespace}.svc.cluster.local:{probe.port}{probe.path}"
     script = (
-        f"body=$(curl -fsS --max-time 20 {shlex.quote(url)}); "
-        f"printf '%s' \"$body\" | grep -E {shlex.quote(probe.body_regex)} >/dev/null"
+        "for attempt in $(seq 1 60); do "
+        f"if body=$(curl -fsS --max-time 20 {shlex.quote(url)}); then "
+        f"printf '%s' \"$body\" | grep -E {shlex.quote(probe.body_regex)} >/dev/null && exit 0; "
+        "fi; "
+        "sleep 5; "
+        "done; "
+        "exit 1"
     )
     return kubectl(
         config,
@@ -681,6 +686,8 @@ def build_http_probe_command(
         "--image=curlimages/curl:8.16.0",
         "--restart=Never",
         "--rm=true",
+        "--overrides",
+        probe_pod_overrides(pod_name),
         "-i",
         "--quiet",
         "--command",
@@ -688,6 +695,30 @@ def build_http_probe_command(
         "sh",
         "-ec",
         script,
+    )
+
+
+def probe_pod_overrides(pod_name: str) -> str:
+    return json.dumps(
+        {
+            "spec": {
+                "securityContext": {
+                    "runAsNonRoot": True,
+                    "seccompProfile": {"type": "RuntimeDefault"},
+                },
+                "containers": [
+                    {
+                        "name": pod_name,
+                        "securityContext": {
+                            "allowPrivilegeEscalation": False,
+                            "capabilities": {"drop": ["ALL"]},
+                            "runAsNonRoot": True,
+                        },
+                    }
+                ],
+            }
+        },
+        separators=(",", ":"),
     )
 
 
