@@ -7,7 +7,7 @@ scope:
   - agent-operations
 authority: binding
 created: 2026-05-10
-last_verified: 2026-05-12
+last_verified: 2026-05-16
 supersedes: []
 superseded_by:
 ---
@@ -20,13 +20,18 @@ All repository code changes must use the mandatory implementation workflow in `d
 
 Implementation work must happen in a sibling clone under `/workspaces/homelab-ideas/<implementation>` on branch `codex/<implementation>`. Before tracked files change, the clone must contain a valid `.codex/tmp/active-implementation` marker, a valid `.codex/tmp/implementation-plan.yaml` plan, and a valid `.codex/tmp/implementation-owner-attestation.yaml` with matching delegation token evidence.
 
+When runtime tooling permits delegation, tracked implementation work must be owned by an implementation owner subagent, and verification must be owned by a separate verifier subagent. The main agent remains planner and orchestrator only: it may inspect, stage required ignored local config, and coordinate, but it does not own tracked implementation work or verifier sign-off.
+
+Runtime and developer policy outrank this repository documentation. If runtime tooling is unavailable or higher-priority policy blocks delegation, that blockage is not automatic permission for main-agent self-work. Self-implementation or self-verification requires explicit user consent for the specific task, and the approved fallback must be recorded in `.codex/tmp/pr-summary.md`.
+
 Pushes to `origin` and automatic PR creation require verifier approval for the exact `HEAD` in `.codex/tmp/verifier-approved` plus a valid `.codex/tmp/verifier-attestation.yaml` with `approved_head` equal to that same SHA and separate verifier delegation token evidence. The verifier `agent_id`, `delegation_token`, and `delegation_token_path` must differ from the implementation owner evidence.
 
-Approved memory may summarize or point to this workflow, but it is not the canonical authority for the policy.
+Approved memory may point to this workflow or summarize it at a high level, but it must not restate the binding workflow policy in full and is not the canonical authority for the policy.
 
 ## Rationale
 
 - Binding workflow policy belongs in decision records and runbooks, not only in approved memory.
+- Delegated implementation and verification keeps planner coordination separate from tracked edits and review approval.
 - A local implementation plan makes scope, documentation impact, tests, verification, and risks explicit before edits begin.
 - Deterministic local attestations and delegation token files make the implementation owner and verifier roles machine-checkable without relying on conversational context.
 - Hook enforcement catches accidental edits in the planner checkout or on non-implementation branches.
@@ -36,10 +41,12 @@ Approved memory may summarize or point to this workflow, but it is not the canon
 
 - Code-change requests begin with planning in the main checkout and move to a sibling implementation clone for edits.
 - The implementation owner owns tracked edits, commits, `.codex/tmp/active-implementation`, `.codex/tmp/implementation-plan.yaml`, `.codex/tmp/implementation-owner-attestation.yaml`, `.codex/tmp/pr-summary.md`, and final branch state.
-- Helper agents may research, test, verify, or prepare patch recommendations, but only the implementation owner mutates tracked files.
+- A separate verifier owns exact-`HEAD` verifier approval and verifier attestation.
+- The main agent plans and coordinates; it may perform self-work only with explicit task-specific user consent when delegation is unavailable or blocked by higher-priority policy.
+- Helper agents may research, test, smoke check, or prepare patch recommendations, but only the implementation owner mutates tracked files.
 - Generic identities such as `codex`, `assistant`, `planner`, `parent`, `main`, `self`, and `orchestrator` are not valid implementation owner or verifier identities. Owner identities must use the `implementation-agent-` prefix, and verifier identities must use the `verifier-agent-` prefix.
 - Hook enforcement happens at mutating tool or tracked-file-change boundaries; natural-language request detection remains advisory.
-- The approved memory entry for this workflow must remain advisory or superseded by this decision.
+- The approved memory entry for this workflow must remain an advisory pointer to this decision and the runbook.
 
 ## Operational Notes
 

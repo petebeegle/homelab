@@ -144,9 +144,15 @@ python3 tools/codex-harness/validate_workflow_attestations.py \
 
 ## Ownership
 
-Use implementation and verifier subagents by default whenever runtime tooling exposes them. Self-implementation or self-verification is acceptable only when subagent tooling is unavailable or higher-priority runtime policy blocks delegation, and the fallback must be recorded in `.codex/tmp/pr-summary.md`.
+The main agent remains planner and orchestrator only. It may inspect repository state, stage required ignored local config for delegation, and coordinate agents, but it does not own tracked-file edits, commits, verifier approval, or final branch state.
 
-Multiple helpers may contribute through the single integrator model. Helpers may inspect, test, verify, or recommend patches, but one implementation owner applies tracked-file edits and owns final branch state.
+One implementation owner subagent owns tracked-file edits, commits, `.codex/tmp/active-implementation`, `.codex/tmp/implementation-plan.yaml`, `.codex/tmp/implementation-owner-attestation.yaml`, `.codex/tmp/pr-summary.md`, and final branch state for the implementation clone.
+
+One separate verifier subagent reviews the exact `HEAD` and owns `.codex/tmp/verifier-approved` plus `.codex/tmp/verifier-attestation.yaml`. The verifier identity and delegation token evidence must differ from the implementation owner evidence.
+
+Helper subagents may research, test, run smoke checks, or recommend patches through the single integrator model. Helpers must not make tracked-file edits; the implementation owner applies any accepted recommendations.
+
+If subagent tooling is unavailable or higher-priority runtime policy blocks delegation, blocked delegation is not automatic permission for main-agent self-work. The user must explicitly consent to self-implementation or self-verification for that task, and the approved fallback must be recorded in `.codex/tmp/pr-summary.md`.
 
 ## Risk-Tiered TDD And Smoke Evidence
 
