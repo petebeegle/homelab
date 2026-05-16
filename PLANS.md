@@ -49,3 +49,42 @@ Completed follow-ups:
 Follow-up efforts:
 
 1. No open follow-ups remain from this review set.
+
+## Monitoring Radar Grafana Dashboard
+
+Status: planned. Implementation discovery and live validation are blocked until Grafana MCP is reloaded or otherwise usable from the current Codex session.
+
+Summary:
+
+- Add an overview Grafana dashboard that acts as the homelab monitoring radar: the first port of call for cluster visibility, high-level diagnosis, and drill-down into specialized dashboards.
+- Keep the dashboard broad and shallow. It should answer "what needs attention now?" before sending the operator to Kubernetes, Flux, observability, Proxmox, synthetics, app, or log-focused views.
+
+Key changes:
+
+- Manage the dashboard through GitOps as dashboard JSON plus the existing Grafana Operator wrapper pattern.
+- Provision it in the existing `Monitoring` Grafana folder.
+- Make it Grafana Home by setting `dashboards.default_home_dashboard_path` in the Grafana Helm values.
+- Include links to existing specialized dashboards so this page is a navigation hub, not a replacement for detailed views.
+- Use high-level panels for Kubernetes health, Flux reconciliation, observability stack health, certificates, Gateway/Cilium traffic and errors, storage, synthetics, important apps, capacity, and log triage.
+
+Interfaces/config:
+
+- Follow the existing `GrafanaDashboard` plus ConfigMap pattern under `kubernetes/infra/monitoring/grafana/dashboards/`.
+- Update Grafana Helm values in `kubernetes/infra/monitoring/grafana/app.yaml` for the Home dashboard path.
+- Use existing datasource UIDs `prometheus` and `loki`.
+- Proposed dashboard identity: UID `monitoring-radar`, title `Monitoring Radar`.
+
+Test plan:
+
+- Validate dashboard JSON with `jq`.
+- Render the relevant kustomization with `kustomize`.
+- Run the architecture check and update generated architecture only if source changes require it.
+- Use Grafana MCP/API to confirm dashboard, folder, links, datasources, and Home behavior after the MCP session is usable.
+- After Flux applies the change, verify the live Grafana Home dashboard opens to Monitoring Radar.
+
+Assumptions/defaults:
+
+- Use Viewer-level Grafana MCP access for discovery and validation when possible.
+- GitOps owns durable dashboard and Grafana configuration writes; live changes are temporary diagnostics only.
+- Prefer the Home dashboard path over relying on a folderless Operator dashboard.
+- Do not change alert rules as part of this dashboard-only implementation.
