@@ -20,7 +20,8 @@ Use this runbook to add a Kubernetes app managed by Flux.
 6. Add `kubernetes/clusters/production/apps/<app-name>.yaml` as a Flux Kustomization.
 7. Add the new cluster-layer file to `kubernetes/clusters/production/apps/kustomization.yaml`.
 8. If the app should be testable in branch environments, add a branch-aware overlay that uses `branch_slug` in names, namespaces, hostnames, and PVC names.
-9. Verify after Flux reconciles.
+9. Add or select a development smoke profile for the app, or document why the app cannot be smoke-tested in development yet.
+10. Verify after Flux reconciles.
 
 ## Choose Exposure
 
@@ -333,6 +334,21 @@ For raw manifests, create an overlay such as `kubernetes/apps/<app-name>/branch/
 Cluster-layer branch activations should live under a reviewed development path, point their `sourceRef` at a branch-specific `GitRepository`, set `postBuild.substitute.branch_slug`, and remain `suspend: true` until the referenced branch exists. See `kubernetes/clusters/development/branches/` and `kubernetes/apps/whoami/branch/` for the initial template.
 
 Cluster-scoped changes, including CRDs, controllers, Gateway API shared objects, and storage classes, are tested sequentially on the development base. Do not fan those changes out through parallel branch environments.
+
+## Development Testing
+
+New production apps are not considered complete until development testing is addressed. Prefer adding or selecting a config-driven smoke profile as described in `docs/runbooks/development-cluster.md`. If the app cannot be tested in development yet, record a documented exception in the implementation plan and PR summary with the missing dependency and follow-up needed.
+
+For each new app, validate the applicable items before production activation is considered complete:
+
+- Workload readiness: Deployments, StatefulSets, DaemonSets, or HelmRelease-managed pods become Ready in the development branch namespace.
+- Routes: `HTTPRoute` or `TLSRoute` attaches to the intended Gateway and reports healthy conditions expected for that route type.
+- Storage: PVCs use `nfs-csi-storage` unless intentionally exempted, bind successfully, mount into the workload, and clean up with the branch namespace unless retained for debugging.
+- Secrets: Secret references render with the expected names, required development secret/config files are staged when needed, and secret contents are never logged.
+- Branch overlay: Namespaces, workload names, hostnames, PVC names, and route references use `branch_slug` and can coexist with the development base.
+- App-specific probes: Exercise a meaningful health endpoint, login-free HTTP path, protocol handshake, or command that proves the app is serving more than a scheduled pod.
+
+When `tools/development/verify_branch_deploy.py` supports the selected profile, run it against the exact branch `HEAD` that will be reviewed. Until profile expansion supports the app, record manual smoke commands and observations instead of changing harness behavior inside the app PR.
 
 ## Verification
 

@@ -6,7 +6,7 @@ scope:
   - flux
 authority: operational
 created: 2026-05-14
-last_verified: 2026-05-15
+last_verified: 2026-05-16
 ---
 
 # Development Cluster
@@ -130,6 +130,8 @@ Branch environments are for app-scoped validation on the development cluster. Us
 
 Use `tools/development/verify_branch_deploy.py` as the canonical path for future branch validation. V1 supports `whoami` only. The tool renders the activation template, applies it directly to the development cluster, forces Flux reconciliation, checks the branch namespace and active pods, checks the whoami Service and HTTPRoute, and then removes the temporary branch Flux resources unless `--keep` is set.
 
+The current deployment verifier is intentionally limited to the `whoami` smoke path while the app profile model is expanded. Treat non-`whoami` app smoke as manual or helper-run evidence for now: use the matrix below, record the exact commands and observations, and document any missing profile as an exception rather than adding ad hoc harness behavior.
+
 The initial activation template is in `kubernetes/clusters/development/branches/`, and the first branch-aware app payload overlay is `kubernetes/apps/whoami/branch/`. The cluster-layer template creates the Flux `GitRepository` and `Kustomization` that point at a branch; the app overlay is the rendered workload payload that Flux applies after substituting `${branch_slug}`. The template is not referenced from the live development entrypoint and is suspended by default. The verification tool fills `branch_name` and `branch_slug`, sets both Flux objects to `suspend: false`, and applies the rendered activation temporarily.
 
 ### Live App Acceptance
@@ -184,6 +186,40 @@ kubectl --kubeconfig ~/.kube/homelab-development.config -n flux-system delete gi
 
 This proves that the pushed branch can be fetched by Flux, the whoami branch overlay can reconcile on the development cluster, the branch namespace exists, at least one branch app pod is active, active branch app pods report Ready, the Service exists, and the HTTPRoute reports `Accepted` and `ResolvedRefs`. Without `--include-cluster-base`, it does not prove production readiness, cross-app behavior, cluster-scoped changes, public Cloudflare routing, or apps other than `whoami`.
 
+### Touched-App Smoke Matrix
+
+For each implementation that changes app behavior, manifests, Gateway routing, storage, secrets references, or branch overlays, list touched apps in the implementation plan or PR summary and choose one smoke path per app:
+
+| Change type | Minimum development smoke evidence |
+| --- | --- |
+| Branch overlay only | Render the branch overlay locally; when supported, run `verify_branch_deploy.py` for the app profile. |
+| Workload, Service, or route | Confirm workload readiness, Service presence, and `HTTPRoute` or `TLSRoute` attachment in a development branch namespace. |
+| PVC or storage | Confirm PVC binds with `nfs-csi-storage`, the pod mounts it, and cleanup removes branch PVCs unless retained for debugging. |
+| Secret reference | Confirm referenced Secret names render correctly and required staged development secrets exist; do not log secret values. |
+| Cluster-scoped base dependency | Run a sequential development base reconcile with `--include-cluster-base`, then run the app smoke if an app is affected. |
+| Public or external exposure | Confirm the Gateway route attaches and record any Cloudflare, WireGuard, or out-of-cluster dependency that development cannot fully prove. |
+
+### Smoke Profiles
+
+The target model is a config-driven smoke profile per app. A profile should name the app, branch overlay path, activation template, expected namespace, workloads, Services, routes, PVCs, app-specific probes, cleanup expectations, and any required development-only secret/config prerequisites. Profiles should allow the verifier to choose consistent checks without hard-coding each app into the harness.
+
+Until profile expansion lands, use `whoami` as the only automated profile and document either:
+
+- `smoke_profile: whoami` with the exact `verify_branch_deploy.py` command and result.
+- `smoke_profile: manual` with commands and observations for the touched app.
+- `smoke_profile: none` with the reason, such as docs-only, unavailable development cluster, missing app branch overlay, or production-only integration.
+
+An exact-`HEAD` smoke report should include:
+
+- implementation name, app name, branch, branch slug, and exact commit SHA tested;
+- smoke profile name or documented exception;
+- whether `--push`, `--terraform-apply`, `--include-cluster-base`, or `--keep` was used;
+- readiness, route, storage, secret-reference, and app-specific probe results that apply to the app;
+- cleanup status, including any namespaces, Flux resources, or PVCs intentionally left behind;
+- timestamp and kubeconfig or context used, without secret contents.
+
+If a smoke report names a different `HEAD` than the branch under review, treat it as stale. Rerun the smoke, record why rerun was impossible, or explicitly mark the stale report as ignored. Remove or supersede stale local reports before handoff so the verifier does not mistake them for current evidence.
+
 Local manifest verification does not require pushing a branch:
 
 ```sh
@@ -211,9 +247,13 @@ The shared gateway base at `kubernetes/infra/network/gateway` must stay environm
 
 Test cluster-scoped changes sequentially on the development base. CRDs, controllers, Gateway API shared objects, storage classes, and other cluster-wide resources should not be tested in parallel branch environments because they share reconciliation and ownership boundaries. Use `--include-cluster-base` with the branch verifier when the target branch changes shared development base resources and the branch app acceptance should run after that live base reconcile.
 
+Use `--include-cluster-base` when the implementation changes resources under `kubernetes/clusters/development`, shared CRDs, controller installs, Gateway base objects, Cilium, cert-manager, NFS CSI, Flux dependency ordering, or any app dependency that must exist before a branch overlay can be meaningful. Do not use it for docs-only changes or isolated app overlay edits where the development base from `main` is already sufficient.
+
 ## Cleanup
 
 Remove app branch activations by deleting their cluster-layer Flux manifests and allowing Flux to prune them. Confirm namespaces and PVCs are gone before reusing a `branch_slug`.
+
+For kept or failed branch smokes, record cleanup status in the smoke report. Before reusing a slug, delete stale branch `Kustomization` and `GitRepository` objects, wait for the branch namespace to disappear, and check for leftover PVCs or app-owned resources. If cleanup fails, leave the evidence visible to the verifier with the resource names and reason.
 
 To retire the whole development cluster:
 
