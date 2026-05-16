@@ -21,7 +21,8 @@ Use this runbook to add a Kubernetes app managed by Flux.
 7. Add the new cluster-layer file to `kubernetes/clusters/production/apps/kustomization.yaml`.
 8. If the app should be testable in branch environments, add a branch-aware overlay that uses `branch_slug` in names, namespaces, hostnames, and PVC names.
 9. Add or select a development smoke profile for the app, or document why the app cannot be smoke-tested in development yet.
-10. Verify after Flux reconciles.
+10. For routed HTTP apps, add an unauthenticated probe to `tests/smoke/routes.spec.js` or document why the app should be excluded from in-cluster synthetic smoke checks. Prefer durable page-shell text or redirect assertions and add the app Flux Kustomization to `app-synthetics` `dependsOn` when the probe requires the app to exist first.
+11. Verify after Flux reconciles.
 
 ## Choose Exposure
 

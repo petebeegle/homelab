@@ -39,6 +39,12 @@ configMapGenerator:
       - dashboard.json=codex-operations-dashboard.json
     options:
       disableNameSuffixHash: true
+  - name: synthetic-smoke-dashboard
+    namespace: grafana
+    files:
+      - dashboard.json=synthetic-smoke-dashboard.json
+    options:
+      disableNameSuffixHash: true
 resources:
   - proxmox-dashboard.yaml
   - flux-dashboard.yaml
@@ -46,3 +52,4 @@ resources:
   - authentik-dashboard.yaml
   - observability-health-dashboard.yaml
   - codex-operations-dashboard.yaml
+  - synthetic-smoke-dashboard.yaml
