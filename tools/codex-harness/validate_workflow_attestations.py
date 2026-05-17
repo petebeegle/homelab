@@ -5,16 +5,25 @@ from __future__ import annotations
 
 import argparse
 import sys
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping, Sequence
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
 
 TOOLS_LIB = Path(__file__).resolve().parents[2] / "tools" / "lib"
 if str(TOOLS_LIB) not in sys.path:
     sys.path.insert(0, str(TOOLS_LIB))
 
 from homelab_tools.git import discover_git_branch, discover_git_head, discover_git_root
-from homelab_tools.yamlish import parse_scalar_yaml_file
+from validation_common import (
+    ValidationResult,
+    load_scalar_yaml,
+    path_from_cwd,
+    require_fields,
+    resolve_repo_relative_path,
+)
 from validate_active_implementation import GENERIC_OWNER_AGENTS, parse_marker
 from validate_implementation_plan import parse_plan
 
@@ -42,19 +51,12 @@ GENERIC_IDENTITIES = GENERIC_OWNER_AGENTS
 DELEGATION_TOKEN_ROOT = Path(".codex/tmp/delegation-tokens")
 
 
-@dataclass(frozen=True)
-class AttestationValidationResult:
-    attestation: Mapping[str, str]
-    errors: tuple[str, ...]
-
-    @property
-    def ok(self) -> bool:
-        return not self.errors
+AttestationValidationResult = ValidationResult
 
 
 def parse_attestation(attestation_path: Path) -> dict[str, str]:
     """Parse the scalar-only YAML subset used by workflow attestations."""
-    return parse_scalar_yaml_file(attestation_path)
+    return load_scalar_yaml(attestation_path)
 
 
 def validate_owner_attestation(
@@ -68,7 +70,7 @@ def validate_owner_attestation(
 ) -> AttestationValidationResult:
     errors: list[str] = []
 
-    _require_fields(attestation, OWNER_REQUIRED_FIELDS, errors)
+    require_fields(attestation, OWNER_REQUIRED_FIELDS, errors)
     _validate_common_identity(attestation, expected_role="implementation-agent", errors=errors)
     _validate_common_matches(
         attestation,
@@ -111,7 +113,7 @@ def validate_owner_attestation(
         expected_role="implementation-agent",
         errors=errors,
     )
-    return AttestationValidationResult(attestation=attestation, errors=tuple(errors))
+    return AttestationValidationResult(attestation, tuple(errors))
 
 
 def validate_verifier_attestation(
@@ -136,7 +138,7 @@ def validate_verifier_attestation(
     )
     errors.extend(f"Owner attestation: {error}" for error in owner_result.errors)
 
-    _require_fields(attestation, VERIFIER_REQUIRED_FIELDS, errors)
+    require_fields(attestation, VERIFIER_REQUIRED_FIELDS, errors)
     _validate_common_identity(attestation, expected_role="verifier-agent", errors=errors)
     _validate_common_matches(
         attestation,
@@ -172,7 +174,7 @@ def validate_verifier_attestation(
     if owner_token_path and verifier_token_path and owner_token_path == verifier_token_path:
         errors.append("Field 'delegation_token_path' must differ from implementation owner delegation_token_path.")
 
-    return AttestationValidationResult(attestation=attestation, errors=tuple(errors))
+    return AttestationValidationResult(attestation, tuple(errors))
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -279,12 +281,6 @@ def main(argv: Sequence[str] | None = None) -> int:
     return 1
 
 
-def _require_fields(attestation: Mapping[str, str], fields: Sequence[str], errors: list[str]) -> None:
-    for field in fields:
-        if field not in attestation:
-            errors.append(f"Missing required field '{field}'.")
-
-
 def _validate_common_identity(
     attestation: Mapping[str, str], *, expected_role: str, errors: list[str]
 ) -> None:
@@ -381,10 +377,7 @@ def _validate_delegation_token(
 
 
 def _path(value: str) -> Path:
-    path = Path(value)
-    if not path.is_absolute():
-        path = Path.cwd() / path
-    return path
+    return path_from_cwd(value)
 
 
 def _load_delegation_token(
@@ -396,16 +389,13 @@ def _load_delegation_token(
     if not token_path_value:
         return None
 
-    token_path = Path(token_path_value)
-    if token_path.is_absolute():
-        return None
-
     root = Path(current_root) if current_root is not None else Path.cwd()
-    token_root = (root / DELEGATION_TOKEN_ROOT).resolve(strict=False)
-    full_path = (root / token_path).resolve(strict=False)
-    try:
-        full_path.relative_to(token_root)
-    except ValueError:
+    full_path = resolve_repo_relative_path(
+        root,
+        token_path_value,
+        required_parent=DELEGATION_TOKEN_ROOT,
+    )
+    if full_path is None:
         return None
 
     if not full_path.is_file():

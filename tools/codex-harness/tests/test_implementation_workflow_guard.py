@@ -15,6 +15,7 @@ USER_PROMPT_HOOK_SOURCE = REPO_ROOT / ".codex" / "hooks" / "user_prompt_submit.s
 ACTIVE_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_active_implementation.py"
 PLAN_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_implementation_plan.py"
 ATTESTATION_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_workflow_attestations.py"
+VALIDATION_COMMON = REPO_ROOT / "tools" / "codex-harness" / "validation_common.py"
 TOOLS_LIB_SOURCE = REPO_ROOT / "tools" / "lib"
 
 
@@ -216,6 +217,7 @@ class ImplementationWorkflowGuardTest(unittest.TestCase):
         shutil.copy2(ACTIVE_VALIDATOR, tool_dir / "validate_active_implementation.py")
         shutil.copy2(PLAN_VALIDATOR, tool_dir / "validate_implementation_plan.py")
         shutil.copy2(ATTESTATION_VALIDATOR, tool_dir / "validate_workflow_attestations.py")
+        shutil.copy2(VALIDATION_COMMON, tool_dir / "validation_common.py")
         shutil.copytree(TOOLS_LIB_SOURCE, target_root / "tools" / "lib")
         self._patch_sibling_root(
             hook_path,
