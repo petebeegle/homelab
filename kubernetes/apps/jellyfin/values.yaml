@@ -25,11 +25,37 @@ readinessProbe:
   failureThreshold: 6
   periodSeconds: 10
   timeoutSeconds: 5
+extraInitContainers:
+  - name: install-sso-auth
+    image: python:3.13-alpine
+    imagePullPolicy: IfNotPresent
+    env:
+      - name: JELLYFIN_OAUTH_CLIENT_SECRET
+        valueFrom:
+          secretKeyRef:
+            name: jellyfin-secrets
+            key: JELLYFIN_OAUTH_CLIENT_SECRET
+      - name: JELLYFIN_PUBLIC_URL
+        value: https://jellyfin.${cluster_domain}
+      - name: JELLYFIN_OIDC_ENDPOINT
+        value: https://authentik.${cluster_domain}/application/o/jellyfin/.well-known/openid-configuration
+    command:
+      - python3
+      - /opt/jellyfin-sso/bootstrap-sso.py
+    volumeMounts:
+      - name: config
+        mountPath: /config
+      - name: jellyfin-sso-bootstrap
+        mountPath: /opt/jellyfin-sso
+        readOnly: true
 volumes:
   - name: custom-media
     nfs:
       server: ${nfs_server}
       path: /volume1/Media/Jellyfin
+  - name: jellyfin-sso-bootstrap
+    configMap:
+      name: jellyfin-sso-bootstrap
 volumeMounts:
   - name: custom-media
     mountPath: /custom-media

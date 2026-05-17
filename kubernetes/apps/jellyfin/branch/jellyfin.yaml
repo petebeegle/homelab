@@ -27,6 +27,118 @@ spec:
     requests:
       storage: 5Gi
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jellyfin-${branch_slug}-sso-bootstrap
+  namespace: jellyfin-${branch_slug}
+  labels:
+    app.kubernetes.io/name: jellyfin
+    homelab.petebeegle.com/branch-slug: ${branch_slug}
+data:
+  bootstrap-sso.py: |
+    import hashlib
+    import os
+    import shutil
+    import sys
+    import tempfile
+    import urllib.request
+    import zipfile
+    from pathlib import Path
+    from xml.sax.saxutils import escape
+
+    plugin_version = "4.0.0.4"
+    plugin_url = "https://github.com/9p4/jellyfin-plugin-sso/releases/download/v4.0.0.4/sso-authentication_4.0.0.4.zip"
+    plugin_sha256 = "c09f16ba31059a434ddd7f811e4f9608d4b4c4514cc80a5bf1ca33bee61e1107"
+    config_root = Path("/config")
+    plugin_dir = config_root / "plugins" / f"SSO Authentication_{plugin_version}"
+    plugin_config = config_root / "plugins" / "configurations" / "SSO-Auth.xml"
+    branding_config = config_root / "config" / "branding.xml"
+    public_url = os.environ["JELLYFIN_PUBLIC_URL"].rstrip("/")
+    oid_endpoint = os.environ["JELLYFIN_OIDC_ENDPOINT"]
+    client_secret = os.environ["JELLYFIN_OAUTH_CLIENT_SECRET"]
+
+    try:
+        plugin_dir.parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            archive = Path(temp_dir) / "sso-authentication.zip"
+            with urllib.request.urlopen(plugin_url, timeout=60) as response:
+                archive.write_bytes(response.read())
+            if hashlib.sha256(archive.read_bytes()).hexdigest() != plugin_sha256:
+                raise RuntimeError("SSO Authentication plugin checksum mismatch")
+            if plugin_dir.exists():
+                shutil.rmtree(plugin_dir)
+            plugin_dir.mkdir(parents=True)
+            with zipfile.ZipFile(archive) as plugin_zip:
+                plugin_zip.extractall(plugin_dir)
+
+        plugin_config.parent.mkdir(parents=True, exist_ok=True)
+        plugin_config.write_text(f"""<?xml version='1.0' encoding='utf-8'?>
+    <PluginConfiguration>
+      <SamlConfigs />
+      <OidConfigs>
+        <item>
+          <key><string>authentik</string></key>
+          <value>
+            <OidConfig>
+              <OidEndpoint>{escape(oid_endpoint)}</OidEndpoint>
+              <OidClientId>jellyfin</OidClientId>
+              <OidSecret>{escape(client_secret)}</OidSecret>
+              <Enabled>true</Enabled>
+              <EnableAuthorization>true</EnableAuthorization>
+              <EnableAllFolders>true</EnableAllFolders>
+              <EnabledFolders />
+              <AdminRoles><string>Jellyfin Admins</string></AdminRoles>
+              <Roles><string>Jellyfin Users</string><string>Jellyfin Admins</string></Roles>
+              <EnableFolderRoles>false</EnableFolderRoles>
+              <EnableLiveTvRoles>false</EnableLiveTvRoles>
+              <EnableLiveTv>true</EnableLiveTv>
+              <EnableLiveTvManagement>false</EnableLiveTvManagement>
+              <LiveTvRoles />
+              <LiveTvManagementRoles />
+              <FolderRoleMappings />
+              <RoleClaim>groups</RoleClaim>
+              <OidScopes><string>groups</string></OidScopes>
+              <DefaultProvider />
+              <SchemeOverride />
+              <NewPath>true</NewPath>
+              <CanonicalLinks />
+              <DefaultUsernameClaim>preferred_username</DefaultUsernameClaim>
+              <AvatarUrlFormat />
+              <DisableHttps>false</DisableHttps>
+              <DisablePushedAuthorization>false</DisablePushedAuthorization>
+              <DoNotValidateEndpoints>false</DoNotValidateEndpoints>
+              <DoNotValidateIssuerName>false</DoNotValidateIssuerName>
+              <DoNotLoadProfile>false</DoNotLoadProfile>
+            </OidConfig>
+          </value>
+        </item>
+      </OidConfigs>
+    </PluginConfiguration>
+    """, encoding="utf-8")
+
+        branding_config.parent.mkdir(parents=True, exist_ok=True)
+        branding_config.write_text(f"""<?xml version='1.0' encoding='utf-8'?>
+    <BrandingOptions>
+      <LoginDisclaimer>&lt;form action=&quot;{escape(public_url)}/sso/OID/start/authentik&quot;&gt;
+      &lt;button class=&quot;raised block emby-button button-submit&quot;&gt;
+        Sign in with SSO
+      &lt;/button&gt;
+    &lt;/form&gt;</LoginDisclaimer>
+      <CustomCss>a.raised.emby-button {{
+      padding: 0.9em 1em;
+      color: inherit !important;
+    }}
+    .disclaimerContainer {{
+      display: block;
+    }}</CustomCss>
+      <SplashscreenEnabled>false</SplashscreenEnabled>
+    </BrandingOptions>
+    """, encoding="utf-8")
+    except Exception as exc:
+        print(f"Jellyfin branch SSO bootstrap failed: {exc}", file=sys.stderr)
+        raise
+---
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: HelmRepository
 metadata:
@@ -96,6 +208,30 @@ spec:
       failureThreshold: 6
       periodSeconds: 10
       timeoutSeconds: 5
+    extraInitContainers:
+      - name: install-sso-auth
+        image: python:3.13-alpine
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: JELLYFIN_OAUTH_CLIENT_SECRET
+            value: branch-placeholder-not-secret
+          - name: JELLYFIN_PUBLIC_URL
+            value: https://jellyfin-${branch_slug}.${cluster_domain}
+          - name: JELLYFIN_OIDC_ENDPOINT
+            value: https://authentik.${cluster_domain}/application/o/jellyfin/.well-known/openid-configuration
+        command:
+          - python3
+          - /opt/jellyfin-sso/bootstrap-sso.py
+        volumeMounts:
+          - name: config
+            mountPath: /config
+          - name: jellyfin-sso-bootstrap
+            mountPath: /opt/jellyfin-sso
+            readOnly: true
+    volumes:
+      - name: jellyfin-sso-bootstrap
+        configMap:
+          name: jellyfin-${branch_slug}-sso-bootstrap
 ---
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: ReferenceGrant

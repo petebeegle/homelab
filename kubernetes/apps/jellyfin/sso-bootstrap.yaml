@@ -1,0 +1,207 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jellyfin-sso-bootstrap
+  namespace: jellyfin
+data:
+  bootstrap-sso.py: |
+    import hashlib
+    import os
+    import shutil
+    import sys
+    import tempfile
+    import urllib.request
+    import zipfile
+    import xml.etree.ElementTree as ET
+    from pathlib import Path
+
+    PLUGIN_VERSION = "4.0.0.4"
+    PLUGIN_URL = "https://github.com/9p4/jellyfin-plugin-sso/releases/download/v4.0.0.4/sso-authentication_4.0.0.4.zip"
+    PLUGIN_SHA256 = "c09f16ba31059a434ddd7f811e4f9608d4b4c4514cc80a5bf1ca33bee61e1107"
+    PROVIDER_NAME = "authentik"
+    CLIENT_ID = "jellyfin"
+    OID_ENDPOINT = os.environ["JELLYFIN_OIDC_ENDPOINT"]
+    PUBLIC_URL = os.environ["JELLYFIN_PUBLIC_URL"].rstrip("/")
+    CLIENT_SECRET = os.environ["JELLYFIN_OAUTH_CLIENT_SECRET"]
+
+    CONFIG_ROOT = Path("/config")
+    PLUGIN_DIR = CONFIG_ROOT / "plugins" / f"SSO Authentication_{PLUGIN_VERSION}"
+    PLUGIN_CONFIG = CONFIG_ROOT / "plugins" / "configurations" / "SSO-Auth.xml"
+    BRANDING_CONFIG = CONFIG_ROOT / "config" / "branding.xml"
+
+    def indent(element, level=0):
+        spacing = "\n" + level * "  "
+        child_spacing = "\n" + (level + 1) * "  "
+        if len(element):
+            if not element.text or not element.text.strip():
+                element.text = child_spacing
+            for child in element:
+                indent(child, level + 1)
+            if not child.tail or not child.tail.strip():
+                child.tail = spacing
+        if level and (not element.tail or not element.tail.strip()):
+            element.tail = spacing
+
+    def set_text(parent, name, value):
+        child = parent.find(name)
+        if child is None:
+            child = ET.SubElement(parent, name)
+        child.text = value
+        return child
+
+    def set_bool(parent, name, value):
+        set_text(parent, name, "true" if value else "false")
+
+    def set_string_array(parent, name, values):
+        existing = parent.find(name)
+        if existing is not None:
+            parent.remove(existing)
+        array = ET.SubElement(parent, name)
+        for value in values:
+            item = ET.SubElement(array, "string")
+            item.text = value
+        return array
+
+    def key_text(item):
+        key = item.find("key")
+        if key is None:
+            return None
+        string = key.find("string")
+        return string.text if string is not None else None
+
+    def install_plugin():
+        PLUGIN_DIR.parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            archive = Path(temp_dir) / "sso-authentication.zip"
+            with urllib.request.urlopen(PLUGIN_URL, timeout=60) as response:
+                archive.write_bytes(response.read())
+            digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+            if digest != PLUGIN_SHA256:
+                raise RuntimeError("SSO Authentication plugin checksum mismatch")
+            if PLUGIN_DIR.exists():
+                shutil.rmtree(PLUGIN_DIR)
+            PLUGIN_DIR.mkdir(parents=True)
+            with zipfile.ZipFile(archive) as plugin_zip:
+                plugin_zip.extractall(PLUGIN_DIR)
+
+    def build_oid_config(canonical_links):
+        oid_config = ET.Element("OidConfig")
+        set_text(oid_config, "OidEndpoint", OID_ENDPOINT)
+        set_text(oid_config, "OidClientId", CLIENT_ID)
+        set_text(oid_config, "OidSecret", CLIENT_SECRET)
+        set_bool(oid_config, "Enabled", True)
+        set_bool(oid_config, "EnableAuthorization", True)
+        set_bool(oid_config, "EnableAllFolders", True)
+        set_string_array(oid_config, "EnabledFolders", [])
+        set_string_array(oid_config, "AdminRoles", ["Jellyfin Admins"])
+        set_string_array(oid_config, "Roles", ["Jellyfin Users", "Jellyfin Admins"])
+        set_bool(oid_config, "EnableFolderRoles", False)
+        set_bool(oid_config, "EnableLiveTvRoles", False)
+        set_bool(oid_config, "EnableLiveTv", True)
+        set_bool(oid_config, "EnableLiveTvManagement", False)
+        set_string_array(oid_config, "LiveTvRoles", [])
+        set_string_array(oid_config, "LiveTvManagementRoles", [])
+        ET.SubElement(oid_config, "FolderRoleMappings")
+        set_text(oid_config, "RoleClaim", "groups")
+        set_string_array(oid_config, "OidScopes", ["groups"])
+        set_text(oid_config, "DefaultProvider", "")
+        set_text(oid_config, "SchemeOverride", "")
+        set_bool(oid_config, "NewPath", True)
+        if canonical_links is not None:
+            oid_config.append(canonical_links)
+        else:
+            ET.SubElement(oid_config, "CanonicalLinks")
+        set_text(oid_config, "DefaultUsernameClaim", "preferred_username")
+        set_text(oid_config, "AvatarUrlFormat", "")
+        set_bool(oid_config, "DisableHttps", False)
+        set_bool(oid_config, "DisablePushedAuthorization", False)
+        set_bool(oid_config, "DoNotValidateEndpoints", False)
+        set_bool(oid_config, "DoNotValidateIssuerName", False)
+        set_bool(oid_config, "DoNotLoadProfile", False)
+        return oid_config
+
+    def configure_sso():
+        PLUGIN_CONFIG.parent.mkdir(parents=True, exist_ok=True)
+        canonical_links = None
+        if PLUGIN_CONFIG.exists():
+            root = ET.parse(PLUGIN_CONFIG).getroot()
+        else:
+            root = ET.Element("PluginConfiguration")
+
+        saml_configs = root.find("SamlConfigs")
+        if saml_configs is None:
+            saml_configs = ET.Element("SamlConfigs")
+            root.insert(0, saml_configs)
+
+        oid_configs = root.find("OidConfigs")
+        if oid_configs is None:
+            oid_configs = ET.SubElement(root, "OidConfigs")
+
+        for item in list(oid_configs.findall("item")):
+            if key_text(item) == PROVIDER_NAME:
+                existing = item.find("./value/OidConfig/CanonicalLinks")
+                if existing is not None:
+                    canonical_links = existing
+                oid_configs.remove(item)
+
+        item = ET.SubElement(oid_configs, "item")
+        key = ET.SubElement(item, "key")
+        set_text(key, "string", PROVIDER_NAME)
+        value = ET.SubElement(item, "value")
+        value.append(build_oid_config(canonical_links))
+
+        indent(root)
+        ET.ElementTree(root).write(PLUGIN_CONFIG, encoding="utf-8", xml_declaration=True)
+
+    def configure_branding():
+        BRANDING_CONFIG.parent.mkdir(parents=True, exist_ok=True)
+        if BRANDING_CONFIG.exists():
+            root = ET.parse(BRANDING_CONFIG).getroot()
+        else:
+            root = ET.Element("BrandingOptions")
+
+        disclaimer = root.find("LoginDisclaimer")
+        if disclaimer is None:
+            disclaimer = ET.SubElement(root, "LoginDisclaimer")
+        existing_disclaimer = disclaimer.text or ""
+        sso_button = (
+            f'<form action="{PUBLIC_URL}/sso/OID/start/authentik">\n'
+            '  <button class="raised block emby-button button-submit">\n'
+            "    Sign in with SSO\n"
+            "  </button>\n"
+            "</form>"
+        )
+        if "/sso/OID/start/authentik" not in existing_disclaimer:
+            disclaimer.text = "\n\n".join(part for part in [existing_disclaimer.strip(), sso_button] if part)
+
+        custom_css = root.find("CustomCss")
+        if custom_css is None:
+            custom_css = ET.SubElement(root, "CustomCss")
+        existing_css = custom_css.text or ""
+        sso_css = (
+            "a.raised.emby-button {\n"
+            "  padding: 0.9em 1em;\n"
+            "  color: inherit !important;\n"
+            "}\n"
+            ".disclaimerContainer {\n"
+            "  display: block;\n"
+            "}"
+        )
+        if ".disclaimerContainer" not in existing_css:
+            custom_css.text = "\n\n".join(part for part in [existing_css.strip(), sso_css] if part)
+
+        splash = root.find("SplashscreenEnabled")
+        if splash is None:
+            set_bool(root, "SplashscreenEnabled", False)
+
+        indent(root)
+        ET.ElementTree(root).write(BRANDING_CONFIG, encoding="utf-8", xml_declaration=True)
+
+    try:
+        install_plugin()
+        configure_sso()
+        configure_branding()
+    except Exception as exc:
+        print(f"Jellyfin SSO bootstrap failed: {exc}", file=sys.stderr)
+        raise

@@ -128,7 +128,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/apps/foundry-bluegreen-fixture` | `namespace.yaml`, `pvc-blue.yaml`, `pvc-green.yaml`, `deployment-blue.yaml`, `deployment-green.yaml`, `service-blue.yaml`, `service-green.yaml`, `httproute-green-preview.yaml` |
 | `kubernetes/apps/foundryvtt` | `namespace.yaml`, `pvc.yaml`, `secret.yaml`, `deployment.yaml`, `service.yaml`, `httproute.yaml`, `httproute-public.yaml` |
 | `kubernetes/apps/jellyfin/branch` | `jellyfin.yaml` |
-| `kubernetes/apps/jellyfin` | `./app.yaml`, `./pvc.yaml`, `./httproute.yaml` |
+| `kubernetes/apps/jellyfin` | `./app.yaml`, `./pvc.yaml`, `./httproute.yaml`, `./secret.yaml`, `./sso-bootstrap.yaml` |
 | `kubernetes/apps/pihole` | `app.yaml`, `secret.yaml`, `httproute.yaml` |
 | `kubernetes/apps/renovate` | `app.yaml`, `secret.yaml` |
 | `kubernetes/apps/synthetics` | `namespace.yaml`, `cronjob.yaml` |
@@ -185,6 +185,7 @@ This lists secret manifest presence only. Secret values are not rendered.
 | `cloudflare-tunnels` | `cloudflare/tunnel-credentials` | `yes` | `kubernetes/apps/cloudflare-tunnels/secret.yaml` |
 | `controllers/cert-manager` | `cert-manager/cloudflare-api-token` | `yes` | `kubernetes/infra/controllers/cert-manager/secret.yaml` |
 | `foundryvtt` | `foundryvtt/foundryvtt-secret` | `yes` | `kubernetes/apps/foundryvtt/secret.yaml` |
+| `jellyfin` | `jellyfin/jellyfin-secrets` | `yes` | `kubernetes/apps/jellyfin/secret.yaml` |
 | `monitoring/grafana` | `grafana/grafana-credentials` | `yes` | `kubernetes/infra/monitoring/grafana/secret.yaml` |
 | `monitoring/grafana` | `grafana/grafana-env` | `yes` | `kubernetes/infra/monitoring/grafana/grafana-env.yaml` |
 | `monitoring/pretty-discord-alerts` | `monitoring/grafana-env` | `yes` | `kubernetes/infra/monitoring/pretty-discord-alerts/grafana-env.yaml` |

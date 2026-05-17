@@ -37,6 +37,7 @@ spec:
     blueprints:
       configMaps:
         - grafana-oauth-blueprint
+        - jellyfin-oauth-blueprint
         - synology-oauth-blueprint
   valuesFrom:
     - kind: ConfigMap
