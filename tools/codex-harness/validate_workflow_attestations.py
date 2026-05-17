@@ -4,12 +4,17 @@
 from __future__ import annotations
 
 import argparse
-import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping, Sequence
 
+TOOLS_LIB = Path(__file__).resolve().parents[2] / "tools" / "lib"
+if str(TOOLS_LIB) not in sys.path:
+    sys.path.insert(0, str(TOOLS_LIB))
+
+from homelab_tools.git import discover_git_branch, discover_git_head, discover_git_root
+from homelab_tools.yamlish import parse_scalar_yaml_file
 from validate_active_implementation import GENERIC_OWNER_AGENTS, parse_marker
 from validate_implementation_plan import parse_plan
 
@@ -49,25 +54,7 @@ class AttestationValidationResult:
 
 def parse_attestation(attestation_path: Path) -> dict[str, str]:
     """Parse the scalar-only YAML subset used by workflow attestations."""
-    attestation: dict[str, str] = {}
-    for lineno, raw_line in enumerate(attestation_path.read_text(encoding="utf-8").splitlines(), 1):
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if raw_line.startswith(" "):
-            raise ValueError(f"{attestation_path}:{lineno}: unsupported indentation")
-        if ":" not in raw_line:
-            raise ValueError(f"{attestation_path}:{lineno}: expected key: value")
-
-        key, raw_value = raw_line.split(":", 1)
-        key = key.strip()
-        value = _strip_quotes(raw_value.strip())
-        if not key:
-            raise ValueError(f"{attestation_path}:{lineno}: key must not be empty")
-        if key in attestation:
-            raise ValueError(f"{attestation_path}:{lineno}: duplicate field {key}")
-        attestation[key] = value
-    return attestation
+    return parse_scalar_yaml_file(attestation_path)
 
 
 def validate_owner_attestation(
@@ -186,18 +173,6 @@ def validate_verifier_attestation(
         errors.append("Field 'delegation_token_path' must differ from implementation owner delegation_token_path.")
 
     return AttestationValidationResult(attestation=attestation, errors=tuple(errors))
-
-
-def discover_git_root(cwd: Path) -> Path | None:
-    return _git_output(["git", "rev-parse", "--show-toplevel"], cwd=cwd, as_path=True)
-
-
-def discover_git_branch(cwd: Path) -> str | None:
-    return _git_output(["git", "branch", "--show-current"], cwd=cwd)
-
-
-def discover_git_head(cwd: Path) -> str | None:
-    return _git_output(["git", "rev-parse", "HEAD"], cwd=cwd)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -405,24 +380,6 @@ def _validate_delegation_token(
         errors.append("Delegation token field 'created_at' must not be empty.")
 
 
-def _git_output(command: Sequence[str], *, cwd: Path, as_path: bool = False):
-    try:
-        result = subprocess.run(
-            command,
-            cwd=cwd,
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-            text=True,
-        )
-    except (FileNotFoundError, subprocess.CalledProcessError):
-        return None
-    value = result.stdout.strip()
-    if not value:
-        return None
-    return Path(value) if as_path else value
-
-
 def _path(value: str) -> Path:
     path = Path(value)
     if not path.is_absolute():
@@ -462,12 +419,6 @@ def _load_delegation_token(
 
 def _string(value: object) -> str:
     return value if isinstance(value, str) else ""
-
-
-def _strip_quotes(value: str) -> str:
-    if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
-        return value[1:-1]
-    return value
 
 
 if __name__ == "__main__":

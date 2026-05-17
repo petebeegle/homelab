@@ -4,11 +4,17 @@
 from __future__ import annotations
 
 import argparse
-import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping, Sequence
+
+TOOLS_LIB = Path(__file__).resolve().parents[2] / "tools" / "lib"
+if str(TOOLS_LIB) not in sys.path:
+    sys.path.insert(0, str(TOOLS_LIB))
+
+from homelab_tools.git import discover_git_branch, discover_git_root
+from homelab_tools.yamlish import parse_key_value_file
 
 
 REQUIRED_FIELDS = (
@@ -38,58 +44,7 @@ class ValidationResult:
 
 def parse_marker(marker_path: Path) -> dict[str, str]:
     """Parse a key=value marker file."""
-    marker: dict[str, str] = {}
-    for lineno, raw_line in enumerate(marker_path.read_text(encoding="utf-8").splitlines(), 1):
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if "=" not in line:
-            raise ValueError(f"{marker_path}:{lineno}: expected key=value, got {raw_line!r}")
-        key, value = line.split("=", 1)
-        key = key.strip()
-        value = value.strip()
-        if value.startswith('"') and value.endswith('"') and len(value) >= 2:
-            value = value[1:-1]
-        if not key:
-            raise ValueError(f"{marker_path}:{lineno}: marker key must not be empty")
-        marker[key] = value
-    return marker
-
-
-def discover_git_root(cwd: Path) -> Path | None:
-    try:
-        result = subprocess.run(
-            ["git", "rev-parse", "--show-toplevel"],
-            cwd=cwd,
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-            text=True,
-        )
-    except (FileNotFoundError, subprocess.CalledProcessError):
-        return None
-
-    root = result.stdout.strip()
-    if not root:
-        return None
-    return Path(root)
-
-
-def discover_git_branch(cwd: Path) -> str | None:
-    try:
-        result = subprocess.run(
-            ["git", "branch", "--show-current"],
-            cwd=cwd,
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-            text=True,
-        )
-    except (FileNotFoundError, subprocess.CalledProcessError):
-        return None
-
-    branch = result.stdout.strip()
-    return branch or None
+    return parse_key_value_file(marker_path, quote_chars='"')
 
 
 def validate_marker(

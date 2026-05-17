@@ -12,6 +12,7 @@ SCRIPT_SOURCE = REPO_ROOT / ".codex" / "scripts" / "create_implementation_pr.sh"
 ACTIVE_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_active_implementation.py"
 PLAN_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_implementation_plan.py"
 ATTESTATION_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_workflow_attestations.py"
+TOOLS_LIB_SOURCE = REPO_ROOT / "tools" / "lib"
 
 
 class CreateImplementationPrTest(unittest.TestCase):
@@ -71,6 +72,7 @@ def _install_harness_files(root: Path, sibling_root: Path) -> None:
     shutil.copy2(ACTIVE_VALIDATOR, tool_dir / "validate_active_implementation.py")
     shutil.copy2(PLAN_VALIDATOR, tool_dir / "validate_implementation_plan.py")
     shutil.copy2(ATTESTATION_VALIDATOR, tool_dir / "validate_workflow_attestations.py")
+    shutil.copytree(TOOLS_LIB_SOURCE, root / "tools" / "lib")
     _patch_sibling_root(
         sibling_root,
         script_path,

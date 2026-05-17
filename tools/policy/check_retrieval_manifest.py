@@ -6,6 +6,13 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+TOOLS_LIB = Path(__file__).resolve().parents[2] / "tools" / "lib"
+if str(TOOLS_LIB) not in sys.path:
+    sys.path.insert(0, str(TOOLS_LIB))
+
+from homelab_tools.reporting import CheckResult
+from homelab_tools.yamlish import strip_quotes
+
 
 ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / ".codex" / "retrieval.yaml"
@@ -39,20 +46,20 @@ REQUIRED_METADATA = {
 
 
 def main() -> int:
-    issues: list[str] = []
+    result = CheckResult("retrieval manifest check failed:")
     try:
         indexes = parse_manifest(MANIFEST)
     except ValueError as error:
-        issues.append(str(error))
+        result.add(str(error))
         indexes = []
 
     if not indexes:
-        issues.append("manifest must define at least one index")
+        result.add("manifest must define at least one index")
 
     for index in indexes:
         missing = REQUIRED_TOP_KEYS - index.keys()
         if missing:
-            issues.append(f"{index.get('name', '<unnamed>')}: missing keys {sorted(missing)}")
+            result.add(f"{index.get('name', '<unnamed>')}: missing keys {sorted(missing)}")
             continue
 
         include = index["include"]
@@ -61,29 +68,26 @@ def main() -> int:
 
         for field, value in (("include", include), ("exclude", exclude), ("required_metadata", metadata)):
             if not isinstance(value, list) or not value:
-                issues.append(f"{index['name']}: {field} must be a non-empty list")
+                result.add(f"{index['name']}: {field} must be a non-empty list")
 
         if isinstance(include, list):
             for pattern in include:
                 if not matches_repo_file(pattern):
-                    issues.append(f"{index['name']}: include pattern has no tracked match: {pattern}")
+                    result.add(f"{index['name']}: include pattern has no tracked match: {pattern}")
 
         if isinstance(exclude, list):
             missing_excludes = REQUIRED_EXCLUDES - set(exclude)
             if missing_excludes:
-                issues.append(f"{index['name']}: missing required excludes {sorted(missing_excludes)}")
+                result.add(f"{index['name']}: missing required excludes {sorted(missing_excludes)}")
 
         if isinstance(metadata, list):
             missing_metadata = REQUIRED_METADATA - set(metadata)
             if missing_metadata:
-                issues.append(f"{index['name']}: missing required metadata {sorted(missing_metadata)}")
+                result.add(f"{index['name']}: missing required metadata {sorted(missing_metadata)}")
 
-    if issues:
-        print("retrieval manifest check failed:", file=sys.stderr)
-        for issue in issues:
-            print(f"- {issue}", file=sys.stderr)
-        return 1
-    return 0
+    if not result.ok:
+        result.print()
+    return result.exit_code()
 
 
 def parse_manifest(path: Path) -> list[dict[str, object]]:
@@ -125,12 +129,6 @@ def parse_manifest(path: Path) -> list[dict[str, object]]:
         raise ValueError(f"line {line_number}: unsupported manifest syntax")
 
     return indexes
-
-
-def strip_quotes(value: str) -> str:
-    if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
-        return value[1:-1]
-    return value
 
 
 def matches_repo_file(pattern: str) -> bool:
