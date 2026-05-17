@@ -21,7 +21,12 @@ from homelab_tools.reporting import (
     format_issues_json,
     format_issues_text,
 )
-from homelab_tools.yamlish import parse_simple_yaml_file, parse_scalar_yaml_file
+from homelab_tools.yamlish import (
+    parse_frontmatter_text,
+    parse_retrieval_manifest_file,
+    parse_scalar_yaml_file,
+    parse_simple_yaml_file,
+)
 
 
 class HomelabToolsTest(unittest.TestCase):
@@ -57,6 +62,49 @@ class HomelabToolsTest(unittest.TestCase):
 
             with self.assertRaisesRegex(ValueError, "duplicate field role"):
                 parse_scalar_yaml_file(path)
+
+    def test_parse_frontmatter_text_returns_body(self) -> None:
+        metadata, body, errors = parse_frontmatter_text(
+            "---\nstatus: \"current\"\nscope:\n  - tools\n---\n\n# Body\n",
+            strip_values=True,
+        )
+
+        self.assertEqual(errors, [])
+        self.assertEqual(metadata, {"status": "current", "scope": ["tools"]})
+        self.assertEqual(body, "# Body")
+
+    def test_parse_retrieval_manifest_file_preserves_index_lists(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "retrieval.yaml"
+            path.write_text(
+                "\n".join(
+                    [
+                        "---",
+                        "indexes:",
+                        "  - name: binding-agent-context",
+                        "    include:",
+                        "      - AGENTS.md",
+                        "    exclude:",
+                        "      - '**/secret.yaml'",
+                        "    required_metadata:",
+                        "      - source_path",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            self.assertEqual(
+                parse_retrieval_manifest_file(path, strict=True),
+                [
+                    {
+                        "name": "binding-agent-context",
+                        "include": ["AGENTS.md"],
+                        "exclude": ["**/secret.yaml"],
+                        "required_metadata": ["source_path"],
+                    }
+                ],
+            )
 
     def test_check_result_collects_and_reports_exit_code(self) -> None:
         result = CheckResult("example failed:")
