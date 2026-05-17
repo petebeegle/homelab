@@ -9,6 +9,7 @@ spec:
   retryInterval: 2m
   path: ./kubernetes/apps/transfer
   prune: true
+  deletionPolicy: Orphan
   wait: true
   sourceRef:
     kind: GitRepository
