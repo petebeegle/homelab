@@ -18,9 +18,28 @@ spec:
     - matches:
         - path:
             type: PathPrefix
+            value: /metrics
+      backendRefs:
+        - name: jellyfin-metrics-deny
+          port: 8096
+          weight: 1
+    - matches:
+        - path:
+            type: PathPrefix
             value: /
-
       backendRefs:
         - name: jellyfin
           port: 8096
           weight: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jellyfin-metrics-deny
+  namespace: jellyfin
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8096
+      targetPort: 8096

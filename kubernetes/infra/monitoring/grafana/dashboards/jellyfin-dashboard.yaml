@@ -1,0 +1,14 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: jellyfin-overview
+  namespace: grafana
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  folderRef: "jellyfin"
+  configMapRef:
+    name: jellyfin-dashboard
+    key: dashboard.json
