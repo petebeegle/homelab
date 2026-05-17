@@ -5,15 +5,18 @@ from __future__ import annotations
 
 import argparse
 import sys
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping, Sequence
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
 
 TOOLS_LIB = Path(__file__).resolve().parents[2] / "tools" / "lib"
 if str(TOOLS_LIB) not in sys.path:
     sys.path.insert(0, str(TOOLS_LIB))
 
-from homelab_tools.yamlish import parse_simple_yaml_file
+from validation_common import ValidationResult, load_plan, path_from_cwd, require_fields
 from validate_active_implementation import parse_marker
 
 
@@ -37,19 +40,12 @@ REQUIRED_LIST_FIELDS = (
 ALL_REQUIRED_FIELDS = REQUIRED_SCALAR_FIELDS + REQUIRED_LIST_FIELDS
 
 
-@dataclass(frozen=True)
-class PlanValidationResult:
-    plan: Mapping[str, object]
-    errors: tuple[str, ...]
-
-    @property
-    def ok(self) -> bool:
-        return not self.errors
+PlanValidationResult = ValidationResult
 
 
 def parse_plan(plan_path: Path) -> dict[str, object]:
     """Parse the simple YAML subset used by .codex/tmp/implementation-plan.yaml."""
-    return parse_simple_yaml_file(plan_path)
+    return load_plan(plan_path)
 
 
 def validate_plan(
@@ -61,9 +57,7 @@ def validate_plan(
 ) -> PlanValidationResult:
     errors: list[str] = []
 
-    for field in ALL_REQUIRED_FIELDS:
-        if field not in plan:
-            errors.append(f"Missing required field '{field}'.")
+    require_fields(plan, ALL_REQUIRED_FIELDS, errors)
 
     for field in REQUIRED_SCALAR_FIELDS:
         value = plan.get(field)
@@ -104,7 +98,7 @@ def validate_plan(
                     f"Field '{field}' must match active implementation marker value '{marker_value}', got '{plan_value}'."
                 )
 
-    return PlanValidationResult(plan=plan, errors=tuple(errors))
+    return PlanValidationResult(plan, tuple(errors))
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -139,9 +133,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    plan_path = Path(args.plan)
-    if not plan_path.is_absolute():
-        plan_path = Path.cwd() / plan_path
+    plan_path = path_from_cwd(args.plan)
     if not plan_path.is_file():
         print(f"Implementation plan not found: {plan_path}", file=sys.stderr)
         return 1
@@ -154,9 +146,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     marker = None
     if not args.no_marker:
-        marker_path = Path(args.marker)
-        if not marker_path.is_absolute():
-            marker_path = Path.cwd() / marker_path
+        marker_path = path_from_cwd(args.marker)
         if not marker_path.is_file():
             print(f"Active implementation marker not found: {marker_path}", file=sys.stderr)
             return 1

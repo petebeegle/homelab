@@ -4,13 +4,19 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
+TOOLS_LIB = Path(__file__).resolve().parents[3] / "lib"
+if str(TOOLS_LIB) not in sys.path:
+    sys.path.insert(0, str(TOOLS_LIB))
+
 from agent_memory.policy import secret_rejection_reason
 from agent_memory.storage import memory_root
+from homelab_tools.yamlish import parse_frontmatter_text
 
 APPROVED_REQUIRED_FIELDS = (
     "status",
@@ -153,13 +159,33 @@ def _lint_approved_markdown(
     if secret_reason is not None:
         issues.append(_issue(path, "error", "secret-like-content", secret_reason, base))
 
-    try:
-        frontmatter, body = _split_frontmatter(text)
-    except ValueError as error:
-        issues.append(_issue(path, "error", "frontmatter-missing", str(error), base))
+    metadata, body, metadata_errors = parse_frontmatter_text(
+        text,
+        strip_values=True,
+        metadata_line_start=1,
+    )
+    if metadata_errors == ["missing opening frontmatter marker"]:
+        issues.append(
+            _issue(
+                path,
+                "error",
+                "frontmatter-missing",
+                "approved Markdown memory must start with frontmatter",
+                base,
+            )
+        )
         return issues
-
-    metadata, metadata_errors = _parse_frontmatter(frontmatter)
+    if metadata_errors == ["missing closing frontmatter marker"]:
+        issues.append(
+            _issue(
+                path,
+                "error",
+                "frontmatter-missing",
+                "approved Markdown memory frontmatter is not closed",
+                base,
+            )
+        )
+        return issues
     issues.extend(_issue(path, "error", "frontmatter-invalid", message, base) for message in metadata_errors)
 
     for field_name in APPROVED_REQUIRED_FIELDS:
@@ -304,55 +330,6 @@ def _lint_record(path: Path, base: Path, record: dict[str, Any], line_number: in
     return issues
 
 
-def _split_frontmatter(text: str) -> tuple[str, str]:
-    lines = text.splitlines()
-    if not lines or lines[0].strip() != "---":
-        raise ValueError("approved Markdown memory must start with frontmatter")
-    for index, line in enumerate(lines[1:], start=1):
-        if line.strip() == "---":
-            return "\n".join(lines[1:index]), "\n".join(lines[index + 1 :])
-    raise ValueError("approved Markdown memory frontmatter is not closed")
-
-
-def _parse_frontmatter(frontmatter: str) -> tuple[dict[str, object], list[str]]:
-    metadata: dict[str, object] = {}
-    errors: list[str] = []
-    current_list_key: str | None = None
-    for line_number, line in enumerate(frontmatter.splitlines(), start=1):
-        if not line.strip() or line.lstrip().startswith("#"):
-            continue
-        if line.startswith("  - "):
-            if current_list_key is None:
-                errors.append(f"line {line_number}: list item without list key")
-                continue
-            value = _strip_quotes(line[4:].strip())
-            if value:
-                current_value = metadata[current_list_key]
-                if isinstance(current_value, list):
-                    current_value.append(value)
-            continue
-
-        current_list_key = None
-        stripped = line.strip()
-        if ":" not in stripped:
-            errors.append(f"line {line_number}: expected key: value")
-            continue
-        key, value = stripped.split(":", 1)
-        key = key.strip()
-        if not key:
-            errors.append(f"line {line_number}: key must not be empty")
-            continue
-        cleaned = value.strip()
-        if cleaned == "[]":
-            metadata[key] = []
-        elif cleaned == "":
-            metadata[key] = []
-            current_list_key = key
-        else:
-            metadata[key] = _strip_quotes(cleaned)
-    return metadata, errors
-
-
 def _parse_date_field(value: object) -> date | None:
     if not isinstance(value, str):
         return None
@@ -370,12 +347,6 @@ def _has_dated_filename(path: Path) -> bool:
 
 def _is_vague(value: object) -> bool:
     return isinstance(value, str) and value.strip().lower() in VAGUE_METADATA_VALUES
-
-
-def _strip_quotes(value: str) -> str:
-    if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
-        return value[1:-1]
-    return value
 
 
 def _word_count(text: str) -> int:

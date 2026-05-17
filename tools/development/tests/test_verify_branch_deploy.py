@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import importlib.util
 import json
 import subprocess
 import sys
@@ -12,13 +11,12 @@ from types import SimpleNamespace
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-MODULE_PATH = REPO_ROOT / "tools" / "development" / "verify_branch_deploy.py"
+TOOLS_DEVELOPMENT = REPO_ROOT / "tools" / "development"
+SHIM_PATH = TOOLS_DEVELOPMENT / "verify_branch_deploy.py"
+if str(TOOLS_DEVELOPMENT) not in sys.path:
+    sys.path.insert(0, str(TOOLS_DEVELOPMENT))
 
-spec = importlib.util.spec_from_file_location("verify_branch_deploy", MODULE_PATH)
-verify = importlib.util.module_from_spec(spec)
-assert spec.loader is not None
-sys.modules["verify_branch_deploy"] = verify
-spec.loader.exec_module(verify)
+import devverify as verify
 
 
 READY_HTTPROUTE = """{
@@ -176,6 +174,17 @@ class FakeRunner:
 
 
 class VerifyBranchDeployTest(unittest.TestCase):
+    def test_cli_shim_remains_executable(self) -> None:
+        result = subprocess.run(
+            [sys.executable, str(SHIM_PATH), "--help"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Verify an app branch environment", result.stdout)
+
     def test_profile_loading_discovers_whoami_and_jellyfin(self) -> None:
         profiles = verify.load_smoke_profiles()
 

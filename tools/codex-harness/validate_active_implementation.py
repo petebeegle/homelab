@@ -5,16 +5,19 @@ from __future__ import annotations
 
 import argparse
 import sys
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping, Sequence
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
 
 TOOLS_LIB = Path(__file__).resolve().parents[2] / "tools" / "lib"
 if str(TOOLS_LIB) not in sys.path:
     sys.path.insert(0, str(TOOLS_LIB))
 
 from homelab_tools.git import discover_git_branch, discover_git_root
-from homelab_tools.yamlish import parse_key_value_file
+from validation_common import ValidationResult, load_marker, path_from_cwd, require_fields
 
 
 REQUIRED_FIELDS = (
@@ -32,19 +35,9 @@ GENERIC_OWNER_AGENTS = frozenset(
 SIBLING_CLONE_ROOT = Path("/workspaces/homelab-ideas")
 
 
-@dataclass(frozen=True)
-class ValidationResult:
-    marker: Mapping[str, str]
-    errors: tuple[str, ...]
-
-    @property
-    def ok(self) -> bool:
-        return not self.errors
-
-
 def parse_marker(marker_path: Path) -> dict[str, str]:
     """Parse a key=value marker file."""
-    return parse_key_value_file(marker_path, quote_chars='"')
+    return load_marker(marker_path)
 
 
 def validate_marker(
@@ -55,9 +48,7 @@ def validate_marker(
 ) -> ValidationResult:
     errors: list[str] = []
 
-    for field in REQUIRED_FIELDS:
-        if field not in marker:
-            errors.append(f"Missing required field '{field}'.")
+    require_fields(marker, REQUIRED_FIELDS, errors)
 
     implementation = marker.get("implementation", "")
     branch = marker.get("branch", "")
@@ -112,7 +103,7 @@ def validate_marker(
                 f"Field 'clone_path' must match current repository root '{root}', got '{clone_path}'."
             )
 
-    return ValidationResult(marker=marker, errors=tuple(errors))
+    return ValidationResult(marker, tuple(errors))
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -139,9 +130,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    marker_path = Path(args.marker)
-    if not marker_path.is_absolute():
-        marker_path = Path.cwd() / marker_path
+    marker_path = path_from_cwd(args.marker)
 
     if not marker_path.is_file():
         print(f"Active implementation marker not found: {marker_path}", file=sys.stderr)

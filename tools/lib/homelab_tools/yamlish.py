@@ -100,23 +100,26 @@ def parse_simple_yaml_file(path: Path) -> dict[str, object]:
 
 
 def parse_frontmatter_text(
-    text: str, *, strip_values: bool = False
+    text: str,
+    *,
+    strip_values: bool = False,
+    metadata_line_start: int = 2,
 ) -> tuple[dict[str, Any], str, list[str]]:
     """Parse simple Markdown frontmatter and return metadata, body, and errors."""
     lines = text.splitlines()
-    if not lines or lines[0] != "---":
+    if not lines or lines[0].strip() != "---":
         return {}, text, ["missing opening frontmatter marker"]
 
     try:
-        end = lines[1:].index("---") + 1
-    except ValueError:
+        end = next(index for index, line in enumerate(lines[1:], start=1) if line.strip() == "---")
+    except StopIteration:
         return {}, text, ["missing closing frontmatter marker"]
 
     metadata: dict[str, Any] = {}
     errors: list[str] = []
     current_list: str | None = None
 
-    for lineno, line in enumerate(lines[1:end], start=2):
+    for lineno, line in enumerate(lines[1:end], start=metadata_line_start):
         if not line.strip():
             continue
         if line.startswith("  - "):

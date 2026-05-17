@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import importlib.util
+import importlib
 import io
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -10,13 +11,13 @@ from contextlib import redirect_stdout
 from pathlib import Path
 
 
-MODULE_PATH = Path(__file__).resolve().parents[1] / "foundry_bluegreen.py"
-REPO_ROOT = MODULE_PATH.parents[1]
-SPEC = importlib.util.spec_from_file_location("foundry_bluegreen", MODULE_PATH)
-foundry_bluegreen = importlib.util.module_from_spec(SPEC)
-assert SPEC.loader is not None
-sys.modules["foundry_bluegreen"] = foundry_bluegreen
-SPEC.loader.exec_module(foundry_bluegreen)
+TOOLS_DIR = Path(__file__).resolve().parents[1]
+REPO_ROOT = TOOLS_DIR.parent
+SHIM_PATH = TOOLS_DIR / "foundry_bluegreen.py"
+if str(TOOLS_DIR) not in sys.path:
+    sys.path.insert(0, str(TOOLS_DIR))
+
+import foundry_bluegreen_pkg as foundry_bluegreen
 
 
 class FakeRunner:
@@ -98,6 +99,17 @@ resources:
         self.assertIs(package.FoundryBlueGreenError, foundry_bluegreen.FoundryBlueGreenError)
         self.assertTrue(callable(package.build_parser))
         self.assertTrue(callable(package.command_prepare))
+
+    def test_cli_shim_remains_executable(self) -> None:
+        result = subprocess.run(
+            [sys.executable, str(SHIM_PATH), "--help"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Safe, dev-gated blue/green workflow", result.stdout)
 
     def test_status_accepts_root_after_subcommand(self) -> None:
         parsed = foundry_bluegreen.build_parser().parse_args(["status", "--root", str(self.root)])

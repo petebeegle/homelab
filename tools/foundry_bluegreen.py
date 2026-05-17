@@ -11,7 +11,6 @@ TOOLS_DIR = str(Path(__file__).resolve().parent)
 if TOOLS_DIR not in sys.path:
     sys.path.insert(0, TOOLS_DIR)
 
-from foundry_bluegreen_pkg import *  # noqa: F401,F403
 from foundry_bluegreen_pkg import main
 
 
