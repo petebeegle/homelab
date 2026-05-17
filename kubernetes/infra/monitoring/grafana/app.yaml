@@ -36,7 +36,7 @@ spec:
         domain: monitoring.${cluster_domain}
         root_url: https://monitoring.${cluster_domain}
       dashboards:
-        default_home_dashboard_path: /var/lib/grafana/dashboards/home/monitoring-radar.json
+        default_home_dashboard_path: /var/lib/grafana/dashboards/home/dashboard.json
       metrics:
         enabled: true
       auth.generic_oauth:
@@ -59,8 +59,7 @@ spec:
     extraConfigmapMounts:
       - name: monitoring-radar-dashboard
         configMap: monitoring-radar-dashboard
-        mountPath: /var/lib/grafana/dashboards/home/monitoring-radar.json
-        subPath: dashboard.json
+        mountPath: /var/lib/grafana/dashboards/home
         readOnly: true
     sidecar:
       dashboards:
