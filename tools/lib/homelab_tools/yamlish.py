@@ -99,16 +99,18 @@ def parse_simple_yaml_file(path: Path) -> dict[str, object]:
     return values
 
 
-def parse_frontmatter_file(path: Path) -> tuple[dict[str, Any], list[str]]:
-    """Parse simple Markdown frontmatter and return metadata plus parse errors."""
-    lines = path.read_text(encoding="utf-8").splitlines()
+def parse_frontmatter_text(
+    text: str, *, strip_values: bool = False
+) -> tuple[dict[str, Any], str, list[str]]:
+    """Parse simple Markdown frontmatter and return metadata, body, and errors."""
+    lines = text.splitlines()
     if not lines or lines[0] != "---":
-        return {}, ["missing opening frontmatter marker"]
+        return {}, text, ["missing opening frontmatter marker"]
 
     try:
         end = lines[1:].index("---") + 1
     except ValueError:
-        return {}, ["missing closing frontmatter marker"]
+        return {}, text, ["missing closing frontmatter marker"]
 
     metadata: dict[str, Any] = {}
     errors: list[str] = []
@@ -122,6 +124,8 @@ def parse_frontmatter_file(path: Path) -> tuple[dict[str, Any], list[str]]:
                 errors.append(f"line {lineno}: list item without list key")
                 continue
             value = line[4:].strip()
+            if strip_values:
+                value = strip_quotes(value)
             if value:
                 current_value = metadata[current_list]
                 if isinstance(current_value, list):
@@ -134,6 +138,8 @@ def parse_frontmatter_file(path: Path) -> tuple[dict[str, Any], list[str]]:
         key, raw_value = line.split(":", 1)
         key = key.strip()
         value = raw_value.strip()
+        if strip_values:
+            value = strip_quotes(value)
         if value == "[]":
             metadata[key] = []
         elif value == "":
@@ -142,4 +148,52 @@ def parse_frontmatter_file(path: Path) -> tuple[dict[str, Any], list[str]]:
         else:
             metadata[key] = value
 
+    return metadata, "\n".join(lines[end + 1 :]).strip(), errors
+
+
+def parse_frontmatter_file(path: Path) -> tuple[dict[str, Any], list[str]]:
+    """Parse simple Markdown frontmatter and return metadata plus parse errors."""
+    metadata, _body, errors = parse_frontmatter_text(path.read_text(encoding="utf-8"))
     return metadata, errors
+
+
+def parse_retrieval_manifest_file(path: Path, *, strict: bool = False) -> list[dict[str, object]]:
+    """Parse the retrieval manifest subset shared by policy checks and context rendering."""
+    indexes: list[dict[str, object]] = []
+    current: dict[str, object] | None = None
+    current_list: str | None = None
+    in_indexes = False
+
+    for line_number, raw_line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        line = raw_line.split("#", 1)[0].rstrip()
+        if not line.strip() or line.strip() == "---":
+            continue
+        if line == "indexes:":
+            in_indexes = True
+            continue
+        if not in_indexes:
+            if strict:
+                raise ValueError(f"line {line_number}: only indexes is supported at top level")
+            continue
+        if line.startswith("  - name: "):
+            current = {"name": strip_quotes(line.split(":", 1)[1].strip())}
+            indexes.append(current)
+            current_list = None
+            continue
+        if current is None:
+            if strict:
+                raise ValueError(f"line {line_number}: index item must start with name")
+            continue
+        if line.startswith("    ") and line.endswith(":"):
+            current_list = line.strip()[:-1]
+            current[current_list] = []
+            continue
+        if line.startswith("      - ") and current_list:
+            current_value = current[current_list]
+            if isinstance(current_value, list):
+                current_value.append(strip_quotes(line.strip()[2:].strip()))
+            continue
+        if strict:
+            raise ValueError(f"line {line_number}: unsupported manifest syntax")
+
+    return indexes
