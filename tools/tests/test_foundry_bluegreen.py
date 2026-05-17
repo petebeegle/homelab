@@ -91,6 +91,20 @@ resources:
         values.update(kwargs)
         return Namespace(**values)
 
+    def test_importable_package_exposes_legacy_helpers(self) -> None:
+        package = importlib.import_module("foundry_bluegreen_pkg")
+
+        self.assertIs(package.CommandResult, foundry_bluegreen.CommandResult)
+        self.assertIs(package.FoundryBlueGreenError, foundry_bluegreen.FoundryBlueGreenError)
+        self.assertTrue(callable(package.build_parser))
+        self.assertTrue(callable(package.command_prepare))
+
+    def test_status_accepts_root_after_subcommand(self) -> None:
+        parsed = foundry_bluegreen.build_parser().parse_args(["status", "--root", str(self.root)])
+
+        self.assertEqual("status", parsed.command)
+        self.assertEqual(self.root, parsed.root)
+
     def write_current_evidence(self) -> None:
         foundry_bluegreen.write_json(
             self.root / ".codex/tmp/foundry-bluegreen-dev-rehearse.json",
