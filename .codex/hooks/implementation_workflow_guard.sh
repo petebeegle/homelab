@@ -23,6 +23,14 @@ plan_validator="tools/codex-harness/validate_implementation_plan.py"
 attestation_validator="tools/codex-harness/validate_workflow_attestations.py"
 branch="$(git branch --show-current)"
 
+run_root_python() {
+  if [[ -f pyproject.toml && -f uv.lock ]] && command -v uv >/dev/null 2>&1; then
+    uv run --frozen python3 "$@"
+  else
+    python3 "$@"
+  fi
+}
+
 fail() {
   {
     printf 'Implementation workflow guard: refusing tracked-file changes outside an active implementation.\n'
@@ -51,7 +59,7 @@ validate_workflow() {
     fail "Missing $marker."
   fi
 
-  if ! python3 "$marker_validator" --marker "$marker" --root "$root" --branch "$branch"; then
+  if ! run_root_python "$marker_validator" --marker "$marker" --root "$root" --branch "$branch"; then
     fail "Active implementation marker validation failed."
   fi
 
@@ -59,7 +67,7 @@ validate_workflow() {
     fail "Missing $plan."
   fi
 
-  if ! python3 "$plan_validator" --plan "$plan" --marker "$marker" --root "$root" --branch "$branch"; then
+  if ! run_root_python "$plan_validator" --plan "$plan" --marker "$marker" --root "$root" --branch "$branch"; then
     fail "Implementation plan validation failed."
   fi
 
@@ -67,7 +75,7 @@ validate_workflow() {
     fail "Missing $owner_attestation."
   fi
 
-  if ! python3 "$attestation_validator" --kind owner --attestation "$owner_attestation" --marker "$marker" --plan "$plan" --root "$root" --branch "$branch"; then
+  if ! run_root_python "$attestation_validator" --kind owner --attestation "$owner_attestation" --marker "$marker" --plan "$plan" --root "$root" --branch "$branch"; then
     fail "Implementation owner attestation validation failed."
   fi
 }

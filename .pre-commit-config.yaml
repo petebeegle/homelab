@@ -50,32 +50,32 @@ repos:
         always_run: true
       - id: architecture-doc
         name: Check generated architecture document
-        entry: python3 tools/architecture/render.py --check
+        entry: uv run --frozen python3 tools/architecture/render.py --check
         language: system
         stages: [pre-commit]
         pass_filenames: false
         always_run: true
       - id: synology-oauth-redirect
         name: Check Synology OAuth redirect path
-        entry: python3 tools/policy/check_synology_oauth_redirect.py
+        entry: uv run --frozen python3 tools/policy/check_synology_oauth_redirect.py
         language: system
         files: ^(kubernetes/infra/authentik/blueprints/synology-oauth\.yaml|tools/policy/check_synology_oauth_redirect\.py|\.pre-commit-config\.yaml)$
         pass_filenames: false
       - id: retrieval-manifest
         name: Check Codex retrieval manifest
-        entry: python3 tools/policy/check_retrieval_manifest.py
+        entry: uv run --frozen python3 tools/policy/check_retrieval_manifest.py
         language: system
         files: ^(\.codex/retrieval\.yaml|tools/policy/check_retrieval_manifest\.py|\.pre-commit-config\.yaml)$
         pass_filenames: false
       - id: decision-metadata
         name: Check decision record metadata
-        entry: python3 tools/policy/check_decision_metadata.py
+        entry: uv run --frozen python3 tools/policy/check_decision_metadata.py
         language: system
         files: ^(docs/decisions/.*\.md|tools/policy/check_decision_metadata\.py|\.pre-commit-config\.yaml)$
         pass_filenames: false
       - id: mcp-config-consistency
         name: Check MCP config consistency
-        entry: python3 tools/policy/check_mcp_config_consistency.py
+        entry: uv run --frozen python3 tools/policy/check_mcp_config_consistency.py
         language: system
         files: ^(\.mcp\.json|\.codex/config\.toml|tools/policy/check_mcp_config_consistency\.py|\.pre-commit-config\.yaml)$
         pass_filenames: false

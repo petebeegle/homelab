@@ -5,6 +5,9 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
+
+import yaml
 
 
 @dataclass(frozen=True)
@@ -30,21 +33,30 @@ def relative(path: Path, *, root: Path) -> str:
 
 
 def split_documents(text: str) -> list[str]:
-    return [doc.strip() for doc in re.split(r"(?m)^---\s*$", text) if doc.strip()]
+    documents: list[str] = []
+    for doc in re.split(r"(?m)^---\s*$", text):
+        if not doc.strip():
+            continue
+        if _load_yaml_document(doc):
+            documents.append(doc.strip())
+    return documents
 
 
 def scalar(text: str, key: str) -> str:
-    match = re.search(rf"(?m)^\s*{re.escape(key)}:\s*(.+?)\s*$", text)
-    if not match:
+    value = _find_key(_load_yaml_document(text), key)
+    if isinstance(value, (dict, list)) or value is None:
         return ""
-    return match.group(1).strip().strip('"')
+    return _scalar_text(value)
 
 
 def metadata_value(text: str, key: str) -> str:
-    match = re.search(r"(?ms)^metadata:\n(?P<body>(?:  .+\n?)*)", text)
-    if not match:
+    metadata = _find_key(_load_yaml_document(text), "metadata")
+    if not isinstance(metadata, dict):
         return ""
-    return scalar(match.group("body"), key)
+    value = metadata.get(key)
+    if isinstance(value, (dict, list)) or value is None:
+        return ""
+    return _scalar_text(value)
 
 
 def lines_after(lines: list[str], key: str) -> list[str]:
@@ -64,32 +76,27 @@ def lines_after(lines: list[str], key: str) -> list[str]:
 
 
 def list_scalars(text: str, key: str) -> list[str]:
-    values: list[str] = []
-    for line in lines_after(text.splitlines(), key):
-        stripped = line.strip()
-        if stripped.startswith("- "):
-            values.append(stripped[2:].strip().strip('"'))
-    return values
+    value = _find_key(_load_yaml_document(text), key)
+    if not isinstance(value, list):
+        return []
+    return [_scalar_text(item) for item in value if not isinstance(item, (dict, list)) and item is not None]
 
 
 def list_maps(text: str, key: str) -> list[dict[str, str]]:
+    value = _find_key(_load_yaml_document(text), key)
+    if not isinstance(value, list):
+        return []
     items: list[dict[str, str]] = []
-    current: dict[str, str] | None = None
-    for line in lines_after(text.splitlines(), key):
-        stripped = line.strip()
-        if stripped.startswith("- "):
-            if current:
-                items.append(current)
-            current = {}
-            stripped = stripped[2:].strip()
-            if ":" in stripped:
-                k, v = stripped.split(":", 1)
-                current[k.strip()] = v.strip().strip('"')
-        elif current is not None and ":" in stripped:
-            k, v = stripped.split(":", 1)
-            current[k.strip()] = v.strip().strip('"')
-    if current:
-        items.append(current)
+    for item in value:
+        if not isinstance(item, dict):
+            continue
+        items.append(
+            {
+                _scalar_text(map_key): _scalar_text(map_value)
+                for map_key, map_value in item.items()
+                if not isinstance(map_value, (dict, list)) and map_value is not None
+            }
+        )
     return items
 
 
@@ -117,18 +124,11 @@ def cluster_vars(root: Path) -> list[tuple[str, str]]:
     path = root / "cluster-vars.yaml"
     if not path.exists():
         return []
-    text = read(path)
-    body = re.search(r"(?ms)^data:\n(?P<body>(?:  .+\n?)*)", text)
-    if not body:
+    data = _load_yaml_document(read(path))
+    values = data.get("data") if isinstance(data, dict) else None
+    if not isinstance(values, dict):
         return []
-    values: list[tuple[str, str]] = []
-    for line in body.group("body").splitlines():
-        stripped = line.strip()
-        if ":" not in stripped:
-            continue
-        key, value = stripped.split(":", 1)
-        values.append((key.strip(), value.strip().strip('"')))
-    return sorted(values)
+    return sorted((_scalar_text(key), _scalar_text(value)) for key, value in values.items())
 
 
 def component(path: Path, *, root: Path) -> str:
@@ -152,3 +152,32 @@ def secret_relationships(manifests: list[Manifest], *, root: Path) -> list[str]:
             f"| `{component(item.path, root=root)}` | `{item.namespace or 'default'}/{item.name}` | `{encrypted}` | `{item.relpath}` |"
         )
     return sorted(rows)
+
+
+def _load_yaml_document(text: str) -> Any:
+    try:
+        return yaml.safe_load(text) or {}
+    except yaml.YAMLError:
+        return {}
+
+
+def _find_key(value: Any, key: str) -> Any:
+    if isinstance(value, dict):
+        if key in value:
+            return value[key]
+        for child in value.values():
+            found = _find_key(child, key)
+            if found is not None:
+                return found
+    elif isinstance(value, list):
+        for child in value:
+            found = _find_key(child, key)
+            if found is not None:
+                return found
+    return None
+
+
+def _scalar_text(value: object) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    return str(value).strip().strip('"')

@@ -28,6 +28,9 @@ jobs:
         with:
           python-version-file: tools/.python-version
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v4
         with:
@@ -62,15 +65,15 @@ jobs:
         with:
           python-version-file: tools/.python-version
 
-      - name: Run Codex harness tests
-        run: python3 -m unittest discover -s tools/codex-harness/tests
-
       - name: Install uv
         uses: astral-sh/setup-uv@v8.1.0
 
+      - name: Run Codex harness tests
+        run: uv run --frozen python3 -m unittest discover -s tools/codex-harness/tests
+
       - name: Run tests
         run: >-
-          uv run --project tools/agent-memory --with pytest pytest
+          uv run --project tools/agent-memory pytest
           tools/agent-memory/tests
 
   terraform:

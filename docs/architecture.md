@@ -1,6 +1,6 @@
 # Architecture
 
-<!-- GENERATED: do not edit by hand. Run `python3 tools/architecture/render.py --write`. -->
+<!-- GENERATED: do not edit by hand. Run `uv run --frozen python3 tools/architecture/render.py --write`. -->
 
 This document is generated for agentic repo navigation. It records relationships that must stay aligned with the Kubernetes, Flux, and Terraform source of truth.
 

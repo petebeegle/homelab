@@ -39,6 +39,14 @@ approval_file=".codex/tmp/verifier-approved"
 attestation_file=".codex/tmp/verifier-attestation.yaml"
 attestation_validator="tools/codex-harness/validate_workflow_attestations.py"
 
+run_root_python() {
+  if [[ -f pyproject.toml && -f uv.lock ]] && command -v uv >/dev/null 2>&1; then
+    uv run --frozen python3 "$@"
+  else
+    python3 "$@"
+  fi
+}
+
 if [[ ! -f "$approval_file" ]] || ! grep -Fxq "$head_sha" "$approval_file"; then
   {
     printf 'Verifier push guard: refusing to push to origin.\n'
@@ -58,7 +66,7 @@ if [[ ! -f "$attestation_file" ]]; then
   exit 1
 fi
 
-if ! python3 "$attestation_validator" --kind verifier --attestation "$attestation_file" --head "$head_sha"; then
+if ! run_root_python "$attestation_validator" --kind verifier --attestation "$attestation_file" --head "$head_sha"; then
   printf 'Verifier push guard: verifier attestation validation failed.\n' >&2
   exit 1
 fi

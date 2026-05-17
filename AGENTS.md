@@ -61,9 +61,9 @@ kubectl create job --from=cronjob.batch/renovate renovate-manual-run -n renovate
 Generated relationship map:
 
 - `docs/architecture.md` is generated from Kubernetes and Terraform source files.
-- Do not edit it by hand. Run `python3 tools/architecture/render.py --write`, then commit the result.
-- Pre-commit runs `python3 tools/architecture/render.py --check` and fails if it is stale.
-- When Kubernetes or Terraform source changes make the architecture check fail, refresh `docs/architecture.md` with `python3 tools/architecture/render.py --write` as part of the same implementation.
+- Do not edit it by hand. Run `uv run --frozen python3 tools/architecture/render.py --write`, then commit the result.
+- Pre-commit runs `uv run --frozen python3 tools/architecture/render.py --check` and fails if it is stale.
+- When Kubernetes or Terraform source changes make the architecture check fail, refresh `docs/architecture.md` with `uv run --frozen python3 tools/architecture/render.py --write` as part of the same implementation.
 
 Flux cluster entrypoint:
 

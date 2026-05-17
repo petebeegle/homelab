@@ -113,18 +113,18 @@ The verifier `agent_id` must be concrete, must use the `verifier-agent-` prefix,
 ## Validation
 
 ```bash
-python3 tools/codex-harness/validate_active_implementation.py \
+uv run --frozen python3 tools/codex-harness/validate_active_implementation.py \
   --marker .codex/tmp/active-implementation \
   --root "$(pwd)" \
   --branch "$(git branch --show-current)"
 
-python3 tools/codex-harness/validate_implementation_plan.py \
+uv run --frozen python3 tools/codex-harness/validate_implementation_plan.py \
   --plan .codex/tmp/implementation-plan.yaml \
   --marker .codex/tmp/active-implementation \
   --root "$(pwd)" \
   --branch "$(git branch --show-current)"
 
-python3 tools/codex-harness/validate_workflow_attestations.py \
+uv run --frozen python3 tools/codex-harness/validate_workflow_attestations.py \
   --kind owner \
   --attestation .codex/tmp/implementation-owner-attestation.yaml \
   --marker .codex/tmp/active-implementation \
@@ -132,7 +132,7 @@ python3 tools/codex-harness/validate_workflow_attestations.py \
   --root "$(pwd)" \
   --branch "$(git branch --show-current)"
 
-python3 tools/codex-harness/validate_workflow_attestations.py \
+uv run --frozen python3 tools/codex-harness/validate_workflow_attestations.py \
   --kind verifier \
   --attestation .codex/tmp/verifier-attestation.yaml \
   --marker .codex/tmp/active-implementation \

@@ -7,6 +7,10 @@ name = "homelab-python-tooling"
 version = "0.1.0"
 description = "Shared local Python helpers for the homelab repository."
 requires-python = ">=3.11"
+dependencies = [
+  "PyYAML==6.0.3",
+  "python-hcl2==8.1.2",
+]
 
 [tool.setuptools.packages.find]
 where = ["tools/lib"]

@@ -63,6 +63,14 @@ class HomelabToolsTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "duplicate field role"):
                 parse_scalar_yaml_file(path)
 
+    def test_parse_simple_yaml_rejects_duplicate_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "plan.yaml"
+            path.write_text("summary: first\nsummary: second\n", encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "duplicate field summary"):
+                parse_simple_yaml_file(path)
+
     def test_parse_frontmatter_text_returns_body(self) -> None:
         metadata, body, errors = parse_frontmatter_text(
             "---\nstatus: \"current\"\nscope:\n  - tools\n---\n\n# Body\n",
@@ -71,6 +79,15 @@ class HomelabToolsTest(unittest.TestCase):
 
         self.assertEqual(errors, [])
         self.assertEqual(metadata, {"status": "current", "scope": ["tools"]})
+        self.assertEqual(body, "# Body")
+
+    def test_parse_frontmatter_text_preserves_scalar_strings(self) -> None:
+        metadata, body, errors = parse_frontmatter_text(
+            "---\nlast_verified: 2026-05-16\nsuperseded_by:\n---\n\n# Body\n"
+        )
+
+        self.assertEqual(errors, [])
+        self.assertEqual(metadata, {"last_verified": "2026-05-16", "superseded_by": []})
         self.assertEqual(body, "# Body")
 
     def test_parse_retrieval_manifest_file_preserves_index_lists(self) -> None:

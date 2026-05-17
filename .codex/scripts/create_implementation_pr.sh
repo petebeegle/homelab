@@ -51,14 +51,22 @@ if [[ ! -f "$marker" ]]; then
   exit 1
 fi
 
+run_root_python() {
+  if [[ -f pyproject.toml && -f uv.lock ]] && command -v uv >/dev/null 2>&1; then
+    uv run --frozen python3 "$@"
+  else
+    python3 "$@"
+  fi
+}
+
 validator="tools/codex-harness/validate_active_implementation.py"
-if ! python3 "$validator" --marker "$marker" --root "$root" --branch "$branch"; then
+if ! run_root_python "$validator" --marker "$marker" --root "$root" --branch "$branch"; then
   printf 'Implementation PR: active implementation marker does not match this checkout.\n' >&2
   exit 1
 fi
 
 attestation_validator="tools/codex-harness/validate_workflow_attestations.py"
-if ! python3 "$attestation_validator" --kind verifier --attestation "$attestation_file" --head "$head_sha" --root "$root" --branch "$branch"; then
+if ! run_root_python "$attestation_validator" --kind verifier --attestation "$attestation_file" --head "$head_sha" --root "$root" --branch "$branch"; then
   printf 'Implementation PR: verifier attestation validation failed.\n' >&2
   exit 1
 fi

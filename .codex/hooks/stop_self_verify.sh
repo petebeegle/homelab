@@ -6,6 +6,14 @@ cd "$root"
 
 failed=0
 
+run_root_python() {
+  if [[ -f pyproject.toml && -f uv.lock ]] && command -v uv >/dev/null 2>&1; then
+    uv run --frozen python3 "$@"
+  else
+    python3 "$@"
+  fi
+}
+
 if [[ -e .codex/hooks.json ]]; then
   printf 'Codex self-verify: .codex/hooks.json exists, but hooks must be inline in .codex/config.toml.\n' >&2
   failed=1
@@ -29,10 +37,10 @@ for script in .codex/scripts/*.sh; do
   bash -n "$script" || failed=1
 done
 
-python3 -m unittest discover -s tools/codex-harness/tests || failed=1
-python3 -m unittest discover -s tools/context-pack/tests || failed=1
+run_root_python -m unittest discover -s tools/codex-harness/tests || failed=1
+run_root_python -m unittest discover -s tools/context-pack/tests || failed=1
 
-python3 - <<'PY' || failed=1
+run_root_python - <<'PY' || failed=1
 import re
 import sys
 

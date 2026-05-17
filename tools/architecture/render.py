@@ -88,7 +88,10 @@ def render() -> str:
 
 def check(expected: str) -> int:
     if not OUTPUT.exists():
-        print(f"{relative(OUTPUT)} is missing. Run: python3 tools/architecture/render.py --write", file=sys.stderr)
+        print(
+            f"{relative(OUTPUT)} is missing. Run: uv run --frozen python3 tools/architecture/render.py --write",
+            file=sys.stderr,
+        )
         return 1
     actual = read(OUTPUT)
     if actual == expected:
@@ -100,7 +103,10 @@ def check(expected: str) -> int:
         tofile="generated",
         lineterm="",
     )
-    print(f"{relative(OUTPUT)} is stale. Run: python3 tools/architecture/render.py --write", file=sys.stderr)
+    print(
+        f"{relative(OUTPUT)} is stale. Run: uv run --frozen python3 tools/architecture/render.py --write",
+        file=sys.stderr,
+    )
     print("\n".join(diff), file=sys.stderr)
     return 1
 
