@@ -9,6 +9,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping, Sequence
 
+TOOLS_LIB = Path(__file__).resolve().parents[2] / "tools" / "lib"
+if str(TOOLS_LIB) not in sys.path:
+    sys.path.insert(0, str(TOOLS_LIB))
+
+from homelab_tools.yamlish import parse_simple_yaml_file
 from validate_active_implementation import parse_marker
 
 
@@ -44,48 +49,7 @@ class PlanValidationResult:
 
 def parse_plan(plan_path: Path) -> dict[str, object]:
     """Parse the simple YAML subset used by .codex/tmp/implementation-plan.yaml."""
-    plan: dict[str, object] = {}
-    current_list: str | None = None
-
-    for lineno, raw_line in enumerate(plan_path.read_text(encoding="utf-8").splitlines(), 1):
-        if not raw_line.strip() or raw_line.lstrip().startswith("#"):
-            continue
-
-        if raw_line.startswith("  - "):
-            if current_list is None:
-                raise ValueError(f"{plan_path}:{lineno}: list item without list field")
-            value = _strip_quotes(raw_line[4:].strip())
-            if not value:
-                raise ValueError(f"{plan_path}:{lineno}: list item must not be empty")
-            values = plan[current_list]
-            if not isinstance(values, list):
-                raise ValueError(f"{plan_path}:{lineno}: field {current_list} is not a list")
-            values.append(value)
-            continue
-
-        current_list = None
-        if raw_line.startswith(" "):
-            raise ValueError(f"{plan_path}:{lineno}: unsupported indentation")
-        if ":" not in raw_line:
-            raise ValueError(f"{plan_path}:{lineno}: expected key: value")
-
-        key, raw_value = raw_line.split(":", 1)
-        key = key.strip()
-        value = raw_value.strip()
-        if not key:
-            raise ValueError(f"{plan_path}:{lineno}: key must not be empty")
-        if key in plan:
-            raise ValueError(f"{plan_path}:{lineno}: duplicate field {key}")
-
-        if value == "":
-            plan[key] = []
-            current_list = key
-        elif value == "[]":
-            plan[key] = []
-        else:
-            plan[key] = _strip_quotes(value)
-
-    return plan
+    return parse_simple_yaml_file(plan_path)
 
 
 def validate_plan(
@@ -225,12 +189,6 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 def _string(value: object) -> str:
     return value if isinstance(value, str) else ""
-
-
-def _strip_quotes(value: str) -> str:
-    if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
-        return value[1:-1]
-    return value
 
 
 if __name__ == "__main__":
