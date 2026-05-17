@@ -1,0 +1,20 @@
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nfs-csi-media-storage
+provisioner: nfs.csi.k8s.io
+parameters:
+  server: ${nfs_server}
+  share: /volume1/Media
+  subDir: nfs-csi-$${pvc.metadata.namespace}-$${pvc.metadata.name}
+mountOptions:
+  - nfsvers=4.1
+  - hard
+  - timeo=600
+  - retrans=2
+  - rsize=1048576
+  - wsize=1048576
+allowVolumeExpansion: true
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
