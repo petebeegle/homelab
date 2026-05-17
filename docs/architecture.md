@@ -88,7 +88,8 @@ This document is generated for agentic repo navigation. It records relationships
 | `production` | `app-foundryvtt` | `./kubernetes/apps/foundryvtt` | `gateway`, `nfs-csi` | `cluster-vars` | `sops` |
 | `production` | `app-jellyfin` | `./kubernetes/apps/jellyfin` | `gateway`, `nfs-csi` | `cluster-vars` | `no` |
 | `production` | `app-pihole` | `./kubernetes/apps/pihole` | `gateway` | `cluster-vars` | `sops` |
-| `production` | `app-transfer` | `./kubernetes/apps/transfer` | `gateway`, `nfs-csi` | `cluster-vars` | `sops` |
+| `production` | `private-source` | `./kubernetes/clusters/production/apps/private/source` | (none) | `(none)` | `sops` |
+| `production` | `app-transfer` | `./kubernetes/apps/transfer` | `private-source`, `gateway`, `nfs-csi` | `cluster-vars` | `sops` |
 | `production` | `app-renovate` | `./kubernetes/apps/renovate` | `gateway` | `cluster-vars` | `sops` |
 | `production` | `app-synthetics` | `./kubernetes/apps/synthetics` | `gateway`, `grafana`, `authentik`, `app-whoami`, `app-jellyfin`, `app-pihole`, `app-foundryvtt` | `cluster-vars` | `no` |
 | `production` | `app-valheim` | `./kubernetes/apps/valheim` | `gateway`, `nfs-csi` | `cluster-vars` | `sops` |
@@ -191,8 +192,8 @@ This lists secret manifest presence only. Secret values are not rendered.
 | `monitoring/pretty-discord-alerts` | `monitoring/grafana-env` | `yes` | `kubernetes/infra/monitoring/pretty-discord-alerts/grafana-env.yaml` |
 | `network/vpn` | `wireguard/wireguard-env` | `yes` | `kubernetes/infra/network/vpn/secret.yaml` |
 | `pihole` | `pihole/pihole-admin-password` | `yes` | `kubernetes/apps/pihole/secret.yaml` |
-| `private` | `flux-system/homelab-private-deploy-key` | `yes` | `kubernetes/clusters/production/apps/private/secret.yaml` |
 | `renovate` | `renovate/renovate-secret` | `yes` | `kubernetes/apps/renovate/secret.yaml` |
+| `source` | `flux-system/homelab-private-deploy-key` | `yes` | `kubernetes/clusters/production/apps/private/source/secret.yaml` |
 | `valheim` | `valheim/valheim-secret` | `yes` | `kubernetes/apps/valheim/secret.yaml` |
 
 ## Terraform Substrate
