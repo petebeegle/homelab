@@ -57,6 +57,41 @@ class MemoryLintTests(unittest.TestCase):
             self.assertEqual(result.exit_code, 0)
             self.assertEqual(result.issues, ())
 
+    def test_approved_markdown_frontmatter_comments_are_ignored(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = write_approved_memory(root)
+            path.write_text(
+                path.read_text(encoding="utf-8").replace(
+                    "---\nstatus: approved\n",
+                    "---\n# frontmatter comment\nstatus: approved\n",
+                ),
+                encoding="utf-8",
+            )
+
+            result = lint_memory_root(root, today=date(2026, 5, 10))
+
+            self.assertEqual(result.exit_code, 0)
+            self.assertEqual(result.issues, ())
+
+    def test_approved_markdown_empty_frontmatter_key_is_invalid(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = write_approved_memory(root)
+            path.write_text(
+                path.read_text(encoding="utf-8").replace(
+                    "---\nstatus: approved\n",
+                    "---\n: bad\nstatus: approved\n",
+                ),
+                encoding="utf-8",
+            )
+
+            result = lint_memory_root(root, today=date(2026, 5, 10))
+
+            self.assertEqual(result.exit_code, 1)
+            self.assertIn("frontmatter-invalid", {issue.code for issue in result.issues})
+            self.assertIn("line 1: key must not be empty", {issue.message for issue in result.issues})
+
     def test_invalid_approved_markdown_reports_errors(self):
         cases = {
             "missing-frontmatter.md": "# Missing Frontmatter\n\nBody.\n",

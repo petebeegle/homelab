@@ -73,6 +73,16 @@ class HomelabToolsTest(unittest.TestCase):
         self.assertEqual(metadata, {"status": "current", "scope": ["tools"]})
         self.assertEqual(body, "# Body")
 
+    def test_parse_frontmatter_text_ignores_comments_and_rejects_empty_keys(self) -> None:
+        metadata, body, errors = parse_frontmatter_text(
+            "---\n# comment\n: bad\nstatus: current\n---\n\n# Body\n",
+            metadata_line_start=1,
+        )
+
+        self.assertEqual(metadata, {"status": "current"})
+        self.assertEqual(body, "# Body")
+        self.assertEqual(errors, ["line 2: key must not be empty"])
+
     def test_parse_retrieval_manifest_file_preserves_index_lists(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "retrieval.yaml"

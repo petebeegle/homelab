@@ -120,7 +120,7 @@ def parse_frontmatter_text(
     current_list: str | None = None
 
     for lineno, line in enumerate(lines[1:end], start=metadata_line_start):
-        if not line.strip():
+        if not line.strip() or line.lstrip().startswith("#"):
             continue
         if line.startswith("  - "):
             if current_list is None:
@@ -140,6 +140,9 @@ def parse_frontmatter_text(
             continue
         key, raw_value = line.split(":", 1)
         key = key.strip()
+        if not key:
+            errors.append(f"line {lineno}: key must not be empty")
+            continue
         value = raw_value.strip()
         if strip_values:
             value = strip_quotes(value)
