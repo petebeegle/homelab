@@ -283,7 +283,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "(sum(gatewayapi_gateway_status_condition{type=\"Programmed\"} == bool 0) OR vector(0)) + (sum(gatewayapi_httproute_parent_accepted == bool 0) OR vector(0)) + (sum(gatewayapi_tlsroute_parent_accepted == bool 0) OR vector(0)) + (sum(gatewayapi_httproute_parent_resolved_refs == bool 0) OR vector(0)) + (sum(gatewayapi_tlsroute_parent_resolved_refs == bool 0) OR vector(0))",
+          "expr": "(sum((gatewayapi_gateway_status_condition{type=\"Programmed\"} == bool 0) unless on(exported_namespace, name, type) gatewayapi_gateway_status_condition{type=\"Programmed\",exported_namespace=\"gateway\",name=\"public\",reason=\"AddressNotAssigned\"}) OR vector(0)) + (sum(gatewayapi_httproute_parent_accepted == bool 0) OR vector(0)) + (sum(gatewayapi_tlsroute_parent_accepted == bool 0) OR vector(0)) + (sum(gatewayapi_httproute_parent_resolved_refs == bool 0) OR vector(0)) + (sum(gatewayapi_tlsroute_parent_resolved_refs == bool 0) OR vector(0))",
           "refId": "A"
         }
       ],
@@ -356,7 +356,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Pods currently Pending or Failed, excluding retained synthetic-smoke job history in the synthetics namespace.",
+      "description": "Pods currently Failed, excluding retained synthetic-smoke job history in the synthetics namespace.",
       "fieldConfig": {
         "defaults": {
           "mappings": [],
@@ -405,11 +405,11 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(max by (namespace, pod, phase) ((kube_pod_status_phase{phase=\"Pending\"} or (kube_pod_status_phase{phase=\"Failed\"} unless (kube_pod_status_phase{phase=\"Failed\",namespace=\"synthetics\",pod=~\"synthetic-smoke-.+\"} or kube_pod_status_phase{exported_namespace=\"synthetics\",phase=\"Failed\",pod=~\"synthetic-smoke-.+\"}))) > bool 0)) OR vector(0)",
+          "expr": "sum(max by (namespace, pod) ((kube_pod_status_phase{phase=\"Failed\"} unless (kube_pod_status_phase{phase=\"Failed\",namespace=\"synthetics\",pod=~\"synthetic-smoke-.+\"} or kube_pod_status_phase{exported_namespace=\"synthetics\",phase=\"Failed\",pod=~\"synthetic-smoke-.+\"})) > bool 0)) OR vector(0)",
           "refId": "A"
         }
       ],
-      "title": "Failed Or Pending Pods",
+      "title": "Failed Pods",
       "type": "stat"
     },
     {
@@ -1411,7 +1411,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(gatewayapi_gateway_status_condition{type=\"Programmed\"} == bool 0) OR vector(0)",
+          "expr": "sum((gatewayapi_gateway_status_condition{type=\"Programmed\"} == bool 0) unless on(exported_namespace, name, type) gatewayapi_gateway_status_condition{type=\"Programmed\",exported_namespace=\"gateway\",name=\"public\",reason=\"AddressNotAssigned\"}) OR vector(0)",
           "refId": "A"
         }
       ],
@@ -1659,7 +1659,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(gatewayapi_gateway_status_condition{type=\"Programmed\"} == bool 0) OR vector(0)",
+          "expr": "sum((gatewayapi_gateway_status_condition{type=\"Programmed\"} == bool 0) unless on(exported_namespace, name, type) gatewayapi_gateway_status_condition{type=\"Programmed\",exported_namespace=\"gateway\",name=\"public\",reason=\"AddressNotAssigned\"}) OR vector(0)",
           "legendFormat": "Gateways not programmed",
           "refId": "A"
         },
