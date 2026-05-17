@@ -11,7 +11,7 @@ This document is generated for agentic repo navigation. It records relationships
 - Root Kustomization: `kubernetes/clusters/production/kustomization.yaml`.
 - Root resources: `flux-system`, `cluster-vars.yaml`, `infra`, `apps`.
 - Infra activation list: `crds.yaml`, `cert-manager.yaml`, `grafana-operator.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `certs.yaml`, `gateway.yaml`, `vpn.yaml`, `monitoring.yaml`, `loki.yaml`, `mimir.yaml`, `alloy.yaml`, `grafana.yaml`, `otel-collector.yaml`, `authentik.yaml`.
-- App activation list: `external.yaml`, `pihole.yaml`, `whoami.yaml`, `renovate.yaml`, `cloudflare-tunnels.yaml`, `jellyfin.yaml`, `foundryvtt.yaml`, `valheim.yaml`, `synthetics.yaml`.
+- App activation list: `external.yaml`, `pihole.yaml`, `whoami.yaml`, `renovate.yaml`, `cloudflare-tunnels.yaml`, `jellyfin.yaml`, `foundryvtt.yaml`, `valheim.yaml`, `synthetics.yaml`, `private`.
 
 ### Development
 
@@ -88,6 +88,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `production` | `app-foundryvtt` | `./kubernetes/apps/foundryvtt` | `gateway`, `nfs-csi` | `cluster-vars` | `sops` |
 | `production` | `app-jellyfin` | `./kubernetes/apps/jellyfin` | `gateway`, `nfs-csi` | `cluster-vars` | `no` |
 | `production` | `app-pihole` | `./kubernetes/apps/pihole` | `gateway` | `cluster-vars` | `sops` |
+| `production` | `app-transfer` | `./kubernetes/apps/transfer` | `gateway`, `nfs-csi` | `cluster-vars` | `sops` |
 | `production` | `app-renovate` | `./kubernetes/apps/renovate` | `gateway` | `cluster-vars` | `sops` |
 | `production` | `app-synthetics` | `./kubernetes/apps/synthetics` | `gateway`, `grafana`, `authentik`, `app-whoami`, `app-jellyfin`, `app-pihole`, `app-foundryvtt` | `cluster-vars` | `no` |
 | `production` | `app-valheim` | `./kubernetes/apps/valheim` | `gateway`, `nfs-csi` | `cluster-vars` | `sops` |
@@ -190,6 +191,7 @@ This lists secret manifest presence only. Secret values are not rendered.
 | `monitoring/pretty-discord-alerts` | `monitoring/grafana-env` | `yes` | `kubernetes/infra/monitoring/pretty-discord-alerts/grafana-env.yaml` |
 | `network/vpn` | `wireguard/wireguard-env` | `yes` | `kubernetes/infra/network/vpn/secret.yaml` |
 | `pihole` | `pihole/pihole-admin-password` | `yes` | `kubernetes/apps/pihole/secret.yaml` |
+| `private` | `flux-system/homelab-private-deploy-key` | `yes` | `kubernetes/clusters/production/apps/private/secret.yaml` |
 | `renovate` | `renovate/renovate-secret` | `yes` | `kubernetes/apps/renovate/secret.yaml` |
 | `valheim` | `valheim/valheim-secret` | `yes` | `kubernetes/apps/valheim/secret.yaml` |
 

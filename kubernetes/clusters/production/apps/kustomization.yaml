@@ -11,3 +11,4 @@ resources:
   - foundryvtt.yaml
   - valheim.yaml
   - synthetics.yaml
+  - private

@@ -1,0 +1,13 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: homelab-private
+  namespace: flux-system
+spec:
+  interval: 1m
+  url: ssh://git@github.com/petebeegle/homelab-private
+  ref:
+    branch: main
+  secretRef:
+    name: homelab-private-deploy-key
