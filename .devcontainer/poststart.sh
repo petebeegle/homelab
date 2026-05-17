@@ -19,7 +19,7 @@ tf_output_to_file() {
 
   mkdir -p "$(dirname "$output_file")"
   tmp_file="$(mktemp "${output_file}.tmp.XXXXXX")"
-  if terraform -chdir="$dir" output -raw "$output_key" > "$tmp_file" 2>/dev/null; then
+  if terraform output -state="$dir" -raw "$output_key" > "$tmp_file" 2>/dev/null; then
     chmod 600 "$tmp_file"
     mv "$tmp_file" "$output_file"
     return 0
@@ -38,7 +38,7 @@ operator_files=(
 
 for operator_file in "${operator_files[@]}"; do
   IFS='|' read -r environment dir output_key output_file <<< "$operator_file"
-  if ! tf_output_to_file "$dir" "$output_key" "$output_file"; then
+  if ! tf_output_to_file "$dir/terraform.tfstate" "$output_key" "$output_file"; then
     echo "WARNING: ${environment} ${output_key} output is unavailable from ${dir}; leaving ${output_file} unchanged"
   fi
 done
