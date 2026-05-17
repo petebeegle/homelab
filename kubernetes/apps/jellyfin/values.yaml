@@ -5,6 +5,15 @@ persistence:
     storageClass: nfs-csi-storage
   media:
     enabled: false
+service:
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8096"
+    prometheus.io/path: /metrics
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: false
 startupProbe:
   tcpSocket:
     port: http
