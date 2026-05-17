@@ -1,0 +1,26 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: app-transfer
+  namespace: flux-system
+spec:
+  interval: 5m
+  retryInterval: 2m
+  path: ./kubernetes/apps/transfer
+  prune: true
+  wait: true
+  sourceRef:
+    kind: GitRepository
+    name: homelab-private
+  dependsOn:
+    - name: gateway
+    - name: nfs-csi
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
+  postBuild:
+    substituteFrom:
+      - kind: ConfigMap
+        name: cluster-vars
