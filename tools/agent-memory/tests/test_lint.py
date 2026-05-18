@@ -196,7 +196,7 @@ class MemoryLintTests(unittest.TestCase):
     def test_cli_json_output_contains_issue_shape(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            write_approved_memory(root, source="unknown")
+            write_approved_memory(root, source="unknown", review_after="2999-01-01")
             stdout = io.StringIO()
 
             with contextlib.redirect_stdout(stdout):
