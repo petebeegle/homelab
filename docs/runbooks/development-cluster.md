@@ -25,7 +25,7 @@ Use this runbook to create, bootstrap, test, and clean up the dedicated developm
 - Gateway IPs: internal `192.168.30.225`, passthrough `192.168.30.226`, external `192.168.40.225`, external passthrough `192.168.40.226`
 - ACME: Let's Encrypt staging through the shared Cloudflare issuer
 
-The development base intentionally includes CRDs, Cilium, cert-manager/certs, Gateway API, NFS CSI, whoami, and the evergreen Homepage dashboard at `https://homepage.development.lab.petebeegle.com`. Authentik, games/media apps, Cloudflare tunnels, Renovate, VPN, and the full monitoring stack are omitted to keep the single-node cluster resource-conscious and to avoid production-only secrets or traffic paths unless a test explicitly needs them.
+The development base intentionally includes CRDs, Cilium, cert-manager/certs, Gateway API, NFS CSI, whoami, and the development Homepage deployment at `homepage.${cluster_domain}`. In the live development cluster, that resolves to `https://homepage.dev.lab.petebeegle.com`. Authentik, games/media apps, Cloudflare tunnels, Renovate, VPN, and the full monitoring stack are omitted to keep the single-node cluster resource-conscious and to avoid production-only secrets or traffic paths unless a test explicitly needs them.
 
 ## Local Tfvars
 
