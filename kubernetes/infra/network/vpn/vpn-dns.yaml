@@ -41,7 +41,7 @@ spec:
     spec:
       containers:
         - name: coredns
-          image: registry.k8s.io/coredns/coredns:v1.12.4
+          image: registry.k8s.io/coredns/coredns:v1.14.3
           imagePullPolicy: IfNotPresent
           args:
             - -conf
