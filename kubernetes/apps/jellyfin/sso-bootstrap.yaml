@@ -145,7 +145,7 @@ data:
         set_text(oid_config, "RoleClaim", "groups")
         set_string_array(oid_config, "OidScopes", ["groups"])
         set_text(oid_config, "DefaultProvider", "")
-        set_text(oid_config, "SchemeOverride", "")
+        set_text(oid_config, "SchemeOverride", "https")
         set_bool(oid_config, "NewPath", True)
         if canonical_links is not None:
             oid_config.append(canonical_links)

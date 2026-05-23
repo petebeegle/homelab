@@ -61,6 +61,16 @@ class JellyfinSsoBootstrapTest(unittest.TestCase):
         self.assertNotIn("<OidConfig>", script)
         self.assertNotIn("</OidConfig>", script)
 
+    def test_bootstrap_scripts_force_https_scheme_for_gateway_tls_termination(self) -> None:
+        production = embedded_script_namespace("kubernetes/apps/jellyfin/sso-bootstrap.yaml")
+        oid_config = production["build_oid_config"](None)
+
+        self.assertEqual(oid_config.findtext("SchemeOverride"), "https")
+
+        branch = embedded_script("kubernetes/apps/jellyfin/branch/jellyfin.yaml")
+        self.assertIn("<SchemeOverride>https</SchemeOverride>", branch)
+        self.assertNotIn("<SchemeOverride />", branch)
+
     def test_production_bootstrap_skips_complete_plugin_without_removing_it(self) -> None:
         namespace = embedded_script_namespace("kubernetes/apps/jellyfin/sso-bootstrap.yaml")
 
