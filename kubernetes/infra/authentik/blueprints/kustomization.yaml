@@ -8,6 +8,9 @@ configMapGenerator:
   - name: grafana-oauth-blueprint
     files:
       - grafana-oauth.yaml
+  - name: jellyfin-oauth-blueprint
+    files:
+      - jellyfin-oauth.yaml
   - name: synology-oauth-blueprint
     files:
       - synology-oauth.yaml

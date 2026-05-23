@@ -5,6 +5,8 @@ resources:
   - ./app.yaml
   - ./pvc.yaml
   - ./httproute.yaml
+  - ./secret.yaml
+  - ./sso-bootstrap.yaml
 configMapGenerator:
   - name: jellyfin-values
     namespace: jellyfin
