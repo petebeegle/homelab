@@ -3,7 +3,8 @@ const { expect, test } = require("@playwright/test");
 const baseDomain = process.env.SMOKE_BASE_DOMAIN || "lab.petebeegle.com";
 
 function urlFor(host, path = "/") {
-  return "https://" + host + "." + baseDomain + path;
+  const prefix = host ? host + "." : "";
+  return "https://" + prefix + baseDomain + path;
 }
 
 async function gotoOk(page, url) {
@@ -14,6 +15,11 @@ async function gotoOk(page, url) {
 }
 
 test.describe("homelab routed services", () => {
+  test("homepage serves the dashboard at the root domain", async ({ page }) => {
+    await gotoOk(page, urlFor(""));
+    await expect(page.locator("body")).toContainText(/Home Lab|Core|Operations|Homepage/i);
+  });
+
   test("whoami exercises Gateway TLS and routing", async ({ page }) => {
     await gotoOk(page, urlFor("whoami"));
     await expect(page.locator("body")).toContainText(/Hostname|IP|RemoteAddr|GET \//i);

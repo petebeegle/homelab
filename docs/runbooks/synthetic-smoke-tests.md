@@ -11,6 +11,7 @@ The checks are intentionally deeper than pod readiness and lighter than full aut
 ## Targets
 
 - `whoami.${cluster_domain}` verifies the baseline Gateway TLS path.
+- `${cluster_domain}` verifies the Homepage dashboard route at the root lab domain.
 - `authentik.${cluster_domain}` verifies the SSO start or login page.
 - `monitoring.${cluster_domain}` verifies the Grafana login or landing shell.
 - `jellyfin.${cluster_domain}` verifies the Jellyfin web shell.

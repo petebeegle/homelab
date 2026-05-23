@@ -185,10 +185,12 @@ class VerifyBranchDeployTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("Verify an app branch environment", result.stdout)
 
-    def test_profile_loading_discovers_whoami_and_jellyfin(self) -> None:
+    def test_profile_loading_discovers_whoami_jellyfin_and_homepage(self) -> None:
         profiles = verify.load_smoke_profiles()
 
-        self.assertEqual(set(profiles), {"jellyfin", "whoami"})
+        self.assertEqual(set(profiles), {"homepage", "jellyfin", "whoami"})
+        self.assertEqual(profiles["homepage"].activation_template, "kubernetes/clusters/development/branches/homepage-template.yaml")
+        self.assertEqual(profiles["homepage"].git_repository, "branch-homepage-${branch_slug}")
         self.assertEqual(profiles["whoami"].activation_template, "kubernetes/clusters/development/branches/whoami-template.yaml")
         self.assertEqual(profiles["whoami"].git_repository, "branch-${branch_slug}")
         self.assertEqual(profiles["jellyfin"].git_repository, "branch-jellyfin-${branch_slug}")
@@ -378,6 +380,18 @@ class VerifyBranchDeployTest(unittest.TestCase):
         self.assertTrue(any("get service jellyfin-example-change" in command for command in commands))
         self.assertTrue(any("get httproute jellyfin-example-change -o json" in command for command in commands))
         self.assertTrue(any("run probe-example-change" in command and "curlimages/curl:8.16.0" in command for command in commands))
+
+    def test_homepage_profile_checks_service_route_and_http_probe(self) -> None:
+        runner = FakeRunner()
+        config = self._config(app="homepage")
+
+        verify.assert_smoke_profile(config, verify.load_smoke_profile("homepage"), runner=runner)
+
+        commands = [" ".join(command) for command in runner.commands]
+        self.assertTrue(any("get namespace homepage-example-change" in command for command in commands))
+        self.assertTrue(any("get service homepage-example-change" in command for command in commands))
+        self.assertTrue(any("get httproute homepage-example-change -o json" in command for command in commands))
+        self.assertTrue(any("run probe-example-change" in command and "Home Lab|Branch|Homepage" in command for command in commands))
 
     def test_pvc_assert_requires_bound_phase_and_expected_storage_class(self) -> None:
         verify.assert_pvc_bound(READY_PVC, pvc_name="jellyfin-config-example-change", storage_class="nfs-csi-storage")

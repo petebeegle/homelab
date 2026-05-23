@@ -1,0 +1,105 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homepage-public-config
+  namespace: homepage
+  labels:
+    app.kubernetes.io/name: homepage
+data:
+  settings.yaml: |
+    title: Home Lab
+    description: Homelab services and cluster status
+    target: _self
+    statusStyle: dot
+    hideVersion: true
+    showStats: true
+    layout:
+      Core:
+        style: row
+        columns: 4
+      Media:
+        style: row
+        columns: 4
+      Operations:
+        style: row
+        columns: 4
+  services.yaml: |
+    - Core:
+        - Authentik:
+            icon: authentik.png
+            href: https://authentik.${cluster_domain}
+            description: Single sign-on
+            namespace: authentik
+            app: authentik
+        - Pi-hole:
+            icon: pi-hole.png
+            href: https://pihole.${cluster_domain}
+            description: DNS and ad blocking
+            namespace: pihole
+            app: pihole
+    - Media:
+        - Jellyfin:
+            icon: jellyfin.png
+            href: https://jellyfin.${cluster_domain}
+            description: Media library
+            namespace: jellyfin
+            app: jellyfin
+        - Foundry VTT:
+            icon: foundry-vtt.png
+            href: https://foundry.${cluster_domain}
+            description: Virtual tabletop
+            namespace: foundryvtt
+            app: foundryvtt
+    - Operations:
+        - Grafana:
+            icon: grafana.png
+            href: https://monitoring.${cluster_domain}
+            description: Observability
+            namespace: monitoring
+            app: grafana
+        - Whoami:
+            icon: mdi-test-tube
+            href: https://whoami.${cluster_domain}
+            description: Gateway routing canary
+            namespace: whoami
+            app: whoami
+  bookmarks.yaml: |
+    - Repositories:
+        - Homelab:
+            - abbr: Git
+              href: https://github.com/petebeegle/homelab
+  widgets.yaml: |
+    - kubernetes:
+        cluster:
+          show: true
+          cpu: true
+          memory: true
+          showLabel: true
+          label: cluster
+        nodes:
+          show: true
+          cpu: true
+          memory: true
+          showLabel: true
+    - search:
+        provider: duckduckgo
+        target: _blank
+    - datetime:
+        text_size: xl
+        format:
+          dateStyle: long
+          timeStyle: short
+  kubernetes.yaml: |
+    mode: cluster
+    ingress: false
+    traefik: false
+    gateway: true
+  docker.yaml: |
+    {}
+  custom.css: |
+    :root {
+      --homepage-dashboard-note: "homelab-public-config";
+    }
+  custom.js: |
+    // Public Homepage custom JavaScript intentionally left minimal.

@@ -1,6 +1,6 @@
 # Development Tools
 
-`verify_branch_deploy.py` is the canonical live acceptance helper for app-scoped development branch environments. It loads smoke profiles from `tools/development/smoke-profiles/` and currently supports `whoami` and `jellyfin`.
+`verify_branch_deploy.py` is the canonical live acceptance helper for app-scoped development branch environments. It loads smoke profiles from `tools/development/smoke-profiles/` and currently supports `whoami`, `jellyfin`, and `homepage`.
 
 Operational authority lives in [Development Cluster](../../docs/runbooks/development-cluster.md). Start there for prerequisites, cleanup expectations, and what this tool proves.
 
@@ -12,6 +12,12 @@ The Jellyfin profile verifies the branch namespace, Flux Kustomization and HelmR
 
 ```sh
 python3 tools/development/verify_branch_deploy.py --app jellyfin --branch codex/jellyfin-change --slug jellyfin-change --push
+```
+
+The Homepage profile verifies the branch namespace, active pod readiness, Service existence, HTTPRoute attachment, and an in-cluster HTTP probe against the dashboard shell:
+
+```sh
+python3 tools/development/verify_branch_deploy.py --app homepage --branch codex/homepage-change --slug homepage-change --push
 ```
 
 Use `--include-cluster-base` to first reconcile the development base from `--branch` in the known order and restore the `flux-system` GitRepository to `main` before the tool exits:
