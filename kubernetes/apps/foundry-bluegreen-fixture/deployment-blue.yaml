@@ -34,7 +34,7 @@ spec:
               mountPath: /work
       containers:
         - name: http
-          image: nginx:1.31.0-alpine
+          image: nginx:1.31.1-alpine
           ports:
             - name: http
               containerPort: 80
