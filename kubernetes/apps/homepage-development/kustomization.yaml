@@ -33,14 +33,10 @@ patches:
                   icon: homepage.png
                   href: https://homepage.${cluster_domain}
                   description: Development dashboard
-                  namespace: homepage
-                  app: homepage
               - Whoami:
                   icon: mdi-test-tube
                   href: https://whoami.${cluster_domain}
                   description: Gateway routing canary
-                  namespace: whoami
-                  app: whoami
         bookmarks.yaml: |
           - Repositories:
               - Homelab:
