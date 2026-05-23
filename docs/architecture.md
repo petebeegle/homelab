@@ -39,7 +39,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `production` | `nfs_server` | `192.168.30.99` |
 | `production` | `wildcard_cert_name` | `wildcard-lab-petebeegle-com` |
 | `development` | `cilium_operator_replicas` | `1` |
-| `development` | `cluster_domain` | `development.lab.petebeegle.com` |
+| `development` | `cluster_domain` | `dev.lab.petebeegle.com` |
 | `development` | `cluster_env` | `development` |
 | `development` | `gateway_external_ip` | `192.168.40.225` |
 | `development` | `gateway_external_passthrough_ip` | `192.168.40.226` |
@@ -47,9 +47,9 @@ This document is generated for agentic repo navigation. It records relationships
 | `development` | `gateway_internal_ip` | `192.168.30.225` |
 | `development` | `gateway_internal_pool` | `192.168.30.224/28` |
 | `development` | `gateway_passthrough_ip` | `192.168.30.226` |
-| `development` | `letsencrypt_server` | `https://acme-staging-v02.api.letsencrypt.org/directory` |
+| `development` | `letsencrypt_server` | `https://acme-v02.api.letsencrypt.org/directory` |
 | `development` | `nfs_server` | `192.168.30.99` |
-| `development` | `wildcard_cert_name` | `wildcard-development-lab-petebeegle-com` |
+| `development` | `wildcard_cert_name` | `wildcard-dev-lab-petebeegle-com` |
 
 ## Flux Dependencies
 
@@ -145,7 +145,7 @@ This document is generated for agentic repo navigation. It records relationships
 | --- | --- | --- | --- | --- |
 | `HTTPRoute` | `authentik/authentik` | `authentik.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `authentik-server:80` |
 | `HTTPRoute` | `external/synology-route` | `synology.petebeegle.com` | `gateway/internal/synology-https-gateway` | `synology-proxy:8080` |
-| `HTTPRoute` | `foundry-bluegreen-fixture/foundry-fixture-green-preview` | `foundry-green-preview.development.lab.petebeegle.com` | `gateway/internal/https-gateway` | `foundry-fixture-green:80` |
+| `HTTPRoute` | `foundry-bluegreen-fixture/foundry-fixture-green-preview` | `foundry-green-preview.dev.lab.petebeegle.com` | `gateway/internal/https-gateway` | `foundry-fixture-green:80` |
 | `HTTPRoute` | `foundryvtt/foundryvtt-public` | `foundry.petebeegle.com` | `gateway/public/http-gateway` | `foundryvtt:80` |
 | `HTTPRoute` | `foundryvtt/foundryvtt` | `foundry.${cluster_domain}` | `gateway/internal/https-gateway` | `foundryvtt:80` |
 | `HTTPRoute` | `gateway/https-redirect` | `*.${cluster_domain}, ${cluster_domain}` | `gateway/internal/http-gateway, gateway/external/http-gateway` | `(none)` |

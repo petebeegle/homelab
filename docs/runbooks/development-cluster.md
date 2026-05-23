@@ -20,10 +20,10 @@ Use this runbook to create, bootstrap, test, and clean up the dedicated developm
 - Cluster name: `homelab-development`
 - Endpoint: `https://192.168.30.170:6443`
 - Default node: VM `170` on `pve04`, IP `192.168.30.170`, single schedulable control-plane node, 4 CPU, 24576 MB memory, 180 GB disk
-- Domain: `development.lab.petebeegle.com`
+- Domain: `dev.lab.petebeegle.com`
 - LoadBalancer pools: internal `192.168.30.224/28`, external `192.168.40.224/28`
 - Gateway IPs: internal `192.168.30.225`, passthrough `192.168.30.226`, external `192.168.40.225`, external passthrough `192.168.40.226`
-- ACME: Let's Encrypt staging through the shared Cloudflare issuer
+- ACME: trusted Let's Encrypt production issuance through the shared Cloudflare issuer
 
 The development base intentionally includes CRDs, Cilium, cert-manager/certs, Gateway API, NFS CSI, and whoami. Authentik, games/media apps, Cloudflare tunnels, Renovate, VPN, and the full monitoring stack are omitted to keep the single-node cluster resource-conscious and to avoid production-only secrets or traffic paths unless a test explicitly needs them.
 
@@ -125,7 +125,7 @@ kd get httproute -A
 Branch environments are for app-scoped validation on the development cluster. Use `branch_slug` for all uniqueness and route hostnames:
 
 ```text
-<app>-${branch_slug}.development.lab.petebeegle.com
+<app>-${branch_slug}.dev.lab.petebeegle.com
 ```
 
 Use `tools/development/verify_branch_deploy.py` as the canonical path for future branch validation. The tool loads JSON smoke profiles from `tools/development/smoke-profiles/`, renders the matching activation template, applies it directly to the development cluster, forces Flux reconciliation, checks the branch namespace and active pods, runs profile resource checks, and then removes the temporary branch Flux resources unless `--keep` is set. Automated profiles currently cover `whoami` and `jellyfin`.
@@ -239,7 +239,7 @@ Local manifest verification does not require pushing a branch:
 
 ```sh
 export branch_slug=example
-export cluster_domain=development.lab.petebeegle.com
+export cluster_domain=dev.lab.petebeegle.com
 kubectl kustomize kubernetes/apps/whoami/branch | flux envsubst --strict
 kubectl kustomize kubernetes/apps/jellyfin/branch | flux envsubst --strict
 

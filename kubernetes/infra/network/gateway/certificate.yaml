@@ -8,6 +8,7 @@ spec:
   secretName: ${wildcard_cert_name}
   dnsNames:
     - "*.${cluster_domain}"
+    - ${cluster_domain}
   issuerRef:
     name: cloudflare
     kind: ClusterIssuer

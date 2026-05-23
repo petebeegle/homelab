@@ -10,7 +10,7 @@ spec:
       namespace: gateway
       sectionName: https-gateway
   hostnames:
-    - foundry-green-preview.development.lab.petebeegle.com
+    - foundry-green-preview.dev.lab.petebeegle.com
   rules:
     - matches:
         - path:
