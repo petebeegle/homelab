@@ -6,5 +6,6 @@ resources:
   - cert-manager.yaml
   - nfs-csi.yaml
   - cilium.yaml
+  - metrics-server.yaml
   - certs.yaml
   - gateway.yaml

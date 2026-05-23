@@ -7,6 +7,7 @@ resources:
   - grafana-operator.yaml
   - nfs-csi.yaml
   - cilium.yaml
+  - metrics-server.yaml
   - certs.yaml
   - gateway.yaml
   - vpn.yaml
