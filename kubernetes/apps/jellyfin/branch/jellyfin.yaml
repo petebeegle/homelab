@@ -54,23 +54,61 @@ data:
     plugin_dir = config_root / "plugins" / f"SSO Authentication_{plugin_version}"
     plugin_config = config_root / "plugins" / "configurations" / "SSO-Auth.xml"
     branding_config = config_root / "config" / "branding.xml"
+    expected_plugin_files = (
+        "SSO-Auth.dll",
+        "Duende.IdentityModel.dll",
+        "Duende.IdentityModel.OidcClient.dll",
+        "meta.json",
+    )
     public_url = os.environ["JELLYFIN_PUBLIC_URL"].rstrip("/")
     oid_endpoint = os.environ["JELLYFIN_OIDC_ENDPOINT"]
     client_secret = os.environ["JELLYFIN_OAUTH_CLIENT_SECRET"]
 
+    def plugin_install_complete(path=None):
+        plugin_path = plugin_dir if path is None else path
+        return plugin_path.is_dir() and all((plugin_path / name).is_file() for name in expected_plugin_files)
+
     try:
         plugin_dir.parent.mkdir(parents=True, exist_ok=True)
-        with tempfile.TemporaryDirectory() as temp_dir:
-            archive = Path(temp_dir) / "sso-authentication.zip"
-            with urllib.request.urlopen(plugin_url, timeout=60) as response:
-                archive.write_bytes(response.read())
-            if hashlib.sha256(archive.read_bytes()).hexdigest() != plugin_sha256:
-                raise RuntimeError("SSO Authentication plugin checksum mismatch")
-            if plugin_dir.exists():
-                shutil.rmtree(plugin_dir)
-            plugin_dir.mkdir(parents=True)
-            with zipfile.ZipFile(archive) as plugin_zip:
-                plugin_zip.extractall(plugin_dir)
+        if plugin_install_complete():
+            print(f"SSO Authentication plugin {plugin_version} already installed; skipping install")
+        else:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                archive = Path(temp_dir) / "sso-authentication.zip"
+                with urllib.request.urlopen(plugin_url, timeout=60) as response:
+                    archive.write_bytes(response.read())
+                if hashlib.sha256(archive.read_bytes()).hexdigest() != plugin_sha256:
+                    raise RuntimeError("SSO Authentication plugin checksum mismatch")
+
+                install_parent = plugin_dir.parent
+                with tempfile.TemporaryDirectory(
+                    prefix=f".{plugin_dir.name}.install-",
+                    dir=install_parent,
+                ) as staged_dir:
+                    staged_plugin_dir = Path(staged_dir) / plugin_dir.name
+                    staged_plugin_dir.mkdir()
+                    with zipfile.ZipFile(archive) as plugin_zip:
+                        plugin_zip.extractall(staged_plugin_dir)
+
+                    if not plugin_install_complete(staged_plugin_dir):
+                        missing = [
+                            name for name in expected_plugin_files
+                            if not (staged_plugin_dir / name).is_file()
+                        ]
+                        raise RuntimeError(
+                            "SSO Authentication plugin archive is incomplete; "
+                            f"missing expected files: {', '.join(missing)}"
+                        )
+
+                    if plugin_dir.exists():
+                        try:
+                            shutil.rmtree(plugin_dir)
+                        except OSError as exc:
+                            raise RuntimeError(
+                                "Existing SSO Authentication plugin directory is incomplete "
+                                "and could not be replaced safely; stop Jellyfin and retry"
+                            ) from exc
+                    staged_plugin_dir.rename(plugin_dir)
 
         plugin_config.parent.mkdir(parents=True, exist_ok=True)
         plugin_config.write_text(f"""<?xml version='1.0' encoding='utf-8'?>

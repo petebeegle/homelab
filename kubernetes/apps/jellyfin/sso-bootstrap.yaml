@@ -29,6 +29,12 @@ data:
     PLUGIN_DIR = CONFIG_ROOT / "plugins" / f"SSO Authentication_{PLUGIN_VERSION}"
     PLUGIN_CONFIG = CONFIG_ROOT / "plugins" / "configurations" / "SSO-Auth.xml"
     BRANDING_CONFIG = CONFIG_ROOT / "config" / "branding.xml"
+    EXPECTED_PLUGIN_FILES = (
+        "SSO-Auth.dll",
+        "Duende.IdentityModel.dll",
+        "Duende.IdentityModel.OidcClient.dll",
+        "meta.json",
+    )
 
     def indent(element, level=0):
         spacing = "\n" + level * "  "
@@ -70,8 +76,16 @@ data:
         string = key.find("string")
         return string.text if string is not None else None
 
+    def plugin_install_complete(path=None):
+        plugin_path = PLUGIN_DIR if path is None else path
+        return plugin_path.is_dir() and all((plugin_path / name).is_file() for name in EXPECTED_PLUGIN_FILES)
+
     def install_plugin():
         PLUGIN_DIR.parent.mkdir(parents=True, exist_ok=True)
+        if plugin_install_complete():
+            print(f"SSO Authentication plugin {PLUGIN_VERSION} already installed; skipping install")
+            return
+
         with tempfile.TemporaryDirectory() as temp_dir:
             archive = Path(temp_dir) / "sso-authentication.zip"
             with urllib.request.urlopen(PLUGIN_URL, timeout=60) as response:
@@ -79,11 +93,36 @@ data:
             digest = hashlib.sha256(archive.read_bytes()).hexdigest()
             if digest != PLUGIN_SHA256:
                 raise RuntimeError("SSO Authentication plugin checksum mismatch")
-            if PLUGIN_DIR.exists():
-                shutil.rmtree(PLUGIN_DIR)
-            PLUGIN_DIR.mkdir(parents=True)
-            with zipfile.ZipFile(archive) as plugin_zip:
-                plugin_zip.extractall(PLUGIN_DIR)
+
+            install_parent = PLUGIN_DIR.parent
+            with tempfile.TemporaryDirectory(
+                prefix=f".{PLUGIN_DIR.name}.install-",
+                dir=install_parent,
+            ) as staged_dir:
+                staged_plugin_dir = Path(staged_dir) / PLUGIN_DIR.name
+                staged_plugin_dir.mkdir()
+                with zipfile.ZipFile(archive) as plugin_zip:
+                    plugin_zip.extractall(staged_plugin_dir)
+
+                if not plugin_install_complete(staged_plugin_dir):
+                    missing = [
+                        name for name in EXPECTED_PLUGIN_FILES
+                        if not (staged_plugin_dir / name).is_file()
+                    ]
+                    raise RuntimeError(
+                        "SSO Authentication plugin archive is incomplete; "
+                        f"missing expected files: {', '.join(missing)}"
+                    )
+
+                if PLUGIN_DIR.exists():
+                    try:
+                        shutil.rmtree(PLUGIN_DIR)
+                    except OSError as exc:
+                        raise RuntimeError(
+                            "Existing SSO Authentication plugin directory is incomplete "
+                            "and could not be replaced safely; stop Jellyfin and retry"
+                        ) from exc
+                staged_plugin_dir.rename(PLUGIN_DIR)
 
     def build_oid_config(canonical_links):
         oid_config = ET.Element("PluginConfiguration")
