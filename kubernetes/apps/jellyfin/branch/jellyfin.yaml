@@ -80,7 +80,7 @@ data:
         <item>
           <key><string>authentik</string></key>
           <value>
-            <OidConfig>
+            <PluginConfiguration>
               <OidEndpoint>{escape(oid_endpoint)}</OidEndpoint>
               <OidClientId>jellyfin</OidClientId>
               <OidSecret>{escape(client_secret)}</OidSecret>
@@ -110,7 +110,7 @@ data:
               <DoNotValidateEndpoints>false</DoNotValidateEndpoints>
               <DoNotValidateIssuerName>false</DoNotValidateIssuerName>
               <DoNotLoadProfile>false</DoNotLoadProfile>
-            </OidConfig>
+            </PluginConfiguration>
           </value>
         </item>
       </OidConfigs>

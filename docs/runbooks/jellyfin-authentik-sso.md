@@ -4,7 +4,7 @@ scope:
   - jellyfin
   - authentik
   - sso
-last_verified: 2026-05-17
+last_verified: 2026-05-23
 ---
 
 # Jellyfin Authentik SSO
@@ -12,6 +12,8 @@ last_verified: 2026-05-17
 Jellyfin web SSO is provided by the 9p4 SSO Authentication plugin, pinned in GitOps to release `v4.0.0.4`. The Authentik setup follows the community integration guide at <https://integrations.goauthentik.io/media/jellyfin/>.
 
 Authentik owns the `jellyfin` OAuth2/OpenID provider and Jellyfin application. The provider name visible to Jellyfin is `authentik`, with client ID `jellyfin`, redirect URL `https://jellyfin.${cluster_domain}/sso/OID/redirect/authentik`, and launch URL `https://jellyfin.${cluster_domain}/sso/OID/start/authentik`.
+
+The GitOps bootstrap writes the plugin configuration at `/config/plugins/configurations/SSO-Auth.xml`. For plugin `v4.0.0.4`, each OIDC provider dictionary value must be rooted as `<PluginConfiguration>` inside the `<value>` element. If it is written as `<OidConfig>`, the plugin rewrites `OidConfigs` empty and `/sso/OID/start/authentik` fails with `Provider does not exist`.
 
 Group membership is exposed through the `groups` OIDC scope and claim. Users must be in `Jellyfin Users` or `Jellyfin Admins` to pass plugin authorization. Members of `Jellyfin Admins` are mapped to Jellyfin administrators.
 
