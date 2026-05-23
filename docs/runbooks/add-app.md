@@ -322,7 +322,7 @@ Add `- name: nfs-csi` under `dependsOn` when the app uses NFS-backed PVCs.
 
 ## Branch-Aware App Overlay
 
-Use `branch_slug`, not slot terminology. Branch app hostnames must follow `<app>-${branch_slug}.development.lab.petebeegle.com`, and branch resources must be unique enough to coexist with the development base and other branch apps.
+Use `branch_slug`, not slot terminology. Branch app hostnames must follow `<app>-${branch_slug}.dev.lab.petebeegle.com`, and branch resources must be unique enough to coexist with the development base and other branch apps.
 
 For raw manifests, create an overlay such as `kubernetes/apps/<app-name>/branch/` with:
 

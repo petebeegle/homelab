@@ -22,6 +22,7 @@ It exposes DNS on TCP and UDP port 53 and is selected into that pool with the `h
 
 CoreDNS provides split-DNS behavior for VPN clients:
 
+- `dev.lab.petebeegle.com` and `*.dev.lab.petebeegle.com` A queries return the development external Gateway IP `192.168.40.225`.
 - `*.lab.petebeegle.com` A queries return `192.168.40.241`.
 - All other queries forward to UniFi DNS at `192.168.1.1`.
 
