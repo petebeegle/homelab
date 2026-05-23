@@ -138,7 +138,7 @@ data:
               <RoleClaim>groups</RoleClaim>
               <OidScopes><string>groups</string></OidScopes>
               <DefaultProvider />
-              <SchemeOverride />
+              <SchemeOverride>https</SchemeOverride>
               <NewPath>true</NewPath>
               <CanonicalLinks />
               <DefaultUsernameClaim>preferred_username</DefaultUsernameClaim>
