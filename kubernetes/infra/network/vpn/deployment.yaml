@@ -20,7 +20,7 @@ spec:
     spec:
       initContainers:
         - name: wg-easy-defaults
-          image: ghcr.io/wg-easy/wg-easy:15.2.2
+          image: ghcr.io/wg-easy/wg-easy:15.3.0
           imagePullPolicy: IfNotPresent
           workingDir: /app/server
           command:
@@ -44,7 +44,7 @@ spec:
               name: wg-easy-defaults
               readOnly: true
         - name: iptables-nft-shims
-          image: ghcr.io/wg-easy/wg-easy:15.2.2
+          image: ghcr.io/wg-easy/wg-easy:15.3.0
           imagePullPolicy: IfNotPresent
           command:
             - /bin/sh
@@ -84,7 +84,7 @@ spec:
                 configMapKeyRef:
                   name: wireguard-global-config
                   key: default_dns
-          image: ghcr.io/wg-easy/wg-easy:15.2.2
+          image: ghcr.io/wg-easy/wg-easy:15.3.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 30000
