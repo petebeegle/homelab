@@ -18,7 +18,7 @@ This document is generated for agentic repo navigation. It records relationships
 - Root Kustomization: `kubernetes/clusters/development/kustomization.yaml`.
 - Root resources: `flux-system`, `cluster-vars.yaml`, `infra`, `apps`.
 - Infra activation list: `crds.yaml`, `cert-manager.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `certs.yaml`, `gateway.yaml`.
-- App activation list: `whoami.yaml`, `foundry-bluegreen-fixture.yaml`.
+- App activation list: `whoami.yaml`, `homepage.yaml`, `foundry-bluegreen-fixture.yaml`.
 
 - Branch environment templates: `whoami-template.yaml`, `jellyfin-template.yaml`, `homepage-template.yaml`.
 
@@ -97,6 +97,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `production` | `app-valheim` | `./kubernetes/apps/valheim` | `gateway`, `nfs-csi` | `cluster-vars` | `sops` |
 | `production` | `app-whoami` | `./kubernetes/apps/whoami` | `gateway` | `cluster-vars` | `no` |
 | `development` | `app-foundry-bluegreen-fixture` | `./kubernetes/apps/foundry-bluegreen-fixture` | `gateway`, `nfs-csi` | `cluster-vars` | `no` |
+| `development` | `app-homepage` | `./kubernetes/apps/homepage-development` | `gateway` | `cluster-vars` | `no` |
 | `development` | `app-whoami` | `./kubernetes/apps/whoami` | `gateway` | `cluster-vars` | `no` |
 
 ## Kustomize Resource Relationships
@@ -133,6 +134,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/apps/foundryvtt` | `namespace.yaml`, `pvc.yaml`, `secret.yaml`, `deployment.yaml`, `service.yaml`, `httproute.yaml`, `httproute-public.yaml` |
 | `kubernetes/apps/homepage/branch` | `homepage.yaml` |
 | `kubernetes/apps/homepage` | `namespace.yaml`, `rbac.yaml`, `configmap.yaml`, `deployment.yaml`, `service.yaml`, `pdb.yaml`, `httproute.yaml` |
+| `kubernetes/apps/homepage-development` | `../homepage` |
 | `kubernetes/apps/jellyfin/branch` | `jellyfin.yaml` |
 | `kubernetes/apps/jellyfin` | `./app.yaml`, `./pvc.yaml`, `./httproute.yaml` |
 | `kubernetes/apps/pihole` | `app.yaml`, `secret.yaml`, `httproute.yaml` |
