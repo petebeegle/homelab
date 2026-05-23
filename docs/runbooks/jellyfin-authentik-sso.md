@@ -13,6 +13,8 @@ Jellyfin web SSO is provided by the 9p4 SSO Authentication plugin, pinned in Git
 
 Authentik owns the `jellyfin` OAuth2/OpenID provider and Jellyfin application. The provider name visible to Jellyfin is `authentik`, with client ID `jellyfin`, redirect URL `https://jellyfin.${cluster_domain}/sso/OID/redirect/authentik`, and launch URL `https://jellyfin.${cluster_domain}/sso/OID/start/authentik`.
 
+The Authentik provider must allow the `authorization_code` grant type, with `refresh_token` enabled alongside it for the normal web authorization-code flow. If Authentik redirects back to Jellyfin with `error=invalid_request&error_description=The request is otherwise malformed` and the Authentik server logs show `Invalid grant_type for provider` with `grant_type=authorization_code`, confirm the Jellyfin provider blueprint includes those grant types.
+
 The GitOps bootstrap writes the plugin configuration at `/config/plugins/configurations/SSO-Auth.xml`. For plugin `v4.0.0.4`, each OIDC provider dictionary value must be rooted as `<PluginConfiguration>` inside the `<value>` element. If it is written as `<OidConfig>`, the plugin rewrites `OidConfigs` empty and `/sso/OID/start/authentik` fails with `Provider does not exist`.
 
 Jellyfin sits behind Gateway API TLS termination, so the upstream hop into the pod is HTTP even though the public route is HTTPS. The Authentik provider strictly allows `https://jellyfin.${cluster_domain}/sso/OID/redirect/authentik`; keep the plugin `<SchemeOverride>` set to `https` so Jellyfin generates that redirect URI instead of an `http://` callback.

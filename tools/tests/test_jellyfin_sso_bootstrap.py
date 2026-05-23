@@ -12,6 +12,27 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
+def jellyfin_oauth_provider_attr_lines() -> list[str]:
+    path = REPO_ROOT / "kubernetes/infra/authentik/blueprints/jellyfin-oauth.yaml"
+    lines = path.read_text(encoding="utf-8").splitlines()
+    provider_start = next(
+        index
+        for index, line in enumerate(lines)
+        if line == "    model: authentik_providers_oauth2.oauth2provider"
+        and index > 0
+        and lines[index - 2] == "  - identifiers:"
+        and lines[index - 1] == "      name: jellyfin"
+    )
+    attrs_start = next(
+        index for index in range(provider_start, len(lines)) if lines[index] == "    attrs:"
+    )
+    provider_end = next(
+        (index for index in range(attrs_start + 1, len(lines)) if lines[index].startswith("  - identifiers:")),
+        len(lines),
+    )
+    return lines[attrs_start + 1 : provider_end]
+
+
 def embedded_script(path: str) -> str:
     lines = (REPO_ROOT / path).read_text(encoding="utf-8").splitlines()
     try:
@@ -44,6 +65,17 @@ def embedded_script_namespace(path: str) -> dict[str, object]:
 
 
 class JellyfinSsoBootstrapTest(unittest.TestCase):
+    def test_authentik_jellyfin_provider_allows_authorization_code_with_refresh_tokens(self) -> None:
+        attrs = jellyfin_oauth_provider_attr_lines()
+        grant_types_start = attrs.index("      grant_types:")
+        grant_types: list[str] = []
+        for line in attrs[grant_types_start + 1 :]:
+            if not line.startswith("        - "):
+                break
+            grant_types.append(line.removeprefix("        - "))
+
+        self.assertEqual(grant_types, ["authorization_code", "refresh_token"])
+
     def test_production_bootstrap_writes_oid_value_with_plugin_configuration_root(self) -> None:
         script = embedded_script("kubernetes/apps/jellyfin/sso-bootstrap.yaml")
 
