@@ -86,7 +86,7 @@ data:
                 plugin_zip.extractall(PLUGIN_DIR)
 
     def build_oid_config(canonical_links):
-        oid_config = ET.Element("OidConfig")
+        oid_config = ET.Element("PluginConfiguration")
         set_text(oid_config, "OidEndpoint", OID_ENDPOINT)
         set_text(oid_config, "OidClientId", CLIENT_ID)
         set_text(oid_config, "OidSecret", CLIENT_SECRET)
@@ -140,9 +140,11 @@ data:
 
         for item in list(oid_configs.findall("item")):
             if key_text(item) == PROVIDER_NAME:
-                existing = item.find("./value/OidConfig/CanonicalLinks")
-                if existing is not None:
-                    canonical_links = existing
+                for path in ("./value/PluginConfiguration/CanonicalLinks", "./value/OidConfig/CanonicalLinks"):
+                    existing = item.find(path)
+                    if existing is not None:
+                        canonical_links = existing
+                        break
                 oid_configs.remove(item)
 
         item = ET.SubElement(oid_configs, "item")
