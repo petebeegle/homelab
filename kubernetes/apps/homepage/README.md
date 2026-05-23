@@ -4,7 +4,7 @@ Homepage serves the LAN and WireGuard dashboard at `https://${cluster_domain}`. 
 
 ## Configuration
 
-Public, non-sensitive configuration lives in `ConfigMap/homepage-public-config` in this directory. The app also mounts an optional `ConfigMap/homepage-private-config` from `homelab-private`; the private ConfigMap may be absent and startup must still succeed.
+Public, non-sensitive configuration lives in `ConfigMap/homepage-public-config` in `base/configmap.yaml`. The app also mounts an optional `ConfigMap/homepage-private-config` from `homelab-private`; the private ConfigMap may be absent and startup must still succeed.
 
 Homepage reads merged files from `/app/config`. Public and private files are mounted read-only under separate directories, then an initContainer builds `/app/config` before the app starts. A sidecar re-runs the same merge periodically while the app is running.
 
