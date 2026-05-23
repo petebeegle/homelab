@@ -34,3 +34,9 @@ patches:
       - op: replace
         path: /spec/hostnames/0
         value: homepage.${cluster_domain}
+      - op: replace
+        path: /spec/parentRefs/0/sectionName
+        value: https-gateway
+      - op: replace
+        path: /spec/parentRefs/1/sectionName
+        value: https-gateway
