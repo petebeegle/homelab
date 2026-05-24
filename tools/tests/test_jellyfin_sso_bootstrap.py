@@ -192,6 +192,10 @@ class JellyfinSsoBootstrapTest(unittest.TestCase):
   <EnableDecodingColorDepth10Hevc>false</EnableDecodingColorDepth10Hevc>
   <EnableDecodingColorDepth10Vp9>false</EnableDecodingColorDepth10Vp9>
   <PreferSystemNativeHwDecoder>false</PreferSystemNativeHwDecoder>
+  <EnableSegmentDeletion>false</EnableSegmentDeletion>
+  <EnableThrottling>false</EnableThrottling>
+  <ThrottleDelaySeconds>0</ThrottleDelaySeconds>
+  <SegmentKeepSeconds>0</SegmentKeepSeconds>
   <HardwareDecodingCodecs>
     <string>h264</string>
     <string>vc1</string>
@@ -212,6 +216,10 @@ class JellyfinSsoBootstrapTest(unittest.TestCase):
                 self.assertEqual(root.findtext("EnableDecodingColorDepth10Hevc"), "true")
                 self.assertEqual(root.findtext("EnableDecodingColorDepth10Vp9"), "true")
                 self.assertEqual(root.findtext("PreferSystemNativeHwDecoder"), "true")
+                self.assertEqual(root.findtext("EnableSegmentDeletion"), "true")
+                self.assertEqual(root.findtext("EnableThrottling"), "true")
+                self.assertEqual(root.findtext("ThrottleDelaySeconds"), "180")
+                self.assertEqual(root.findtext("SegmentKeepSeconds"), "720")
                 self.assertEqual(
                     [item.text for item in root.findall("./HardwareDecodingCodecs/string")],
                     ["h264", "hevc", "mpeg2video", "vc1", "vp8", "vp9"],

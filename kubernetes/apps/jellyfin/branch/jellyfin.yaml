@@ -119,6 +119,10 @@ data:
         set_bool(root, "EnableDecodingColorDepth10Hevc", True)
         set_bool(root, "EnableDecodingColorDepth10Vp9", True)
         set_bool(root, "PreferSystemNativeHwDecoder", True)
+        set_bool(root, "EnableSegmentDeletion", True)
+        set_bool(root, "EnableThrottling", True)
+        set_text(root, "ThrottleDelaySeconds", "180")
+        set_text(root, "SegmentKeepSeconds", "720")
         set_string_array(root, "HardwareDecodingCodecs", HARDWARE_DECODING_CODECS)
 
         indent(root)
@@ -344,6 +348,26 @@ spec:
       - name: jellyfin-sso-bootstrap
         configMap:
           name: jellyfin-${branch_slug}-sso-bootstrap
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              group: apps
+              version: v1
+              kind: Deployment
+              name: jellyfin-${branch_slug}
+            patch: |
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: jellyfin-${branch_slug}
+              spec:
+                template:
+                  spec:
+                    volumes:
+                      - name: cache
+                        emptyDir:
+                          sizeLimit: 40Gi
 ---
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: ReferenceGrant
