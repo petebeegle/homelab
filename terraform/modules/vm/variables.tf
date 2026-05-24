@@ -26,6 +26,36 @@ variable "additional_tags" {
   default = []
 }
 
+variable "pci_passthrough_devices" {
+  description = "Optional host PCI devices to attach to the VM. Set exactly one of id or mapping for each device."
+  type = list(object({
+    id       = optional(string)
+    mapping  = optional(string)
+    mdev     = optional(string)
+    pcie     = optional(bool)
+    rom_file = optional(string)
+    rombar   = optional(bool)
+    xvga     = optional(bool)
+  }))
+  default = []
+
+  validation {
+    condition = alltrue([
+      for device in var.pci_passthrough_devices :
+      length([
+        for value in [device.id, device.mapping] : value
+        if value != null && value != ""
+      ]) == 1
+    ])
+    error_message = "Each PCI passthrough device must set exactly one non-empty value for either id or mapping."
+  }
+
+  validation {
+    condition     = length(var.pci_passthrough_devices) <= 16
+    error_message = "Proxmox supports at most 16 host PCI devices per VM."
+  }
+}
+
 variable "network" {
   description = "Network configuration for the VM"
   type = object({

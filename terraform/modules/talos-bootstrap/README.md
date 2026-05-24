@@ -48,6 +48,7 @@ No modules.
 | <a name="input_installer"></a> [installer](#input\_installer) | Installer url to load | `string` | n/a | yes |
 | <a name="input_kubeconfig_output_path"></a> [kubeconfig\_output\_path](#input\_kubeconfig\_output\_path) | Optional path where the generated kubeconfig should be written | `string` | `null` | no |
 | <a name="input_kubernetes_version"></a> [kubernetes\_version](#input\_kubernetes\_version) | Kubernetes version for Talos-generated component images and bootstrap Cilium template compatibility | `string` | n/a | yes |
+| <a name="input_node_labels"></a> [node\_labels](#input\_node\_labels) | Kubernetes node labels to apply through Talos machine.nodeLabels, keyed by node address. | `map(map(string))` | `{}` | no |
 | <a name="input_talos_version"></a> [talos\_version](#input\_talos\_version) | The version of Talos to use for the cluster | `string` | n/a | yes |
 | <a name="input_talosconfig_output_path"></a> [talosconfig\_output\_path](#input\_talosconfig\_output\_path) | Optional path where the generated talosconfig should be written | `string` | `null` | no |
 | <a name="input_worker_nodes"></a> [worker\_nodes](#input\_worker\_nodes) | List of nodes to compose the cluster worker plane | `set(string)` | n/a | yes |

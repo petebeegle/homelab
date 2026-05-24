@@ -1,3 +1,7 @@
 machine:
   install:
     image: ${install_image}
+%{ if length(node_labels) > 0 ~}
+  nodeLabels:
+    ${indent(4, chomp(yamlencode(node_labels)))}
+%{ endif ~}

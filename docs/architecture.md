@@ -204,10 +204,12 @@ This lists secret manifest presence only. Secret values are not rendered.
 | `development` | Module | `kubernetes_nodes` | `../modules/vm` | `(none)` |
 | `development` | Module | `talos_bootstrap` | `../modules/talos-bootstrap` | `kubernetes_nodes, talos_provision` |
 | `development` | Module | `talos_provision` | `../modules/talos-provision` | `(none)` |
+| `development` | Root resource | `proxmox_hardware_mapping_pci.jellyfin_igpu` | `(root)` | `(none)` |
 | `development` | Root resource | `proxmox_virtual_environment_file.talos_iso` | `(root)` | `talos_provision` |
 | `development` | Root resource | `terraform_data.bootstrap_script` | `(root)` | `talos_bootstrap` |
 | `production` | Module | `kubernetes_nodes` | `../modules/vm` | `(none)` |
 | `production` | Module | `talos_bootstrap` | `../modules/talos-bootstrap` | `kubernetes_nodes, talos_provision` |
 | `production` | Module | `talos_provision` | `../modules/talos-provision` | `(none)` |
+| `production` | Root resource | `proxmox_hardware_mapping_pci.jellyfin_igpu` | `(root)` | `(none)` |
 | `production` | Root resource | `proxmox_virtual_environment_file.talos_iso` | `(root)` | `talos_provision` |
 | `production` | Root resource | `terraform_data.bootstrap_script` | `(root)` | `talos_bootstrap` |

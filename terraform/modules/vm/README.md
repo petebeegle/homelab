@@ -35,6 +35,7 @@ No modules.
 | <a name="input_disk_size"></a> [disk\_size](#input\_disk\_size) | Size of the boot disk in gigabytes | `number` | `40` | no |
 | <a name="input_memory"></a> [memory](#input\_memory) | Amount of dedicated memory (megabytes) to assign to the VM | `number` | n/a | yes |
 | <a name="input_network"></a> [network](#input\_network) | Network configuration for the VM | <pre>object({<br/>    address = string<br/>    gateway = string<br/>  })</pre> | n/a | yes |
+| <a name="input_pci_passthrough_devices"></a> [pci\_passthrough\_devices](#input\_pci\_passthrough\_devices) | Optional host PCI devices to attach to the VM. Set exactly one of id or mapping for each device. | <pre>list(object({<br/>    id       = optional(string)<br/>    mapping  = optional(string)<br/>    mdev     = optional(string)<br/>    pcie     = optional(bool)<br/>    rom_file = optional(string)<br/>    rombar   = optional(bool)<br/>    xvga     = optional(bool)<br/>  }))</pre> | `[]` | no |
 | <a name="input_target_node_name"></a> [target\_node\_name](#input\_target\_node\_name) | Name of the node to create the VM on | `string` | n/a | yes |
 | <a name="input_vm_id"></a> [vm\_id](#input\_vm\_id) | Id to assign to the VM | `number` | n/a | yes |
 

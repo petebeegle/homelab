@@ -1,3 +1,45 @@
+locals {
+  jellyfin_igpu_vm_ids = toset([160, 161])
+
+  jellyfin_igpu_pci_maps = [
+    {
+      comment      = "pve01 Intel iGPU for production worker VMID 160"
+      id           = "8086:a780"
+      iommu_group  = 0
+      node         = "pve01"
+      path         = "0000:00:02.0"
+      subsystem_id = "1028:0c79"
+    },
+    {
+      comment      = "pve02 Intel iGPU for production worker VMID 161"
+      id           = "8086:4680"
+      iommu_group  = 0
+      node         = "pve02"
+      path         = "0000:00:02.0"
+      subsystem_id = "1028:0c7b"
+    }
+  ]
+
+  jellyfin_igpu_pci_passthrough_devices = [
+    {
+      mapping = proxmox_hardware_mapping_pci.jellyfin_igpu.name
+    }
+  ]
+
+  node_labels = {
+    for node in var.nodes : node.address => merge(
+      {
+        "homelab.petebeegle.com/proxmox-host" = node.node
+        "homelab.petebeegle.com/vm-id"        = tostring(node.vm_id)
+        "homelab.petebeegle.com/machine-type" = node.machine_type
+      },
+      contains(tolist(local.jellyfin_igpu_vm_ids), node.vm_id) ? {
+        "homelab.petebeegle.com/jellyfin-igpu" = "true"
+      } : {}
+    )
+  }
+}
+
 module "talos_provision" {
   source = "../modules/talos-provision"
 
@@ -12,6 +54,13 @@ resource "proxmox_virtual_environment_file" "talos_iso" {
     path      = module.talos_provision.iso_url
     file_name = module.talos_provision.image_name
   }
+}
+
+resource "proxmox_hardware_mapping_pci" "jellyfin_igpu" {
+  name             = "jellyfin-igpu"
+  comment          = "Production Intel iGPU mapping for Jellyfin hardware transcoding nodes."
+  mediated_devices = false
+  map              = local.jellyfin_igpu_pci_maps
 }
 
 module "kubernetes_nodes" {
@@ -41,6 +90,8 @@ module "kubernetes_nodes" {
   memory    = each.value.memory
   disk_size = each.value.disk_size
 
+  pci_passthrough_devices = contains(tolist(local.jellyfin_igpu_vm_ids), each.value.vm_id) ? local.jellyfin_igpu_pci_passthrough_devices : []
+
   additional_tags = [each.value.machine_type]
 }
 
@@ -59,6 +110,7 @@ module "talos_bootstrap" {
 
   control_nodes = [for node in var.nodes : node.address if node.machine_type == "controlplane"]
   worker_nodes  = [for node in var.nodes : node.address if node.machine_type == "worker"]
+  node_labels   = local.node_labels
 
   allow_scheduling_on_control_planes = false
   cilium_operator_replicas           = 3

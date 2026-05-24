@@ -32,6 +32,7 @@ Keep local shared credentials in ignored `terraform/development/terraform.tfvars
 
 | Name | Type |
 | ---- | ---- |
+| [proxmox_hardware_mapping_pci.jellyfin_igpu](https://registry.terraform.io/providers/bpg/proxmox/0.106.0/docs/resources/hardware_mapping_pci) | resource |
 | [proxmox_virtual_environment_file.talos_iso](https://registry.terraform.io/providers/bpg/proxmox/0.106.0/docs/resources/virtual_environment_file) | resource |
 | [terraform_data.bootstrap_script](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) | resource |
 
