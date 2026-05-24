@@ -5,6 +5,7 @@ import io
 import os
 import tempfile
 import zipfile
+import xml.etree.ElementTree as ET
 from unittest import mock
 from pathlib import Path
 
@@ -172,6 +173,49 @@ class JellyfinSsoBootstrapTest(unittest.TestCase):
 
         self.assertNotIn("if PLUGIN_DIR.exists():\n                shutil.rmtree(PLUGIN_DIR)", production)
         self.assertNotIn("if plugin_dir.exists():\n                shutil.rmtree(plugin_dir)", branch)
+
+    def test_bootstrap_scripts_force_qsv_encoding_settings(self) -> None:
+        for path in (
+            "kubernetes/apps/jellyfin/sso-bootstrap.yaml",
+            "kubernetes/apps/jellyfin/branch/jellyfin.yaml",
+        ):
+            with self.subTest(path=path), tempfile.TemporaryDirectory() as temp_dir:
+                namespace = embedded_script_namespace(path)
+                encoding_config = Path(temp_dir) / "config" / "encoding.xml"
+                encoding_config.parent.mkdir(parents=True)
+                encoding_config.write_text(
+                    """<?xml version='1.0' encoding='utf-8'?>
+<EncodingOptions>
+  <HardwareAccelerationType>none</HardwareAccelerationType>
+  <VaapiDevice>/dev/dri/renderD128</VaapiDevice>
+  <EnableHardwareEncoding>false</EnableHardwareEncoding>
+  <EnableDecodingColorDepth10Hevc>false</EnableDecodingColorDepth10Hevc>
+  <EnableDecodingColorDepth10Vp9>false</EnableDecodingColorDepth10Vp9>
+  <PreferSystemNativeHwDecoder>false</PreferSystemNativeHwDecoder>
+  <HardwareDecodingCodecs>
+    <string>h264</string>
+    <string>vc1</string>
+  </HardwareDecodingCodecs>
+</EncodingOptions>
+""",
+                    encoding="utf-8",
+                )
+
+                namespace["ENCODING_CONFIG"] = encoding_config
+                namespace["configure_encoding"]()
+
+                root = ET.parse(encoding_config).getroot()
+                self.assertEqual(root.findtext("HardwareAccelerationType"), "qsv")
+                self.assertEqual(root.findtext("VaapiDevice"), "/dev/dri/renderD128")
+                self.assertEqual(root.findtext("QsvDevice"), "/dev/dri/renderD128")
+                self.assertEqual(root.findtext("EnableHardwareEncoding"), "true")
+                self.assertEqual(root.findtext("EnableDecodingColorDepth10Hevc"), "true")
+                self.assertEqual(root.findtext("EnableDecodingColorDepth10Vp9"), "true")
+                self.assertEqual(root.findtext("PreferSystemNativeHwDecoder"), "true")
+                self.assertEqual(
+                    [item.text for item in root.findall("./HardwareDecodingCodecs/string")],
+                    ["h264", "hevc", "mpeg2video", "vc1", "vp8", "vp9"],
+                )
 
 
 if __name__ == "__main__":
