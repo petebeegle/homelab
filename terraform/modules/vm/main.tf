@@ -60,6 +60,21 @@ resource "proxmox_virtual_environment_vm" "kubernetes_node" {
     model  = "virtio"
   }
 
+  dynamic "hostpci" {
+    for_each = var.pci_passthrough_devices
+
+    content {
+      device   = "hostpci${hostpci.key}"
+      id       = hostpci.value.id
+      mapping  = hostpci.value.mapping
+      mdev     = hostpci.value.mdev
+      pcie     = hostpci.value.pcie
+      rom_file = hostpci.value.rom_file
+      rombar   = hostpci.value.rombar
+      xvga     = hostpci.value.xvga
+    }
+  }
+
   initialization {
     datastore_id = local.datastore.id
 

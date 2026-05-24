@@ -18,6 +18,7 @@ resource "talos_machine_configuration_apply" "worker_apply" {
   config_patches = [
     templatefile("${path.module}/templates/worker.yaml.tftpl", {
       install_image  = var.installer
+      node_labels    = lookup(var.node_labels, each.key, {})
       cilium_install = data.helm_template.cilium.manifest
     }),
     templatefile("${path.module}/templates/docker_proxy.yaml.tftpl", {

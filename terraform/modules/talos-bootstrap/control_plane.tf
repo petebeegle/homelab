@@ -18,6 +18,7 @@ resource "talos_machine_configuration_apply" "control_plane_apply" {
   config_patches = [
     templatefile("${path.module}/templates/control_plane.yaml.tftpl", {
       install_image                      = var.installer
+      node_labels                        = lookup(var.node_labels, each.key, {})
       cilium_install                     = data.helm_template.cilium.manifest
       allow_scheduling_on_control_planes = var.allow_scheduling_on_control_planes
     }),
