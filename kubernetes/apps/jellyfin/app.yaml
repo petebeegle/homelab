@@ -41,3 +41,23 @@ spec:
   valuesFrom:
     - kind: ConfigMap
       name: jellyfin-values
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              group: apps
+              version: v1
+              kind: Deployment
+              name: jellyfin
+            patch: |
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: jellyfin
+              spec:
+                template:
+                  spec:
+                    volumes:
+                      - name: cache
+                        emptyDir:
+                          sizeLimit: 20Gi

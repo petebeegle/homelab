@@ -39,6 +39,13 @@ spec:
             replication_factor: 1
     distributor:
       replicas: 1
+      resources:
+        requests:
+          cpu: 250m
+          memory: 512Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
       service:
         annotations:
           prometheus.io/scrape: "true"
@@ -47,6 +54,13 @@ spec:
       enabled: false
     ingester:
       replicas: 1
+      resources:
+        requests:
+          cpu: 500m
+          memory: 1Gi
+        limits:
+          cpu: 1500m
+          memory: 2Gi
       service:
         annotations:
           prometheus.io/scrape: "true"
@@ -56,17 +70,54 @@ spec:
       persistentVolume:
         size: 50Gi
     querier:
+      resources:
+        requests:
+          cpu: 250m
+          memory: 512Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+      topologySpreadConstraints:
+        maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
       service:
         annotations:
           prometheus.io/scrape: "true"
           prometheus.io/port: "8080"
     query_frontend:
+      resources:
+        requests:
+          cpu: 250m
+          memory: 512Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
       service:
         annotations:
           prometheus.io/scrape: "true"
           prometheus.io/port: "8080"
+    query_scheduler:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      topologySpreadConstraints:
+        maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
     store_gateway:
       replicas: 1
+      resources:
+        requests:
+          cpu: 250m
+          memory: 512Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
       service:
         annotations:
           prometheus.io/scrape: "true"
@@ -74,6 +125,13 @@ spec:
       zoneAwareReplication:
         enabled: false
     compactor:
+      resources:
+        requests:
+          cpu: 250m
+          memory: 512Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
       service:
         annotations:
           prometheus.io/scrape: "true"
@@ -81,5 +139,28 @@ spec:
     minio:
       persistence:
         size: 50Gi
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
       serviceAccount:
         name: "mimir-minio-sa"
+    nginx:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 250m
+          memory: 256Mi
+    ruler:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi

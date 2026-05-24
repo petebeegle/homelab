@@ -55,3 +55,21 @@ spec:
 
     admin:
       existingSecret: pihole-admin-password
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+    probes:
+      liveness:
+        initialDelaySeconds: 90
+        failureThreshold: 12
+        timeoutSeconds: 10
+      readiness:
+        initialDelaySeconds: 90
+        failureThreshold: 12
+        timeoutSeconds: 10
