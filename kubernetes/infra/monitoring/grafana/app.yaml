@@ -27,6 +27,13 @@ spec:
     envFromSecret: grafana-env
     admin:
       existingSecret: grafana-credentials
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
     service:
       annotations:
         prometheus.io/scrape: "true"
