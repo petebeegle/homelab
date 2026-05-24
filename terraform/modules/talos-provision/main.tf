@@ -7,6 +7,7 @@ data "talos_image_factory_extensions_versions" "this" {
   filters = {
     names = [
       "siderolabs/btrfs",
+      "siderolabs/i915",
       "siderolabs/qemu-guest-agent"
     ]
   }

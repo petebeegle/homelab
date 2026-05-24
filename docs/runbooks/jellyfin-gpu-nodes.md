@@ -10,7 +10,7 @@ last_verified: 2026-05-24
 
 # Jellyfin GPU Nodes
 
-Jellyfin hardware transcoding nodes are prepared by Terraform before any Jellyfin workload scheduling change. The Proxmox VM layer attaches a cluster-specific PCI hardware mapping, and the Talos bootstrap layer applies stable Kubernetes node labels through `machine.nodeLabels`.
+Jellyfin hardware transcoding nodes are prepared by Terraform before any Jellyfin workload scheduling change. The Proxmox VM layer attaches a cluster-specific PCI hardware mapping, the Talos image includes the `siderolabs/i915` system extension required for Intel DRM render devices, and the Talos bootstrap layer applies stable Kubernetes node labels through `machine.nodeLabels`.
 
 Proxmox PCI hardware mappings are cluster-scoped, so each Terraform root must own a distinct mapping name. Production owns `jellyfin-igpu` with only the pve01 and pve02 entries. Development owns `jellyfin-igpu-dev` with only the pve04 entry.
 
@@ -52,7 +52,7 @@ talosctl --nodes 192.168.30.170 ls /dev/dri
 kubectl get nodes -l homelab.petebeegle.com/jellyfin-igpu=true -o wide
 ```
 
-If `/dev/dri` is missing after the VM has the `hostpci` mapping, verify the Proxmox host has IOMMU enabled, the VM has been fully stopped and started, and the mapping entry matches the VM's current Proxmox host.
+If `/dev/dri` is missing after the VM has the `hostpci` mapping, verify the Terraform-generated Talos image includes `siderolabs/i915`, the Proxmox host has IOMMU enabled, the VM has been fully stopped and started, and the mapping entry matches the VM's current Proxmox host.
 
 ## Rollout Notes
 

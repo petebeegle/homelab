@@ -26,6 +26,7 @@ Pre-checks:
 - Review Talos release notes for breaking changes.
 - Confirm the target Talos version supports the current Kubernetes version.
 - Confirm cluster health.
+- For GPU workers on Proxmox, use the Terraform/Image Factory `nocloud-installer` image instead of the generic `installer` image so Talos keeps Proxmox NoCloud networking while adding extensions such as `siderolabs/i915`.
 
 ```bash
 talosctl health --nodes <CP_NODE>
@@ -34,7 +35,7 @@ talosctl health --nodes <CP_NODE>
 Upgrade each node:
 
 ```bash
-talosctl upgrade --nodes <NODE_IP> --image ghcr.io/siderolabs/installer:<version>
+talosctl upgrade --nodes <NODE_IP> --image <IMAGE_FACTORY_NOCLOUD_INSTALLER_IMAGE>
 ```
 
 Verify after each node:
