@@ -22,6 +22,9 @@ The Jellyfin init bootstrap enforces `/config/config/encoding.xml` on each pod s
 - `<EnableHardwareEncoding>true</EnableHardwareEncoding>`
 - hardware decoding codecs `h264`, `hevc`, `mpeg2video`, `vc1`, `vp8`, and `vp9`
 - HEVC and VP9 10-bit decode toggles enabled, with native VA-API decoder preference enabled for QSV pipelines
+- segment deletion and throttling enabled, with `<ThrottleDelaySeconds>180</ThrottleDelaySeconds>` and `<SegmentKeepSeconds>720</SegmentKeepSeconds>`
+
+The Jellyfin `/cache` volume is intentionally node-local `emptyDir` storage for transcode performance. The Helm post-renderer bounds it at `40Gi`, and the encoding bootstrap keeps transcode segments self-cleaning so cache growth does not rely only on pod eviction. Do not move `/cache` to an NFS-backed PVC for this iteration; NFS remains appropriate for persistent config and media access, but transcode cache I/O should stay local unless a later decision record changes that tradeoff.
 
 After reconcile, acceptance should confirm:
 
@@ -30,6 +33,8 @@ After reconcile, acceptance should confirm:
 3. `flux -n flux-system get kustomization intel-device-plugins-operator intel-gpu-device-plugin app-jellyfin` reports Ready.
 4. The Jellyfin pod is scheduled on the labeled node and has `gpu.intel.com/i915: 1` in requests and limits.
 5. `kubectl -n jellyfin exec deploy/jellyfin -- /usr/lib/jellyfin-ffmpeg/vainfo` reports the Intel media driver and render device.
-6. A 4K HEVC or HEVC Main10 playback test shows QSV decode/encode in the Jellyfin transcode log.
+6. `kubectl -n jellyfin get deploy jellyfin -o jsonpath='{.spec.template.spec.volumes[?(@.name=="cache")].emptyDir.sizeLimit}'` reports `40Gi`.
+7. `/config/config/encoding.xml` contains segment deletion and throttling settings.
+8. A 4K HEVC or HEVC Main10 playback test shows QSV decode/encode in the Jellyfin transcode log.
 
 For branch validation, use the Jellyfin development verifier with `--include-cluster-base` once the `jellyfin-gpu-nodes` prerequisite is present. If the development cluster does not yet expose the label and `gpu.intel.com/i915` resource, record the smoke as blocked by that prerequisite and substitute local render checks plus bootstrap tests.

@@ -256,6 +256,10 @@ data:
         set_bool(root, "EnableDecodingColorDepth10Hevc", True)
         set_bool(root, "EnableDecodingColorDepth10Vp9", True)
         set_bool(root, "PreferSystemNativeHwDecoder", True)
+        set_bool(root, "EnableSegmentDeletion", True)
+        set_bool(root, "EnableThrottling", True)
+        set_text(root, "ThrottleDelaySeconds", "180")
+        set_text(root, "SegmentKeepSeconds", "720")
         set_string_array(root, "HardwareDecodingCodecs", HARDWARE_DECODING_CODECS)
 
         indent(root)
