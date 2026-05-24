@@ -29,6 +29,9 @@ data:
     PLUGIN_DIR = CONFIG_ROOT / "plugins" / f"SSO Authentication_{PLUGIN_VERSION}"
     PLUGIN_CONFIG = CONFIG_ROOT / "plugins" / "configurations" / "SSO-Auth.xml"
     BRANDING_CONFIG = CONFIG_ROOT / "config" / "branding.xml"
+    ENCODING_CONFIG = CONFIG_ROOT / "config" / "encoding.xml"
+    QSV_RENDER_DEVICE = "/dev/dri/renderD128"
+    HARDWARE_DECODING_CODECS = ("h264", "hevc", "mpeg2video", "vc1", "vp8", "vp9")
     EXPECTED_PLUGIN_FILES = (
         "SSO-Auth.dll",
         "Duende.IdentityModel.dll",
@@ -239,10 +242,30 @@ data:
         indent(root)
         ET.ElementTree(root).write(BRANDING_CONFIG, encoding="utf-8", xml_declaration=True)
 
+    def configure_encoding():
+        ENCODING_CONFIG.parent.mkdir(parents=True, exist_ok=True)
+        if ENCODING_CONFIG.exists():
+            root = ET.parse(ENCODING_CONFIG).getroot()
+        else:
+            root = ET.Element("EncodingOptions")
+
+        set_text(root, "HardwareAccelerationType", "qsv")
+        set_text(root, "VaapiDevice", QSV_RENDER_DEVICE)
+        set_text(root, "QsvDevice", QSV_RENDER_DEVICE)
+        set_bool(root, "EnableHardwareEncoding", True)
+        set_bool(root, "EnableDecodingColorDepth10Hevc", True)
+        set_bool(root, "EnableDecodingColorDepth10Vp9", True)
+        set_bool(root, "PreferSystemNativeHwDecoder", True)
+        set_string_array(root, "HardwareDecodingCodecs", HARDWARE_DECODING_CODECS)
+
+        indent(root)
+        ET.ElementTree(root).write(ENCODING_CONFIG, encoding="utf-8", xml_declaration=True)
+
     try:
         install_plugin()
         configure_sso()
         configure_branding()
+        configure_encoding()
     except Exception as exc:
         print(f"Jellyfin SSO bootstrap failed: {exc}", file=sys.stderr)
         raise

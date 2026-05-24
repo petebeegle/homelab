@@ -1,0 +1,39 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: intel
+  namespace: flux-system
+spec:
+  interval: 12h
+  url: https://intel.github.io/helm-charts
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: intel-device-plugins-operator
+  namespace: intel-device-plugins-system
+spec:
+  interval: 5m0s
+  releaseName: intel-device-plugins-operator
+  install:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+      remediateLastFailure: true
+  chart:
+    spec:
+      chart: intel-device-plugins-operator
+      sourceRef:
+        kind: HelmRepository
+        name: intel
+        namespace: flux-system
+      version: "0.35.0"
+  values:
+    manager:
+      devices:
+        gpu: true

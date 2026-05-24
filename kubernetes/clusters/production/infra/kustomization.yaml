@@ -5,6 +5,8 @@ resources:
   - crds.yaml
   - cert-manager.yaml
   - grafana-operator.yaml
+  - intel-device-plugins-operator.yaml
+  - intel-gpu-device-plugin.yaml
   - nfs-csi.yaml
   - cilium.yaml
   - certs.yaml

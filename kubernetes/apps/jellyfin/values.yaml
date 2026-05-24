@@ -5,6 +5,13 @@ persistence:
     storageClass: nfs-csi-storage
   media:
     enabled: false
+nodeSelector:
+  homelab.petebeegle.com/jellyfin-igpu: "true"
+resources:
+  requests:
+    gpu.intel.com/i915: 1
+  limits:
+    gpu.intel.com/i915: 1
 service:
   annotations:
     prometheus.io/scrape: "true"
