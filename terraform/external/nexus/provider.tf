@@ -12,7 +12,7 @@ terraform {
   required_providers {
     nexus = {
       source  = "datadrivers/nexus"
-      version = "2.7.1"
+      version = "2.8.0"
     }
 
     random = {
