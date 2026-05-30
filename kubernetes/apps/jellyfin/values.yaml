@@ -47,7 +47,7 @@ readinessProbe:
   timeoutSeconds: 5
 extraInitContainers:
   - name: install-sso-auth
-    image: python:3.13-alpine
+    image: python:3.14-alpine
     imagePullPolicy: IfNotPresent
     env:
       - name: JELLYFIN_OAUTH_CLIENT_SECRET
