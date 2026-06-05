@@ -9,7 +9,7 @@ The generated kubeconfig and talosconfig are written to cluster-specific paths b
 
 | Name | Version |
 | ---- | ------- |
-| <a name="requirement_helm"></a> [helm](#requirement\_helm) | 3.1.1 |
+| <a name="requirement_helm"></a> [helm](#requirement\_helm) | 3.2.0 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | 3.1.0 |
 | <a name="requirement_proxmox"></a> [proxmox](#requirement\_proxmox) | 0.106.0 |
 

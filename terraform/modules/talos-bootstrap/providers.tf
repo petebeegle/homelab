@@ -8,7 +8,7 @@ terraform {
     // https://registry.terraform.io/providers/hashicorp/helm/3.1.1/docs
     helm = {
       source  = "hashicorp/helm"
-      version = "3.1.1"
+      version = "3.2.0"
     }
     // https://registry.terraform.io/providers/hashicorp/local/2.7.0/docs
     local = {
