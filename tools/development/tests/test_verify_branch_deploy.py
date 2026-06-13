@@ -462,37 +462,46 @@ class VerifyBranchDeployTest(unittest.TestCase):
             for index, command in enumerate(commands)
             if "patch gitrepository.source.toolkit.fluxcd.io/flux-system" in command and '"branch": "codex/example-change"' in command
         ]
-        self.assertEqual(len(branch_patch_indices), len(verify.DEVELOPMENT_BASE_KUSTOMIZATIONS) + 1)
-        root_index = self._index_containing(commands, "reconcile kustomization flux-system")
+        self.assertEqual(len(branch_patch_indices), len(verify.DEVELOPMENT_BASE_KUSTOMIZATIONS))
+        suspend_index = self._index_containing(
+            commands,
+            "patch kustomization.kustomize.toolkit.fluxcd.io/flux-system --type=merge -p {\"spec\": {\"suspend\": true}}",
+        )
+        root_index = self._last_index_containing(commands, "reconcile kustomization flux-system")
         apply_cluster_vars_indices = self._indices_containing(commands, "apply -f")
         apply_k_indices = self._indices_containing(commands, "apply -k")
         apply_infra_indices = apply_k_indices[0::2]
         apply_apps_indices = apply_k_indices[1::2]
+        branch_source_indices = self._indices_containing(commands, "reconcile source git flux-system")[
+            : len(verify.DEVELOPMENT_BASE_KUSTOMIZATIONS)
+        ]
         child_indices = [
             self._index_containing(commands, f"reconcile kustomization {name}")
             for name in verify.DEVELOPMENT_BASE_KUSTOMIZATIONS
         ]
-        self.assertLess(branch_patch_indices[0], root_index)
+        self.assertLess(suspend_index, apply_cluster_vars_indices[0])
+        self.assertEqual(len(branch_source_indices), len(verify.DEVELOPMENT_BASE_KUSTOMIZATIONS))
         self.assertEqual(len(apply_cluster_vars_indices), len(verify.DEVELOPMENT_BASE_KUSTOMIZATIONS))
         self.assertEqual(len(apply_infra_indices), len(verify.DEVELOPMENT_BASE_KUSTOMIZATIONS))
         self.assertEqual(len(apply_apps_indices), len(verify.DEVELOPMENT_BASE_KUSTOMIZATIONS))
-        for cluster_vars_index, infra_index, apps_index, child_index in zip(
+        for cluster_vars_index, infra_index, apps_index, branch_patch_index, source_index, child_index in zip(
             apply_cluster_vars_indices,
             apply_infra_indices,
             apply_apps_indices,
+            branch_patch_indices,
+            branch_source_indices,
             child_indices,
             strict=True,
         ):
-            self.assertLess(root_index, cluster_vars_index)
             self.assertLess(cluster_vars_index, infra_index)
             self.assertLess(infra_index, apps_index)
-            self.assertLess(apps_index, child_index)
+            self.assertLess(apps_index, branch_patch_index)
+            self.assertLess(branch_patch_index, source_index)
+            self.assertLess(source_index, child_index)
+            self.assertLess(child_index, root_index)
             self.assertIn("kubernetes/clusters/development/cluster-vars.yaml", commands[cluster_vars_index])
             self.assertIn("kubernetes/clusters/development/infra", commands[infra_index])
             self.assertIn("kubernetes/clusters/development/apps", commands[apps_index])
-        self.assertLess(root_index, branch_patch_indices[1])
-        for patch_index, child_index in zip(branch_patch_indices[1:], child_indices, strict=True):
-            self.assertLess(patch_index, child_index)
         self.assertEqual(child_indices, sorted(child_indices))
         self.assertGreater(
             self._index_containing(commands, "reconcile kustomization authentik"),
@@ -504,6 +513,13 @@ class VerifyBranchDeployTest(unittest.TestCase):
         self.assertTrue(any("get pods --all-namespaces -o json" in command for command in commands))
         self.assertTrue(any("wait pod/whoami-example-change-7d9c4 --for=condition=Ready" in command for command in commands))
         self.assertTrue(any('"branch": "main"' in command for command in commands))
+        self.assertGreater(
+            self._last_index_containing(
+                commands,
+                "patch kustomization.kustomize.toolkit.fluxcd.io/flux-system --type=merge -p {\"spec\": {\"suspend\": false}}",
+            ),
+            self._last_index_containing(commands, '"branch": "main"'),
+        )
         self.assertGreater(commands[-2].find("reconcile kustomization flux-system"), -1)
 
     def test_cluster_base_restores_main_on_failure(self) -> None:
@@ -514,6 +530,7 @@ class VerifyBranchDeployTest(unittest.TestCase):
 
         commands = [" ".join(command) for command in runner.commands]
         self.assertTrue(any('"branch": "main"' in command for command in commands))
+        self.assertTrue(any('"suspend": false' in command for command in commands))
         self.assertTrue(any("reconcile kustomization flux-system" in command for command in commands[-2:]))
 
     def test_cleanup_is_attempted_after_activation_failure_unless_keep_is_set(self) -> None:
@@ -576,6 +593,12 @@ class VerifyBranchDeployTest(unittest.TestCase):
         if not indices:
             self.fail(f"missing command containing {needle!r}")
         return indices
+
+    def _last_index_containing(self, commands: list[str], needle: str) -> int:
+        for index in range(len(commands) - 1, -1, -1):
+            if needle in commands[index]:
+                return index
+        self.fail(f"missing command containing {needle!r}")
 
     def _config(
         self,

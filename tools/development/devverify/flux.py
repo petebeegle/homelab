@@ -69,9 +69,7 @@ def verify_cluster_base(config: AppConfig, *, runner: Runner) -> None:
 
     failure: BaseException | None = None
     try:
-        pin_flux_system_source(config, branch=config.branch, runner=runner)
-        reconcile_flux_system_source(config, runner=runner)
-        reconcile_flux_kustomization(config, "flux-system", runner=runner)
+        suspend_flux_system_kustomization(config, suspend=True, runner=runner)
 
         for kustomization in DEVELOPMENT_BASE_KUSTOMIZATIONS:
             apply_development_base_flux_crs(config, runner=runner, repo_root=REPO_ROOT)
@@ -168,7 +166,26 @@ def reconcile_flux_system_source(config: AppConfig, *, runner: Runner) -> None:
 def restore_flux_system_source(config: AppConfig, *, runner: Runner) -> None:
     pin_flux_system_source(config, branch="main", runner=runner)
     reconcile_flux_system_source(config, runner=runner)
+    suspend_flux_system_kustomization(config, suspend=False, runner=runner)
     reconcile_flux_kustomization(config, "flux-system", runner=runner)
+
+
+def suspend_flux_system_kustomization(config: AppConfig, *, suspend: bool, runner: Runner) -> None:
+    patch = json.dumps({"spec": {"suspend": suspend}})
+    run_command(
+        kubectl(
+            config,
+            "-n",
+            FLUX_NAMESPACE,
+            "patch",
+            "kustomization.kustomize.toolkit.fluxcd.io/flux-system",
+            "--type=merge",
+            "-p",
+            patch,
+        ),
+        runner=runner,
+        timeout=config.timeout,
+    )
 
 
 def reconcile_flux_kustomization(config: AppConfig, name: str, *, runner: Runner, with_source: bool = True) -> None:

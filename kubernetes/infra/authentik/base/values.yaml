@@ -1,6 +1,8 @@
 # Authentik server configuration
 authentik:
   secret_key: ""  # Set via envFrom
+  existingSecret:
+    secretName: authentik-secrets
   error_reporting:
     enabled: false  # Disable telemetry
   postgresql:
@@ -13,6 +15,7 @@ postgresql:
     existingSecret: authentik-secrets
     secretKeys:
       adminPasswordKey: password
+      userPasswordKey: password
   primary:
     extendedConfiguration: |
       max_connections = 500
