@@ -39,6 +39,8 @@ spec:
         - grafana-oauth-blueprint
         - jellyfin-oauth-blueprint
         - synology-oauth-blueprint
+      secrets:
+        - private-authentik-blueprints
   valuesFrom:
     - kind: ConfigMap
       name: authentik-values
