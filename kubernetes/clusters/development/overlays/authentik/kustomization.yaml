@@ -39,6 +39,9 @@ patches:
           primary:
             persistence:
               volumeName: data-development
+      - op: add
+        path: /spec/timeout
+        value: 15m
 
 configurations:
   - kustomizeconfig.yaml
