@@ -2,17 +2,9 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - namespace.yaml
-  - app.yaml
+  - base
   - secret.yaml
-  - httproute.yaml
   - blueprints
 
-configMapGenerator:
-  - name: authentik-values
-    namespace: authentik
-    files:
-      - values.yaml=values.yaml
-
 configurations:
-  - kustomizeconfig.yaml
+  - base/kustomizeconfig.yaml

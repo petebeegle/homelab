@@ -194,6 +194,21 @@ class VerifyBranchDeployTest(unittest.TestCase):
         self.assertEqual(profiles["jellyfin"].git_repository, "branch-jellyfin-${branch_slug}")
         self.assertEqual(profiles["jellyfin"].pvcs[0].name, "jellyfin-config-${branch_slug}")
 
+    def test_development_base_reconcile_includes_authentik_for_jellyfin_sso(self) -> None:
+        self.assertIn("authentik", verify.DEVELOPMENT_BASE_KUSTOMIZATIONS)
+        self.assertLess(
+            verify.DEVELOPMENT_BASE_KUSTOMIZATIONS.index("gateway"),
+            verify.DEVELOPMENT_BASE_KUSTOMIZATIONS.index("authentik"),
+        )
+
+    def test_jellyfin_branch_template_depends_on_authentik_and_decrypts_secrets(self) -> None:
+        template = (REPO_ROOT / "kubernetes/clusters/development/branches/jellyfin-template.yaml").read_text(encoding="utf-8")
+
+        self.assertIn("    - name: authentik", template)
+        self.assertIn("decryption:", template)
+        self.assertIn("provider: sops", template)
+        self.assertIn("name: sops-age", template)
+
     def test_supported_apps_are_loaded_from_profile_json(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             profile_dir = Path(tmp)

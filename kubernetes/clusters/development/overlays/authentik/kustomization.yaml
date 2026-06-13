@@ -1,0 +1,33 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../../../infra/authentik/base
+  - secret.yaml
+
+configMapGenerator:
+  - name: jellyfin-development-oauth-blueprint
+    namespace: authentik
+    files:
+      - jellyfin-oauth.yaml=blueprints/jellyfin-oauth.yaml
+  - name: jellyfin-development-fixture-blueprint
+    namespace: authentik
+    files:
+      - jellyfin-development-fixture.yaml=blueprints/jellyfin-development-fixture.yaml
+
+patches:
+  - target:
+      group: helm.toolkit.fluxcd.io
+      version: v2
+      kind: HelmRelease
+      name: authentik
+      namespace: authentik
+    patch: |
+      - op: replace
+        path: /spec/values/blueprints/configMaps
+        value:
+          - jellyfin-development-oauth-blueprint
+          - jellyfin-development-fixture-blueprint
+
+configurations:
+  - kustomizeconfig.yaml

@@ -77,6 +77,54 @@ class JellyfinSsoBootstrapTest(unittest.TestCase):
 
         self.assertEqual(grant_types, ["authorization_code", "refresh_token"])
 
+    def test_production_authentik_jellyfin_redirect_remains_strict(self) -> None:
+        attrs = "\n".join(jellyfin_oauth_provider_attr_lines())
+
+        self.assertIn("matching_mode: strict", attrs)
+        self.assertIn("url: https://jellyfin.${cluster_domain}/sso/OID/redirect/authentik", attrs)
+        self.assertNotIn("matching_mode: regex", attrs)
+        self.assertNotIn("https://jellyfin-", attrs)
+
+    def test_development_authentik_jellyfin_redirect_allows_branch_hosts(self) -> None:
+        blueprint = (
+            REPO_ROOT / "kubernetes/clusters/development/overlays/authentik/blueprints/jellyfin-oauth.yaml"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("matching_mode: strict", blueprint)
+        self.assertIn("https://jellyfin.dev.lab.petebeegle.com/sso/OID/redirect/authentik", blueprint)
+        self.assertIn("matching_mode: regex", blueprint)
+        self.assertIn(r"^https://jellyfin-[a-z0-9]", blueprint)
+        self.assertIn(r"\.dev\.lab\.petebeegle\.com/sso/OID/redirect/authentik$", blueprint)
+        self.assertNotIn("jellyfin.lab.petebeegle.com", blueprint)
+
+    def test_development_fixture_sources_test_password_from_secret_env(self) -> None:
+        fixture = (
+            REPO_ROOT / "kubernetes/clusters/development/overlays/authentik/blueprints/jellyfin-development-fixture.yaml"
+        ).read_text(encoding="utf-8")
+        secret = (REPO_ROOT / "kubernetes/clusters/development/overlays/authentik/secret.yaml").read_text(encoding="utf-8")
+
+        self.assertIn("test_password: !Env JELLYFIN_TEST_PASSWORD", fixture)
+        self.assertIn("username: test", fixture)
+        self.assertIn("password: !Context test_password", fixture)
+        self.assertIn("groups:", fixture)
+        self.assertIn("!Find [authentik_core.group, [name, Jellyfin Users]]", fixture)
+        self.assertIn("JELLYFIN_TEST_PASSWORD: ENC[AES256_GCM", secret)
+        self.assertNotIn('JELLYFIN_TEST_PASSWORD: "test"', secret)
+
+    def test_branch_jellyfin_uses_sops_secret_for_oauth_client_secret(self) -> None:
+        branch = (REPO_ROOT / "kubernetes/apps/jellyfin/branch/jellyfin.yaml").read_text(encoding="utf-8")
+        kustomization = (REPO_ROOT / "kubernetes/apps/jellyfin/branch/kustomization.yaml").read_text(encoding="utf-8")
+        secret = (REPO_ROOT / "kubernetes/apps/jellyfin/branch/secret.yaml").read_text(encoding="utf-8")
+
+        self.assertIn("valueFrom:", branch)
+        self.assertIn("secretKeyRef:", branch)
+        self.assertIn("name: jellyfin-${branch_slug}-secrets", branch)
+        self.assertIn("key: JELLYFIN_OAUTH_CLIENT_SECRET", branch)
+        self.assertIn("  - secret.yaml", kustomization)
+        self.assertIn("JELLYFIN_OAUTH_CLIENT_SECRET: ENC[AES256_GCM", secret)
+        self.assertNotIn("branch-placeholder-not-secret", branch)
+        self.assertNotIn("branch-placeholder-not-secret", secret)
+
     def test_production_bootstrap_writes_oid_value_with_plugin_configuration_root(self) -> None:
         script = embedded_script("kubernetes/apps/jellyfin/sso-bootstrap.yaml")
 

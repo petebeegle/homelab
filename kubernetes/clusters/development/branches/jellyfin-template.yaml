@@ -32,6 +32,11 @@ spec:
     - name: gateway
     - name: nfs-csi
     - name: intel-gpu-device-plugin
+    - name: authentik
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
   postBuild:
     substitute:
       branch_slug: ${branch_slug}

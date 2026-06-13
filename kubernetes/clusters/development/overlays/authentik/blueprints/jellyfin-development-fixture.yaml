@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=https://json-schema.org/draft/2020-12/schema
+---
+version: 1
+metadata:
+  name: jellyfin-development-fixture
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+context:
+  test_password: !Env JELLYFIN_TEST_PASSWORD
+
+entries:
+  - identifiers:
+      name: Jellyfin Users
+    model: authentik_core.group
+    attrs:
+      name: Jellyfin Users
+
+  - identifiers:
+      username: test
+    model: authentik_core.user
+    attrs:
+      username: test
+      name: Jellyfin Test
+      email: test@dev.lab.petebeegle.com
+      is_active: true
+      password: !Context test_password
+      groups:
+        - !Find [authentik_core.group, [name, Jellyfin Users]]

@@ -17,7 +17,7 @@ This document is generated for agentic repo navigation. It records relationships
 
 - Root Kustomization: `kubernetes/clusters/development/kustomization.yaml`.
 - Root resources: `flux-system`, `cluster-vars.yaml`, `infra`, `apps`.
-- Infra activation list: `crds.yaml`, `cert-manager.yaml`, `intel-device-plugins-operator.yaml`, `intel-gpu-device-plugin.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `certs.yaml`, `gateway.yaml`.
+- Infra activation list: `crds.yaml`, `cert-manager.yaml`, `intel-device-plugins-operator.yaml`, `intel-gpu-device-plugin.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `certs.yaml`, `gateway.yaml`, `authentik.yaml`.
 - App activation list: `whoami.yaml`, `foundry-bluegreen-fixture.yaml`.
 
 - Branch environment templates: `whoami-template.yaml`, `jellyfin-template.yaml`.
@@ -74,6 +74,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `production` | `nfs-csi` | `./kubernetes/infra/controllers/nfs-csi` | (none) | `cluster-vars` | `no` |
 | `production` | `otel-collector` | `./kubernetes/infra/monitoring/otel-collector` | `crds`, `gateway` | `cluster-vars` | `no` |
 | `production` | `vpn` | `./kubernetes/infra/network/vpn` | `cilium`, `nfs-csi`, `gateway` | `cluster-vars` | `sops` |
+| `development` | `authentik` | `./kubernetes/clusters/development/overlays/authentik` | `gateway`, `cert-manager` | `cluster-vars` | `sops` |
 | `development` | `cert-manager` | `./kubernetes/infra/controllers/cert-manager` | `crds` | `cluster-vars` | `sops` |
 | `development` | `certs` | `./kubernetes/infra/network/certs` | `cert-manager`, `cilium` | `cluster-vars` | `no` |
 | `development` | `cilium` | `./kubernetes/infra/network/cilium` | `crds` | `cluster-vars` | `no` |
@@ -105,7 +106,8 @@ This document is generated for agentic repo navigation. It records relationships
 
 | Component path | Listed resources |
 | --- | --- |
-| `kubernetes/infra/authentik` | `namespace.yaml`, `app.yaml`, `secret.yaml`, `httproute.yaml`, `blueprints` |
+| `kubernetes/infra/authentik/base` | `namespace.yaml`, `app.yaml`, `httproute.yaml` |
+| `kubernetes/infra/authentik` | `base`, `secret.yaml`, `blueprints` |
 | `kubernetes/infra/controllers/cert-manager` | `app.yaml`, `secret.yaml` |
 | `kubernetes/infra/controllers/grafana-operator` | `namespace.yaml`, `app.yaml` |
 | `kubernetes/infra/controllers/intel-device-plugins/gpu` | `app.yaml` |
@@ -136,7 +138,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/apps/external` | `namespace.yaml`, `synology.yaml` |
 | `kubernetes/apps/foundry-bluegreen-fixture` | `namespace.yaml`, `pvc-blue.yaml`, `pvc-green.yaml`, `deployment-blue.yaml`, `deployment-green.yaml`, `service-blue.yaml`, `service-green.yaml`, `httproute-green-preview.yaml` |
 | `kubernetes/apps/foundryvtt` | `namespace.yaml`, `pvc.yaml`, `secret.yaml`, `deployment.yaml`, `service.yaml`, `httproute.yaml`, `httproute-public.yaml` |
-| `kubernetes/apps/jellyfin/branch` | `jellyfin.yaml` |
+| `kubernetes/apps/jellyfin/branch` | `jellyfin.yaml`, `secret.yaml` |
 | `kubernetes/apps/jellyfin` | `./app.yaml`, `./pvc.yaml`, `./httproute.yaml`, `./secret.yaml`, `./sso-bootstrap.yaml` |
 | `kubernetes/apps/pihole` | `app.yaml`, `secret.yaml`, `httproute.yaml` |
 | `kubernetes/apps/renovate` | `app.yaml`, `secret.yaml` |
@@ -181,7 +183,7 @@ This document is generated for agentic repo navigation. It records relationships
 | PVC | `jellyfin-${branch_slug}/jellyfin-config-${branch_slug}` | `nfs-csi-storage` | `kubernetes/apps/jellyfin/branch/jellyfin.yaml` |
 | PVC | `jellyfin/jellyfin-config-v2` | `nfs-csi-storage` | `kubernetes/apps/jellyfin/pvc.yaml` |
 | PVC | `wireguard/wireguard-pvc` | `nfs-csi-storage` | `kubernetes/infra/network/vpn/pvc.yaml` |
-| Values file | `authentik` | `nfs-csi-storage` | `kubernetes/infra/authentik/values.yaml` |
+| Values file | `authentik` | `nfs-csi-storage` | `kubernetes/infra/authentik/base/values.yaml` |
 | Values file | `jellyfin` | `nfs-csi-storage` | `kubernetes/apps/jellyfin/values.yaml` |
 
 ## Secret Manifests
@@ -190,10 +192,12 @@ This lists secret manifest presence only. Secret values are not rendered.
 
 | Component | Secret | SOPS encrypted | Path |
 | --- | --- | --- | --- |
+| `authentik` | `authentik/authentik-secrets` | `yes` | `kubernetes/clusters/development/overlays/authentik/secret.yaml` |
 | `authentik` | `authentik/authentik-secrets` | `yes` | `kubernetes/infra/authentik/secret.yaml` |
 | `cloudflare-tunnels` | `cloudflare/tunnel-credentials` | `yes` | `kubernetes/apps/cloudflare-tunnels/secret.yaml` |
 | `controllers/cert-manager` | `cert-manager/cloudflare-api-token` | `yes` | `kubernetes/infra/controllers/cert-manager/secret.yaml` |
 | `foundryvtt` | `foundryvtt/foundryvtt-secret` | `yes` | `kubernetes/apps/foundryvtt/secret.yaml` |
+| `jellyfin` | `jellyfin-${branch_slug}/jellyfin-${branch_slug}-secrets` | `yes` | `kubernetes/apps/jellyfin/branch/secret.yaml` |
 | `jellyfin` | `jellyfin/jellyfin-secrets` | `yes` | `kubernetes/apps/jellyfin/secret.yaml` |
 | `monitoring/grafana` | `grafana/grafana-credentials` | `yes` | `kubernetes/infra/monitoring/grafana/secret.yaml` |
 | `monitoring/grafana` | `grafana/grafana-env` | `yes` | `kubernetes/infra/monitoring/grafana/grafana-env.yaml` |

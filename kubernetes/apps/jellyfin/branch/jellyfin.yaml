@@ -330,7 +330,10 @@ spec:
         imagePullPolicy: IfNotPresent
         env:
           - name: JELLYFIN_OAUTH_CLIENT_SECRET
-            value: branch-placeholder-not-secret
+            valueFrom:
+              secretKeyRef:
+                name: jellyfin-${branch_slug}-secrets
+                key: JELLYFIN_OAUTH_CLIENT_SECRET
           - name: JELLYFIN_PUBLIC_URL
             value: https://jellyfin-${branch_slug}.${cluster_domain}
           - name: JELLYFIN_OIDC_ENDPOINT

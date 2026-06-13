@@ -23,6 +23,7 @@ DEVELOPMENT_BASE_KUSTOMIZATIONS = (
     "cilium",
     "certs",
     "gateway",
+    "authentik",
     "app-whoami",
 )
 
