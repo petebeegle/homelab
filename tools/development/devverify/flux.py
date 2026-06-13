@@ -68,6 +68,7 @@ def verify_cluster_base(config: AppConfig, *, runner: Runner) -> None:
     from .checks import wait_for_active_pods_ready
 
     failure: BaseException | None = None
+    existing_base_kustomizations = list_flux_kustomizations(config, runner=runner)
     try:
         suspend_flux_system_kustomization(config, suspend=True, runner=runner)
 
@@ -89,6 +90,7 @@ def verify_cluster_base(config: AppConfig, *, runner: Runner) -> None:
     finally:
         try:
             restore_flux_system_source(config, runner=runner)
+            delete_branch_added_base_kustomizations(config, existing_base_kustomizations, runner=runner)
         except BaseException as restore_exc:
             if failure is None:
                 failure = restore_exc
@@ -111,6 +113,45 @@ def apply_development_base_flux_crs(config: AppConfig, *, runner: Runner, repo_r
             runner=runner,
             timeout=config.timeout,
             cwd=repo_root,
+        )
+
+
+def list_flux_kustomizations(config: AppConfig, *, runner: Runner) -> frozenset[str]:
+    result = run_command(
+        kubectl(
+            config,
+            "-n",
+            FLUX_NAMESPACE,
+            "get",
+            "kustomization.kustomize.toolkit.fluxcd.io",
+            "-o",
+            "json",
+        ),
+        runner=runner,
+        timeout=config.timeout,
+        capture_output=True,
+    )
+    payload = json.loads(str(result.stdout or "{}"))
+    return frozenset(str(item["metadata"]["name"]) for item in payload.get("items", []))
+
+
+def delete_branch_added_base_kustomizations(config: AppConfig, existing_base_kustomizations: frozenset[str], *, runner: Runner) -> None:
+    for name in DEVELOPMENT_BASE_KUSTOMIZATIONS:
+        if name in existing_base_kustomizations:
+            continue
+        run_command(
+            kubectl(
+                config,
+                "-n",
+                FLUX_NAMESPACE,
+                "delete",
+                "kustomization.kustomize.toolkit.fluxcd.io",
+                name,
+                "--ignore-not-found=true",
+                "--wait=false",
+            ),
+            runner=runner,
+            timeout=config.timeout,
         )
 
 

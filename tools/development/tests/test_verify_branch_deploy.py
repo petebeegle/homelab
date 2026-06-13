@@ -104,6 +104,16 @@ NO_ACTIVE_PODS = json.dumps(
     }
 )
 
+READY_BASE_KUSTOMIZATIONS = json.dumps(
+    {
+        "items": [
+            {"metadata": {"name": name}}
+            for name in verify.DEVELOPMENT_BASE_KUSTOMIZATIONS
+            if name != "authentik"
+        ]
+    }
+)
+
 
 TEMPLATE = """---
 apiVersion: source.toolkit.fluxcd.io/v1
@@ -162,6 +172,8 @@ class FakeRunner:
             return SimpleNamespace(returncode=0, stdout=self.cluster_pods_json)
         if args[-4:] == ["get", "pods", "-o", "json"]:
             return SimpleNamespace(returncode=0, stdout=self.pods_json)
+        if "get" in args and "kustomization.kustomize.toolkit.fluxcd.io" in args and args[-2:] == ["-o", "json"]:
+            return SimpleNamespace(returncode=0, stdout=READY_BASE_KUSTOMIZATIONS)
         if "get" in args and "httproute" in args and args[-2:] == ["-o", "json"]:
             return SimpleNamespace(returncode=0, stdout=READY_HTTPROUTE)
         if "get" in args and "pvc" in args and args[-2:] == ["-o", "json"]:
@@ -463,6 +475,10 @@ class VerifyBranchDeployTest(unittest.TestCase):
             if "patch gitrepository.source.toolkit.fluxcd.io/flux-system" in command and '"branch": "codex/example-change"' in command
         ]
         self.assertEqual(len(branch_patch_indices), len(verify.DEVELOPMENT_BASE_KUSTOMIZATIONS))
+        self.assertLess(
+            self._index_containing(commands, "get kustomization.kustomize.toolkit.fluxcd.io -o json"),
+            branch_patch_indices[0],
+        )
         suspend_index = self._index_containing(
             commands,
             "patch kustomization.kustomize.toolkit.fluxcd.io/flux-system --type=merge -p {\"spec\": {\"suspend\": true}}",
@@ -520,7 +536,20 @@ class VerifyBranchDeployTest(unittest.TestCase):
             ),
             self._last_index_containing(commands, '"branch": "main"'),
         )
-        self.assertGreater(commands[-2].find("reconcile kustomization flux-system"), -1)
+        authentik_delete_index = self._index_containing(
+            commands,
+            "delete kustomization.kustomize.toolkit.fluxcd.io authentik --ignore-not-found=true --wait=false",
+        )
+        self.assertGreater(authentik_delete_index, root_index)
+        self.assertFalse(
+            any(
+                f"delete kustomization.kustomize.toolkit.fluxcd.io {name} --ignore-not-found=true --wait=false" in command
+                for name in verify.DEVELOPMENT_BASE_KUSTOMIZATIONS
+                if name != "authentik"
+                for command in commands
+            )
+        )
+        self.assertGreater(root_index, self._last_index_containing(commands, '"branch": "main"'))
 
     def test_cluster_base_restores_main_on_failure(self) -> None:
         runner = FakeRunner(fail_on="reconcile kustomization gateway")
@@ -531,7 +560,8 @@ class VerifyBranchDeployTest(unittest.TestCase):
         commands = [" ".join(command) for command in runner.commands]
         self.assertTrue(any('"branch": "main"' in command for command in commands))
         self.assertTrue(any('"suspend": false' in command for command in commands))
-        self.assertTrue(any("reconcile kustomization flux-system" in command for command in commands[-2:]))
+        self.assertTrue(any("delete kustomization.kustomize.toolkit.fluxcd.io authentik" in command for command in commands))
+        self.assertTrue(any("reconcile kustomization flux-system" in command for command in commands))
 
     def test_cleanup_is_attempted_after_activation_failure_unless_keep_is_set(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

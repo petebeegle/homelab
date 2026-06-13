@@ -1,8 +1,6 @@
 # Authentik server configuration
 authentik:
   secret_key: ""  # Set via envFrom
-  existingSecret:
-    secretName: authentik-secrets
   error_reporting:
     enabled: false  # Disable telemetry
   postgresql:
