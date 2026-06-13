@@ -598,14 +598,17 @@ class VerifyBranchDeployTest(unittest.TestCase):
             commands,
             "delete kustomization.kustomize.toolkit.fluxcd.io authentik --ignore-not-found=true --wait=false",
         )
+        main_restore_index = self._last_index_containing(commands, '"branch": "main"')
         self.assertLess(branch_reconcile_index, branch_cleanup_index)
-        self.assertLess(branch_cleanup_index, authentik_delete_index)
+        self.assertLess(branch_cleanup_index, main_restore_index)
+        self.assertLess(main_restore_index, authentik_delete_index)
         self.assertFalse(
             any(
                 "delete kustomization.kustomize.toolkit.fluxcd.io authentik --ignore-not-found=true --wait=false" in command
                 for command in commands[:branch_reconcile_index]
             )
         )
+        self.assertFalse(any('"branch": "main"' in command for command in commands[:branch_reconcile_index]))
         apply_calls = [kwargs["input"] for command, kwargs in runner.calls if command == verify.kubectl(self._config(), "apply", "-f", "-")]
         self.assertTrue(any("    - name: authentik" in str(manifest) for manifest in apply_calls))
 
