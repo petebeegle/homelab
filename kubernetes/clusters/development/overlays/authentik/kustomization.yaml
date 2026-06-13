@@ -33,6 +33,12 @@ patches:
         value:
           existingSecret:
             secretName: authentik-secrets
+      - op: add
+        path: /spec/values/postgresql
+        value:
+          primary:
+            persistence:
+              volumeName: data-development
 
 configurations:
   - kustomizeconfig.yaml
