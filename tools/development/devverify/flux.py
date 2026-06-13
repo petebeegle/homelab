@@ -72,9 +72,9 @@ def verify_cluster_base(config: AppConfig, *, runner: Runner) -> None:
         pin_flux_system_source(config, branch=config.branch, runner=runner)
         reconcile_flux_system_source(config, runner=runner)
         reconcile_flux_kustomization(config, "flux-system", runner=runner)
-        apply_development_base_flux_crs(config, runner=runner, repo_root=REPO_ROOT)
 
         for kustomization in DEVELOPMENT_BASE_KUSTOMIZATIONS:
+            apply_development_base_flux_crs(config, runner=runner, repo_root=REPO_ROOT)
             pin_flux_system_source(config, branch=config.branch, runner=runner)
             reconcile_flux_system_source(config, runner=runner)
             reconcile_flux_kustomization(config, kustomization, runner=runner, with_source=False)

@@ -464,28 +464,39 @@ class VerifyBranchDeployTest(unittest.TestCase):
         ]
         self.assertEqual(len(branch_patch_indices), len(verify.DEVELOPMENT_BASE_KUSTOMIZATIONS) + 1)
         root_index = self._index_containing(commands, "reconcile kustomization flux-system")
-        apply_cluster_vars_index = self._index_containing(commands, "apply -f")
-        apply_infra_index = self._index_containing(commands, "apply -k")
-        apply_apps_index = self._last_index_containing(commands, "apply -k")
+        apply_cluster_vars_indices = self._indices_containing(commands, "apply -f")
+        apply_k_indices = self._indices_containing(commands, "apply -k")
+        apply_infra_indices = apply_k_indices[0::2]
+        apply_apps_indices = apply_k_indices[1::2]
         child_indices = [
             self._index_containing(commands, f"reconcile kustomization {name}")
             for name in verify.DEVELOPMENT_BASE_KUSTOMIZATIONS
         ]
         self.assertLess(branch_patch_indices[0], root_index)
-        self.assertLess(root_index, apply_cluster_vars_index)
-        self.assertLess(apply_cluster_vars_index, apply_infra_index)
-        self.assertLess(apply_infra_index, apply_apps_index)
-        self.assertLess(apply_apps_index, child_indices[0])
-        self.assertIn("kubernetes/clusters/development/cluster-vars.yaml", commands[apply_cluster_vars_index])
-        self.assertIn("kubernetes/clusters/development/infra", commands[apply_infra_index])
-        self.assertIn("kubernetes/clusters/development/apps", commands[apply_apps_index])
+        self.assertEqual(len(apply_cluster_vars_indices), len(verify.DEVELOPMENT_BASE_KUSTOMIZATIONS))
+        self.assertEqual(len(apply_infra_indices), len(verify.DEVELOPMENT_BASE_KUSTOMIZATIONS))
+        self.assertEqual(len(apply_apps_indices), len(verify.DEVELOPMENT_BASE_KUSTOMIZATIONS))
+        for cluster_vars_index, infra_index, apps_index, child_index in zip(
+            apply_cluster_vars_indices,
+            apply_infra_indices,
+            apply_apps_indices,
+            child_indices,
+            strict=True,
+        ):
+            self.assertLess(root_index, cluster_vars_index)
+            self.assertLess(cluster_vars_index, infra_index)
+            self.assertLess(infra_index, apps_index)
+            self.assertLess(apps_index, child_index)
+            self.assertIn("kubernetes/clusters/development/cluster-vars.yaml", commands[cluster_vars_index])
+            self.assertIn("kubernetes/clusters/development/infra", commands[infra_index])
+            self.assertIn("kubernetes/clusters/development/apps", commands[apps_index])
         self.assertLess(root_index, branch_patch_indices[1])
         for patch_index, child_index in zip(branch_patch_indices[1:], child_indices, strict=True):
             self.assertLess(patch_index, child_index)
         self.assertEqual(child_indices, sorted(child_indices))
         self.assertGreater(
             self._index_containing(commands, "reconcile kustomization authentik"),
-            apply_infra_index,
+            apply_infra_indices[verify.DEVELOPMENT_BASE_KUSTOMIZATIONS.index("authentik")],
         )
         for name in verify.DEVELOPMENT_BASE_KUSTOMIZATIONS:
             command = commands[self._index_containing(commands, f"reconcile kustomization {name}")]
@@ -560,11 +571,11 @@ class VerifyBranchDeployTest(unittest.TestCase):
                 return index
         self.fail(f"missing command containing {needle!r}")
 
-    def _last_index_containing(self, commands: list[str], needle: str) -> int:
-        for index in range(len(commands) - 1, -1, -1):
-            if needle in commands[index]:
-                return index
-        self.fail(f"missing command containing {needle!r}")
+    def _indices_containing(self, commands: list[str], needle: str) -> list[int]:
+        indices = [index for index, command in enumerate(commands) if needle in command]
+        if not indices:
+            self.fail(f"missing command containing {needle!r}")
+        return indices
 
     def _config(
         self,
