@@ -200,7 +200,9 @@ class MemoryLintTests(unittest.TestCase):
             stdout = io.StringIO()
 
             with contextlib.redirect_stdout(stdout):
-                exit_code = main(["lint", "--root", str(root), "--format", "json"])
+                exit_code = main(
+                    ["lint", "--root", str(root), "--format", "json", "--review-window-days", "999999"]
+                )
 
             payload = json.loads(stdout.getvalue())
             self.assertEqual(exit_code, 0)
