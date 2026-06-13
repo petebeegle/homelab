@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
-from .config import DEVELOPMENT_BASE_KUSTOMIZATIONS, FLUX_NAMESPACE, AppConfig, Runner, SmokeProfile, VerificationError
+from .config import DEVELOPMENT_BASE_KUSTOMIZATIONS, FLUX_NAMESPACE, REPO_ROOT, AppConfig, Runner, SmokeProfile, VerificationError
 from .kube import kubectl, run_command
 from .profiles import render_profile_value
 
@@ -71,6 +72,7 @@ def verify_cluster_base(config: AppConfig, *, runner: Runner) -> None:
         pin_flux_system_source(config, branch=config.branch, runner=runner)
         reconcile_flux_system_source(config, runner=runner)
         reconcile_flux_kustomization(config, "flux-system", runner=runner)
+        apply_development_base_flux_crs(config, runner=runner, repo_root=REPO_ROOT)
 
         for kustomization in DEVELOPMENT_BASE_KUSTOMIZATIONS:
             pin_flux_system_source(config, branch=config.branch, runner=runner)
@@ -97,6 +99,21 @@ def verify_cluster_base(config: AppConfig, *, runner: Runner) -> None:
 
     if failure is not None:
         raise failure
+
+
+def apply_development_base_flux_crs(config: AppConfig, *, runner: Runner, repo_root: Path) -> None:
+    development_root = repo_root / "kubernetes" / "clusters" / "development"
+    for args in (
+        ("apply", "-f", str(development_root / "cluster-vars.yaml")),
+        ("apply", "-k", str(development_root / "infra")),
+        ("apply", "-k", str(development_root / "apps")),
+    ):
+        run_command(
+            kubectl(config, *args),
+            runner=runner,
+            timeout=config.timeout,
+            cwd=repo_root,
+        )
 
 
 def pin_flux_system_source(config: AppConfig, *, branch: str, runner: Runner) -> None:
