@@ -29,9 +29,10 @@ patches:
           - jellyfin-development-oauth-blueprint
           - jellyfin-development-fixture-blueprint
       - op: add
-        path: /spec/values/authentik/existingSecret
+        path: /spec/values/authentik
         value:
-          secretName: authentik-secrets
+          existingSecret:
+            secretName: authentik-secrets
 
 configurations:
   - kustomizeconfig.yaml
