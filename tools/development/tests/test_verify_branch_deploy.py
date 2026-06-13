@@ -137,6 +137,30 @@ spec:
     name: branch-${branch_slug}
 """
 
+JELLYFIN_TEMPLATE = """---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: branch-jellyfin-${branch_slug}
+  namespace: flux-system
+spec:
+  suspend: true
+  ref:
+    branch: ${branch_name}
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: branch-jellyfin-${branch_slug}
+  namespace: flux-system
+spec:
+  suspend: true
+  dependsOn:
+    - name: authentik
+  sourceRef:
+    name: branch-jellyfin-${branch_slug}
+"""
+
 
 class FakeRunner:
     quiet = True
@@ -550,6 +574,40 @@ class VerifyBranchDeployTest(unittest.TestCase):
             )
         )
         self.assertGreater(root_index, self._last_index_containing(commands, '"branch": "main"'))
+
+    def test_include_cluster_base_keeps_branch_added_base_until_branch_cleanup(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "terraform" / "development").mkdir(parents=True)
+            runner = FakeRunner(cluster_pods_json=READY_PODS, pods_json=READY_JELLYFIN_PODS)
+
+            verify.run_acceptance(
+                self._config(app="jellyfin", include_cluster_base=True),
+                runner=runner,
+                repo_root=root,
+                template_text=JELLYFIN_TEMPLATE,
+            )
+
+        commands = [" ".join(command) for command in runner.commands]
+        branch_reconcile_index = self._index_containing(commands, "reconcile kustomization branch-jellyfin-example-change")
+        branch_cleanup_index = self._index_containing(
+            commands,
+            "delete kustomization.kustomize.toolkit.fluxcd.io/branch-jellyfin-example-change",
+        )
+        authentik_delete_index = self._index_containing(
+            commands,
+            "delete kustomization.kustomize.toolkit.fluxcd.io authentik --ignore-not-found=true --wait=false",
+        )
+        self.assertLess(branch_reconcile_index, branch_cleanup_index)
+        self.assertLess(branch_cleanup_index, authentik_delete_index)
+        self.assertFalse(
+            any(
+                "delete kustomization.kustomize.toolkit.fluxcd.io authentik --ignore-not-found=true --wait=false" in command
+                for command in commands[:branch_reconcile_index]
+            )
+        )
+        apply_calls = [kwargs["input"] for command, kwargs in runner.calls if command == verify.kubectl(self._config(), "apply", "-f", "-")]
+        self.assertTrue(any("    - name: authentik" in str(manifest) for manifest in apply_calls))
 
     def test_cluster_base_restores_main_on_failure(self) -> None:
         runner = FakeRunner(fail_on="reconcile kustomization gateway")

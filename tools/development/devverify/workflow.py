@@ -10,7 +10,7 @@ from pathlib import Path
 from .checks import assert_smoke_profile
 from .cleanup import cleanup_branch_environment
 from .config import REPO_ROOT, AppConfig, Runner, VerificationError, validate_branch, validate_slug
-from .flux import reconcile_flux, verify_cluster_base
+from .flux import delete_branch_added_base_kustomizations, reconcile_flux, verify_cluster_base
 from .kube import apply_activation
 from .profiles import load_smoke_profile
 from .terraform import push_branch, run_terraform
@@ -38,6 +38,7 @@ def run_acceptance(
 ) -> None:
     activated = False
     failure: BaseException | None = None
+    base_cleanup: frozenset[str] | None = None
     profile = load_smoke_profile(config.app)
 
     try:
@@ -47,7 +48,7 @@ def run_acceptance(
         run_terraform(config, runner=runner, repo_root=repo_root)
 
         if config.include_cluster_base:
-            verify_cluster_base(config, runner=runner)
+            base_cleanup = verify_cluster_base(config, runner=runner, defer_cleanup=True)
 
         rendered = render_activation_template(
             template_text
@@ -72,6 +73,14 @@ def run_acceptance(
                     failure = cleanup_exc
                 else:
                     print(f"cleanup failed after primary error: {cleanup_exc}", file=sys.stderr)
+        if base_cleanup is not None and not config.keep:
+            try:
+                delete_branch_added_base_kustomizations(config, base_cleanup, runner=runner)
+            except BaseException as cleanup_exc:
+                if failure is None:
+                    failure = cleanup_exc
+                else:
+                    print(f"cluster base cleanup failed after primary error: {cleanup_exc}", file=sys.stderr)
 
     if failure is not None:
         raise failure

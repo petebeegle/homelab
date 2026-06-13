@@ -39,6 +39,7 @@ from .config import (
     validate_slug,
 )
 from .flux import (
+    delete_branch_added_base_kustomizations,
     flux,
     pin_flux_system_source,
     reconcile_flux,
@@ -83,6 +84,7 @@ __all__ = (
     "build_parser",
     "cleanup_branch_environment",
     "config_from_args",
+    "delete_branch_added_base_kustomizations",
     "flux",
     "is_pod_deleting",
     "kubectl",

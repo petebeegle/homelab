@@ -64,7 +64,7 @@ def reconcile_flux(config: AppConfig, profile: SmokeProfile, *, runner: Runner) 
     )
 
 
-def verify_cluster_base(config: AppConfig, *, runner: Runner) -> None:
+def verify_cluster_base(config: AppConfig, *, runner: Runner, defer_cleanup: bool = False) -> frozenset[str] | None:
     from .checks import wait_for_active_pods_ready
 
     failure: BaseException | None = None
@@ -90,7 +90,8 @@ def verify_cluster_base(config: AppConfig, *, runner: Runner) -> None:
     finally:
         try:
             restore_flux_system_source(config, runner=runner)
-            delete_branch_added_base_kustomizations(config, existing_base_kustomizations, runner=runner)
+            if failure is not None or not defer_cleanup:
+                delete_branch_added_base_kustomizations(config, existing_base_kustomizations, runner=runner)
         except BaseException as restore_exc:
             if failure is None:
                 failure = restore_exc
@@ -99,6 +100,9 @@ def verify_cluster_base(config: AppConfig, *, runner: Runner) -> None:
 
     if failure is not None:
         raise failure
+    if defer_cleanup:
+        return existing_base_kustomizations
+    return None
 
 
 def apply_development_base_flux_crs(config: AppConfig, *, runner: Runner, repo_root: Path) -> None:
