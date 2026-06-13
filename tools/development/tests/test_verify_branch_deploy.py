@@ -462,7 +462,7 @@ class VerifyBranchDeployTest(unittest.TestCase):
             for index, command in enumerate(commands)
             if "patch gitrepository.source.toolkit.fluxcd.io/flux-system" in command and '"branch": "codex/example-change"' in command
         ]
-        self.assertEqual(len(branch_patch_indices), 2)
+        self.assertEqual(len(branch_patch_indices), len(verify.DEVELOPMENT_BASE_KUSTOMIZATIONS) + 1)
         root_index = self._index_containing(commands, "reconcile kustomization flux-system")
         child_indices = [
             self._index_containing(commands, f"reconcile kustomization {name}")
@@ -470,7 +470,12 @@ class VerifyBranchDeployTest(unittest.TestCase):
         ]
         self.assertLess(branch_patch_indices[0], root_index)
         self.assertLess(root_index, branch_patch_indices[1])
+        for patch_index, child_index in zip(branch_patch_indices[1:], child_indices, strict=True):
+            self.assertLess(patch_index, child_index)
         self.assertEqual(child_indices, sorted(child_indices))
+        for name in verify.DEVELOPMENT_BASE_KUSTOMIZATIONS:
+            command = commands[self._index_containing(commands, f"reconcile kustomization {name}")]
+            self.assertNotIn("--with-source", command)
         self.assertTrue(any("get pods --all-namespaces -o json" in command for command in commands))
         self.assertTrue(any("wait pod/whoami-example-change-7d9c4 --for=condition=Ready" in command for command in commands))
         self.assertTrue(any('"branch": "main"' in command for command in commands))

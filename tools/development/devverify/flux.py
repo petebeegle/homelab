@@ -72,10 +72,10 @@ def verify_cluster_base(config: AppConfig, *, runner: Runner) -> None:
         reconcile_flux_system_source(config, runner=runner)
         reconcile_flux_kustomization(config, "flux-system", runner=runner)
 
-        pin_flux_system_source(config, branch=config.branch, runner=runner)
-        reconcile_flux_system_source(config, runner=runner)
         for kustomization in DEVELOPMENT_BASE_KUSTOMIZATIONS:
-            reconcile_flux_kustomization(config, kustomization, runner=runner)
+            pin_flux_system_source(config, branch=config.branch, runner=runner)
+            reconcile_flux_system_source(config, runner=runner)
+            reconcile_flux_kustomization(config, kustomization, runner=runner, with_source=False)
 
         wait_for_active_pods_ready(
             config,
@@ -154,19 +154,21 @@ def restore_flux_system_source(config: AppConfig, *, runner: Runner) -> None:
     reconcile_flux_kustomization(config, "flux-system", runner=runner)
 
 
-def reconcile_flux_kustomization(config: AppConfig, name: str, *, runner: Runner) -> None:
+def reconcile_flux_kustomization(config: AppConfig, name: str, *, runner: Runner, with_source: bool = True) -> None:
+    command = flux(
+        config,
+        "reconcile",
+        "kustomization",
+        name,
+        "--namespace",
+        FLUX_NAMESPACE,
+        "--timeout",
+        config.timeout.raw,
+    )
+    if with_source:
+        command.insert(-2, "--with-source")
     run_command(
-        flux(
-            config,
-            "reconcile",
-            "kustomization",
-            name,
-            "--namespace",
-            FLUX_NAMESPACE,
-            "--with-source",
-            "--timeout",
-            config.timeout.raw,
-        ),
+        command,
         runner=runner,
         timeout=config.timeout,
     )
