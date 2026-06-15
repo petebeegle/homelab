@@ -125,6 +125,15 @@ class JellyfinSsoBootstrapTest(unittest.TestCase):
         self.assertNotIn("branch-placeholder-not-secret", branch)
         self.assertNotIn("branch-placeholder-not-secret", secret)
 
+    def test_branch_jellyfin_is_cpu_schedulable_for_development_sso_smoke(self) -> None:
+        production_values = (REPO_ROOT / "kubernetes/apps/jellyfin/values.yaml").read_text(encoding="utf-8")
+        branch = (REPO_ROOT / "kubernetes/apps/jellyfin/branch/jellyfin.yaml").read_text(encoding="utf-8")
+
+        self.assertIn("homelab.petebeegle.com/jellyfin-igpu", production_values)
+        self.assertIn("gpu.intel.com/i915", production_values)
+        self.assertNotIn("homelab.petebeegle.com/jellyfin-igpu", branch)
+        self.assertNotIn("gpu.intel.com/i915", branch)
+
     def test_production_bootstrap_writes_oid_value_with_plugin_configuration_root(self) -> None:
         script = embedded_script("kubernetes/apps/jellyfin/sso-bootstrap.yaml")
 

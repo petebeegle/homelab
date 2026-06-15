@@ -37,4 +37,4 @@ After reconcile, acceptance should confirm:
 7. `/config/config/encoding.xml` contains segment deletion and throttling settings.
 8. A 4K HEVC or HEVC Main10 playback test shows QSV decode/encode in the Jellyfin transcode log.
 
-For branch validation, use the Jellyfin development verifier with `--include-cluster-base` once the `jellyfin-gpu-nodes` prerequisite is present. If the development cluster does not yet expose the label and `gpu.intel.com/i915` resource, record the smoke as blocked by that prerequisite and substitute local render checks plus bootstrap tests.
+The standard Jellyfin branch overlay is CPU-schedulable for development SSO, Gateway, PVC, and web-shell smoke tests. Do not treat that branch smoke as hardware-transcoding evidence. Production hardware acceptance still requires the production Jellyfin workload to schedule on an iGPU-labeled node and receive `gpu.intel.com/i915: 1`; if the development cluster needs to prove the hardware path, add or select a separate GPU-capable validation path once the `jellyfin-gpu-nodes` prerequisite is present.

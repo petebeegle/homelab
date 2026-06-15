@@ -31,6 +31,8 @@ Native Jellyfin login is intentionally preserved. Keep at least one local admini
 
 The development cluster includes Authentik for Jellyfin SSO validation. Its overlay uses development-only SOPS secret material and a blueprint fixture that creates user `test`, sources the password from `JELLYFIN_TEST_PASSWORD`, and adds the user to `Jellyfin Users`.
 
+The Jellyfin branch overlay is intentionally CPU-schedulable so SSO and Gateway smoke tests can run on the single-node development cluster even when the production iGPU label and `gpu.intel.com/i915` resource are unavailable. Production Jellyfin still hard-requires the iGPU node selector and device-plugin allocation.
+
 For branch validation, use the Jellyfin branch verifier with the shared-base reconcile because the branch depends on development Authentik:
 
 ```bash
