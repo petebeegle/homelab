@@ -3,14 +3,14 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="requirement_proxmox"></a> [proxmox](#requirement\_proxmox) | 0.106.0 |
+| <a name="requirement_proxmox"></a> [proxmox](#requirement\_proxmox) | 0.111.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | 3.8.1 |
 
 ## Providers
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_proxmox"></a> [proxmox](#provider\_proxmox) | 0.106.0 |
+| <a name="provider_proxmox"></a> [proxmox](#provider\_proxmox) | 0.111.0 |
 | <a name="provider_random"></a> [random](#provider\_random) | 3.8.1 |
 
 ## Modules
@@ -21,9 +21,9 @@ No modules.
 
 | Name | Type |
 | ---- | ---- |
-| [proxmox_virtual_environment_vm.kubernetes_node](https://registry.terraform.io/providers/bpg/proxmox/0.106.0/docs/resources/virtual_environment_vm) | resource |
+| [proxmox_virtual_environment_vm.kubernetes_node](https://registry.terraform.io/providers/bpg/proxmox/0.111.0/docs/resources/virtual_environment_vm) | resource |
 | [random_pet.name](https://registry.terraform.io/providers/hashicorp/random/3.8.1/docs/resources/pet) | resource |
-| [proxmox_virtual_environment_datastores.this](https://registry.terraform.io/providers/bpg/proxmox/0.106.0/docs/data-sources/virtual_environment_datastores) | data source |
+| [proxmox_virtual_environment_datastores.this](https://registry.terraform.io/providers/bpg/proxmox/0.111.0/docs/data-sources/virtual_environment_datastores) | data source |
 
 ## Inputs
 
