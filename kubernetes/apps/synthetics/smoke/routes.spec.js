@@ -21,7 +21,7 @@ async function expectNotHomeAssistantOnboarding(page) {
 
   expect(
     onboardingDetected,
-    "Home Assistant is serving first-run onboarding; complete onboarding and verify Authentik OIDC before restoring external Gateway exposure or accepting production smoke."
+    "Home Assistant is serving first-run onboarding; confirm the GitOps onboarding seed is mounted and verify Authentik OIDC before accepting production smoke."
   ).toBe(false);
 }
 

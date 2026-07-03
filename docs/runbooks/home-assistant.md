@@ -15,9 +15,11 @@ The production app uses Authentik OIDC through `christiaangoossens/hass-oidc-aut
 
 `auth_oidc` is configured in `configuration.yaml` with `default_redirect: true` and `force_https: true`. The native `homeassistant` auth provider stays enabled as a recovery login. To use that fallback while default redirect is enabled, open `https://homeassistant.${cluster_domain}/?skip_oidc_redirect=true`.
 
-Home Assistant is exposed only on the LAN through `gateway/internal` on `https-gateway` while first-run onboarding and Authentik OIDC acceptance are pending. Do not add the WireGuard service-plane `gateway/external` parentRef until onboarding is complete, Authentik OIDC sign-in passes, and production synthetic smoke no longer detects `/onboarding.html`. It is intentionally not added to Cloudflare Tunnel or the public Gateway.
+The GitOps config seeds `/config/.storage/onboarding` with the Home Assistant onboarding steps marked complete so fresh PVCs do not expose `/onboarding.html`. No local Home Assistant credential is created by GitOps; the native `homeassistant` provider remains a recovery path only after an owner creates a local user or password later. With onboarding complete and `auth_oidc` default redirect enabled, the first OIDC-created user should become owner automatically through Home Assistant's empty-user ownership behavior.
 
-The development branch profile deploys the same container, storage, service, and route shape without the OIDC custom component or Authentik config because the development cluster does not run Authentik. Branch smoke proves the workload, PVC, Service, HTTPRoute, and local Home Assistant web shell only.
+Home Assistant is exposed on the LAN and WireGuard service plane through `gateway/internal` and `gateway/external` on `https-gateway`. It is intentionally not added to Cloudflare Tunnel or the public Gateway.
+
+The development branch profile deploys the same container, onboarding storage seed, storage, service, and route shape without the OIDC custom component or Authentik config because the development cluster does not run Authentik. Branch smoke proves the workload, PVC, Service, HTTPRoute, and local Home Assistant shell only; it should not accept first-run onboarding as healthy.
 
 Initial device onboarding remains UI-driven. Pair Hue, Elgato, UniFi, and similar integrations through the Home Assistant UI first; add code-owned automations, scripts, scenes, and package YAML after entity IDs are known.
 
@@ -35,4 +37,4 @@ After reconcile, acceptance should confirm:
 3. `https://homeassistant.${cluster_domain}` does not serve `/onboarding.html` and reaches the OIDC welcome or Authentik login flow.
 4. A `Home Assistant Users` member can sign in.
 5. A `Home Assistant Admins` member receives administrator access.
-6. `/?skip_oidc_redirect=true` still exposes the local Home Assistant fallback login.
+6. `/?skip_oidc_redirect=true` still exposes the local Home Assistant fallback login once an owner has created local recovery credentials.

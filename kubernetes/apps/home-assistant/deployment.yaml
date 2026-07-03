@@ -36,6 +36,7 @@ spec:
               unzip -q "$archive" "hass-oidc-auth-1.1.1/custom_components/auth_oidc/*" -d /tmp
               mkdir -p /config/custom_components
               mv /tmp/hass-oidc-auth-1.1.1/custom_components/auth_oidc /config/custom_components/auth_oidc
+              mkdir -p /config/.storage
           volumeMounts:
             - name: config-storage
               mountPath: /config
@@ -86,6 +87,10 @@ spec:
             - name: home-assistant-packages
               mountPath: /config/packages
               readOnly: true
+            - name: home-assistant-storage
+              mountPath: /config/.storage/onboarding
+              subPath: onboarding
+              readOnly: true
           resources:
             requests:
               cpu: 250m
@@ -103,3 +108,6 @@ spec:
         - name: home-assistant-packages
           configMap:
             name: home-assistant-packages
+        - name: home-assistant-storage
+          configMap:
+            name: home-assistant-storage

@@ -160,7 +160,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `HTTPRoute` | `gateway/https-redirect` | `*.${cluster_domain}, ${cluster_domain}` | `gateway/internal/http-gateway, gateway/external/http-gateway` | `(none)` |
 | `HTTPRoute` | `grafana/monitoring` | `monitoring.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `grafana:80` |
 | `HTTPRoute` | `home-assistant-${branch_slug}/home-assistant-${branch_slug}` | `homeassistant-${branch_slug}.${cluster_domain}` | `gateway/internal/https-gateway` | `home-assistant-${branch_slug}:80` |
-| `HTTPRoute` | `home-assistant/home-assistant` | `homeassistant.${cluster_domain}` | `gateway/internal/https-gateway` | `home-assistant:80` |
+| `HTTPRoute` | `home-assistant/home-assistant` | `homeassistant.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `home-assistant:80` |
 | `HTTPRoute` | `jellyfin-${branch_slug}/jellyfin-${branch_slug}` | `jellyfin-${branch_slug}.${cluster_domain}` | `gateway/internal/https-gateway` | `jellyfin-${branch_slug}-metrics-deny:8096` |
 | `HTTPRoute` | `jellyfin/jellyfin` | `jellyfin.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `jellyfin-metrics-deny:8096` |
 | `HTTPRoute` | `otel-collector/otel-collector` | `otel.${cluster_domain}` | `gateway/internal/https-gateway` | `otel-collector-opentelemetry-collector:4318` |

@@ -7,7 +7,7 @@
 
 ## Summary
 
-Remove Home Assistant's production `gateway/external` parentRef until onboarding and Authentik OIDC are verified, rename the invalid package slug to `code_first`, and make synthetic smoke fail onboarding with an explicit safety message while keeping the OIDC/AuthentiK success path.
+Seed Home Assistant onboarding complete from GitOps in production and branch overlays, restore the production `gateway/external` parentRef for OIDC-gated access, keep the valid `code_first` package slug, and make synthetic smoke fail onboarding with an explicit safety message while keeping the OIDC/AuthentiK success path.
 
 ## Technical Context
 
@@ -16,7 +16,7 @@ Remove Home Assistant's production `gateway/external` parentRef until onboarding
 **Primary Areas**: Kubernetes, Gateway API, Home Assistant app configuration, synthetic smoke, docs, generated architecture
 **Dependencies**: kubectl, kustomize through kubectl, npm/Playwright, Python architecture renderer, development branch verifier if available
 **Storage**: Existing Home Assistant PVC remains on `nfs-csi-storage`; no storage behavior change
-**Ingress**: Gateway API HTTPRoute remains on `gateway/internal`; `gateway/external` is intentionally withheld
+**Ingress**: Gateway API HTTPRoute attaches to `gateway/internal` and `gateway/external`; Cloudflare/public Gateway remains out of scope
 **Secrets**: No SOPS or plaintext secret changes
 **Development Validation**: Run `python3 tools/development/verify_branch_deploy.py --app home-assistant --branch codex/home-assistant-auth-gate --slug home-assistant-auth-gate --push --include-cluster-base` if credentials/profile are available; otherwise record the blocker and substitutes
 
@@ -51,18 +51,23 @@ specs/home-assistant-auth-gate/
 ```text
 docs/architecture.md
 docs/runbooks/home-assistant.md
+kubernetes/apps/home-assistant/config/storage/onboarding
+kubernetes/apps/home-assistant/deployment.yaml
 kubernetes/apps/home-assistant/httproute.yaml
 kubernetes/apps/home-assistant/kustomization.yaml
+kubernetes/apps/home-assistant/branch/config/storage/onboarding
+kubernetes/apps/home-assistant/branch/home-assistant.yaml
 kubernetes/apps/home-assistant/config/packages/code_first.yaml
 kubernetes/apps/home-assistant/branch/kustomization.yaml
 kubernetes/apps/home-assistant/branch/config/packages/code_first.yaml
 kubernetes/apps/synthetics/smoke/routes.spec.js
+tools/development/smoke-profiles/home-assistant.json
 specs/home-assistant-auth-gate/
 ```
 
 ## Tiered TDD And Validation Plan
 
-**TDD expectation**: High-risk local-first verification. A useful pre-change failing test seam for the live onboarding page is not available without hitting production, so the synthetic assertion is strengthened and validated through the existing smoke suite plus targeted manifest/render checks.
+**TDD expectation**: High-risk local-first verification. A useful pre-change failing test seam for the live onboarding page is not available without hitting production, so the synthetic assertion is kept strict and validated through the existing smoke suite plus targeted manifest/render checks.
 
 **Local checks**:
 
@@ -72,7 +77,7 @@ specs/home-assistant-auth-gate/
 - `npm --prefix kubernetes/apps/synthetics/smoke test`
 - `python3 tools/architecture/render.py --write`
 - `python3 tools/architecture/render.py --check`
-- Targeted grep/render checks for no Home Assistant `gateway/external` parentRef and no old hyphenated package slug
+- Targeted grep/render checks for the onboarding storage mount in production and branch overlays, both production Home Assistant Gateway parentRefs, and no old hyphenated package slug
 
 **Development smoke**: Home Assistant branch deploy with `--include-cluster-base` if available; otherwise record unavailable infrastructure or missing credentials and substitute local renders and smoke tests.
 
@@ -86,8 +91,9 @@ Update `docs/runbooks/home-assistant.md` and refresh `docs/architecture.md` if t
 ## Implementation Steps
 
 1. Rename Home Assistant package files and kustomize generator keys to `code_first`.
-2. Remove the production Home Assistant `gateway/external` parentRef.
-3. Add an explicit onboarding guard to production synthetic smoke.
+2. Add production and branch Home Assistant onboarding storage seeds and mounts.
+3. Restore the production Home Assistant `gateway/external` parentRef.
+4. Add an explicit onboarding guard to production synthetic smoke.
 4. Update Home Assistant docs and SDD evidence.
 5. Run local renders, smoke tests, architecture renderer, targeted checks, and development validation or exception.
 6. Commit with a conventional commit and stop before verifier approval or PR creation.
@@ -96,7 +102,7 @@ Update `docs/runbooks/home-assistant.md` and refresh `docs/architecture.md` if t
 
 | Risk | Mitigation |
 | ---- | ---------- |
-| Home Assistant remains reachable where onboarding is exposed | Remove `gateway/external`, render-check parentRefs, and document withheld exposure |
+| Home Assistant remains reachable where onboarding is exposed | Code-seed onboarding complete, keep synthetic onboarding guard, and render-check storage mount |
 | Smoke accidentally treats onboarding as healthy | Add explicit onboarding detection before OIDC/AuthentiK success assertion |
 | Package slug warning persists | Rename source files and generated keys; grep repo and rendered output for the old hyphenated slug |
 | Development validation cannot represent production Authentik | Record exception and rely on local renders plus production smoke expectation until onboarding/AuthentiK can be verified |

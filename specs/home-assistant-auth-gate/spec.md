@@ -8,7 +8,7 @@
 
 ## Summary
 
-Home Assistant must remain LAN-only until first-run onboarding is completed and Authentik OIDC is verified. Repository manifests must also generate the valid `code_first` package slug, and production smoke must continue to fail onboarding with an explicit diagnostic instead of treating it as success.
+Home Assistant must skip first-run onboarding through GitOps-owned storage seeding so root traffic goes to Authentik/OIDC, including over the WireGuard service-plane route. Repository manifests must also generate the valid `code_first` package slug, and production smoke must continue to fail onboarding with an explicit diagnostic instead of treating it as success.
 
 ## Binding Sources
 
@@ -25,7 +25,8 @@ Home Assistant must remain LAN-only until first-run onboarding is completed and 
 
 ### In Scope
 
-- Remove Home Assistant production exposure through `gateway/external` while keeping the `gateway/internal` route.
+- Seed Home Assistant onboarding-complete storage in production and branch overlays so fresh PVCs do not serve `/onboarding.html`.
+- Restore Home Assistant production exposure through `gateway/external` while keeping the `gateway/internal` route.
 - Rename Home Assistant package file and generated ConfigMap keys to `code_first.yaml` in base and branch overlays.
 - Update production synthetic smoke so `/onboarding.html` is reported as an explicit failure before the OIDC/AuthentiK URL assertion.
 - Update Home Assistant operator docs and generated architecture if route output changes.
@@ -35,22 +36,22 @@ Home Assistant must remain LAN-only until first-run onboarding is completed and 
 
 - Completing Home Assistant onboarding.
 - Changing Authentik provider blueprints, OIDC client secrets, or user/group mappings.
-- Re-enabling the WireGuard service-plane route before onboarding and Authentik OIDC pass.
+- Creating local Home Assistant recovery credentials.
 - Creating verifier approval or opening a pull request.
 
 ## User Scenarios & Testing *(mandatory)*
 
-### User Story 1 - Withhold External Exposure (Priority: P1)
+### User Story 1 - Gate External Exposure Through OIDC (Priority: P1)
 
-Operators need Home Assistant withheld from the WireGuard service-plane Gateway while it is still serving first-run onboarding.
+Operators need Home Assistant reachable on the WireGuard service-plane Gateway without exposing first-run onboarding.
 
-**Why this priority**: This is the smallest safety correction that reduces exposure before authentication is proven.
+**Why this priority**: This is the smallest safety correction that restores expected access while keeping onboarding from being exposed.
 
-**Independent Test**: Render `kubernetes/apps/home-assistant` and confirm the Home Assistant HTTPRoute only references `gateway/internal`.
+**Independent Test**: Render `kubernetes/apps/home-assistant` and confirm the Deployment mounts `/config/.storage/onboarding` and the HTTPRoute references both `gateway/internal` and `gateway/external`.
 
 **Acceptance Scenarios**:
 
-1. **Given** the production Home Assistant app manifests, **When** they are rendered, **Then** the Home Assistant HTTPRoute has no `gateway/external` parentRef and still has `gateway/internal`.
+1. **Given** the production Home Assistant app manifests, **When** they are rendered, **Then** the Home Assistant pod receives a storage seed marking onboarding done and the HTTPRoute attaches to both internal and external Gateways.
 
 ### User Story 2 - Valid Package Slug (Priority: P1)
 
@@ -74,15 +75,16 @@ Operators need scheduled smoke to explain that onboarding is unsafe and incomple
 
 **Acceptance Scenarios**:
 
-1. **Given** Home Assistant serves `/onboarding.html`, **When** production synthetic smoke runs, **Then** the Home Assistant test fails with a message that onboarding must be completed and Authentik OIDC verified.
+1. **Given** Home Assistant serves `/onboarding.html`, **When** production synthetic smoke runs, **Then** the Home Assistant test fails with a message to confirm the GitOps onboarding seed is mounted and Authentik OIDC is verified.
 
 ## Requirements *(mandatory)*
 
-- **FR-001**: The production Home Assistant HTTPRoute MUST attach to `gateway/internal` and MUST NOT attach to `gateway/external` until onboarding and Authentik OIDC are verified.
+- **FR-001**: The production and branch Home Assistant Deployments MUST mount a ConfigMap-owned `/config/.storage/onboarding` file whose Home Assistant storage JSON uses version `4`, key `onboarding`, and a `done` list containing `user`, `core_config`, `analytics`, and `integration`.
 - **FR-002**: Base and branch Home Assistant package ConfigMap keys and source file paths MUST use `code_first.yaml`, with no remaining references to the old hyphenated package file.
 - **FR-003**: Production synthetic smoke MUST keep Authentik/OIDC as the Home Assistant success expectation and MUST fail onboarding with a clear diagnostic.
-- **FR-004**: Home Assistant docs or PR summary MUST note that the external route is intentionally withheld until onboarding and Authentik OIDC pass.
-- **FR-005**: Evidence MUST include local render checks, synthetic tests, architecture render write/check, targeted grep/render assertions, and development validation or a precise exception.
+- **FR-004**: The production Home Assistant HTTPRoute MUST attach to both `gateway/internal` and `gateway/external` after onboarding is code-seeded complete.
+- **FR-005**: Home Assistant docs or PR summary MUST note that no local credential exists until an owner creates one later.
+- **FR-006**: Evidence MUST include local render checks, synthetic tests, architecture render write/check, targeted grep/render assertions, and development validation or a precise exception.
 
 ## Risk And Validation Expectations
 
@@ -90,9 +92,9 @@ Operators need scheduled smoke to explain that onboarding is unsafe and incomple
 
 ## Success Criteria *(mandatory)*
 
-- **SC-001**: `kubectl kustomize kubernetes/apps/home-assistant` renders a Home Assistant HTTPRoute with only `gateway/internal`.
+- **SC-001**: `kubectl kustomize kubernetes/apps/home-assistant` and `kubectl kustomize kubernetes/apps/home-assistant/branch` render Home Assistant Deployments with `/config/.storage/onboarding` mounted from a ConfigMap.
 - **SC-002**: `kubectl kustomize kubernetes/apps/home-assistant/branch` renders package ConfigMap data keyed by `code_first.yaml`.
-- **SC-003**: Repository and targeted rendered output contain no old hyphenated Home Assistant package slug or path references.
+- **SC-003**: `kubectl kustomize kubernetes/apps/home-assistant` renders a Home Assistant HTTPRoute with both `gateway/internal` and `gateway/external`.
 - **SC-004**: `npm --prefix kubernetes/apps/synthetics/smoke test` is run and recorded.
 - **SC-005**: `python3 tools/architecture/render.py --check` passes after any generated architecture refresh.
 

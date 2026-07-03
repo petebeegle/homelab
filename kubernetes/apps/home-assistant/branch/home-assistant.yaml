@@ -49,6 +49,18 @@ spec:
         app.kubernetes.io/name: home-assistant
         homelab.petebeegle.com/branch-slug: ${branch_slug}
     spec:
+      initContainers:
+        - name: prepare-storage
+          image: alpine:3.22
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -ec
+          args:
+            - mkdir -p /config/.storage
+          volumeMounts:
+            - name: config-storage
+              mountPath: /config
       containers:
         - name: home-assistant
           image: ghcr.io/home-assistant/home-assistant:2026.7.0
@@ -96,6 +108,10 @@ spec:
             - name: home-assistant-packages
               mountPath: /config/packages
               readOnly: true
+            - name: home-assistant-storage
+              mountPath: /config/.storage/onboarding
+              subPath: onboarding
+              readOnly: true
           resources:
             requests:
               cpu: 250m
@@ -113,6 +129,9 @@ spec:
         - name: home-assistant-packages
           configMap:
             name: home-assistant-${branch_slug}-packages
+        - name: home-assistant-storage
+          configMap:
+            name: home-assistant-${branch_slug}-storage
 ---
 apiVersion: v1
 kind: Service
