@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "agent-memory"
 version = "0.1.0"
 description = "Local Codex memory compaction and consolidation scaffold."
-requires-python = "==3.14.5"
+requires-python = "==3.14.6"
 dependencies = []
 
 [dependency-groups]
