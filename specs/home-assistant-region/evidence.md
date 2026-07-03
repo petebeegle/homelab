@@ -31,6 +31,7 @@
 | `python3 tools/architecture/render.py --check` | PASS | Initially reported stale generated docs; passed after `python3 tools/architecture/render.py --write`. |
 | `git grep -n -E 'home_latitude:|home_longitude:|home_elevation:' -- . ':!kubernetes/apps/home-assistant/secret.yaml' ':!specs/home-assistant-region/evidence.md'` | PASS | No coordinate secret keys outside the encrypted Secret file and this evidence record. |
 | `rg -n 'home_latitude:|home_longitude:|home_elevation:' kubernetes/apps/home-assistant/secret.yaml` | PASS | Encrypted Secret does not expose inner secret keys. |
+| `PYTHONPATH=tools/agent-memory/src python3 -m agent_memory.cli lint` | PASS | Added `.codex/memory/.gitkeep` after PR CI reported `missing-root`. |
 
 ## Development Validation
 
@@ -55,6 +56,10 @@
   verifier approval is created by the implementation owner.
 - Development validation could not complete because required local development
   Terraform variables/secrets were unavailable in this environment.
+- PR CI initially failed `agent-memory-lint` because GitHub `main` no longer
+  had a tracked `.codex/memory` root after `.gitkeep` cleanup. This branch adds
+  `.codex/memory/.gitkeep` so the lint root exists without restoring old memory
+  documents.
 
 ## Final State
 
