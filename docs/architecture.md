@@ -35,6 +35,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `production` | `gateway_internal_ip` | `192.168.30.241` |
 | `production` | `gateway_internal_pool` | `192.168.30.240/28` |
 | `production` | `gateway_passthrough_ip` | `192.168.30.242` |
+| `production` | `homepage_target_domain` | `lab.petebeegle.com` |
 | `production` | `letsencrypt_server` | `https://acme-v02.api.letsencrypt.org/directory` |
 | `production` | `nfs_server` | `192.168.30.99` |
 | `production` | `wildcard_cert_name` | `wildcard-lab-petebeegle-com` |
@@ -47,6 +48,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `development` | `gateway_internal_ip` | `192.168.30.225` |
 | `development` | `gateway_internal_pool` | `192.168.30.224/28` |
 | `development` | `gateway_passthrough_ip` | `192.168.30.226` |
+| `development` | `homepage_target_domain` | `lab.petebeegle.com` |
 | `development` | `letsencrypt_server` | `https://acme-staging-v02.api.letsencrypt.org/directory` |
 | `development` | `nfs_server` | `192.168.30.99` |
 | `development` | `wildcard_cert_name` | `wildcard-development-lab-petebeegle-com` |
