@@ -27,6 +27,17 @@
 - PASS follow-up: exact assertion found rendered `value: homepage.dev.lab.petebeegle.com` and `- homepage.dev.lab.petebeegle.com`.
 - PASS follow-up: rendered development Homepage hrefs target `*.lab.petebeegle.com` and no href targets `*.dev.lab.petebeegle.com`.
 - PASS follow-up after `python3 tools/architecture/render.py --write`: `python3 tools/architecture/render.py --check`.
+- PASS second follow-up: `kubectl kustomize kubernetes/clusters/production >/tmp/homepage-dashboard-public-production.yaml`
+- PASS second follow-up: `kubectl kustomize kubernetes/clusters/development >/tmp/homepage-dashboard-public-development.yaml`
+- PASS second follow-up: `export cluster_domain=lab.petebeegle.com homepage_target_domain=lab.petebeegle.com; kubectl kustomize kubernetes/apps/homepage | flux envsubst --strict >/tmp/homepage-dashboard-public-homepage-production.yaml`
+- PASS second follow-up: `export cluster_domain=dev.lab.petebeegle.com homepage_target_domain=lab.petebeegle.com; kubectl kustomize kubernetes/apps/homepage/development | flux envsubst --strict >/tmp/homepage-dashboard-public-homepage-development.yaml`
+- PASS second follow-up: exact assertion found rendered `value: homepage.dev.lab.petebeegle.com` and `- homepage.dev.lab.petebeegle.com`.
+- PASS second follow-up: rendered development Homepage hrefs target `*.lab.petebeegle.com` and `synology.petebeegle.com`, with no href targets `*.dev.lab.petebeegle.com`.
+- PASS second follow-up: rendered production Homepage includes Home Assistant at `https://homeassistant.lab.petebeegle.com` with `namespace: home-assistant` and `app: home-assistant`.
+- PASS second follow-up: rendered production Homepage includes Synology at `https://synology.petebeegle.com` with `namespace: external` and `app: synology-proxy`.
+- PASS second follow-up: public Homepage ConfigMap still contains no private download/media automation names: `transfer`, `sabnzbd`, `radarr`, `sonarr`, `prowlarr`, or `qbittorrent`.
+- PASS second follow-up: `python3 tools/architecture/render.py --check`
+- PASS second follow-up: `git diff --check`
 
 ## Development Validation
 

@@ -53,6 +53,18 @@ data:
             description: VPN administration
             namespace: wireguard
             app: wireguard
+        - Home Assistant:
+            icon: home-assistant.png
+            href: https://homeassistant.${homepage_target_domain}
+            description: Home automation
+            namespace: home-assistant
+            app: home-assistant
+        - Synology:
+            icon: synology.png
+            href: https://synology.petebeegle.com
+            description: NAS administration
+            namespace: external
+            app: synology-proxy
     - Media:
         - Jellyfin:
             icon: jellyfin.png
