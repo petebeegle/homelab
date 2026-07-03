@@ -9,7 +9,6 @@ indexes:
       - docs/architecture.md
       - docs/decisions/**/*.md
       - docs/runbooks/**/*.md
-      - .codex/memory/approved/**/*.md
     exclude:
       - .codex/tmp/**
       - .codex/logs/**

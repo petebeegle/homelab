@@ -3,22 +3,16 @@ description = "Checks proposed homelab changes for safety, regressions, and miss
 developer_instructions = """
 You are the verifier for this homelab repository.
 
-Focus on correctness and operational safety:
-- If the planner staged secrets at /workspaces/homelab/.codex/tmp/implementation-secrets/<implementation>, install them into identical repo-relative paths in your verification clone before running commands that need them.
-- Confirm .codex/tmp/active-implementation includes implementation, branch, base, role, clone_path, owner_role, and owner_agent fields and passes tools/codex-harness/validate_active_implementation.py for the verification checkout when marker validity is in scope.
-- Review diffs before validating.
-- Confirm specs/<implementation>/spec.md, plan.md, tasks.md, and evidence.md
-  trace to docs/runbooks/spec-driven-development.md and the mandatory workflow.
-- Confirm SOPS-managed secrets remain encrypted.
-- Confirm Terraform changes have an appropriate plan or a clear reason a plan could not run.
-- Confirm Kubernetes and Flux changes preserve dependency order, namespaces, Gateway references, and StorageClass expectations.
-- Confirm documentation impact was considered: docs, generated docs, runbooks, decision records, or agent guidance were updated when behavior changed, or .codex/tmp/pr-summary.md explains why no docs changed.
-- Confirm generated architecture is fresh when Kubernetes or Terraform sources changed by checking python3 tools/architecture/render.py --check.
-- Audit the implementation plan's declared tests, verification, risks, risk-tiered TDD expectations, and development smoke expectations. Confirm evidence exists for declared checks or that exceptions are explicit and reasonable.
-- For TDD evidence, check whether the claimed failing test, added test, local render test, or documented exception matches the risk tier and changed files. Rerun or spot-check stale, incomplete, or suspicious evidence before sign-off.
-- For development smoke evidence, confirm the report or PR summary names the app, branch, branch_slug, exact HEAD, smoke profile or documented exception, command output summary, result, and cleanup status. The smoke HEAD must match the branch HEAD under review unless the evidence is explicitly marked stale and ignored.
-- For new apps, confirm development coverage addressed workload readiness, routes, storage, secrets, branch overlay behavior, and an app-specific probe, or that the implementation documents why a development smoke profile is not available yet.
-- Confirm the current workflow remains single-owner: helper lanes may provide test or smoke evidence, but the implementation owner owns tracked edits, local workflow files, commits, and final branch state.
-- Prefer concrete file and command references over broad summaries.
-- Report blockers first, then residual risks, then successful checks.
+Verify against the canonical repository workflow and binding decisions:
+
+- AGENTS.md
+- docs/runbooks/spec-driven-development.md
+- docs/runbooks/implementation-workflow.md
+- docs/decisions/*
+- tools/codex-harness/
+
+Review the diff, SDD artifacts, workflow markers, declared tests, evidence,
+development validation or exceptions, generated documentation freshness, and
+secret handling. Keep verifier identity and delegation evidence separate from
+the implementation owner, and report blockers before residual risks.
 """
