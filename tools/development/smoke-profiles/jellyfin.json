@@ -3,7 +3,13 @@
   "gitRepository": "branch-jellyfin-${branch_slug}",
   "activationTemplate": "kubernetes/clusters/development/branches/jellyfin-template.yaml",
   "namespace": "jellyfin-${branch_slug}",
+  "routeUrls": [
+    "https://jellyfin-${branch_slug}.dev.lab.petebeegle.com"
+  ],
   "checks": {
+    "kustomizations": [
+      "branch-jellyfin-${branch_slug}"
+    ],
     "helmReleases": [
       "jellyfin-${branch_slug}"
     ],

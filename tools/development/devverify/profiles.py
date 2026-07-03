@@ -39,11 +39,15 @@ def load_smoke_profile_file(path: Path) -> SmokeProfile:
         git_repository=raw.get("gitRepository") if isinstance(raw.get("gitRepository"), str) else "branch-${branch_slug}",
         activation_template=_required_string(raw, "activationTemplate", path),
         namespace=_required_string(raw, "namespace", path),
+        kustomizations=tuple(_string_list(checks.get("kustomizations", []), f"{path}:checks.kustomizations")),
         helm_releases=tuple(_string_list(checks.get("helmReleases", []), f"{path}:checks.helmReleases")),
         services=tuple(_string_list(checks.get("services", []), f"{path}:checks.services")),
         http_routes=tuple(_string_list(checks.get("httpRoutes", []), f"{path}:checks.httpRoutes")),
+        tls_routes=tuple(_string_list(checks.get("tlsRoutes", []), f"{path}:checks.tlsRoutes")),
+        secret_refs=tuple(_string_list(checks.get("secretRefs", []), f"{path}:checks.secretRefs")),
         pvcs=tuple(_pvc_checks(checks.get("pvcs", []), path)),
         http_probes=tuple(_http_probes(checks.get("httpProbes", []), path)),
+        route_urls=tuple(_string_list(raw.get("routeUrls", []), f"{path}:routeUrls")),
     )
     return profile
 

@@ -3,7 +3,13 @@
   "gitRepository": "branch-home-assistant-${branch_slug}",
   "activationTemplate": "kubernetes/clusters/development/branches/home-assistant-template.yaml",
   "namespace": "home-assistant-${branch_slug}",
+  "routeUrls": [
+    "https://homeassistant-${branch_slug}.dev.lab.petebeegle.com"
+  ],
   "checks": {
+    "kustomizations": [
+      "branch-home-assistant-${branch_slug}"
+    ],
     "pvcs": [
       {
         "name": "home-assistant-config-${branch_slug}",
