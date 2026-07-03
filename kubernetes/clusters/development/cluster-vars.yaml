@@ -5,7 +5,7 @@ metadata:
   name: cluster-vars
   namespace: flux-system
 data:
-  cluster_domain: "development.lab.petebeegle.com"
+  cluster_domain: "dev.lab.petebeegle.com"
   homepage_target_domain: "lab.petebeegle.com"
   cluster_env: "development"
   gateway_internal_pool: "192.168.30.224/28"
@@ -17,4 +17,4 @@ data:
   cilium_operator_replicas: "1"
   nfs_server: "192.168.30.99"
   letsencrypt_server: "https://acme-staging-v02.api.letsencrypt.org/directory"
-  wildcard_cert_name: "wildcard-development-lab-petebeegle-com"
+  wildcard_cert_name: "wildcard-dev-lab-petebeegle-com"

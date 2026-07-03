@@ -40,7 +40,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `production` | `nfs_server` | `192.168.30.99` |
 | `production` | `wildcard_cert_name` | `wildcard-lab-petebeegle-com` |
 | `development` | `cilium_operator_replicas` | `1` |
-| `development` | `cluster_domain` | `development.lab.petebeegle.com` |
+| `development` | `cluster_domain` | `dev.lab.petebeegle.com` |
 | `development` | `cluster_env` | `development` |
 | `development` | `gateway_external_ip` | `192.168.40.225` |
 | `development` | `gateway_external_passthrough_ip` | `192.168.40.226` |
@@ -51,7 +51,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `development` | `homepage_target_domain` | `lab.petebeegle.com` |
 | `development` | `letsencrypt_server` | `https://acme-staging-v02.api.letsencrypt.org/directory` |
 | `development` | `nfs_server` | `192.168.30.99` |
-| `development` | `wildcard_cert_name` | `wildcard-development-lab-petebeegle-com` |
+| `development` | `wildcard_cert_name` | `wildcard-dev-lab-petebeegle-com` |
 
 ## Flux Dependencies
 
