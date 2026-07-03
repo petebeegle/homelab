@@ -5,6 +5,62 @@ resources:
   - ../base
 patches:
   - target:
+      version: v1
+      kind: ConfigMap
+      name: homepage-public-config
+      namespace: homepage
+    patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: homepage-public-config
+        namespace: homepage
+      data:
+        services.yaml: |
+          - Core:
+              - Homepage:
+                  icon: homepage.png
+                  href: https://${homepage_target_domain}
+                  description: Homelab dashboard
+              - Authentik:
+                  icon: authentik.png
+                  href: https://authentik.${homepage_target_domain}
+                  description: Single sign-on
+              - Pi-hole:
+                  icon: pi-hole.png
+                  href: https://pihole.${homepage_target_domain}
+                  description: DNS and ad blocking
+              - WireGuard:
+                  icon: wireguard.png
+                  href: https://vpn.${homepage_target_domain}
+                  description: VPN administration
+              - Home Assistant:
+                  icon: home-assistant.png
+                  href: https://homeassistant.${homepage_target_domain}
+                  description: Home automation
+              - Synology:
+                  icon: synology.png
+                  href: https://synology.petebeegle.com
+                  description: NAS administration
+          - Media:
+              - Jellyfin:
+                  icon: jellyfin.png
+                  href: https://jellyfin.${homepage_target_domain}
+                  description: Media library
+              - Foundry VTT:
+                  icon: foundry-vtt.png
+                  href: https://foundry.${homepage_target_domain}
+                  description: Virtual tabletop
+          - Operations:
+              - Grafana:
+                  icon: grafana.png
+                  href: https://monitoring.${homepage_target_domain}
+                  description: Observability
+              - Whoami:
+                  icon: mdi-test-tube
+                  href: https://whoami.${homepage_target_domain}
+                  description: Gateway routing canary
+  - target:
       group: apps
       version: v1
       kind: Deployment

@@ -9,6 +9,9 @@
 
 ## Local Checks
 
+- FOLLOW-UP FINDING: Playwright against live `https://homepage.dev.lab.petebeegle.com` showed the live dashboard is stale. Branch review also found the development Homepage overlay still rendered production service `namespace`/`app` metadata, so Homepage dev would call `/api/kubernetes/status/...` for prod-only services and show them missing/offline even after hrefs target production.
+- PASS follow-up fix: development `ConfigMap/homepage-public-config` now patches `services.yaml` to include launchable public production links for Homepage, Authentik, Pi-hole, WireGuard, Home Assistant, Synology, Jellyfin, Foundry VTT, Grafana, and Whoami without `namespace` or `app` metadata.
+- PASS follow-up fix: rendered development services omit status-only platform cards and prod-only Kubernetes status metadata, avoiding prod-only `/api/kubernetes/status/...` service-card calls from the development dashboard.
 - PASS: `kubectl kustomize kubernetes/clusters/production >/tmp/homepage-dashboard-public-production.yaml`
 - PASS: `kubectl kustomize kubernetes/clusters/development >/tmp/homepage-dashboard-public-development.yaml`
 - PASS: `export cluster_domain=lab.petebeegle.com homepage_target_domain=lab.petebeegle.com; kubectl kustomize kubernetes/apps/homepage | flux envsubst --strict >/tmp/homepage-dashboard-public-homepage-production.yaml`
@@ -38,6 +41,13 @@
 - PASS second follow-up: public Homepage ConfigMap still contains no private download/media automation names: `transfer`, `sabnzbd`, `radarr`, `sonarr`, `prowlarr`, or `qbittorrent`.
 - PASS second follow-up: `python3 tools/architecture/render.py --check`
 - PASS second follow-up: `git diff --check`
+- PASS metadata follow-up: `kubectl kustomize kubernetes/clusters/production >/tmp/homepage-dashboard-public-production.yaml`
+- PASS metadata follow-up: `kubectl kustomize kubernetes/clusters/development >/tmp/homepage-dashboard-public-development.yaml`
+- PASS metadata follow-up: `export cluster_domain=lab.petebeegle.com homepage_target_domain=lab.petebeegle.com; kubectl kustomize kubernetes/apps/homepage | flux envsubst --strict >/tmp/homepage-dashboard-public-homepage-production.yaml`
+- PASS metadata follow-up: `export cluster_domain=dev.lab.petebeegle.com homepage_target_domain=lab.petebeegle.com; kubectl kustomize kubernetes/apps/homepage/development | flux envsubst --strict >/tmp/homepage-dashboard-public-homepage-development.yaml`
+- PASS metadata follow-up: dependency-free rendered YAML assertion confirmed development services are exactly the ten non-private launchable public services, all hrefs target production `lab.petebeegle.com` or `synology.petebeegle.com`, no href targets `dev.lab.petebeegle.com`, development `HOMEPAGE_ALLOWED_HOSTS` and `HTTPRoute` use `homepage.dev.lab.petebeegle.com`, public config excludes private media/download names, development services contain no `namespace:` or `app:`, and production services retain Kubernetes metadata.
+- PASS metadata follow-up: `python3 tools/architecture/render.py --check`
+- PASS metadata follow-up: `git diff --check`
 
 ## Development Validation
 
@@ -47,4 +57,4 @@
 ## Commits
 
 - Private `homelab-private` commit: `cf24f4442d04177de457c6f0ef7ba0bbc8ecd3f2` (`feat(homepage): target production private links`).
-- Public commit is created after this evidence update so the commit includes the final SDD artifacts.
+- Public follow-up commit is created after this evidence update so the commit includes the final SDD artifacts.
