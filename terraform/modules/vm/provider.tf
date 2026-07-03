@@ -6,10 +6,10 @@ terraform {
       source  = "bpg/proxmox"
       version = "0.111.0"
     }
-    // https://registry.terraform.io/providers/hashicorp/random/3.8.1/docs
+    // https://registry.terraform.io/providers/hashicorp/random/3.9.0/docs
     random = {
       source  = "hashicorp/random"
-      version = "3.8.1"
+      version = "3.9.0"
     }
   }
 }
