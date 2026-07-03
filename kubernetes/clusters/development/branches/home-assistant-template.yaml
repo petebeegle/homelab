@@ -1,0 +1,39 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: branch-home-assistant-${branch_slug}
+  namespace: flux-system
+spec:
+  interval: 1m
+  suspend: true
+  ref:
+    branch: ${branch_name}
+  secretRef:
+    name: flux-system
+  url: ssh://git@github.com/petebeegle/homelab
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: branch-home-assistant-${branch_slug}
+  namespace: flux-system
+spec:
+  interval: 2m
+  retryInterval: 1m
+  path: ./kubernetes/apps/home-assistant/branch
+  prune: true
+  wait: true
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: branch-home-assistant-${branch_slug}
+  dependsOn:
+    - name: gateway
+    - name: nfs-csi
+  postBuild:
+    substitute:
+      branch_slug: ${branch_slug}
+    substituteFrom:
+      - kind: ConfigMap
+        name: cluster-vars

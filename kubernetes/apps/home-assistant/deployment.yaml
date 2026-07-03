@@ -1,0 +1,105 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: home-assistant
+  namespace: home-assistant
+  labels:
+    app.kubernetes.io/name: home-assistant
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: home-assistant
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: home-assistant
+    spec:
+      initContainers:
+        - name: install-auth-oidc
+          image: alpine:3.22
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -ec
+          args:
+            - |
+              apk add --no-cache unzip
+              archive=/tmp/hass-oidc-auth-v1.1.1.zip
+              expected_sha=0226716e299eace3204ea3e6fcdf54a96cc9ded42dadaa34c37c54ffff9b8b68
+              wget -q -O "${archive}" https://github.com/christiaangoossens/hass-oidc-auth/archive/refs/tags/v1.1.1.zip
+              echo "${expected_sha}  ${archive}" | sha256sum -c -
+              rm -rf /tmp/hass-oidc-auth-1.1.1 /config/custom_components/auth_oidc
+              unzip -q "${archive}" "hass-oidc-auth-1.1.1/custom_components/auth_oidc/*" -d /tmp
+              mkdir -p /config/custom_components
+              mv /tmp/hass-oidc-auth-1.1.1/custom_components/auth_oidc /config/custom_components/auth_oidc
+          volumeMounts:
+            - name: config-storage
+              mountPath: /config
+      containers:
+        - name: home-assistant
+          image: ghcr.io/home-assistant/home-assistant:2026.7.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: TZ
+              value: America/New_York
+          ports:
+            - name: http
+              containerPort: 8123
+          startupProbe:
+            tcpSocket:
+              port: http
+            failureThreshold: 60
+            periodSeconds: 5
+          readinessProbe:
+            tcpSocket:
+              port: http
+            failureThreshold: 6
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: http
+            failureThreshold: 6
+            periodSeconds: 10
+          volumeMounts:
+            - name: config-storage
+              mountPath: /config
+            - name: home-assistant-config
+              mountPath: /config/configuration.yaml
+              subPath: configuration.yaml
+              readOnly: true
+            - name: home-assistant-config
+              mountPath: /config/automations.yaml
+              subPath: automations.yaml
+              readOnly: true
+            - name: home-assistant-config
+              mountPath: /config/scripts.yaml
+              subPath: scripts.yaml
+              readOnly: true
+            - name: home-assistant-config
+              mountPath: /config/scenes.yaml
+              subPath: scenes.yaml
+              readOnly: true
+            - name: home-assistant-packages
+              mountPath: /config/packages
+              readOnly: true
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+      volumes:
+        - name: config-storage
+          persistentVolumeClaim:
+            claimName: home-assistant-config
+        - name: home-assistant-config
+          configMap:
+            name: home-assistant-config
+        - name: home-assistant-packages
+          configMap:
+            name: home-assistant-packages

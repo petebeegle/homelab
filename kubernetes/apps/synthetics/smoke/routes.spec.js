@@ -34,6 +34,13 @@ test.describe("homelab routed services", () => {
     await expect(page.locator("body")).toContainText(/Jellyfin|Please sign in|Wizard|Login/i);
   });
 
+  test("home assistant reaches OIDC or Authentik login", async ({ page }) => {
+    const response = await gotoOk(page, urlFor("homeassistant"));
+    test.skip(!process.env.CI && response.status() === 404, "Home Assistant route is not deployed in the live production cluster yet");
+    await expect(page).toHaveURL(/authentik\.|homeassistant\.[^/]+\/auth\/oidc\/(?:welcome|redirect|callback)/i);
+    await expect(page.locator("body")).toContainText(/Home Assistant|Authentik|Sign in|Login|Username/i);
+  });
+
   test("pihole root redirects to the admin shell", async ({ page }) => {
     await gotoOk(page, urlFor("pihole"));
     await expect(page).toHaveURL(/\/admin(?:\/|\/login)?$/);

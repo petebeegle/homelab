@@ -8,6 +8,9 @@ configMapGenerator:
   - name: grafana-oauth-blueprint
     files:
       - grafana-oauth.yaml
+  - name: home-assistant-oauth-blueprint
+    files:
+      - home-assistant-oauth.yaml
   - name: jellyfin-oauth-blueprint
     files:
       - jellyfin-oauth.yaml

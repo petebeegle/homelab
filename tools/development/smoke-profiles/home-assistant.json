@@ -1,0 +1,28 @@
+{
+  "app": "home-assistant",
+  "gitRepository": "branch-home-assistant-${branch_slug}",
+  "activationTemplate": "kubernetes/clusters/development/branches/home-assistant-template.yaml",
+  "namespace": "home-assistant-${branch_slug}",
+  "checks": {
+    "pvcs": [
+      {
+        "name": "home-assistant-config-${branch_slug}",
+        "storageClass": "nfs-csi-storage"
+      }
+    ],
+    "services": [
+      "home-assistant-${branch_slug}"
+    ],
+    "httpRoutes": [
+      "home-assistant-${branch_slug}"
+    ],
+    "httpProbes": [
+      {
+        "service": "home-assistant-${branch_slug}",
+        "port": 80,
+        "path": "/",
+        "bodyRegex": "Home Assistant|Create my smart home|Sign in|Login"
+      }
+    ]
+  }
+}

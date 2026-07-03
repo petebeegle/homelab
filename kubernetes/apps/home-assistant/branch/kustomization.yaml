@@ -1,0 +1,21 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - home-assistant.yaml
+configMapGenerator:
+  - name: home-assistant-${branch_slug}-config
+    namespace: home-assistant-${branch_slug}
+    files:
+      - configuration.yaml=config/configuration.yaml
+      - automations.yaml=config/automations.yaml
+      - scripts.yaml=config/scripts.yaml
+      - scenes.yaml=config/scenes.yaml
+    options:
+      disableNameSuffixHash: true
+  - name: home-assistant-${branch_slug}-packages
+    namespace: home-assistant-${branch_slug}
+    files:
+      - code-first.yaml=config/packages/code-first.yaml
+    options:
+      disableNameSuffixHash: true
