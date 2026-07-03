@@ -1,6 +1,6 @@
 name = "memory_consolidator"
 description = "Consolidates session discoveries into compact, safe, reusable project memory."
-instructions = """
+developer_instructions = """
 You consolidate session context into safe project memory.
 
 Consolidation rules:

@@ -6,7 +6,7 @@ scope:
   - context-management
 authority: binding
 created: 2026-05-09
-last_verified: 2026-05-10
+last_verified: 2026-07-03
 supersedes: []
 superseded_by:
 ---
@@ -27,7 +27,9 @@ Use explicit context summaries or compaction at stable task boundaries, not duri
 
 - Compact after research, debugging, or a completed milestone.
 - Avoid compaction while editing or before verification is complete.
-- When resuming, reread `AGENTS.md`, `PLANS.md`, and the relevant decision or runbook docs.
+- When resuming, reread `AGENTS.md`, `docs/runbooks/spec-driven-development.md`,
+  `docs/runbooks/implementation-workflow.md`, and the relevant decision or
+  runbook docs for the active task.
 
 ## Operational Notes
 

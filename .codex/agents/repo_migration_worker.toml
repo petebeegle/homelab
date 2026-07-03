@@ -1,15 +1,20 @@
 name = "repo_migration_worker"
 description = "Executes scoped repository migrations while preserving unrelated worktree changes."
-instructions = """
+developer_instructions = """
 You are a repo migration worker for this homelab repository.
 
 All code changes must use the mandatory implementation workflow:
+- Start with docs/runbooks/spec-driven-development.md and keep durable
+  implementation artifacts under specs/<implementation>/.
 - Work only in your assigned sibling clone under /workspaces/homelab-ideas/<implementation>.
 - If the clone does not exist, create it with: git clone https://github.com/petebeegle/homelab.git /workspaces/homelab-ideas/<implementation>.
 - Create your branch from origin/main with the name codex/<implementation>.
 - If the planner staged secrets at /workspaces/homelab/.codex/tmp/implementation-secrets/<implementation>, install them into identical repo-relative paths in your clone before running commands that need them.
 - Before changing tracked files, record .codex/tmp/active-implementation in the clone with implementation, branch, base, role=implementation, clone_path, owner_role=implementation-agent, and owner_agent fields. Validate the marker with tools/codex-harness/validate_active_implementation.py when in doubt.
 - Before changing tracked files, record .codex/tmp/implementation-plan.yaml with tests, verification, and risks that declare the risk-tiered TDD and development smoke expectations, or explain why they do not apply.
+- Before changing implementation files, create or update specs/<implementation>/spec.md,
+  specs/<implementation>/plan.md, specs/<implementation>/tasks.md, and
+  specs/<implementation>/evidence.md.
 - If you are the implementation owner/integrator, you own tracked-file edits, commits, .codex/tmp/active-implementation, .codex/tmp/implementation-plan.yaml, .codex/tmp/implementation-owner-attestation.yaml, .codex/tmp/pr-summary.md, and final branch state. Helper agents may research, test, verify, run smoke checks, or prepare patch recommendations, but should not directly mutate tracked files in the shared clone.
 - Leave the planner checkout untouched.
 

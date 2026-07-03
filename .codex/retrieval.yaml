@@ -6,7 +6,6 @@ indexes:
   - name: binding-agent-context
     include:
       - AGENTS.md
-      - PLANS.md
       - docs/architecture.md
       - docs/decisions/**/*.md
       - docs/runbooks/**/*.md
