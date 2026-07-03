@@ -35,16 +35,28 @@
 | `npm ci && npm test` in `tests/smoke` | PASS | 6 Playwright smoke tests passed against default production smoke domain; generated `node_modules` and `test-results` were removed. |
 | `uv run --project tools/agent-memory pytest tools/agent-memory/tests` | SKIP | Environment limitation: uv could not find required Python 3.14.6. |
 | `python3 tools/development/verify_branch_deploy.py --app whoami --branch codex/sdd-dev-smoke-matrix --slug sdd-dev-smoke-matrix --print-route-urls` | PASS | Rendered `https://whoami-sdd-dev-smoke-matrix.dev.lab.petebeegle.com` without cluster access. |
-| `kubectl --kubeconfig ~/.kube/homelab-development.config get namespace flux-system --request-timeout=10s` | PASS | Read-only credential check succeeded; live smoke attempt is deferred until after the branch has a committed HEAD to push. |
+| `kubectl --kubeconfig ~/.kube/homelab-development.config get namespace flux-system --request-timeout=10s` | PASS | Read-only credential check succeeded before the live smoke attempt. |
+| `python3 tools/development/verify_branch_deploy.py --app whoami --branch codex/sdd-dev-smoke-matrix --slug sdd-dev-smoke-matrix --push` | FAIL/BLOCKED | Attempted after commit `6c1a7a2a5b2d02e45a9d65329661632ad6ecb33f` was pushed to `origin/codex/sdd-dev-smoke-matrix`; blocked during Terraform plan preflight before Flux activation because development Terraform inputs were not staged in this clone. |
+| `kubectl --kubeconfig ~/.kube/homelab-development.config -n flux-system get kustomization.kustomize.toolkit.fluxcd.io/branch-whoami-sdd-dev-smoke-matrix gitrepository.source.toolkit.fluxcd.io/branch-sdd-dev-smoke-matrix --ignore-not-found` | PASS | Returned no resources; branch Flux activation was not created. |
+| `kubectl --kubeconfig ~/.kube/homelab-development.config get namespace whoami-sdd-dev-smoke-matrix --ignore-not-found` | PASS | Returned no namespace; no branch namespace cleanup was required. |
 
 ## Development Validation
 
 - Profile: `whoami`
 - Branch slug: `sdd-dev-smoke-matrix`
-- HEAD: Final committed branch HEAD is reported in handoff; live `--push` smoke must run against committed content.
-- Report path: None yet.
-- Cleanup: None yet.
-- Result or exception: Development kubeconfig exists and read-only access works. The mutating `--push` smoke command is intentionally attempted after the conventional commit so Flux fetches a real implementation branch HEAD instead of the pre-commit base.
+- Tested commit SHA: `6c1a7a2a5b2d02e45a9d65329661632ad6ecb33f`
+- Report path: None; the verifier stopped before Flux activation and did not produce an app smoke report.
+- Cleanup: Confirmed absent after the failed preflight: no
+  `branch-whoami-sdd-dev-smoke-matrix` Flux Kustomization, no
+  `branch-sdd-dev-smoke-matrix` GitRepository, and no
+  `whoami-sdd-dev-smoke-matrix` namespace.
+- Result or exception: Development kubeconfig exists and read-only access works.
+  The live command pushed commit
+  `6c1a7a2a5b2d02e45a9d65329661632ad6ecb33f`, then failed during
+  `terraform -chdir=terraform/development plan -detailed-exitcode -input=false -no-color`
+  before Flux activation. Missing local inputs, without secret values, were
+  `pm_api_url`, Proxmox token fields, GitHub and Docker variables, and
+  `talos_version`.
 
 ## Documentation Impact
 
@@ -74,12 +86,17 @@
 
 - `uv run --project tools/agent-memory pytest tools/agent-memory/tests` could
   not run because Python 3.14.6 is unavailable in this environment.
-- Exact live branch smoke evidence is attempted after commit because
-  `verify_branch_deploy.py --push` pushes `HEAD` to origin for Flux to fetch.
+- Live `whoami` smoke is blocked until development Terraform variables/secrets
+  are staged in the implementation clone. The failure occurred before branch
+  Flux activation, and absence checks confirmed no branch Flux resources or
+  namespace remained.
 
 ## Final State
 
 - Final branch: `codex/sdd-dev-smoke-matrix`
-- Final commit SHA: reported in final handoff after commit.
-- Commit: Conventional commit pending at evidence write time.
+- Pushed/tested commit SHA: `6c1a7a2a5b2d02e45a9d65329661632ad6ecb33f`
+- Evidence refresh commit SHA: reported in final implementation-owner handoff
+  after this evidence update is committed.
+- Commit: `feat(dev-smoke): expand development smoke profile checks`, followed
+  by a conventional evidence refresh commit.
 - Verifier approval: not created by implementation owner
