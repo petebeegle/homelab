@@ -4,7 +4,7 @@
 | Name | Version |
 | ---- | ------- |
 | <a name="requirement_helm"></a> [helm](#requirement\_helm) | 3.2.0 |
-| <a name="requirement_local"></a> [local](#requirement\_local) | 2.8.0 |
+| <a name="requirement_local"></a> [local](#requirement\_local) | 2.9.0 |
 | <a name="requirement_talos"></a> [talos](#requirement\_talos) | 0.11.0 |
 
 ## Providers
@@ -12,7 +12,7 @@
 | Name | Version |
 | ---- | ------- |
 | <a name="provider_helm"></a> [helm](#provider\_helm) | 3.2.0 |
-| <a name="provider_local"></a> [local](#provider\_local) | 2.8.0 |
+| <a name="provider_local"></a> [local](#provider\_local) | 2.9.0 |
 | <a name="provider_talos"></a> [talos](#provider\_talos) | 0.11.0 |
 
 ## Modules
@@ -23,8 +23,8 @@ No modules.
 
 | Name | Type |
 | ---- | ---- |
-| [local_file.kube_config](https://registry.terraform.io/providers/hashicorp/local/2.8.0/docs/resources/file) | resource |
-| [local_file.talos_config](https://registry.terraform.io/providers/hashicorp/local/2.8.0/docs/resources/file) | resource |
+| [local_file.kube_config](https://registry.terraform.io/providers/hashicorp/local/2.9.0/docs/resources/file) | resource |
+| [local_file.talos_config](https://registry.terraform.io/providers/hashicorp/local/2.9.0/docs/resources/file) | resource |
 | [talos_cluster_kubeconfig.this](https://registry.terraform.io/providers/siderolabs/talos/0.11.0/docs/resources/cluster_kubeconfig) | resource |
 | [talos_machine_bootstrap.this](https://registry.terraform.io/providers/siderolabs/talos/0.11.0/docs/resources/machine_bootstrap) | resource |
 | [talos_machine_configuration_apply.control_plane_apply](https://registry.terraform.io/providers/siderolabs/talos/0.11.0/docs/resources/machine_configuration_apply) | resource |
