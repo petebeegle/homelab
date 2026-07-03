@@ -22,14 +22,16 @@ Use this runbook for every repository code change. The binding decision is `docs
 6. Before tracked edits, create `.codex/tmp/implementation-plan.yaml` with implementation identity, summary, scope, out-of-scope items, planned changes, documentation impact, tests, verification, and risks. Tests, verification, and risks must declare the risk-tiered TDD and development validation expectations for the implementation, or explain why they do not apply.
 7. Before tracked edits, create `.codex/tmp/implementation-owner-attestation.yaml` with implementation identity, role, concrete `agent_id`, clone path, `created_at`, and matching delegation token evidence under `.codex/tmp/delegation-tokens/`.
 8. Validate the marker, plan, and owner attestation.
-9. Make tracked-file changes only in the sibling clone.
-10. Update docs, generated docs, decision records, runbooks, or agent guidance when behavior changes. If no docs change, record why in `.codex/tmp/pr-summary.md`.
-11. Commit with conventional commits.
-12. Run relevant checks, collect TDD evidence, and collect required development-cluster validation evidence for covered cluster-affecting changes before requesting verifier review.
-13. Record verifier approval for the exact `HEAD` SHA in `.codex/tmp/verifier-approved`.
-14. Record `.codex/tmp/verifier-attestation.yaml` with verifier identity, separate delegation token evidence, and `approved_head` equal to the exact `HEAD` SHA. The verifier `agent_id`, `delegation_token`, and `delegation_token_path` must differ from the implementation owner evidence.
-15. Write `.codex/tmp/pr-summary.md` from the plan and final result.
-16. Create the pull request against `main`; delete the sibling clone only after PR creation succeeds.
+9. Create durable SDD artifacts under `specs/<implementation>/`: `spec.md`, `plan.md`, `tasks.md`, and `evidence.md`.
+10. Make tracked-file changes only in the sibling clone.
+11. Update docs, generated docs, decision records, runbooks, or agent guidance when behavior changes. If no docs change, record why in `.codex/tmp/pr-summary.md`.
+12. Commit with conventional commits.
+13. Run relevant checks, collect TDD evidence, and collect required development-cluster validation evidence for covered cluster-affecting changes before requesting verifier review.
+14. Record command outcomes, development validation evidence or exceptions, final `HEAD`, and documentation impact in `specs/<implementation>/evidence.md`.
+15. Record verifier approval for the exact `HEAD` SHA in `.codex/tmp/verifier-approved`.
+16. Record `.codex/tmp/verifier-attestation.yaml` with verifier identity, separate delegation token evidence, and `approved_head` equal to the exact `HEAD` SHA. The verifier `agent_id`, `delegation_token`, and `delegation_token_path` must differ from the implementation owner evidence.
+17. Write `.codex/tmp/pr-summary.md` from the plan and final result.
+18. Create the pull request against `main`; delete the sibling clone only after PR creation succeeds.
 
 ## Active Marker
 
@@ -132,6 +134,12 @@ python3 tools/codex-harness/validate_workflow_attestations.py \
   --root "$(pwd)" \
   --branch "$(git branch --show-current)"
 
+python3 tools/codex-harness/validate_sdd_context.py \
+  --marker .codex/tmp/active-implementation \
+  --root "$(pwd)" \
+  --branch "$(git branch --show-current)" \
+  --require-plan-artifacts
+
 python3 tools/codex-harness/validate_workflow_attestations.py \
   --kind verifier \
   --attestation .codex/tmp/verifier-attestation.yaml \
@@ -140,7 +148,40 @@ python3 tools/codex-harness/validate_workflow_attestations.py \
   --head "$(git rev-parse HEAD)" \
   --root "$(pwd)" \
   --branch "$(git branch --show-current)"
+
+python3 tools/codex-harness/validate_sdd_context.py \
+  --marker .codex/tmp/active-implementation \
+  --root "$(pwd)" \
+  --branch "$(git branch --show-current)" \
+  --require-plan-artifacts \
+  --require-evidence \
+  --head "$(git rev-parse HEAD)"
 ```
+
+## SDD Guard Gates
+
+For non-bootstrap tracked edits, the workflow guard requires valid branch,
+clone, marker, implementation plan, owner attestation, delegation token, and
+non-empty `specs/<implementation>/spec.md`, `plan.md`, and `tasks.md`.
+Bootstrap edits that create the initial SDD artifact files are allowed only when
+the branch `HEAD` does not already contain SDD artifacts for the implementation.
+
+Verifier approval, verifier attestation, automatic PR creation, final handoff,
+and non-smoke pushes require `specs/<implementation>/evidence.md` to exist and
+be non-empty. When `evidence.md` records an explicit final, verified, approved,
+branch, or current `HEAD`, that SHA must match the current branch `HEAD`.
+
+`.codex/scripts/create_implementation_pr.sh --auto` performs its own marker,
+plan, owner attestation, SDD evidence, verifier approval, and verifier
+attestation gates before pushing or creating a PR. Do not rely on Stop-hook
+ordering as the PR creation safety boundary.
+
+Development validation may push `origin HEAD:refs/heads/codex/<implementation>`
+before verifier approval only from the active implementation branch, only when
+the implementation clone has valid runtime workflow context and non-empty
+`spec.md`, `plan.md`, and `tasks.md`. PR creation, final handoff, and all other
+origin pushes still require exact-HEAD verifier approval and verifier
+attestation.
 
 ## Ownership
 

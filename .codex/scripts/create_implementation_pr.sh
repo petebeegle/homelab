@@ -22,9 +22,6 @@ head_sha="$(git rev-parse HEAD)"
 approval_file=".codex/tmp/verifier-approved"
 attestation_file=".codex/tmp/verifier-attestation.yaml"
 if [[ ! -f "$approval_file" ]] || ! grep -Fxq "$head_sha" "$approval_file"; then
-  if ((auto)); then
-    exit 0
-  fi
   {
     printf 'Implementation PR: verifier approval is missing for exact HEAD.\n'
     printf 'Expected %s to contain:\n' "$approval_file"
@@ -34,9 +31,6 @@ if [[ ! -f "$approval_file" ]] || ! grep -Fxq "$head_sha" "$approval_file"; then
 fi
 
 if [[ ! -f "$attestation_file" ]]; then
-  if ((auto)); then
-    exit 0
-  fi
   {
     printf 'Implementation PR: verifier attestation is missing for exact HEAD.\n'
     printf 'Expected %s with approved_head:\n' "$attestation_file"
@@ -46,19 +40,48 @@ if [[ ! -f "$attestation_file" ]]; then
 fi
 
 marker=".codex/tmp/active-implementation"
+plan=".codex/tmp/implementation-plan.yaml"
+owner_attestation=".codex/tmp/implementation-owner-attestation.yaml"
 if [[ ! -f "$marker" ]]; then
   printf 'Implementation PR: missing %s.\n' "$marker" >&2
   exit 1
 fi
 
 validator="tools/codex-harness/validate_active_implementation.py"
+plan_validator="tools/codex-harness/validate_implementation_plan.py"
+attestation_validator="tools/codex-harness/validate_workflow_attestations.py"
+sdd_validator="tools/codex-harness/validate_sdd_context.py"
 if ! python3 "$validator" --marker "$marker" --root "$root" --branch "$branch"; then
   printf 'Implementation PR: active implementation marker does not match this checkout.\n' >&2
   exit 1
 fi
 
-attestation_validator="tools/codex-harness/validate_workflow_attestations.py"
-if ! python3 "$attestation_validator" --kind verifier --attestation "$attestation_file" --head "$head_sha" --root "$root" --branch "$branch"; then
+if [[ ! -f "$plan" ]]; then
+  printf 'Implementation PR: missing %s.\n' "$plan" >&2
+  exit 1
+fi
+
+if ! python3 "$plan_validator" --plan "$plan" --marker "$marker" --root "$root" --branch "$branch"; then
+  printf 'Implementation PR: implementation plan validation failed.\n' >&2
+  exit 1
+fi
+
+if [[ ! -f "$owner_attestation" ]]; then
+  printf 'Implementation PR: missing %s.\n' "$owner_attestation" >&2
+  exit 1
+fi
+
+if ! python3 "$attestation_validator" --kind owner --attestation "$owner_attestation" --marker "$marker" --plan "$plan" --root "$root" --branch "$branch"; then
+  printf 'Implementation PR: implementation owner attestation validation failed.\n' >&2
+  exit 1
+fi
+
+if ! python3 "$sdd_validator" --marker "$marker" --root "$root" --branch "$branch" --require-plan-artifacts --require-evidence --head "$head_sha"; then
+  printf 'Implementation PR: SDD evidence validation failed.\n' >&2
+  exit 1
+fi
+
+if ! python3 "$attestation_validator" --kind verifier --attestation "$attestation_file" --marker "$marker" --owner-attestation "$owner_attestation" --head "$head_sha" --root "$root" --branch "$branch"; then
   printf 'Implementation PR: verifier attestation validation failed.\n' >&2
   exit 1
 fi

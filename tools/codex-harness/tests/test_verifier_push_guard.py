@@ -12,6 +12,7 @@ HOOK_SOURCE = REPO_ROOT / ".codex" / "hooks" / "verifier_push_guard.sh"
 ACTIVE_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_active_implementation.py"
 PLAN_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_implementation_plan.py"
 ATTESTATION_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_workflow_attestations.py"
+SDD_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_sdd_context.py"
 VALIDATION_COMMON = REPO_ROOT / "tools" / "codex-harness" / "validation_common.py"
 TOOLS_LIB_SOURCE = REPO_ROOT / "tools" / "lib"
 
@@ -29,8 +30,10 @@ class VerifierPushGuardTest(unittest.TestCase):
         _install_harness_files(self.root, self.sibling_root)
         subprocess.run(["git", "switch", "-c", self.branch], cwd=self.root, check=True, stdout=subprocess.DEVNULL)
         _write_marker(self.root, self.implementation)
+        _write_plan(self.root, self.implementation)
         _write_owner_attestation(self.root, self.implementation)
         self.head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=self.root, text=True).strip()
+        _write_sdd_artifacts(self.root, self.implementation)
 
     def tearDown(self) -> None:
         self.tmpdir.cleanup()
@@ -52,6 +55,34 @@ class VerifierPushGuardTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_allows_smoke_push_to_active_implementation_branch_without_verifier_approval(self) -> None:
+        result = _run_hook(
+            self.root,
+            stdin=f"HEAD {self.head} refs/heads/{self.branch} {'0' * 40}\n",
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_blocks_smoke_push_to_non_active_branch_without_verifier_approval(self) -> None:
+        result = _run_hook(
+            self.root,
+            stdin=f"HEAD {self.head} refs/heads/codex/other-implementation {'0' * 40}\n",
+        )
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("refusing to push to origin", result.stderr)
+
+    def test_blocks_smoke_push_without_sdd_context(self) -> None:
+        (self.root / "specs" / self.implementation / "tasks.md").unlink()
+
+        result = _run_hook(
+            self.root,
+            stdin=f"HEAD {self.head} refs/heads/{self.branch} {'0' * 40}\n",
+        )
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("refusing to push to origin", result.stderr)
+
 
 def _init_repo(root: Path) -> None:
     subprocess.run(["git", "init", "-b", "main"], cwd=root, check=True, stdout=subprocess.DEVNULL)
@@ -72,6 +103,7 @@ def _install_harness_files(root: Path, sibling_root: Path) -> None:
     shutil.copy2(ACTIVE_VALIDATOR, tool_dir / "validate_active_implementation.py")
     shutil.copy2(PLAN_VALIDATOR, tool_dir / "validate_implementation_plan.py")
     shutil.copy2(ATTESTATION_VALIDATOR, tool_dir / "validate_workflow_attestations.py")
+    shutil.copy2(SDD_VALIDATOR, tool_dir / "validate_sdd_context.py")
     shutil.copy2(VALIDATION_COMMON, tool_dir / "validation_common.py")
     shutil.copytree(TOOLS_LIB_SOURCE, root / "tools" / "lib")
     _patch_sibling_root(
@@ -142,6 +174,47 @@ def _write_owner_attestation(root: Path, implementation: str) -> None:
     )
 
 
+def _write_plan(root: Path, implementation: str) -> None:
+    tmp = root / ".codex" / "tmp"
+    tmp.mkdir(parents=True, exist_ok=True)
+    (tmp / "implementation-plan.yaml").write_text(
+        "\n".join(
+            [
+                f"implementation: {implementation}",
+                f"branch: codex/{implementation}",
+                "base: origin/main",
+                f"clone_path: {root}",
+                "owner_agent: implementation-agent-deterministic-role-enforcement",
+                "summary: Harden implementation workflow enforcement.",
+                "scope:",
+                "  - Add plan validation.",
+                "out_of_scope:",
+                "  - Live cluster changes.",
+                "planned_changes:",
+                "  - Add validator and hook checks.",
+                "docs_impact: Update workflow runbooks.",
+                "tests:",
+                "  - python3 -m unittest discover -s tools/codex-harness/tests",
+                "verification:",
+                "  - Harness tests pass.",
+                "risks:",
+                "  - Conservative guard behavior.",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+
+def _write_sdd_artifacts(root: Path, implementation: str) -> None:
+    specs = root / "specs" / implementation
+    specs.mkdir(parents=True, exist_ok=True)
+    (specs / "spec.md").write_text("# Spec\n", encoding="utf-8")
+    (specs / "plan.md").write_text("# Plan\n", encoding="utf-8")
+    (specs / "tasks.md").write_text("# Tasks\n", encoding="utf-8")
+    (specs / "evidence.md").write_text("# Evidence\n", encoding="utf-8")
+
+
 def _write_verifier_approval(root: Path, head: str) -> None:
     tmp = root / ".codex" / "tmp"
     tmp.mkdir(parents=True, exist_ok=True)
@@ -203,10 +276,11 @@ def _write_delegation_token(
     )
 
 
-def _run_hook(root: Path) -> subprocess.CompletedProcess[str]:
+def _run_hook(root: Path, *, stdin: str = "") -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         ["bash", ".codex/hooks/verifier_push_guard.sh", "origin", "https://github.com/petebeegle/homelab.git"],
         cwd=root,
+        input=stdin,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
