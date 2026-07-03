@@ -79,6 +79,12 @@ repos:
         language: system
         files: ^(\.mcp\.json|\.codex/config\.toml|tools/policy/check_mcp_config_consistency\.py|\.pre-commit-config\.yaml)$
         pass_filenames: false
+      - id: synthetic-smoke-mirroring
+        name: Check synthetic smoke mirrored files
+        entry: python3 tools/policy/check_synthetic_smoke_mirroring.py
+        language: system
+        files: ^(tests/smoke/(routes\.spec\.js|package-lock\.json)|kubernetes/apps/synthetics/smoke/(routes\.spec\.js|package-lock\.json)|tools/policy/check_synthetic_smoke_mirroring\.py|\.pre-commit-config\.yaml)$
+        pass_filenames: false
       - id: agent-memory-lint
         name: Lint Codex memory docs
         entry: bash -c 'PYTHONPATH=tools/agent-memory/src python3 -m agent_memory.cli lint'
