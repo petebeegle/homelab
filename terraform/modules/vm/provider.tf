@@ -4,7 +4,7 @@ terraform {
     // https://registry.terraform.io/providers/bpg/proxmox/0.97.1/docs
     proxmox = {
       source  = "bpg/proxmox"
-      version = "0.106.0"
+      version = "0.111.0"
     }
     // https://registry.terraform.io/providers/hashicorp/random/3.8.1/docs
     random = {
