@@ -12,6 +12,7 @@ SCRIPT_SOURCE = REPO_ROOT / ".codex" / "scripts" / "create_implementation_pr.sh"
 ACTIVE_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_active_implementation.py"
 PLAN_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_implementation_plan.py"
 ATTESTATION_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_workflow_attestations.py"
+SDD_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_sdd_context.py"
 VALIDATION_COMMON = REPO_ROOT / "tools" / "codex-harness" / "validation_common.py"
 TOOLS_LIB_SOURCE = REPO_ROOT / "tools" / "lib"
 
@@ -29,8 +30,10 @@ class CreateImplementationPrTest(unittest.TestCase):
         _install_harness_files(self.root, self.sibling_root)
         subprocess.run(["git", "switch", "-c", self.branch], cwd=self.root, check=True, stdout=subprocess.DEVNULL)
         _write_marker(self.root, self.implementation)
+        _write_plan(self.root, self.implementation)
         _write_owner_attestation(self.root, self.implementation)
         self.head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=self.root, text=True).strip()
+        _write_sdd_artifacts(self.root, self.implementation, final_head=self.head)
 
     def tearDown(self) -> None:
         self.tmpdir.cleanup()
@@ -44,6 +47,12 @@ class CreateImplementationPrTest(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("verifier attestation is missing", result.stderr)
 
+    def test_auto_blocks_without_exact_head_verifier_approval(self) -> None:
+        result = _run_script(self.root, "--auto")
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("verifier approval is missing for exact HEAD", result.stderr)
+
     def test_blocks_with_wrong_head_verifier_attestation(self) -> None:
         _write_verifier_approval(self.root, self.head)
         _write_verifier_attestation(self.root, self.implementation, "0" * 40)
@@ -52,6 +61,27 @@ class CreateImplementationPrTest(unittest.TestCase):
 
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("verifier attestation validation failed", result.stderr)
+
+    def test_blocks_without_evidence_md(self) -> None:
+        _write_verifier_approval(self.root, self.head)
+        _write_verifier_attestation(self.root, self.implementation, self.head)
+        (self.root / "specs" / self.implementation / "evidence.md").unlink()
+
+        result = _run_script(self.root)
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("SDD evidence validation failed", result.stderr)
+        self.assertIn("Missing required SDD artifact", result.stderr)
+
+    def test_blocks_stale_evidence_head(self) -> None:
+        _write_verifier_approval(self.root, self.head)
+        _write_verifier_attestation(self.root, self.implementation, self.head)
+        _write_sdd_artifacts(self.root, self.implementation, final_head="0" * 40)
+
+        result = _run_script(self.root)
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("records HEAD", result.stderr)
 
 
 def _init_repo(root: Path) -> None:
@@ -73,6 +103,7 @@ def _install_harness_files(root: Path, sibling_root: Path) -> None:
     shutil.copy2(ACTIVE_VALIDATOR, tool_dir / "validate_active_implementation.py")
     shutil.copy2(PLAN_VALIDATOR, tool_dir / "validate_implementation_plan.py")
     shutil.copy2(ATTESTATION_VALIDATOR, tool_dir / "validate_workflow_attestations.py")
+    shutil.copy2(SDD_VALIDATOR, tool_dir / "validate_sdd_context.py")
     shutil.copy2(VALIDATION_COMMON, tool_dir / "validation_common.py")
     shutil.copytree(TOOLS_LIB_SOURCE, root / "tools" / "lib")
     _patch_sibling_root(
@@ -144,6 +175,50 @@ def _write_owner_attestation(root: Path, implementation: str) -> None:
     )
 
 
+def _write_plan(root: Path, implementation: str) -> None:
+    tmp = root / ".codex" / "tmp"
+    tmp.mkdir(parents=True, exist_ok=True)
+    (tmp / "implementation-plan.yaml").write_text(
+        "\n".join(
+            [
+                f"implementation: {implementation}",
+                f"branch: codex/{implementation}",
+                "base: origin/main",
+                f"clone_path: {root}",
+                "owner_agent: implementation-agent-deterministic-role-enforcement",
+                "summary: Harden implementation workflow enforcement.",
+                "scope:",
+                "  - Add plan validation.",
+                "out_of_scope:",
+                "  - Live cluster changes.",
+                "planned_changes:",
+                "  - Add validator and hook checks.",
+                "docs_impact: Update workflow runbooks.",
+                "tests:",
+                "  - python3 -m unittest discover -s tools/codex-harness/tests",
+                "verification:",
+                "  - Harness tests pass.",
+                "risks:",
+                "  - Conservative guard behavior.",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+
+def _write_sdd_artifacts(root: Path, implementation: str, *, final_head: str | None = None) -> None:
+    specs = root / "specs" / implementation
+    specs.mkdir(parents=True, exist_ok=True)
+    (specs / "spec.md").write_text("# Spec\n", encoding="utf-8")
+    (specs / "plan.md").write_text("# Plan\n", encoding="utf-8")
+    (specs / "tasks.md").write_text("# Tasks\n", encoding="utf-8")
+    lines = ["# Evidence"]
+    if final_head is not None:
+        lines.append(f"- Final HEAD: {final_head}")
+    (specs / "evidence.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def _write_verifier_approval(root: Path, head: str) -> None:
     tmp = root / ".codex" / "tmp"
     tmp.mkdir(parents=True, exist_ok=True)
@@ -205,9 +280,9 @@ def _write_delegation_token(
     )
 
 
-def _run_script(root: Path) -> subprocess.CompletedProcess[str]:
+def _run_script(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        ["bash", ".codex/scripts/create_implementation_pr.sh"],
+        ["bash", ".codex/scripts/create_implementation_pr.sh", *args],
         cwd=root,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,

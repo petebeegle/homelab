@@ -15,6 +15,7 @@ USER_PROMPT_HOOK_SOURCE = REPO_ROOT / ".codex" / "hooks" / "user_prompt_submit.s
 ACTIVE_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_active_implementation.py"
 PLAN_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_implementation_plan.py"
 ATTESTATION_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_workflow_attestations.py"
+SDD_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_sdd_context.py"
 VALIDATION_COMMON = REPO_ROOT / "tools" / "codex-harness" / "validation_common.py"
 TOOLS_LIB_SOURCE = REPO_ROOT / "tools" / "lib"
 
@@ -61,7 +62,33 @@ class ImplementationWorkflowGuardTest(unittest.TestCase):
         self._write_marker()
         self._write_plan()
         self._write_owner_attestation()
+        self._write_sdd_artifacts()
         (self.root / "README.md").write_text("# changed\n", encoding="utf-8")
+
+        result = self._run_hook()
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_post_change_blocks_without_sdd_context(self) -> None:
+        self._switch_to_implementation_branch()
+        self._write_marker()
+        self._write_plan()
+        self._write_owner_attestation()
+        (self.root / "README.md").write_text("# changed\n", encoding="utf-8")
+
+        result = self._run_hook()
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Missing required SDD artifact", result.stderr)
+
+    def test_post_change_allows_sdd_artifact_bootstrap(self) -> None:
+        self._switch_to_implementation_branch()
+        self._write_marker()
+        self._write_plan()
+        self._write_owner_attestation()
+        specs = self.root / "specs" / self.implementation
+        specs.mkdir(parents=True, exist_ok=True)
+        (specs / "spec.md").write_text("# Spec\n", encoding="utf-8")
 
         result = self._run_hook()
 
@@ -143,6 +170,59 @@ class ImplementationWorkflowGuardTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_preflight_mutation_allows_sdd_artifact_bootstrap_after_workflow_validation(self) -> None:
+        self._switch_to_implementation_branch()
+        self._write_marker()
+        self._write_plan()
+        self._write_owner_attestation()
+
+        result = self._run_hook(
+            "--preflight-mutation",
+            {"tool_input": {"path": f"specs/{self.implementation}/spec.md"}},
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_preflight_mutation_blocks_non_sdd_change_without_sdd_artifacts(self) -> None:
+        self._switch_to_implementation_branch()
+        self._write_marker()
+        self._write_plan()
+        self._write_owner_attestation()
+
+        result = self._run_hook("--preflight-mutation", {"tool_input": {"path": "README.md"}})
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Missing required SDD artifact", result.stderr)
+
+    def test_preflight_mutation_blocks_verifier_approval_without_evidence(self) -> None:
+        self._switch_to_implementation_branch()
+        self._write_marker()
+        self._write_plan()
+        self._write_owner_attestation()
+        self._write_sdd_artifacts(include_evidence=False)
+
+        result = self._run_hook(
+            "--preflight-mutation",
+            {"tool_input": {"path": ".codex/tmp/verifier-approved"}},
+        )
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("SDD evidence validation failed", result.stderr)
+
+    def test_preflight_bash_allows_verifier_approval_with_evidence(self) -> None:
+        self._switch_to_implementation_branch()
+        self._write_marker()
+        self._write_plan()
+        self._write_owner_attestation()
+        self._write_sdd_artifacts()
+
+        result = self._run_hook(
+            "--preflight-bash",
+            {"command": "touch .codex/tmp/verifier-approved"},
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_user_prompt_submit_marks_repo_change_intent_and_reminds(self) -> None:
         result = self._run_prompt_hook({"prompt": "Please update the workflow harness tests."})
 
@@ -217,6 +297,7 @@ class ImplementationWorkflowGuardTest(unittest.TestCase):
         shutil.copy2(ACTIVE_VALIDATOR, tool_dir / "validate_active_implementation.py")
         shutil.copy2(PLAN_VALIDATOR, tool_dir / "validate_implementation_plan.py")
         shutil.copy2(ATTESTATION_VALIDATOR, tool_dir / "validate_workflow_attestations.py")
+        shutil.copy2(SDD_VALIDATOR, tool_dir / "validate_sdd_context.py")
         shutil.copy2(VALIDATION_COMMON, tool_dir / "validation_common.py")
         shutil.copytree(TOOLS_LIB_SOURCE, target_root / "tools" / "lib")
         self._patch_sibling_root(
@@ -331,6 +412,18 @@ class ImplementationWorkflowGuardTest(unittest.TestCase):
             + "\n",
             encoding="utf-8",
         )
+
+    def _write_sdd_artifacts(self, *, include_evidence: bool = True, final_head: str | None = None) -> None:
+        specs = self.root / "specs" / self.implementation
+        specs.mkdir(parents=True, exist_ok=True)
+        (specs / "spec.md").write_text("# Spec\n", encoding="utf-8")
+        (specs / "plan.md").write_text("# Plan\n", encoding="utf-8")
+        (specs / "tasks.md").write_text("# Tasks\n", encoding="utf-8")
+        if include_evidence:
+            lines = ["# Evidence"]
+            if final_head is not None:
+                lines.append(f"- Final HEAD: {final_head}")
+            (specs / "evidence.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     def _run_hook(
         self,

@@ -73,6 +73,32 @@ the sibling clone. These files are ignored and are not durable documentation.
 Verifier files under `.codex/tmp/` are owned by a separate verifier and are not
 created by the implementation owner.
 
+## Enforced Guard Behavior
+
+The harness treats `specs/<implementation>/` as durable implementation context.
+After the initial SDD artifact bootstrap, non-bootstrap tracked edits require a
+valid implementation marker, implementation plan, owner attestation, delegation
+token, and non-empty:
+
+- `specs/<implementation>/spec.md`
+- `specs/<implementation>/plan.md`
+- `specs/<implementation>/tasks.md`
+
+`specs/<implementation>/evidence.md` is required before verifier approval,
+automatic PR creation, final handoff, and non-smoke pushes. If evidence records
+an explicit final, verified, approved, branch, or current `HEAD`, the recorded
+SHA must match the current branch `HEAD`.
+
+Automatic PR creation runs these gates itself through
+`.codex/scripts/create_implementation_pr.sh --auto`; Stop-hook ordering is not
+the enforcement boundary.
+
+Development smoke validation may push the active implementation branch to
+`origin codex/<implementation>` before verifier approval only from a valid
+implementation clone with non-empty `spec.md`, `plan.md`, and `tasks.md`.
+Verifier approval for the exact `HEAD` remains mandatory for PR creation, final
+handoff, and non-smoke pushes.
+
 ## Spec Persistence
 
 Keep useful decisions, assumptions, acceptance criteria, test outcomes, smoke
