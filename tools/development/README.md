@@ -8,6 +8,14 @@ For prerequisites, cleanup expectations, and how development validation fits the
 implementation workflow, see
 [Development Cluster](../../docs/runbooks/development-cluster.md).
 
+Before running live smoke from an implementation or verifier clone, stage the
+development Terraform vars from the main checkout into the clone that will run
+the command:
+
+```sh
+.codex/scripts/prepare_development_smoke_secrets.sh example-change /workspaces/homelab-ideas/example-change
+```
+
 ```sh
 python3 tools/development/verify_branch_deploy.py --app whoami --branch codex/example-change --slug example-change --push
 ```

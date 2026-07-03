@@ -16,7 +16,7 @@ Use this runbook for every repository code change. The binding decision is `docs
 
 1. Plan in the main checkout at `/workspaces/homelab`; do not edit tracked files there.
 2. Choose a single implementation name. One implementation maps to one pull request and branch `codex/<implementation>`.
-3. If ignored local secrets or configs are required, stage them under `.codex/tmp/implementation-secrets/<implementation>/` in the main checkout, preserving repo-relative paths and never logging contents.
+3. If ignored local secrets or configs are required, stage them under `.codex/tmp/implementation-secrets/<implementation>/` in the main checkout, preserving repo-relative paths and never logging contents. For development branch smoke that needs Terraform preflight, run `.codex/scripts/prepare_development_smoke_secrets.sh <implementation> [/workspaces/homelab-ideas/<implementation> ...]` from the main checkout before the implementation or verifier clone runs `tools/development/verify_branch_deploy.py`.
 4. Clone the repo into `/workspaces/homelab-ideas/<implementation>` and create `codex/<implementation>` from `origin/main`.
 5. Before tracked edits, create `.codex/tmp/active-implementation` with `implementation`, `branch`, `base`, `role`, `clone_path`, `owner_role`, and `owner_agent`.
 6. Before tracked edits, create `.codex/tmp/implementation-plan.yaml` with implementation identity, summary, scope, out-of-scope items, planned changes, documentation impact, tests, verification, and risks. Tests, verification, and risks must declare the risk-tiered TDD and development validation expectations for the implementation, or explain why they do not apply.
@@ -221,6 +221,22 @@ Development validation expectations by tier:
 - `high`: run development validation for the affected app or base path. For shared cluster base changes, include a sequential development base reconcile before app acceptance.
 
 If the development cluster, kubeconfig, required staged development secrets, or required credentials are unavailable, record a documented exception with the blocker and safest substitute checks. A real development validation failure is not an exception; fix the change, rerun validation, or leave the PR incomplete.
+
+Before smoke commands that may run development Terraform preflight, prepare the
+required ignored development tfvars from the main checkout:
+
+```bash
+.codex/scripts/prepare_development_smoke_secrets.sh <implementation>
+```
+
+Pass both implementation and verifier clone paths when a verifier will rerun the
+same smoke:
+
+```bash
+.codex/scripts/prepare_development_smoke_secrets.sh <implementation> \
+  /workspaces/homelab-ideas/<implementation> \
+  /workspaces/homelab-ideas/<verification-clone>
+```
 
 Default development validation paths:
 
