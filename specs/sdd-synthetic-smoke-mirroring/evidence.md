@@ -39,7 +39,7 @@
 | `npm ci && npm test` in `tests/smoke` | PASS | 7 Playwright route tests passed; generated `node_modules` and `test-results` removed. |
 | `npm ci && npm test && npm run test:unit` in `kubernetes/apps/synthetics/smoke` | PASS | 7 Playwright route tests passed; wrapper/reporter unit tests passed; generated `node_modules` and `test-results` removed. |
 | `uv run --project tools/agent-memory pytest tools/agent-memory/tests` | BLOCKED | Exit 2: no Python 3.14.6 interpreter found in managed installations or search path. Branch does not affect `tools/agent-memory`. |
-| `python3 tools/codex-harness/validate_sdd_context.py --marker .codex/tmp/active-implementation --root "$(pwd)" --branch "$(git branch --show-current)" --require-plan-artifacts --require-evidence --head "$(git rev-parse HEAD)"` | PENDING | Run after commit. |
+| `python3 tools/codex-harness/validate_sdd_context.py --marker .codex/tmp/active-implementation --root "$(pwd)" --branch "$(git branch --show-current)" --require-plan-artifacts --require-evidence --head "$(git rev-parse HEAD)"` | PASS | Passed after the implementation commit; rerun against final `HEAD` before handoff. |
 
 ## Development Validation
 
@@ -67,6 +67,6 @@
 ## Final State
 
 - Final branch: `codex/sdd-synthetic-smoke-mirroring`
-- Final HEAD: Recorded in final implementation-owner handoff after commit.
-- Commit: Pending conventional commit.
+- Final HEAD: Recorded in final implementation-owner handoff after final validation.
+- Commit: `test(smoke): enforce synthetic smoke mirrors` plus final evidence update.
 - Verifier approval: not created by implementation owner

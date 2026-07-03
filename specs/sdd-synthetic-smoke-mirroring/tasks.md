@@ -72,17 +72,17 @@ attestation, and delegation token under `.codex/tmp/`
 - [x] T022 [FR-009] Run
       `uv run --project tools/agent-memory pytest tools/agent-memory/tests` or
       record the Python 3.14.6 environment limitation if it persists.
-- [ ] T023 [FR-009] Run the SDD context validator with
+- [x] T023 [FR-009] Run the SDD context validator with
       `--require-evidence --head` after commit.
-- [ ] T024 [FR-009] Record command outcomes, exceptions, final `HEAD`, and
+- [x] T024 [FR-009] Record command outcomes, exceptions, final `HEAD`, and
       documentation impact in `specs/sdd-synthetic-smoke-mirroring/evidence.md`.
 
 ## Phase 5: Commit And Handoff
 
-- [ ] T025 [FR-009] Write `.codex/tmp/pr-summary.md` from the plan and final
+- [x] T025 [FR-009] Write `.codex/tmp/pr-summary.md` from the plan and final
       evidence.
-- [ ] T026 [FR-009] Commit with a conventional commit message.
-- [ ] T027 [FR-009] Report exact `HEAD` and do not create verifier approval.
+- [x] T026 [FR-009] Commit with a conventional commit message.
+- [x] T027 [FR-009] Report exact `HEAD` and do not create verifier approval.
 
 ## Dependencies
 
