@@ -54,9 +54,28 @@ READY_JELLYFIN_PODS = json.dumps(
     }
 )
 
+READY_HOME_ASSISTANT_PODS = json.dumps(
+    {
+        "items": [
+            {
+                "metadata": {"name": "home-assistant-example-change-6f7d8", "namespace": "home-assistant-example-change"},
+                "status": {"phase": "Running", "conditions": [{"type": "Ready", "status": "True"}]},
+            }
+        ]
+    }
+)
+
 READY_PVC = json.dumps(
     {
         "metadata": {"name": "jellyfin-config-example-change", "namespace": "jellyfin-example-change"},
+        "spec": {"storageClassName": "nfs-csi-storage"},
+        "status": {"phase": "Bound"},
+    }
+)
+
+READY_HOME_ASSISTANT_PVC = json.dumps(
+    {
+        "metadata": {"name": "home-assistant-config-example-change", "namespace": "home-assistant-example-change"},
         "spec": {"storageClassName": "nfs-csi-storage"},
         "status": {"phase": "Bound"},
     }
@@ -188,11 +207,13 @@ class VerifyBranchDeployTest(unittest.TestCase):
     def test_profile_loading_discovers_whoami_and_jellyfin(self) -> None:
         profiles = verify.load_smoke_profiles()
 
-        self.assertEqual(set(profiles), {"jellyfin", "whoami"})
+        self.assertEqual(set(profiles), {"home-assistant", "jellyfin", "whoami"})
         self.assertEqual(profiles["whoami"].activation_template, "kubernetes/clusters/development/branches/whoami-template.yaml")
         self.assertEqual(profiles["whoami"].git_repository, "branch-${branch_slug}")
         self.assertEqual(profiles["jellyfin"].git_repository, "branch-jellyfin-${branch_slug}")
         self.assertEqual(profiles["jellyfin"].pvcs[0].name, "jellyfin-config-${branch_slug}")
+        self.assertEqual(profiles["home-assistant"].git_repository, "branch-home-assistant-${branch_slug}")
+        self.assertEqual(profiles["home-assistant"].pvcs[0].name, "home-assistant-config-${branch_slug}")
 
     def test_supported_apps_are_loaded_from_profile_json(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -379,6 +400,19 @@ class VerifyBranchDeployTest(unittest.TestCase):
         self.assertTrue(any("get httproute jellyfin-example-change -o json" in command for command in commands))
         self.assertTrue(any("run probe-example-change" in command and "curlimages/curl:8.16.0" in command for command in commands))
 
+    def test_home_assistant_profile_checks_pvc_service_route_and_http_probe(self) -> None:
+        runner = FakeRunner(pods_json=READY_HOME_ASSISTANT_PODS, pvc_json=READY_HOME_ASSISTANT_PVC)
+        config = self._config(app="home-assistant")
+
+        verify.assert_smoke_profile(config, verify.load_smoke_profile("home-assistant"), runner=runner)
+
+        commands = [" ".join(command) for command in runner.commands]
+        self.assertTrue(any("get namespace home-assistant-example-change" in command for command in commands))
+        self.assertTrue(any("get pvc home-assistant-config-example-change -o json" in command for command in commands))
+        self.assertTrue(any("get service home-assistant-example-change" in command for command in commands))
+        self.assertTrue(any("get httproute home-assistant-example-change -o json" in command for command in commands))
+        self.assertTrue(any("run probe-example-change" in command and "curlimages/curl:8.16.0" in command for command in commands))
+
     def test_pvc_assert_requires_bound_phase_and_expected_storage_class(self) -> None:
         verify.assert_pvc_bound(READY_PVC, pvc_name="jellyfin-config-example-change", storage_class="nfs-csi-storage")
 
@@ -413,6 +447,33 @@ class VerifyBranchDeployTest(unittest.TestCase):
         self.assertIn("http://jellyfin-example-change.jellyfin-example-change.svc.cluster.local:8096/", script)
         self.assertIn("curl -LfsS", script)
         self.assertIn("Jellyfin|Please sign in|Wizard|Login", script)
+        self.assertIn("seq 1 60", script)
+
+    def test_home_assistant_http_probe_command_targets_service_and_matches_web_shell(self) -> None:
+        config = self._config(app="home-assistant")
+
+        command = verify.build_http_probe_command(
+            config,
+            namespace=config.namespace,
+            probe=verify.HttpProbe(
+                service="home-assistant-${branch_slug}",
+                port=80,
+                path="/",
+                body_regex="Home Assistant|Create my smart home|Sign in|Login",
+            ),
+            probe_index=0,
+            total_probes=1,
+        )
+
+        self.assertIn("probe-example-change", command)
+        self.assertIn("--image=curlimages/curl:8.16.0", command)
+        self.assertIn("--overrides", command)
+        overrides = json.loads(command[command.index("--overrides") + 1])
+        self.assertEqual(overrides["spec"]["containers"][0]["command"], ["sh", "-ec"])
+        script = overrides["spec"]["containers"][0]["args"][0]
+        self.assertIn("http://home-assistant-example-change.home-assistant-example-change.svc.cluster.local:80/", script)
+        self.assertIn("curl -LfsS", script)
+        self.assertIn("Home Assistant|Create my smart home|Sign in|Login", script)
         self.assertIn("seq 1 60", script)
 
     def test_probe_pod_overrides_use_restricted_security_context(self) -> None:
