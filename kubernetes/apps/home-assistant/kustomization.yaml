@@ -18,4 +18,8 @@ configMapGenerator:
   - name: home-assistant-packages
     namespace: home-assistant
     files:
-      - code-first.yaml=config/packages/code-first.yaml
+      - code_first.yaml=config/packages/code_first.yaml
+  - name: home-assistant-storage
+    namespace: home-assistant
+    files:
+      - onboarding=config/storage/onboarding

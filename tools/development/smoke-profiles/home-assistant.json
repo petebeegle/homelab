@@ -21,7 +21,7 @@
         "service": "home-assistant-${branch_slug}",
         "port": 80,
         "path": "/",
-        "bodyRegex": "Home Assistant|Create my smart home|Sign in|Login"
+        "bodyRegex": "Home Assistant|Sign in|Login"
       }
     ]
   }

@@ -16,6 +16,12 @@ configMapGenerator:
   - name: home-assistant-${branch_slug}-packages
     namespace: home-assistant-${branch_slug}
     files:
-      - code-first.yaml=config/packages/code-first.yaml
+      - code_first.yaml=config/packages/code_first.yaml
+    options:
+      disableNameSuffixHash: true
+  - name: home-assistant-${branch_slug}-storage
+    namespace: home-assistant-${branch_slug}
+    files:
+      - onboarding=config/storage/onboarding
     options:
       disableNameSuffixHash: true
