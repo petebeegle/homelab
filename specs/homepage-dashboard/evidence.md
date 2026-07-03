@@ -9,6 +9,36 @@
 
 ## Local Checks
 
+- EMERGENCY LIVE FINDING: After app-homepage reconciled development to
+  `252b487`, live `ConfigMap/homepage-public-config` rendered development
+  service hrefs such as `https://authentik.` because the app Kustomization
+  reads live base-cluster `cluster-vars` through `postBuild.substituteFrom`.
+  That live ConfigMap did not include `homepage_target_domain`, so the
+  development app overlay could not rely on the branch's cluster-vars change.
+- PASS emergency fix: `kubernetes/apps/homepage/development/kustomization.yaml`
+  now uses literal production service hrefs in the development link-only
+  `services.yaml` patch (`lab.petebeegle.com` service hosts and
+  `synology.petebeegle.com`) while production base config still uses
+  `${homepage_target_domain}`.
+- PASS emergency fix: development route and `HOMEPAGE_ALLOWED_HOSTS` still use
+  `${cluster_domain}`, and development services still omit `namespace:` and
+  `app:` metadata.
+- PASS emergency render: `env -i PATH="$PATH" HOME="$HOME" cluster_domain=dev.lab.petebeegle.com bash -c 'kubectl kustomize kubernetes/apps/homepage/development | flux envsubst --strict > /tmp/homepage-dashboard-dev-missing-target.yaml'`
+- PASS emergency render: `env -i PATH="$PATH" HOME="$HOME" cluster_domain=lab.petebeegle.com homepage_target_domain=lab.petebeegle.com bash -c 'kubectl kustomize kubernetes/apps/homepage | flux envsubst --strict > /tmp/homepage-dashboard-prod-strict.yaml'`
+- PASS emergency assertion: dependency-free rendered YAML checks confirmed
+  development services contain no `${homepage_target_domain}`, no `https://.`
+  hrefs, no trailing-dot or double-dot hosts, no `dev.lab.petebeegle.com` hrefs,
+  exactly the expected production service hrefs, and no `namespace:`/`app:`
+  entries; development route and `HOMEPAGE_ALLOWED_HOSTS` render
+  `homepage.dev.lab.petebeegle.com`.
+- PASS emergency assertion: rendered production services contain no dev hrefs,
+  retain Kubernetes metadata, render production service hrefs from
+  `${homepage_target_domain}`, and route/`HOMEPAGE_ALLOWED_HOSTS` render
+  `lab.petebeegle.com` through `https-domain-gateway`.
+- PASS emergency render: `kubectl kustomize kubernetes/clusters/development >/tmp/homepage-dashboard-cluster-development.yaml`
+- PASS emergency render: `kubectl kustomize kubernetes/clusters/production >/tmp/homepage-dashboard-cluster-production.yaml`
+- PASS emergency check: `python3 tools/architecture/render.py --check`
+- PASS emergency check: `git diff --check`
 - FOLLOW-UP FINDING: Playwright against live `https://homepage.dev.lab.petebeegle.com` showed the live dashboard is stale. Branch review also found the development Homepage overlay still rendered production service `namespace`/`app` metadata, so Homepage dev would call `/api/kubernetes/status/...` for prod-only services and show them missing/offline even after hrefs target production.
 - PASS follow-up fix: development `ConfigMap/homepage-public-config` now patches `services.yaml` to include launchable public production links for Homepage, Authentik, Pi-hole, WireGuard, Home Assistant, Synology, Jellyfin, Foundry VTT, Grafana, and Whoami without `namespace` or `app` metadata.
 - PASS follow-up fix: rendered development services omit status-only platform cards and prod-only Kubernetes status metadata, avoiding prod-only `/api/kubernetes/status/...` service-card calls from the development dashboard.

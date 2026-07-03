@@ -20,23 +20,23 @@ patches:
           - Core:
               - Homepage:
                   icon: homepage.png
-                  href: https://${homepage_target_domain}
+                  href: https://lab.petebeegle.com
                   description: Homelab dashboard
               - Authentik:
                   icon: authentik.png
-                  href: https://authentik.${homepage_target_domain}
+                  href: https://authentik.lab.petebeegle.com
                   description: Single sign-on
               - Pi-hole:
                   icon: pi-hole.png
-                  href: https://pihole.${homepage_target_domain}
+                  href: https://pihole.lab.petebeegle.com
                   description: DNS and ad blocking
               - WireGuard:
                   icon: wireguard.png
-                  href: https://vpn.${homepage_target_domain}
+                  href: https://vpn.lab.petebeegle.com
                   description: VPN administration
               - Home Assistant:
                   icon: home-assistant.png
-                  href: https://homeassistant.${homepage_target_domain}
+                  href: https://homeassistant.lab.petebeegle.com
                   description: Home automation
               - Synology:
                   icon: synology.png
@@ -45,20 +45,20 @@ patches:
           - Media:
               - Jellyfin:
                   icon: jellyfin.png
-                  href: https://jellyfin.${homepage_target_domain}
+                  href: https://jellyfin.lab.petebeegle.com
                   description: Media library
               - Foundry VTT:
                   icon: foundry-vtt.png
-                  href: https://foundry.${homepage_target_domain}
+                  href: https://foundry.lab.petebeegle.com
                   description: Virtual tabletop
           - Operations:
               - Grafana:
                   icon: grafana.png
-                  href: https://monitoring.${homepage_target_domain}
+                  href: https://monitoring.lab.petebeegle.com
                   description: Observability
               - Whoami:
                   icon: mdi-test-tube
-                  href: https://whoami.${homepage_target_domain}
+                  href: https://whoami.lab.petebeegle.com
                   description: Gateway routing canary
   - target:
       group: apps
