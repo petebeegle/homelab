@@ -30,10 +30,10 @@ spec:
               apk add --no-cache unzip
               archive=/tmp/hass-oidc-auth-v1.1.1.zip
               expected_sha=0226716e299eace3204ea3e6fcdf54a96cc9ded42dadaa34c37c54ffff9b8b68
-              wget -q -O "${archive}" https://github.com/christiaangoossens/hass-oidc-auth/archive/refs/tags/v1.1.1.zip
-              echo "${expected_sha}  ${archive}" | sha256sum -c -
+              wget -q -O "$archive" https://github.com/christiaangoossens/hass-oidc-auth/archive/refs/tags/v1.1.1.zip
+              echo "$expected_sha  $archive" | sha256sum -c -
               rm -rf /tmp/hass-oidc-auth-1.1.1 /config/custom_components/auth_oidc
-              unzip -q "${archive}" "hass-oidc-auth-1.1.1/custom_components/auth_oidc/*" -d /tmp
+              unzip -q "$archive" "hass-oidc-auth-1.1.1/custom_components/auth_oidc/*" -d /tmp
               mkdir -p /config/custom_components
               mv /tmp/hass-oidc-auth-1.1.1/custom_components/auth_oidc /config/custom_components/auth_oidc
           volumeMounts:
