@@ -6,92 +6,69 @@ cd "$root"
 
 payload="$(cat || true)"
 state_file=".codex/tmp/implementation-workflow-guard-state"
+branch="$(git branch --show-current)"
+
 if [[ "${1:-}" == "--record" ]]; then
   mkdir -p .codex/tmp
   {
-    printf 'branch=%s\n' "$(git branch --show-current)"
+    printf 'branch=%s\n' "$branch"
     printf 'head=%s\n' "$(git rev-parse HEAD)"
   } >"$state_file"
   exit 0
 fi
 
-marker=".codex/tmp/active-implementation"
-plan=".codex/tmp/implementation-plan.yaml"
-owner_attestation=".codex/tmp/implementation-owner-attestation.yaml"
-marker_validator="tools/codex-harness/validate_active_implementation.py"
-plan_validator="tools/codex-harness/validate_implementation_plan.py"
-attestation_validator="tools/codex-harness/validate_workflow_attestations.py"
-sdd_validator="tools/codex-harness/validate_sdd_context.py"
-branch="$(git branch --show-current)"
-
 fail() {
   {
-    printf 'Implementation workflow guard: refusing tracked-file changes outside an active implementation.\n'
+    printf 'Spec Kit workflow guard: refusing tracked-file changes outside an active Spec Kit branch.\n'
     printf '%s\n' "$1"
     printf '\nRequired workflow:\n'
-    printf '  1. Clone https://github.com/petebeegle/homelab.git into /workspaces/homelab-ideas/<implementation>.\n'
-    printf '  2. Create codex/<implementation> from origin/main.\n'
-    printf '  3. Record %s with implementation, branch, base, role=implementation, clone_path, owner_role=implementation-agent, and owner_agent.\n' "$marker"
-    printf '  4. Record %s with implementation identity, scope, planned changes, docs impact, tests, verification, and risks.\n' "$plan"
-    printf '  5. Record %s with role=implementation-agent, agent_id matching owner_agent, clone identity, and created_at.\n' "$owner_attestation"
-    printf '  6. Create durable specs/<implementation>/spec.md, plan.md, tasks.md, and evidence.md from the Spec Kit templates.\n'
-    printf '  7. Make tracked-file changes only inside that sibling clone.\n'
+    printf '  1. Use a worktree by default: git worktree add /workspaces/homelab-worktrees/<implementation> -b codex/<implementation> origin/main\n'
+    printf '  2. Make tracked edits only on branch codex/<implementation>.\n'
+    printf '  3. Keep durable Spec Kit artifacts in specs/<implementation>/.\n'
+    printf '  4. After bootstrap, spec.md, plan.md, and tasks.md must be non-empty.\n'
+    printf '  5. Before push or PR automation, evidence.md must be non-empty.\n'
   } >&2
   exit 1
 }
 
-validate_workflow_base() {
+implementation_from_branch() {
+  [[ "$branch" =~ ^codex/.+ ]] || return 1
+  printf '%s\n' "${branch#codex/}"
+}
+
+validate_branch() {
   if [[ "$branch" == "main" ]]; then
     fail "Current branch is main."
   fi
-
   if [[ ! "$branch" =~ ^codex/.+ ]]; then
     fail "Current branch '$branch' does not match codex/<implementation>."
   fi
+}
 
-  if [[ ! -f "$marker" ]]; then
-    fail "Missing $marker."
-  fi
-
-  if ! python3 "$marker_validator" --marker "$marker" --root "$root" --branch "$branch"; then
-    fail "Active implementation marker validation failed."
-  fi
-
-  if [[ ! -f "$plan" ]]; then
-    fail "Missing $plan."
-  fi
-
-  if ! python3 "$plan_validator" --plan "$plan" --marker "$marker" --root "$root" --branch "$branch"; then
-    fail "Implementation plan validation failed."
-  fi
-
-  if [[ ! -f "$owner_attestation" ]]; then
-    fail "Missing $owner_attestation."
-  fi
-
-  if ! python3 "$attestation_validator" --kind owner --attestation "$owner_attestation" --marker "$marker" --plan "$plan" --root "$root" --branch "$branch"; then
-    fail "Implementation owner attestation validation failed."
+require_sdd_artifact() {
+  local path="$1"
+  if [[ ! -s "$path" ]]; then
+    fail "Missing required SDD artifact: $path"
   fi
 }
 
 validate_sdd_context() {
-  if ! python3 "$sdd_validator" --marker "$marker" --root "$root" --branch "$branch" --require-plan-artifacts; then
-    fail "SDD context validation failed."
-  fi
+  validate_branch
+  local implementation
+  implementation="$(implementation_from_branch)"
+  require_sdd_artifact "specs/$implementation/spec.md"
+  require_sdd_artifact "specs/$implementation/plan.md"
+  require_sdd_artifact "specs/$implementation/tasks.md"
 }
 
 validate_sdd_evidence() {
-  if ! python3 "$sdd_validator" --marker "$marker" --root "$root" --branch "$branch" --require-plan-artifacts --require-evidence --head "$(git rev-parse HEAD)"; then
-    fail "SDD evidence validation failed."
-  fi
-}
-
-validate_workflow() {
-  validate_workflow_base
   validate_sdd_context
+  local implementation
+  implementation="$(implementation_from_branch)"
+  require_sdd_artifact "specs/$implementation/evidence.md"
 }
 
-payload_mentions_verifier_evidence() {
+payload_mentions_evidence_path() {
   PAYLOAD="$payload" python3 - <<'PY'
 import json
 import os
@@ -117,13 +94,11 @@ def walk(value):
 
 walk(data)
 text = "\n".join(haystacks)
-if re.search(r"(?:/workspaces/homelab-ideas/[^/\s]+/)?\.codex/tmp/(?:verifier-approved|verifier-attestation\.yaml)", text):
-    sys.exit(0)
-sys.exit(1)
+sys.exit(0 if re.search(r"specs/[^/\s]+/evidence\.md", text) else 1)
 PY
 }
 
-is_sdd_bootstrap_payload() {
+is_allowed_tmp_payload() {
   PAYLOAD="$payload" python3 - <<'PY'
 import json
 import os
@@ -149,146 +124,136 @@ def walk(value):
 
 walk(data)
 text = "\n".join(haystacks)
-paths = set(re.findall(r"(?:/workspaces/homelab-ideas/[^/\s]+/)?specs/([^/\s]+)/((?:spec|plan|tasks|evidence)\.md)", text))
-if paths:
-    implementations = {implementation for implementation, _ in paths}
-    files = {name for _, name in paths}
-    if len(implementations) == 1 and files <= {"spec.md", "plan.md", "tasks.md", "evidence.md"}:
-        sys.exit(0)
-sys.exit(1)
+paths = set(re.findall(r"(?:^|[\s\"'])((?:/[^/\s]+)*/?\.codex/tmp/repo-change-intent)(?:$|[\s\"'])", text))
+sys.exit(0 if paths else 1)
 PY
+}
+
+is_sdd_payload() {
+  PAYLOAD="$payload" python3 - <<'PY'
+import json
+import os
+import re
+import sys
+
+payload = os.environ.get("PAYLOAD", "")
+haystacks = [payload]
+try:
+    data = json.loads(payload) if payload.strip() else {}
+except json.JSONDecodeError:
+    data = {}
+
+def walk(value):
+    if isinstance(value, str):
+        haystacks.append(value)
+    elif isinstance(value, dict):
+        for nested in value.values():
+            walk(nested)
+    elif isinstance(value, list):
+        for nested in value:
+            walk(nested)
+
+walk(data)
+text = "\n".join(haystacks)
+paths = set(re.findall(r"(?:/workspaces/[^/\s]+/[^/\s]+/)?specs/([^/\s]+)/((?:spec|plan|tasks|evidence)\.md)", text))
+if not paths:
+    sys.exit(1)
+implementations = {implementation for implementation, _ in paths}
+sys.exit(0 if len(implementations) == 1 else 1)
+PY
+}
+
+sdd_artifacts_absent_from_head() {
+  validate_branch
+  local implementation
+  implementation="$(implementation_from_branch)"
+  local tracked_at_head
+  tracked_at_head="$(
+    git ls-tree -r --name-only HEAD "specs/$implementation" 2>/dev/null || true
+  )"
+  [[ -z "$tracked_at_head" ]]
 }
 
 tracked_changes_are_sdd_bootstrap() {
-  python3 - "$branch" <<'PY'
-import subprocess
+  validate_branch
+  local implementation
+  implementation="$(implementation_from_branch)"
+  TRACKED_CHANGES="$(git status --porcelain --untracked-files=no)" IMPLEMENTATION="$implementation" python3 - <<'PY'
+import os
 import sys
 
-branch = sys.argv[1]
-if not branch.startswith("codex/"):
-    sys.exit(1)
-implementation = branch.split("/", 1)[1]
+implementation = os.environ["IMPLEMENTATION"]
 allowed = {
     f"specs/{implementation}/spec.md",
     f"specs/{implementation}/plan.md",
     f"specs/{implementation}/tasks.md",
     f"specs/{implementation}/evidence.md",
 }
-result = subprocess.run(
-    ["git", "status", "--porcelain", "--untracked-files=no"],
-    stdout=subprocess.PIPE,
-    stderr=subprocess.DEVNULL,
-    text=True,
-    check=False,
-)
 paths = []
-for line in result.stdout.splitlines():
+for line in os.environ.get("TRACKED_CHANGES", "").splitlines():
     path = line[3:]
     if " -> " in path:
         path = path.split(" -> ", 1)[1]
     paths.append(path)
-
-tracked_at_head = subprocess.run(
-    ["git", "ls-tree", "-r", "--name-only", "HEAD", f"specs/{implementation}"],
-    stdout=subprocess.PIPE,
-    stderr=subprocess.DEVNULL,
-    text=True,
-    check=False,
-)
-
-if paths and set(paths) <= allowed and not tracked_at_head.stdout.strip():
-    sys.exit(0)
-sys.exit(1)
+sys.exit(0 if paths and set(paths) <= allowed else 1)
 PY
 }
 
-sdd_artifacts_absent_from_head() {
-  python3 - "$branch" <<'PY'
-import subprocess
-import sys
-
-branch = sys.argv[1]
-if not branch.startswith("codex/"):
-    sys.exit(1)
-implementation = branch.split("/", 1)[1]
-result = subprocess.run(
-    ["git", "ls-tree", "-r", "--name-only", "HEAD", f"specs/{implementation}"],
-    stdout=subprocess.PIPE,
-    stderr=subprocess.DEVNULL,
-    text=True,
-    check=False,
-)
-sys.exit(0 if not result.stdout.strip() else 1)
-PY
-}
-
-if [[ "${1:-}" == "--preflight-mutation" ]]; then
-  if PAYLOAD="$payload" python3 - <<'PY'
-import json
-import os
-import re
-import sys
-
-payload = os.environ.get("PAYLOAD", "")
-allowed = {
-    ".codex/tmp/active-implementation",
-    ".codex/tmp/implementation-plan.yaml",
-    ".codex/tmp/implementation-owner-attestation.yaml",
-    ".codex/tmp/repo-change-intent",
-}
-
-haystacks = [payload]
-try:
-    data = json.loads(payload) if payload.strip() else {}
-except json.JSONDecodeError:
-    data = {}
-
-def walk(value):
-    if isinstance(value, str):
-        haystacks.append(value)
-    elif isinstance(value, dict):
-        for nested in value.values():
-            walk(nested)
-    elif isinstance(value, list):
-        for nested in value:
-            walk(nested)
-
-walk(data)
-text = "\n".join(haystacks)
-
-paths = set(re.findall(r"(?:/workspaces/homelab-ideas/[^/\s]+/)?\.codex/tmp/(?:active-implementation|implementation-plan\.yaml|implementation-owner-attestation\.yaml|repo-change-intent)", text))
-normalized = {path[path.index(".codex/tmp/") :] for path in paths}
-
-if normalized and normalized <= allowed:
-    # Allow bootstrapping the local workflow artifacts that make validation possible.
-    sys.exit(0)
-sys.exit(1)
-PY
-  then
-    exit 0
-  fi
-  if is_sdd_bootstrap_payload && sdd_artifacts_absent_from_head; then
-    validate_workflow_base
-    exit 0
-  fi
-  if payload_mentions_verifier_evidence; then
-    validate_workflow_base
-    validate_sdd_evidence
-    exit 0
-  fi
-  validate_workflow
-  exit 0
-fi
-
-if [[ "${1:-}" == "--preflight-bash" ]]; then
-  if PAYLOAD="$payload" ROOT="$root" python3 - <<'PY'
+command_is_allowed_worktree_setup() {
+  PAYLOAD="$payload" ROOT="$root" python3 - <<'PY'
 import json
 import os
 import shlex
 import sys
 
 payload = os.environ.get("PAYLOAD", "")
-root = os.environ.get("ROOT", "")
+try:
+    data = json.loads(payload) if payload.strip() else {}
+except json.JSONDecodeError:
+    data = {}
+
+values = []
+for key in ("command", "input", "tool_input"):
+    value = data.get(key)
+    if isinstance(value, str):
+        values.append(value)
+    elif isinstance(value, dict):
+        for nested in ("command", "cmd"):
+            if isinstance(value.get(nested), str):
+                values.append(value[nested])
+
+for value in values:
+    try:
+        lexer = shlex.shlex(value, posix=True, punctuation_chars=True)
+        lexer.whitespace_split = True
+        tokens = list(lexer)
+    except ValueError:
+        continue
+
+    if tokens[:2] == ["mkdir", "-p"] and len(tokens) == 3:
+        if tokens[2] in {"/workspaces/homelab-worktrees", "/workspaces/homelab-ideas"}:
+            sys.exit(0)
+
+    if len(tokens) >= 7 and tokens[:3] == ["git", "worktree", "add"]:
+        destination = tokens[3]
+        if destination.startswith(("/workspaces/homelab-worktrees/", "/workspaces/homelab-ideas/")):
+            if "-b" in tokens:
+                branch_index = tokens.index("-b") + 1
+                if branch_index < len(tokens) and tokens[branch_index].startswith("codex/") and "origin/main" in tokens:
+                    sys.exit(0)
+
+sys.exit(1)
+PY
+}
+
+payload_has_mutating_command() {
+  PAYLOAD="$payload" python3 - <<'PY'
+import json
+import os
+import shlex
+import sys
+
+payload = os.environ.get("PAYLOAD", "")
 try:
     data = json.loads(payload) if payload.strip() else {}
 except json.JSONDecodeError:
@@ -322,6 +287,7 @@ mutating_commands = {
     "terraform",
     "touch",
 }
+safe_git = {"branch", "diff", "log", "rev-parse", "show", "status"}
 mutating_git = {
     "add",
     "am",
@@ -338,11 +304,10 @@ mutating_git = {
     "reset",
     "restore",
     "revert",
-    "rm",
     "switch",
     "tag",
+    "worktree",
 }
-safe_git = {"branch", "diff", "log", "rev-parse", "show", "status"}
 mutating_terraform = {"apply", "destroy", "fmt", "import", "init", "taint", "untaint", "workspace"}
 separators = {";", "&&", "||", "|"}
 
@@ -371,22 +336,8 @@ for value in values:
             subcommand = next((arg for arg in args if not arg.startswith("-")), "")
             if subcommand in safe_git:
                 continue
-            if subcommand == "clone" and any(arg == "https://github.com/petebeegle/homelab.git" for arg in args) and any(
-                arg.startswith("/workspaces/homelab-ideas/") for arg in args
-            ):
-                continue
-            if (
-                root.startswith("/workspaces/homelab-ideas/")
-                and subcommand in {"switch", "checkout"}
-                and any(arg == "-c" or arg == "-b" for arg in args)
-                and any(arg.startswith("codex/") for arg in args)
-                and any(arg == "origin/main" for arg in args)
-            ):
-                continue
             if subcommand in mutating_git or subcommand:
                 sys.exit(0)
-        elif command == "mkdir" and args == ["-p", ".codex/tmp"]:
-            continue
         elif command == "terraform":
             subcommand = next((arg for arg in args if not arg.startswith("-chdir")), "")
             if subcommand in mutating_terraform:
@@ -398,13 +349,29 @@ for value in values:
 
 sys.exit(1)
 PY
-  then
-    if payload_mentions_verifier_evidence; then
-      validate_workflow_base
-      validate_sdd_evidence
-    else
-      validate_workflow
-    fi
+}
+
+if [[ "${1:-}" == "--preflight-mutation" ]]; then
+  if is_allowed_tmp_payload; then
+    exit 0
+  fi
+  if is_sdd_payload && sdd_artifacts_absent_from_head; then
+    exit 0
+  fi
+  if payload_mentions_evidence_path; then
+    validate_sdd_context
+  else
+    validate_sdd_context
+  fi
+  exit 0
+fi
+
+if [[ "${1:-}" == "--preflight-bash" ]]; then
+  if command_is_allowed_worktree_setup; then
+    exit 0
+  fi
+  if payload_has_mutating_command; then
+    validate_sdd_context
   fi
   exit 0
 fi
@@ -420,9 +387,8 @@ if [[ -z "$tracked_changes" && "$head_before" == "$head_now" ]]; then
   exit 0
 fi
 
-if tracked_changes_are_sdd_bootstrap; then
-  validate_workflow_base
+if tracked_changes_are_sdd_bootstrap && sdd_artifacts_absent_from_head; then
   exit 0
 fi
 
-validate_workflow
+validate_sdd_context

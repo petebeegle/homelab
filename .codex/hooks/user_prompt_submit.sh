@@ -83,5 +83,12 @@ mkdir -p .codex/tmp
 } >.codex/tmp/repo-change-intent
 
 cat <<'EOF'
-Implementation workflow reminder: tracked repository changes require a delegated implementation-agent-* owner, a separate verifier-agent-* reviewer, matching delegation token evidence, and exact-HEAD verifier approval before push or PR creation.
+Spec Kit workflow reminder: tracked repository changes default to a dedicated worktree.
+
+Use:
+  git fetch origin
+  git worktree add /workspaces/homelab-worktrees/<implementation> -b codex/<implementation> origin/main
+
+Then run the Spec Kit cycle in that worktree: specify -> plan -> tasks -> implement.
+Use the current checkout only when explicitly requested or for read-only/planning work.
 EOF

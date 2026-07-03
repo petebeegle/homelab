@@ -102,14 +102,6 @@ def safe_labels(*, payload: bytes, root: Path, phase: str, hook: str) -> dict[st
 
 
 def implementation_name(*, root: Path, branch: str) -> str:
-    marker = root / ".codex" / "tmp" / "active-implementation"
-    if marker.exists():
-        try:
-            for line in marker.read_text(encoding="utf-8").splitlines():
-                if line.startswith("implementation="):
-                    return line.split("=", 1)[1].strip() or "unknown"
-        except OSError:
-            pass
     if branch.startswith("codex/"):
         return branch.split("/", 1)[1]
     return "unknown"

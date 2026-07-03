@@ -11,26 +11,18 @@ HARNESS_ROOT = REPO_ROOT / "tools" / "codex-harness"
 if str(HARNESS_ROOT) not in sys.path:
     sys.path.insert(0, str(HARNESS_ROOT))
 
-import validate_active_implementation
-from validate_active_implementation import parse_marker
 from validate_sdd_context import validate_sdd_context
 
 
 class ValidateSddContextTest(unittest.TestCase):
     def setUp(self) -> None:
         self.temp_parent = tempfile.TemporaryDirectory(prefix="sdd-root-")
-        self.sibling_root = Path(self.temp_parent.name) / "homelab-ideas"
-        self.sibling_root.mkdir()
-        self.root = self.sibling_root / "sdd-context-test"
+        self.root = Path(self.temp_parent.name) / "sdd-context-test"
         self.root.mkdir()
         self.implementation = "sdd-context-test"
         self.branch = f"codex/{self.implementation}"
-        self.original_sibling_root = validate_active_implementation.SIBLING_CLONE_ROOT
-        validate_active_implementation.SIBLING_CLONE_ROOT = self.sibling_root
-        self._write_marker()
 
     def tearDown(self) -> None:
-        validate_active_implementation.SIBLING_CLONE_ROOT = self.original_sibling_root
         self.temp_parent.cleanup()
 
     def test_allows_valid_plan_artifacts_and_evidence(self) -> None:
@@ -39,6 +31,22 @@ class ValidateSddContextTest(unittest.TestCase):
         result = self._validate(require_evidence=True, current_head="1" * 40)
 
         self.assertTrue(result.ok, result.errors)
+
+    def test_infers_implementation_from_branch(self) -> None:
+        self._write_sdd_artifacts()
+
+        result = validate_sdd_context(root=self.root, current_branch=self.branch)
+
+        self.assertTrue(result.ok, result.errors)
+        self.assertEqual(result.values["implementation"], self.implementation)
+
+    def test_blocks_without_branch_or_implementation(self) -> None:
+        self._write_sdd_artifacts()
+
+        result = validate_sdd_context(root=self.root, current_branch="main")
+
+        self.assertFalse(result.ok)
+        self.assertTrue(any("Unable to determine implementation" in error for error in result.errors))
 
     def test_blocks_missing_plan_artifact(self) -> None:
         self._write_sdd_artifacts()
@@ -74,25 +82,6 @@ class ValidateSddContextTest(unittest.TestCase):
         self.assertFalse(result.ok)
         self.assertTrue(any("records HEAD" in error for error in result.errors))
 
-    def _write_marker(self) -> None:
-        tmp = self.root / ".codex" / "tmp"
-        tmp.mkdir(parents=True, exist_ok=True)
-        (tmp / "active-implementation").write_text(
-            "\n".join(
-                [
-                    f"implementation={self.implementation}",
-                    f"branch={self.branch}",
-                    "base=origin/main",
-                    "role=implementation",
-                    f"clone_path={self.root}",
-                    "owner_role=implementation-agent",
-                    "owner_agent=implementation-agent-sdd-context-test",
-                ]
-            )
-            + "\n",
-            encoding="utf-8",
-        )
-
     def _write_sdd_artifacts(self, *, include_evidence: bool = True, final_head: str | None = None) -> None:
         specs = self.root / "specs" / self.implementation
         specs.mkdir(parents=True, exist_ok=True)
@@ -106,10 +95,8 @@ class ValidateSddContextTest(unittest.TestCase):
             (specs / "evidence.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     def _validate(self, *, require_evidence: bool = False, current_head: str | None = None):
-        marker = parse_marker(self.root / ".codex" / "tmp" / "active-implementation")
         return validate_sdd_context(
             root=self.root,
-            marker=marker,
             current_branch=self.branch,
             require_evidence=require_evidence,
             current_head=current_head,

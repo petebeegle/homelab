@@ -32,10 +32,11 @@ none with reason]
 - [ ] SOPS invariant preserved; no plaintext secret manifests staged.
 - [ ] NFS default considered for PVC-backed workloads.
 - [ ] Talos boundary preserved; no SSH-based node operations introduced.
-- [ ] Sibling clone ownership files validated before tracked edits.
+- [ ] Branch is `codex/[IMPLEMENTATION]`; worktree/current-checkout mode is
+      intentional and recorded when relevant.
 - [ ] Documentation impact identified; docs updated or no-docs rationale
       recorded.
-- [ ] Separate verifier approval required before PR creation.
+- [ ] PR review/status checks are the review gate.
 
 ## Project Structure
 
@@ -67,8 +68,7 @@ tier.]
 **Development smoke**: [Profile, manual commands, include-cluster-base, or none
 with reason.]
 
-**Evidence destination**: `specs/[IMPLEMENTATION]/evidence.md` and
-`.codex/tmp/pr-summary.md`.
+**Evidence destination**: `specs/[IMPLEMENTATION]/evidence.md`.
 
 ## Documentation Impact
 

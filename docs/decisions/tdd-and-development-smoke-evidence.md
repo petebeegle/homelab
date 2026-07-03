@@ -17,13 +17,26 @@ superseded_by:
 
 ## Decision
 
-Implementation plans, PR summaries, and verifier review must use risk-tiered TDD and development validation evidence for repository changes.
+Spec Kit plans, evidence files, PR summaries, and PR review must use
+risk-tiered TDD and development validation evidence for repository changes.
 
-Development-cluster validation is required before production-oriented PR completion for covered cluster-affecting changes: Kubernetes manifests, Terraform, Flux wiring, Gateway routes, storage, secrets references, branch overlays, and app behavior. TDD evidence remains risk-tiered and documented. The harness must not add hard gates for TDD or smoke testing until the practice proves stable across routine work; owners and verifiers enforce the requirement through plan, PR, and review evidence.
+Development-cluster validation is required before production-oriented PR
+completion for covered cluster-affecting changes: Kubernetes manifests,
+Terraform, Flux wiring, Gateway routes, storage, secrets references, branch
+overlays, and app behavior. TDD evidence remains risk-tiered and documented.
+The harness must not add hard gates for TDD or smoke testing until the practice
+proves stable across routine work; implementation evidence and PR review enforce
+the requirement.
 
-If the development cluster, kubeconfig, required staged development secrets, or required credentials are unavailable, owners may record a documented exception with substitute checks. Actual development validation failures are not exceptions; the change should be fixed and rerun before production-oriented completion.
+If the development cluster, kubeconfig, required staged development secrets, or
+required credentials are unavailable, record a documented exception with
+substitute checks. Actual development validation failures are not exceptions;
+the change should be fixed and rerun before production-oriented completion.
 
-The existing single-owner implementation model remains binding. Test-helper and smoke-helper lanes may research, run commands, prepare recommendations, and report evidence, but the implementation owner remains responsible for tracked edits, commits, local workflow files, `.codex/tmp/pr-summary.md`, and final branch state.
+Each implementation remains branch-scoped on `codex/<implementation>` with
+durable evidence under `specs/<implementation>/`. Helper lanes may research, run
+commands, prepare recommendations, and report evidence, but final evidence and
+branch state must remain coherent for the PR.
 
 ## Rationale
 
@@ -31,13 +44,17 @@ The existing single-owner implementation model remains binding. Test-helper and 
 - Development smoke tests are valuable only when their evidence identifies the app, branch, exact `HEAD`, profile, result, and cleanup state.
 - The current branch deployment verifier is intentionally narrow, with automated support for `whoami` only while a config-driven app profile model is developed.
 - Hard harness gates would be brittle before the team has enough examples of useful tests, smoke profiles, and valid exceptions.
-- Preserving the single-owner model keeps responsibility clear even when helper lanes contribute evidence.
+- Branch-scoped Spec Kit evidence keeps responsibility clear even when helper
+  lanes contribute evidence.
 
 ## Consequences
 
-- Implementation plans must describe TDD, development validation expectations, and known exceptions in the tests, verification, and risks sections.
+- Spec Kit plans must describe TDD, development validation expectations, and
+  known exceptions.
 - PR summaries must include commands run, development smoke reports or exceptions, documentation impact, and whether generated architecture changed.
-- Verifiers must audit declared tests and development validation evidence against the risk tier, spot-check stale or incomplete evidence, and confirm documented exceptions when live validation is unavailable.
+- PR reviewers must audit declared tests and development validation evidence
+  against the risk tier, spot-check stale or incomplete evidence, and confirm
+  documented exceptions when live validation is unavailable.
 - New app work must add or select a smoke profile when practical, or document why development smoke coverage is deferred.
 - Hard harness gates, automated profile enforcement, and non-`whoami` deployment verifier behavior are deferred to future implementations.
 
