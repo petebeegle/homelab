@@ -72,10 +72,12 @@ sum by (failed_tests) (count_over_time({namespace="synthetics", app="synthetic-s
 1. Add the routed app to `tests/smoke/routes.spec.js`.
 2. Prefer unauthenticated page-shell checks that prove the user-facing route works without storing secrets.
 3. Match durable text, titles, or redirects instead of brittle CSS classes.
-4. Mirror the same smoke files under `kubernetes/apps/synthetics/smoke/`; Flux cannot load ConfigMap files from outside the app kustomization root.
-5. Avoid raw `${...}` syntax in mirrored smoke files unless Flux should substitute it; Flux post-build substitution scans the generated ConfigMap data.
-6. Add the app Flux Kustomization to `app-synthetics` `dependsOn` when the probe requires that app to exist first.
-7. Run the suite locally when the route is reachable, then create a manual Job after Flux applies the change.
+4. Mirror the shared smoke files under `kubernetes/apps/synthetics/smoke/`; Flux cannot load ConfigMap files from outside the app kustomization root.
+5. Keep `tests/smoke/routes.spec.js` exactly equal to `kubernetes/apps/synthetics/smoke/routes.spec.js`, and keep the two `package-lock.json` files exactly equal. The `synthetic-smoke-mirroring` pre-commit hook enforces these mirrored pairs.
+6. Do not force exact equality for cluster-only wrapper or reporter files, `package.json`, or `playwright.config.js`; those files intentionally differ for the in-cluster runner.
+7. Avoid raw `${...}` syntax in mirrored smoke files unless Flux should substitute it; Flux post-build substitution scans the generated ConfigMap data.
+8. Add the app Flux Kustomization to `app-synthetics` `dependsOn` when the probe requires that app to exist first.
+9. Run `python3 tools/policy/check_synthetic_smoke_mirroring.py` or `pre-commit run synthetic-smoke-mirroring --all-files`, run the suite locally when the route is reachable, then create a manual Job after Flux applies the change.
 
 ## Dashboard And Alert
 
