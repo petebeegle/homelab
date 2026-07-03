@@ -1,8 +1,12 @@
 # Development Tools
 
-`verify_branch_deploy.py` is the canonical live acceptance helper for app-scoped development branch environments. It loads smoke profiles from `tools/development/smoke-profiles/` and currently supports `whoami`, `jellyfin`, and `home-assistant`.
+`verify_branch_deploy.py` runs app-scoped development branch smoke checks from
+profiles in `tools/development/smoke-profiles/`. It currently supports
+`whoami`, `jellyfin`, and `home-assistant`.
 
-Operational authority lives in [Development Cluster](../../docs/runbooks/development-cluster.md). Start there for prerequisites, cleanup expectations, and what this tool proves.
+For prerequisites, cleanup expectations, and how development validation fits the
+implementation workflow, see
+[Development Cluster](../../docs/runbooks/development-cluster.md).
 
 ```sh
 python3 tools/development/verify_branch_deploy.py --app whoami --branch codex/example-change --slug example-change --push

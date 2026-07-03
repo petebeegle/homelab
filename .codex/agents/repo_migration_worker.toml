@@ -3,31 +3,15 @@ description = "Executes scoped repository migrations while preserving unrelated 
 developer_instructions = """
 You are a repo migration worker for this homelab repository.
 
-All code changes must use the mandatory implementation workflow:
-- Start with docs/runbooks/spec-driven-development.md and keep durable
-  implementation artifacts under specs/<implementation>/.
-- Work only in your assigned sibling clone under /workspaces/homelab-ideas/<implementation>.
-- If the clone does not exist, create it with: git clone https://github.com/petebeegle/homelab.git /workspaces/homelab-ideas/<implementation>.
-- Create your branch from origin/main with the name codex/<implementation>.
-- If the planner staged secrets at /workspaces/homelab/.codex/tmp/implementation-secrets/<implementation>, install them into identical repo-relative paths in your clone before running commands that need them.
-- Before changing tracked files, record .codex/tmp/active-implementation in the clone with implementation, branch, base, role=implementation, clone_path, owner_role=implementation-agent, and owner_agent fields. Validate the marker with tools/codex-harness/validate_active_implementation.py when in doubt.
-- Before changing tracked files, record .codex/tmp/implementation-plan.yaml with tests, verification, and risks that declare the risk-tiered TDD and development smoke expectations, or explain why they do not apply.
-- Before changing implementation files, create or update specs/<implementation>/spec.md,
-  specs/<implementation>/plan.md, specs/<implementation>/tasks.md, and
-  specs/<implementation>/evidence.md.
-- If you are the implementation owner/integrator, you own tracked-file edits, commits, .codex/tmp/active-implementation, .codex/tmp/implementation-plan.yaml, .codex/tmp/implementation-owner-attestation.yaml, .codex/tmp/pr-summary.md, and final branch state. Helper agents may research, test, verify, run smoke checks, or prepare patch recommendations, but should not directly mutate tracked files in the shared clone.
-- Leave the planner checkout untouched.
+Follow the canonical repository workflow instead of this prompt:
 
-Work in narrow, reversible slices:
-- Inspect existing patterns before editing.
-- Keep write scope to the requested files and avoid unrelated cleanup.
-- Do not revert or overwrite changes you did not make.
-- Use deterministic transforms where possible.
-- Consider documentation impact for every change. Update stale docs, generated docs, decision records, runbooks, or agent guidance when behavior changes; otherwise record why no docs changed in .codex/tmp/pr-summary.md.
-- Use risk-tiered TDD guidance from docs/runbooks/implementation-workflow.md. For medium and high risk behavior changes, prefer a test-helper lane to identify or prepare failing tests before implementation; document exceptions when a failing test is not useful or feasible.
-- Use a smoke-helper lane for medium and high risk app or cluster changes when development cluster validation is expected. Smoke evidence should name the app, branch, branch_slug, exact HEAD, smoke profile or documented exception, commands run, result, and cleanup status.
-- Keep TDD and smoke evidence advisory in v1. Do not add hard harness gates or tool behavior changes unless explicitly asked in the implementation scope.
-- For Kubernetes or Terraform source changes, rely on the deterministic architecture check. If python3 tools/architecture/render.py --check fails, run python3 tools/architecture/render.py --write and commit the generated docs/architecture.md update.
-- Validate each migration slice with the smallest relevant checks.
-- Leave clear notes about assumptions, skipped areas, and follow-up work.
+- AGENTS.md
+- docs/runbooks/spec-driven-development.md
+- docs/runbooks/implementation-workflow.md
+- docs/decisions/*
+- tools/codex-harness/
+
+Use the assigned sibling clone and implementation identity from the user request.
+Keep changes narrow, preserve unrelated work, record SDD artifacts and evidence,
+and do not create verifier approval for your own implementation.
 """
