@@ -81,10 +81,34 @@
 
 ## Development Validation
 
-- EXCEPTION: live development validation was not run because `kubectl config current-context` failed with `error: current-context is not set`.
-- Substitute checks: public production/development cluster renders, strict Homepage envsubst renders, route/allowed-host assertions, production-target href assertions, private production app render, private Homepage strict envsubst render, architecture check, and whitespace checks.
+- PASS post-reconcile evidence: before this evidence-only commit, the pushed
+  public branch HEAD was
+  `4b54509c113112fa13084702523f720f525da09e` and the pushed private branch
+  HEAD was `cf24f4442d04177de457c6f0ef7ba0bbc8ecd3f2`.
+- PASS post-reconcile evidence: the parent/main operator used explicit
+  development kubeconfig `~/.kube/homelab-development.config` and observed live
+  Flux development reconciliation for `app-homepage`: `GitRepository` and
+  `Kustomization/app-homepage` applied
+  `codex/homepage-dashboard@sha1:4b54509c113112fa13084702523f720f525da09e`.
+- PASS post-reconcile evidence: live development
+  `ConfigMap/homepage-public-config` services had production URLs, no broken
+  hrefs, and zero `namespace:` or `app:` service metadata.
+- PASS post-reconcile evidence: Playwright browser validation against the live
+  development page showed Home Assistant and Synology, zero development links,
+  zero broken links, and zero `/api/kubernetes/` resource calls.
+- EXCEPTION: automated verifier/live access may be limited in this environment,
+  so this file records the parent/main operator's live reconciliation and
+  Playwright evidence. Substitute checks remain the public production and
+  development cluster renders, strict Homepage envsubst renders,
+  route/allowed-host assertions, production-target href assertions, private
+  production app render, private Homepage strict envsubst render, architecture
+  check, and whitespace checks.
 
 ## Commits
 
 - Private `homelab-private` commit: `cf24f4442d04177de457c6f0ef7ba0bbc8ecd3f2` (`feat(homepage): target production private links`).
-- Public follow-up commit is created after this evidence update so the commit includes the final SDD artifacts.
+- Public post-reconcile base before this evidence-only commit:
+  `4b54509c113112fa13084702523f720f525da09e`
+  (`docs(homepage): remove development service metadata`). This evidence-only
+  commit records post-reconcile evidence and makes the final public HEAD newer
+  than `4b54509c113112fa13084702523f720f525da09e`.
