@@ -73,7 +73,7 @@ Run `.specify/scripts/bash/check-prerequisites.sh --json --require-tasks --inclu
 - TASKS = FEATURE_DIR/tasks.md
 
 Abort with an error message if any required file is missing (instruct the user to run missing prerequisite command).
-For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").
+For arguments containing single quotes, prefer double quotes when possible; otherwise use shell-safe single-quote escaping.
 
 ### 2. Load Artifacts (Progressive Disclosure)
 

@@ -98,10 +98,10 @@ Given that feature description, do this:
    - Persist the resolved path to `.specify/feature.json`:
      ```json
      {
-       "feature_directory": "<resolved feature dir>"
+       "feature_directory": "RESOLVED_FEATURE_DIR"
      }
      ```
-     Write the actual resolved directory path value (for example, `specs/003-user-auth`), not the literal string `SPECIFY_FEATURE_DIRECTORY`.
+     Write the actual resolved directory path value (for example, `specs/003-user-auth`), not the literal string `RESOLVED_FEATURE_DIR`.
      This allows downstream commands (`/speckit-plan`, `/speckit-tasks`, etc.) to locate the feature directory without relying on git branch name conventions.
 
    **IMPORTANT**:

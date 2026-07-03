@@ -60,6 +60,40 @@ Follow-up checks:
 | `git diff --check` | PASS | No whitespace errors after normalization. |
 | `pre-commit run --all-files` | PASS | Clean rerun after keeping the normalization changes. |
 
+## PR #317 CI Fix Follow-Up
+
+GitHub Actions Agnix CI failed for existing PR #317 at head
+`053ebce8da16110ef37bbcd576175de65b77170f` because generated Spec Kit skill
+markdown tripped two Agnix hard-error heuristics:
+
+- Repeated shell-quoting examples used `I'm` plus backslash-heavy escaping,
+  which Agnix reported as Windows path separators in eight generated skill
+  files.
+- `.agents/skills/speckit-specify/SKILL.md` used the placeholder
+  `<resolved feature dir>` in a JSON example, which Agnix reported as an
+  unclosed XML tag.
+
+Fix:
+
+- Reworded the repeated shell-quoting guidance to avoid contractions and
+  backslash-heavy example text while preserving the instruction to prefer
+  double quotes or shell-safe single-quote escaping.
+- Replaced the JSON placeholder with `RESOLVED_FEATURE_DIR` and updated the
+  adjacent sentence so the example no longer resembles an XML tag.
+- Left the non-failing Agnix `Use when...` description warnings unchanged to
+  keep the CI repair focused on hard errors.
+
+Follow-up checks:
+
+| Command | Result | Notes |
+| ------- | ------ | ----- |
+| `python3 tools/codex-harness/validate_active_implementation.py --marker .codex/tmp/active-implementation --root "$(pwd)" --branch "$(git branch --show-current)"` | PASS | Recreated and validated before tracked edits for the existing PR fix. |
+| `python3 tools/codex-harness/validate_implementation_plan.py --plan .codex/tmp/implementation-plan.yaml --marker .codex/tmp/active-implementation --root "$(pwd)" --branch "$(git branch --show-current)"` | PASS | Recreated and validated before tracked edits for the existing PR fix. |
+| `python3 tools/codex-harness/validate_workflow_attestations.py --kind owner --attestation .codex/tmp/implementation-owner-attestation.yaml --marker .codex/tmp/active-implementation --plan .codex/tmp/implementation-plan.yaml --root "$(pwd)" --branch "$(git branch --show-current)"` | PASS | Recreated and validated before tracked edits for the existing PR fix. |
+| `rg -n "I'm\|I'\\\\''m\|\"<resolved feature dir>\"" .agents/skills/speckit-*/SKILL.md \|\| true` | PASS | No remaining matches for the reported Agnix error patterns. |
+| `npx -y agnix@0.25.0 .` | PASS | Found 0 errors and 14 warnings; warnings are the known non-failing description/AGENTS guidance warnings. |
+| `pre-commit run --all-files` | PASS | All configured hooks passed. |
+
 ## Development Validation
 
 - Profile: none
@@ -90,6 +124,9 @@ Follow-up checks:
   are recorded above.
 - Verifier found that the original exact HEAD required pre-commit whitespace/EOF
   normalization; this was fixed and pre-commit now reruns cleanly.
+- PR #317 Agnix CI then failed on generated Spec Kit skill markdown; this
+  follow-up fixes only the hard errors and intentionally leaves non-failing
+  warnings for a separate cleanup if desired.
 
 ## Final State
 
