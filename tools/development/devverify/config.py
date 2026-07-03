@@ -89,11 +89,15 @@ class SmokeProfile:
     git_repository: str
     activation_template: str
     namespace: str
+    kustomizations: tuple[str, ...]
     helm_releases: tuple[str, ...]
     services: tuple[str, ...]
     http_routes: tuple[str, ...]
+    tls_routes: tuple[str, ...]
+    secret_refs: tuple[str, ...]
     pvcs: tuple[PvcCheck, ...]
     http_probes: tuple[HttpProbe, ...]
+    route_urls: tuple[str, ...]
 
 
 def parse_duration(value: str) -> Duration:
