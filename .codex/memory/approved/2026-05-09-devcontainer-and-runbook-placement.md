@@ -1,8 +1,8 @@
 ---
 status: approved
 created: 2026-05-09
-last_verified: 2026-05-10
-review_after: 2026-05-17
+last_verified: 2026-07-03
+review_after: 2026-10-03
 source: codex-follow-up-migration
 kind: agent-operational-learning
 scope:
