@@ -24,6 +24,20 @@
 | ------- | ------ | ----- |
 | `[command]` | [PASS/FAIL/SKIP] | [notes] |
 
+## Automated Smoke And Live Verification
+
+| Target | Method | Result | Notes |
+| ------ | ------ | ------ | ----- |
+| [exact URL, smoke profile, or Job] | [development profile, synthetic Job, Gateway curl, Playwright, etc.] | [PASS/FAIL/SKIP] | [SHA, status, or exception] |
+
+## Deployment State
+
+- Source fetched SHA:
+- Target applied SHA:
+- Live resource spec checked:
+- Gateway/listener/DNS/certificate checked:
+- Exact user-facing URL result:
+
 ## Development Validation
 
 - Profile: [whoami|manual|none]
@@ -38,6 +52,13 @@
 - Updated:
 - Generated docs:
 - No-docs rationale:
+
+## SDD Conformance
+
+- Local sources checked:
+- Upstream Spec Kit sources checked:
+- Spec -> Plan -> Tasks -> Implement alignment:
+- Artifact updates after implementation:
 
 ## Exceptions And Follow-Ups
 

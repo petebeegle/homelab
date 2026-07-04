@@ -18,8 +18,13 @@
 **Storage**: [NFS class expectation or N/A]
 **Ingress**: [Gateway API route expectation or N/A]
 **Secrets**: [SOPS expectation or N/A]
+**Smoke Strategy**: [development profile, synthetic smoke Job, scriptable
+Gateway/DNS/browser smoke, or none with reason]
+**Fanout Targets**: [independent tasks safe for helper lanes or N/A]
 **Development Validation**: [whoami profile, manual smoke, include-cluster-base,
 none with reason]
+**Post-Implementation SDD Conformance**: [local docs only, upstream Spec Kit
+review required, or N/A]
 
 ## Constitution Check
 
@@ -67,6 +72,19 @@ tier.]
 
 **Development smoke**: [Profile, manual commands, include-cluster-base, or none
 with reason.]
+
+**Automated smoke preference**: For user-facing, routed, deployed, or
+operational changes, prefer automated smoke in this order: development branch
+profile; production synthetic smoke or one-off in-cluster Job; scriptable
+Gateway/DNS/browser smoke against the exact user URL; manual browser checks only
+as supplemental evidence.
+
+**Completion evidence**: For deploy follow-up, record source fetched SHA, target
+kustomization or HelmRelease applied SHA, live resource spec, Gateway/listener
+match when applicable, and exact user-facing URL result.
+
+**Fanout plan**: [List independent non-conflicting tasks and how results will be
+consolidated into evidence.md.]
 
 **Evidence destination**: `specs/[IMPLEMENTATION]/evidence.md`.
 

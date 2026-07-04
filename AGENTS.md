@@ -48,6 +48,10 @@ Synology NFS, Grafana/Loki/Mimir/Alloy.
   `codex/<implementation>`. Use the current checkout only when explicitly
   requested; sibling clones are an allowed fallback.
 - Run the Spec Kit cycle: specify, plan, tasks, then implement.
+- In `plan.md`, declare SDD tier, workflow risk tier, smoke strategy, fanout
+  targets, and exceptions before implementation edits.
+- In `tasks.md`, mark independent non-conflicting fanout work with `[P]`;
+  consolidate all helper-lane results into one `evidence.md`.
 - Before worktree or clone commands that need ignored local secret/config files,
   stage them under
   `.codex/tmp/implementation-secrets/<implementation>/` in the main checkout
@@ -55,6 +59,10 @@ Synology NFS, Grafana/Loki/Mimir/Alloy.
   repo-relative paths in worktrees or clones before commands that need them.
 - Runtime scratch files stay under `.codex/tmp/` and are not committed. Durable
   requirements, plans, tasks, and evidence stay under `specs/<implementation>/`.
+- Prefer automated smoke for user-facing, routed, deployed, or operational
+  changes. Do not call such work done from render checks, pod readiness, Service
+  probes, or route `Accepted=True` alone; verify the exact user path or record
+  the unverified layer.
 - Push and PR automation require matching non-empty Spec Kit artifacts,
   including `evidence.md`; normal GitHub PR review and status checks provide
   review gating.
