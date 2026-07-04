@@ -7,6 +7,7 @@ metadata:
 data:
   HTTP_ADDR: ":8080"
   PUBLIC_BASE_URL: "https://onboard.petebeegle.com"
+  DISCORD_REDIRECT_URI: "https://onboard.petebeegle.com/oauth/callback"
   AUTHENTIK_BASE_URL: "http://authentik-server.authentik.svc.cluster.local"
   WGEASY_BASE_URL: "http://wireguard-http.wireguard.svc.cluster.local:51821"
   ACCESS_STORE_PATH: "/data/homelab-access.json"
