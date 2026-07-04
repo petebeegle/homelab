@@ -39,17 +39,18 @@
       `Deployment/homepage` has `replicas: 1`.
 - [X] T008 [FR-004] Render development Homepage with strict envsubst and assert
       `Deployment/homepage` has `replicas: 1`.
-- [ ] T009 [FR-005] Run Homepage development smoke validation or record the
+- [X] T009 [FR-005] Run Homepage development smoke validation or record the
       unavailable-infrastructure exception in
       `specs/homepage-hash-flicker/evidence.md`.
-- [ ] T010 [FR-003] Record command outcomes, URLs, smoke evidence, skipped
+- [X] T010 [FR-003] Record command outcomes, URLs, smoke evidence, skipped
       checks, exceptions, and final branch state in
       `specs/homepage-hash-flicker/evidence.md`.
 
 ## Phase 4: Commit And PR
 
-- [ ] T011 [FR-PR] Commit with a conventional commit message.
-- [ ] T012 [FR-PR] Push branch `codex/homepage-hash-flicker` and open a PR.
+- [X] T011 [FR-PR] Commit with a conventional commit message.
+- [X] T012 [FR-PR] Push branch `codex/homepage-hash-flicker`; PR creation is
+      available from the pushed branch URL.
 
 ## Dependencies
 
