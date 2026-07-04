@@ -1,0 +1,125 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: immich-${branch_slug}
+resources:
+  - ../base
+patches:
+  - target:
+      kind: Namespace
+      name: immich
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: immich-${branch_slug}
+  - target:
+      kind: HTTPRoute
+      name: immich
+    patch: |-
+      - op: replace
+        path: /spec/parentRefs
+        value:
+          - name: internal
+            namespace: gateway
+            sectionName: https-gateway
+      - op: replace
+        path: /spec/hostnames/0
+        value: immich-${branch_slug}.${cluster_domain}
+  - target:
+      kind: PersistentVolumeClaim
+      name: immich-library
+    patch: |-
+      - op: replace
+        path: /spec/resources/requests/storage
+        value: 20Gi
+  - target:
+      group: helm.toolkit.fluxcd.io
+      version: v2
+      kind: HelmRelease
+      name: immich
+    patch: |-
+      - op: replace
+        path: /spec/chartRef/namespace
+        value: immich-${branch_slug}
+  - target:
+      group: postgresql.cnpg.io
+      version: v1
+      kind: Cluster
+      name: immich-postgres
+    patch: |-
+      - op: replace
+        path: /spec/storage/size
+        value: 10Gi
+  - target:
+      kind: ConfigMap
+      name: immich-values
+    patch: |-
+      - op: replace
+        path: /data/values.yaml
+        value: |
+          controllers:
+            main:
+              containers:
+                main:
+                  image:
+                    tag: v3.0.1
+                  env:
+                    TZ: America/New_York
+                    REDIS_HOSTNAME: immich-valkey
+                    IMMICH_MACHINE_LEARNING_URL: http://immich-machine-learning:3003
+                    DB_HOSTNAME: immich-postgres-rw
+                    DB_PORT: "5432"
+                    DB_USERNAME: immich
+                    DB_DATABASE_NAME: immich
+                    DB_PASSWORD:
+                      valueFrom:
+                        secretKeyRef:
+                          name: immich-postgres-user
+                          key: password
+          server:
+            service:
+              main:
+                annotations:
+                  prometheus.io/scrape: "true"
+                  prometheus.io/port: "8081"
+                  prometheus.io/path: /metrics
+            controllers:
+              main:
+                containers:
+                  main:
+                    resources:
+                      requests:
+                        cpu: 250m
+                        memory: 768Mi
+                      limits:
+                        cpu: "2"
+                        memory: 2Gi
+          immich:
+            metrics:
+              enabled: true
+            persistence:
+              library:
+                existingClaim: immich-library
+            existingConfiguration: immich-secrets
+            configurationKind: Secret
+          valkey:
+            enabled: true
+          machine-learning:
+            persistence:
+              cache:
+                enabled: true
+                type: persistentVolumeClaim
+                size: 5Gi
+                accessMode: ReadWriteOnce
+                storageClass: nfs-csi-storage
+            controllers:
+              main:
+                containers:
+                  main:
+                    resources:
+                      requests:
+                        cpu: 250m
+                        memory: 1Gi
+                      limits:
+                        cpu: "2"
+                        memory: 3Gi

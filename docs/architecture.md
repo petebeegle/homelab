@@ -20,7 +20,7 @@ This document is generated for agentic repo navigation. It records relationships
 - Infra activation list: `crds.yaml`, `cert-manager.yaml`, `local-path-provisioner.yaml`, `cloudnative-pg.yaml`, `intel-device-plugins-operator.yaml`, `intel-gpu-device-plugin.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `metrics-server.yaml`, `certs.yaml`, `gateway.yaml`.
 - App activation list: `whoami.yaml`, `homepage.yaml`, `foundry-bluegreen-fixture.yaml`.
 
-- Branch environment templates: `whoami-template.yaml`, `jellyfin-template.yaml`, `homepage-template.yaml`, `home-assistant-template.yaml`.
+- Branch environment templates: `whoami-template.yaml`, `jellyfin-template.yaml`, `homepage-template.yaml`, `home-assistant-template.yaml`, `immich-template.yaml`.
 
 ### Flux Substitution Variables
 
@@ -157,7 +157,9 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/apps/homepage/branch` | `homepage.yaml` |
 | `kubernetes/apps/homepage/development` | `../base` |
 | `kubernetes/apps/homepage` | `base` |
-| `kubernetes/apps/immich` | `namespace.yaml`, `pvc.yaml`, `postgres.yaml`, `app.yaml`, `httproute.yaml`, `secret.yaml` |
+| `kubernetes/apps/immich/base` | `namespace.yaml`, `pvc.yaml`, `postgres.yaml`, `app.yaml`, `httproute.yaml`, `secret.yaml` |
+| `kubernetes/apps/immich/branch` | `../base` |
+| `kubernetes/apps/immich` | `base` |
 | `kubernetes/apps/jellyfin/branch` | `jellyfin.yaml` |
 | `kubernetes/apps/jellyfin` | `./app.yaml`, `./pvc.yaml`, `./httproute.yaml`, `./secret.yaml`, `./sso-bootstrap.yaml` |
 | `kubernetes/apps/pihole` | `app.yaml`, `secret.yaml`, `httproute.yaml` |
@@ -207,12 +209,12 @@ This document is generated for agentic repo navigation. It records relationships
 | PVC | `foundryvtt/foundryvtt-data-pvc` | `nfs-csi-storage` | `kubernetes/apps/foundryvtt/pvc.yaml` |
 | PVC | `home-assistant-${branch_slug}/home-assistant-config-${branch_slug}` | `nfs-csi-storage` | `kubernetes/apps/home-assistant/branch/home-assistant.yaml` |
 | PVC | `home-assistant/home-assistant-config` | `nfs-csi-storage` | `kubernetes/apps/home-assistant/pvc.yaml` |
-| PVC | `immich/immich-library` | `nfs-csi-media-storage` | `kubernetes/apps/immich/pvc.yaml` |
+| PVC | `immich/immich-library` | `nfs-csi-media-storage` | `kubernetes/apps/immich/base/pvc.yaml` |
 | PVC | `jellyfin-${branch_slug}/jellyfin-config-${branch_slug}` | `nfs-csi-storage` | `kubernetes/apps/jellyfin/branch/jellyfin.yaml` |
 | PVC | `jellyfin/jellyfin-config-v2` | `nfs-csi-storage` | `kubernetes/apps/jellyfin/pvc.yaml` |
 | PVC | `wireguard/wireguard-pvc` | `nfs-csi-storage` | `kubernetes/infra/network/vpn/pvc.yaml` |
 | Values file | `authentik` | `nfs-csi-storage` | `kubernetes/infra/authentik/values.yaml` |
-| Values file | `immich` | `nfs-csi-storage` | `kubernetes/apps/immich/values.yaml` |
+| Values file | `immich` | `nfs-csi-storage` | `kubernetes/apps/immich/base/values.yaml` |
 | Values file | `jellyfin` | `nfs-csi-storage` | `kubernetes/apps/jellyfin/values.yaml` |
 
 ## Secret Manifests
@@ -226,8 +228,8 @@ This lists secret manifest presence only. Secret values are not rendered.
 | `controllers/cert-manager` | `cert-manager/cloudflare-api-token` | `yes` | `kubernetes/infra/controllers/cert-manager/secret.yaml` |
 | `foundryvtt` | `foundryvtt/foundryvtt-secret` | `yes` | `kubernetes/apps/foundryvtt/secret.yaml` |
 | `home-assistant` | `home-assistant/home-assistant-secrets` | `yes` | `kubernetes/apps/home-assistant/secret.yaml` |
-| `immich` | `immich/immich-postgres-user` | `yes` | `kubernetes/apps/immich/secret.yaml` |
-| `immich` | `immich/immich-secrets` | `yes` | `kubernetes/apps/immich/secret.yaml` |
+| `immich` | `immich/immich-postgres-user` | `yes` | `kubernetes/apps/immich/base/secret.yaml` |
+| `immich` | `immich/immich-secrets` | `yes` | `kubernetes/apps/immich/base/secret.yaml` |
 | `jellyfin` | `jellyfin/jellyfin-secrets` | `yes` | `kubernetes/apps/jellyfin/secret.yaml` |
 | `monitoring/grafana` | `grafana/grafana-credentials` | `yes` | `kubernetes/infra/monitoring/grafana/secret.yaml` |
 | `monitoring/grafana` | `grafana/grafana-env` | `yes` | `kubernetes/infra/monitoring/grafana/grafana-env.yaml` |

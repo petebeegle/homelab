@@ -19,7 +19,9 @@ FLUX_NAMESPACE = "flux-system"
 DEVELOPMENT_BASE_KUSTOMIZATIONS = (
     "crds",
     "cert-manager",
+    "local-path-provisioner",
     "nfs-csi",
+    "cloudnative-pg",
     "cilium",
     "certs",
     "gateway",
