@@ -15,7 +15,7 @@ spec:
       namespace: gateway
       sectionName: https-domain-gateway
   hostnames:
-    - ${cluster_domain}
+    - homepage.${cluster_domain}
   rules:
     - matches:
         - path:

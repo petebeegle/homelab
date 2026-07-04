@@ -31,7 +31,7 @@ data:
     - Core:
         - Homepage:
             icon: homepage.png
-            href: https://${homepage_target_domain}
+            href: https://homepage.${homepage_target_domain}
             description: Homelab dashboard
             namespace: homepage
             app: homepage
