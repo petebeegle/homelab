@@ -87,6 +87,50 @@ attestation, and delegation token under `.codex/tmp/`
       --head` after commit.
 - [x] T027 [FR-007] Report exact `HEAD` and do not create verifier approval.
 
+## Phase 6: Dashboard Activity Follow-Up
+
+- [x] T028 [FR-004] Replace guessed Home Assistant Activity PromQL in
+      `kubernetes/infra/monitoring/grafana/dashboards/home-assistant-dashboard.json`
+      with exporter-semantics-based queries using
+      `homeassistant_state_change_total`,
+      `homeassistant_last_updated_time_seconds`,
+      `homeassistant_entity_available`, `homeassistant_entity_info`,
+      `homeassistant_light_brightness_percent`,
+      `homeassistant_switch_state`, and
+      `homeassistant_binary_sensor_state`.
+- [x] T029 [FR-004] Replace zero-prone active entity stat panels in
+      `kubernetes/infra/monitoring/grafana/dashboards/home-assistant-dashboard.json`
+      with table panels that show rows only when matching active entity metrics
+      exist.
+- [x] T030 [FR-007] Record the no-development-smoke rationale for this
+      dashboard-only follow-up in
+      `specs/home-assistant-dashboard-activity/evidence.md`.
+- [x] T031 [FR-007] Run follow-up local checks:
+      `jq empty kubernetes/infra/monitoring/grafana/dashboards/home-assistant-dashboard.json`,
+      `kubectl kustomize kubernetes/infra/monitoring/grafana/dashboards`, and
+      `python3 tools/architecture/render.py --check`.
+- [x] T032 [FR-007] Commit the focused follow-up with a conventional commit
+      message.
+- [x] T033 [FR-007] Run the SDD context validator with `--require-evidence
+      --head` after the follow-up commit and report exact `HEAD` without
+      creating verifier approval.
+
+## Phase 7: Post-Merge Branch Rebuild
+
+- [x] T034 [FR-007] Rebuild local branch
+      `codex/home-assistant-dashboard-activity` from current `origin/main`
+      after PR #336 merged the original implementation.
+- [x] T035 [FR-007] Reapply only the dashboard activity follow-up delta to
+      avoid duplicating original exporter/config/Service changes already merged
+      through PR #336.
+- [x] T036 [FR-007] Run post-rebuild local checks:
+      `jq empty kubernetes/infra/monitoring/grafana/dashboards/home-assistant-dashboard.json`,
+      `kubectl kustomize kubernetes/infra/monitoring/grafana/dashboards`, and
+      `python3 tools/architecture/render.py --check`.
+- [x] T037 [FR-007] Run the SDD context validator with `--require-evidence
+      --head` after the rebuilt follow-up commit and report exact `HEAD`
+      without pushing or creating verifier approval.
+
 ## Dependencies
 
 - Phase 1 must complete before tracked edits.
@@ -96,6 +140,10 @@ attestation, and delegation token under `.codex/tmp/`
 - T013 should run after SDD bootstrap and before dashboard validation.
 - Verification tasks run after implementation edits.
 - Final evidence and PR summary are updated after validation and commit.
+- Phase 6 is a focused follow-up after user feedback and touches only the
+  dashboard JSON plus SDD/pr-summary evidence.
+- Phase 7 rebuilds the branch after PR #336 merged so the follow-up PR contains
+  only the dashboard activity delta relative to current `origin/main`.
 
 ## Parallel Execution Examples
 
