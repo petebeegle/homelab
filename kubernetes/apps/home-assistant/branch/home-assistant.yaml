@@ -57,7 +57,9 @@ spec:
             - /bin/sh
             - -ec
           args:
-            - mkdir -p /config/.storage
+            - |
+              mkdir -p /config/.storage
+              [ -f /config/automations.yaml ] || printf '[]\n' > /config/automations.yaml
           volumeMounts:
             - name: config-storage
               mountPath: /config
@@ -92,10 +94,6 @@ spec:
             - name: home-assistant-config
               mountPath: /config/configuration.yaml
               subPath: configuration.yaml
-              readOnly: true
-            - name: home-assistant-config
-              mountPath: /config/automations.yaml
-              subPath: automations.yaml
               readOnly: true
             - name: home-assistant-config
               mountPath: /config/scripts.yaml

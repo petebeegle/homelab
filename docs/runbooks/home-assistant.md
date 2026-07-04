@@ -11,6 +11,14 @@ last_verified: 2026-07-03
 
 Home Assistant runs as a declarative Kubernetes app from `ghcr.io/home-assistant/home-assistant:2026.7.0`. Its writable `/config` directory is backed by the `home-assistant-config` PVC on `nfs-csi-storage`; Git-owned YAML files are mounted over the runtime config files from ConfigMaps. Do not commit runtime `.storage` state.
 
+UI-managed automations live at `/config/automations.yaml` on the
+`home-assistant-config` PVC. Keep `automation: !include automations.yaml` in
+`configuration.yaml`, but do not mount `automations.yaml` from a ConfigMap or
+mark it read-only. Home Assistant saves UI edits by atomically replacing that
+file, so a ConfigMap `subPath` mount causes 500 errors when the UI saves
+automations. Fresh PVCs are seeded with an empty `[]` file by the pod init
+container only when `/config/automations.yaml` is missing.
+
 Home Information is GitOps-owned under the `homeassistant:` key in
 `configuration.yaml`, so the Home Assistant UI intentionally renders those
 fields read-only. Public regional defaults live directly in the ConfigMap:
@@ -31,7 +39,7 @@ Home Assistant is exposed on the LAN and WireGuard service plane through `gatewa
 
 The development branch profile deploys the same container, onboarding storage seed, storage, service, and route shape without the OIDC custom component or Authentik config because the development cluster does not run Authentik. Branch smoke proves the workload, PVC, Service, HTTPRoute, and local Home Assistant shell only; it should not accept first-run onboarding as healthy.
 
-Initial device onboarding remains UI-driven. Pair Elgato, UniFi, and similar integrations through the Home Assistant UI first; add code-owned automations, scripts, scenes, and package YAML after entity IDs are known.
+Initial device onboarding remains UI-driven. Pair Elgato, UniFi, and similar integrations through the Home Assistant UI first; add Git-owned packages, scripts, and scenes after entity IDs are known. Keep UI-managed automations on the PVC at `/config/automations.yaml`; only reintroduce automations to Git through an intentional follow-up that changes ownership back to code.
 
 Elgato Light is a runtime config-flow integration, not a declarative Git-owned
 integration. Power on each Elgato light and confirm it is on the same LAN that
@@ -52,9 +60,10 @@ Home Assistant stores the Elgato config entry and generated device/entity
 registry state under `/config/.storage` on the `home-assistant-config` PVC. Do
 not commit Elgato `.storage` files, `config_entries`, device credentials, access
 tokens, generated registries, or placeholder YAML. Once real entity IDs exist,
-add code-owned Elgato scenes, scripts, automations, or package YAML in
-`config/scenes.yaml`, `config/scripts.yaml`, `config/automations.yaml`, or
-`config/packages/code_first.yaml`.
+add Git-owned Elgato controls as scenes, scripts, or package YAML in
+`config/scenes.yaml`, `config/scripts.yaml`, or `config/packages/code_first.yaml`.
+Leave UI-managed automations on the PVC at `/config/automations.yaml` unless an
+implementation intentionally moves a specific automation back to Git ownership.
 
 The desk Elgato ambient-balance automation is UI-managed runtime state. Do not
 re-add `input_boolean.desk_light_auto_balance` or automation id
@@ -63,7 +72,7 @@ back to code.
 
 Philips Hue V2 is a runtime config-flow integration, not a declarative Git-owned integration. Pair the Hue bridge through the Home Assistant UI while the bridge link button is available; Home Assistant stores the resulting config entry and tokens under `/config/.storage` on the `home-assistant-config` PVC. Do not commit Hue `.storage` files, `config_entries`, bridge credentials, access or refresh tokens, or fake integration YAML. Do not add an empty `hue.yaml` package as a placeholder.
 
-After pairing, record the runtime inventory before adding Git-owned Hue packages or automations: bridge name, light entity IDs, room/zone/grouped-light entities, scenes, remotes or switches, and any disabled grouped-light entities worth enabling. Once those entity IDs exist, add packages, scripts, scenes, or automations in Git against the observed IDs and keep credentials on the PVC.
+After pairing, record the runtime inventory before adding Git-owned Hue controls: bridge name, light entity IDs, room/zone/grouped-light entities, scenes, remotes or switches, and any disabled grouped-light entities worth enabling. Once those entity IDs exist, add packages, scripts, or scenes in Git against the observed IDs and keep credentials on the PVC. Leave UI-managed automations on the PVC unless intentionally moving a specific automation back to Git ownership.
 
 Upstream references:
 
