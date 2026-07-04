@@ -147,6 +147,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/infra/network/gateway` | `./namespace.yaml`, `./certificate.yaml`, `./gateway-internal.yaml`, `./gateway-passthrough.yaml`, `./gateway-external.yaml`, `./gateway-external-passthrough.yaml`, `./https-redirect.yaml`, `./referencegrant.yaml` |
 | `kubernetes/infra/network` | `./cilium`, `./certs`, `./vpn`, `./gateway` |
 | `kubernetes/infra/network/vpn` | `./namespace.yaml`, `./global-config.yaml`, `./secret.yaml`, `./pvc.yaml`, `./deployment.yaml`, `./service.yaml`, `./vpn-dns.yaml`, `./httproute.yaml` |
+| `kubernetes/apps/access-broker` | `namespace.yaml`, `configmap.yaml`, `secret.yaml`, `pvc.yaml`, `deployment.yaml`, `service.yaml`, `httproute.yaml` |
 | `kubernetes/apps/cloudflare-tunnels` | `namespace.yaml`, `secret.yaml`, `deployment.yaml`, `podmonitor.yaml` |
 | `kubernetes/apps/external` | `namespace.yaml`, `synology.yaml` |
 | `kubernetes/apps/foundry-bluegreen-fixture` | `namespace.yaml`, `pvc-blue.yaml`, `pvc-green.yaml`, `deployment-blue.yaml`, `deployment-green.yaml`, `service-blue.yaml`, `service-green.yaml`, `httproute-green-preview.yaml` |
@@ -173,6 +174,7 @@ This document is generated for agentic repo navigation. It records relationships
 
 | Kind | Route | Hostnames | Parent Gateway | Backend refs |
 | --- | --- | --- | --- | --- |
+| `HTTPRoute` | `access-broker/access-broker-public` | `onboard.${cluster_domain}` | `gateway/public/http-gateway` | `access-broker:80` |
 | `HTTPRoute` | `authentik/authentik` | `authentik.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `authentik-server:80` |
 | `HTTPRoute` | `external/synology-route` | `synology.petebeegle.com` | `gateway/internal/synology-https-gateway` | `synology-proxy:8080` |
 | `HTTPRoute` | `foundry-bluegreen-fixture/foundry-fixture-green-preview` | `foundry-green-preview.dev.lab.petebeegle.com` | `gateway/internal/https-gateway` | `foundry-fixture-green:80` |
@@ -204,6 +206,7 @@ This document is generated for agentic repo navigation. It records relationships
 | --- | --- | --- | --- |
 | HelmRelease values | `jellyfin-${branch_slug}/jellyfin-${branch_slug}` | `nfs-csi-storage` | `kubernetes/apps/jellyfin/branch/jellyfin.yaml` |
 | HelmRelease values | `valheim/valheim-server` | `nfs-csi-storage` | `kubernetes/apps/valheim/app.yaml` |
+| PVC | `access-broker/access-broker-data` | `nfs-csi-storage` | `kubernetes/apps/access-broker/pvc.yaml` |
 | PVC | `foundry-bluegreen-fixture/foundry-fixture-blue` | `nfs-csi-storage` | `kubernetes/apps/foundry-bluegreen-fixture/pvc-blue.yaml` |
 | PVC | `foundry-bluegreen-fixture/foundry-fixture-green` | `nfs-csi-storage` | `kubernetes/apps/foundry-bluegreen-fixture/pvc-green.yaml` |
 | PVC | `foundryvtt/foundryvtt-data-pvc` | `nfs-csi-storage` | `kubernetes/apps/foundryvtt/pvc.yaml` |
@@ -223,6 +226,7 @@ This lists secret manifest presence only. Secret values are not rendered.
 
 | Component | Secret | SOPS encrypted | Path |
 | --- | --- | --- | --- |
+| `access-broker` | `access-broker/access-broker-secret` | `yes` | `kubernetes/apps/access-broker/secret.yaml` |
 | `authentik` | `authentik/authentik-secrets` | `yes` | `kubernetes/infra/authentik/secret.yaml` |
 | `cloudflare-tunnels` | `cloudflare/tunnel-credentials` | `yes` | `kubernetes/apps/cloudflare-tunnels/secret.yaml` |
 | `controllers/cert-manager` | `cert-manager/cloudflare-api-token` | `yes` | `kubernetes/infra/controllers/cert-manager/secret.yaml` |
