@@ -89,5 +89,5 @@
 ## Final State
 
 - Final branch: `codex/immich-app`
-- Final HEAD: pending final evidence commit
-- Commit: local conventional commits created and pushed for implementation plus dev-smoke fixes; final evidence commit pending.
+- Final HEAD: latest pushed `codex/immich-app` branch head; verify with `git log -1`.
+- Commit: local conventional commits created and pushed for implementation, dev-smoke fixes, and final evidence.
