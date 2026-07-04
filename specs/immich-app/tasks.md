@@ -46,7 +46,7 @@ artifacts.
 ## Phase 6: Commit And PR
 
 - [X] T023 [FR-PR] Commit with a conventional commit message.
-- [ ] T024 [FR-PR] Push branch `codex/immich-app` and open a PR if requested after validation.
+- [X] T024 [FR-PR] Push branch `codex/immich-app` and open a PR if requested after validation.
 
 ## Fanout Notes
 
