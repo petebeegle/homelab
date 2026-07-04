@@ -158,7 +158,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/apps/homepage/branch` | `homepage.yaml` |
 | `kubernetes/apps/homepage/development` | `../base` |
 | `kubernetes/apps/homepage` | `base` |
-| `kubernetes/apps/immich/base` | `namespace.yaml`, `pvc.yaml`, `postgres.yaml`, `app.yaml`, `httproute.yaml`, `secret.yaml` |
+| `kubernetes/apps/immich/base` | `namespace.yaml`, `pvc.yaml`, `postgres.yaml`, `app.yaml`, `metrics-service.yaml`, `httproute.yaml`, `secret.yaml` |
 | `kubernetes/apps/immich/branch` | `../base` |
 | `kubernetes/apps/immich` | `base` |
 | `kubernetes/apps/jellyfin/branch` | `jellyfin.yaml` |

@@ -1,0 +1,25 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: immich-server-metrics-ms
+  namespace: immich
+  labels:
+    app.kubernetes.io/name: server
+    app.kubernetes.io/instance: immich
+    app.kubernetes.io/service: immich-server-metrics-ms
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8082"
+    prometheus.io/path: /metrics
+spec:
+  type: ClusterIP
+  ports:
+    - name: metrics-ms
+      port: 8082
+      protocol: TCP
+      targetPort: metrics-ms
+  selector:
+    app.kubernetes.io/controller: main
+    app.kubernetes.io/instance: immich
+    app.kubernetes.io/name: server

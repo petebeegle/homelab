@@ -6,6 +6,7 @@ resources:
   - pvc.yaml
   - postgres.yaml
   - app.yaml
+  - metrics-service.yaml
   - httproute.yaml
   - secret.yaml
 configMapGenerator:
