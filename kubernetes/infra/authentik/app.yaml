@@ -39,6 +39,7 @@ spec:
         - grafana-oauth-blueprint
         - home-assistant-oauth-blueprint
         - jellyfin-oauth-blueprint
+        - immich-oauth-blueprint
         - synology-oauth-blueprint
       secrets:
         - private-authentik-blueprints

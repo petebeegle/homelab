@@ -72,6 +72,12 @@ data:
             description: Media library
             namespace: jellyfin
             app: jellyfin
+        - Immich:
+            icon: immich.png
+            href: https://immich.${homepage_target_domain}
+            description: Photo and video backup
+            namespace: immich
+            app: immich-server
         - Foundry VTT:
             icon: foundry-vtt.png
             href: https://foundry.${homepage_target_domain}

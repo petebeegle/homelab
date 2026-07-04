@@ -6,3 +6,4 @@ resources:
   - jellyfin-template.yaml
   - homepage-template.yaml
   - home-assistant-template.yaml
+  - immich-template.yaml

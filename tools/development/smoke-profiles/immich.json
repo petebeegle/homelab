@@ -1,0 +1,41 @@
+{
+  "app": "immich",
+  "gitRepository": "branch-immich-${branch_slug}",
+  "activationTemplate": "kubernetes/clusters/development/branches/immich-template.yaml",
+  "namespace": "immich-${branch_slug}",
+  "routeUrls": [
+    "https://immich-${branch_slug}.dev.lab.petebeegle.com"
+  ],
+  "checks": {
+    "kustomizations": [
+      "branch-immich-${branch_slug}"
+    ],
+    "helmReleases": [
+      "immich"
+    ],
+    "secretRefs": [
+      "immich-secrets",
+      "immich-postgres-user"
+    ],
+    "pvcs": [
+      {
+        "name": "immich-library",
+        "storageClass": "nfs-csi-media-storage"
+      }
+    ],
+    "services": [
+      "immich-server"
+    ],
+    "httpRoutes": [
+      "immich"
+    ],
+    "httpProbes": [
+      {
+        "service": "immich-server",
+        "port": 2283,
+        "path": "/api/server/ping",
+        "bodyRegex": "pong"
+      }
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: immich
+  namespace: immich
+spec:
+  parentRefs:
+    - name: internal
+      namespace: gateway
+      sectionName: https-gateway
+    - name: external
+      namespace: gateway
+      sectionName: https-gateway
+  hostnames:
+    - immich.${cluster_domain}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: immich-server
+          port: 2283
+          weight: 1

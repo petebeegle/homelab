@@ -10,17 +10,17 @@ This document is generated for agentic repo navigation. It records relationships
 
 - Root Kustomization: `kubernetes/clusters/production/kustomization.yaml`.
 - Root resources: `flux-system`, `cluster-vars.yaml`, `infra`, `apps`.
-- Infra activation list: `crds.yaml`, `cert-manager.yaml`, `grafana-operator.yaml`, `intel-device-plugins-operator.yaml`, `intel-gpu-device-plugin.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `metrics-server.yaml`, `certs.yaml`, `gateway.yaml`, `vpn.yaml`, `monitoring.yaml`, `loki.yaml`, `mimir.yaml`, `alloy.yaml`, `grafana.yaml`, `otel-collector.yaml`, `authentik.yaml`.
-- App activation list: `external.yaml`, `homepage.yaml`, `pihole.yaml`, `whoami.yaml`, `renovate.yaml`, `cloudflare-tunnels.yaml`, `jellyfin.yaml`, `home-assistant.yaml`, `foundryvtt.yaml`, `valheim.yaml`, `synthetics.yaml`, `private`.
+- Infra activation list: `crds.yaml`, `cert-manager.yaml`, `local-path-provisioner.yaml`, `cloudnative-pg.yaml`, `grafana-operator.yaml`, `intel-device-plugins-operator.yaml`, `intel-gpu-device-plugin.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `metrics-server.yaml`, `certs.yaml`, `gateway.yaml`, `vpn.yaml`, `monitoring.yaml`, `loki.yaml`, `mimir.yaml`, `alloy.yaml`, `grafana.yaml`, `otel-collector.yaml`, `authentik.yaml`.
+- App activation list: `external.yaml`, `homepage.yaml`, `pihole.yaml`, `whoami.yaml`, `renovate.yaml`, `cloudflare-tunnels.yaml`, `jellyfin.yaml`, `immich.yaml`, `home-assistant.yaml`, `foundryvtt.yaml`, `valheim.yaml`, `synthetics.yaml`, `private`.
 
 ### Development
 
 - Root Kustomization: `kubernetes/clusters/development/kustomization.yaml`.
 - Root resources: `flux-system`, `cluster-vars.yaml`, `infra`, `apps`.
-- Infra activation list: `crds.yaml`, `cert-manager.yaml`, `intel-device-plugins-operator.yaml`, `intel-gpu-device-plugin.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `metrics-server.yaml`, `certs.yaml`, `gateway.yaml`.
+- Infra activation list: `crds.yaml`, `cert-manager.yaml`, `local-path-provisioner.yaml`, `cloudnative-pg.yaml`, `intel-device-plugins-operator.yaml`, `intel-gpu-device-plugin.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `metrics-server.yaml`, `certs.yaml`, `gateway.yaml`.
 - App activation list: `whoami.yaml`, `homepage.yaml`, `foundry-bluegreen-fixture.yaml`.
 
-- Branch environment templates: `whoami-template.yaml`, `jellyfin-template.yaml`, `homepage-template.yaml`, `home-assistant-template.yaml`.
+- Branch environment templates: `whoami-template.yaml`, `jellyfin-template.yaml`, `homepage-template.yaml`, `home-assistant-template.yaml`, `immich-template.yaml`.
 
 ### Flux Substitution Variables
 
@@ -64,12 +64,14 @@ This document is generated for agentic repo navigation. It records relationships
 | `production` | `cert-manager` | `./kubernetes/infra/controllers/cert-manager` | `crds` | `cluster-vars` | `sops` |
 | `production` | `certs` | `./kubernetes/infra/network/certs` | `cert-manager`, `cilium` | `cluster-vars` | `no` |
 | `production` | `cilium` | `./kubernetes/infra/network/cilium` | `crds` | `cluster-vars` | `no` |
+| `production` | `cloudnative-pg` | `./kubernetes/infra/controllers/cloudnative-pg` | `local-path-provisioner` | `(none)` | `no` |
 | `production` | `crds` | `./kubernetes/infra/crds` | (none) | `cluster-vars` | `no` |
 | `production` | `gateway` | `./kubernetes/clusters/production/overlays/gateway` | `crds`, `cilium`, `certs` | `cluster-vars` | `no` |
 | `production` | `grafana-operator` | `./kubernetes/infra/controllers/grafana-operator` | `crds` | `cluster-vars` | `no` |
 | `production` | `grafana` | `./kubernetes/infra/monitoring/grafana` | `gateway`, `grafana-operator`, `loki`, `mimir` | `cluster-vars` | `sops` |
 | `production` | `intel-device-plugins-operator` | `./kubernetes/infra/controllers/intel-device-plugins/operator` | `cert-manager` | `cluster-vars` | `no` |
 | `production` | `intel-gpu-device-plugin` | `./kubernetes/infra/controllers/intel-device-plugins/gpu` | `intel-device-plugins-operator` | `cluster-vars` | `no` |
+| `production` | `local-path-provisioner` | `./kubernetes/infra/controllers/local-path-provisioner` | (none) | `(none)` | `no` |
 | `production` | `loki` | `./kubernetes/infra/monitoring/loki` | `crds` | `cluster-vars` | `no` |
 | `production` | `metrics-server` | `./kubernetes/infra/controllers/metrics-server` | `crds`, `cilium` | `cluster-vars` | `no` |
 | `production` | `mimir` | `./kubernetes/infra/monitoring/mimir` | `crds`, `nfs-csi` | `cluster-vars` | `no` |
@@ -80,10 +82,12 @@ This document is generated for agentic repo navigation. It records relationships
 | `development` | `cert-manager` | `./kubernetes/infra/controllers/cert-manager` | `crds` | `cluster-vars` | `sops` |
 | `development` | `certs` | `./kubernetes/infra/network/certs` | `cert-manager`, `cilium` | `cluster-vars` | `no` |
 | `development` | `cilium` | `./kubernetes/infra/network/cilium` | `crds` | `cluster-vars` | `no` |
+| `development` | `cloudnative-pg` | `./kubernetes/infra/controllers/cloudnative-pg` | `local-path-provisioner` | `(none)` | `no` |
 | `development` | `crds` | `./kubernetes/infra/crds` | (none) | `cluster-vars` | `no` |
 | `development` | `gateway` | `./kubernetes/infra/network/gateway` | `crds`, `cilium`, `certs` | `cluster-vars` | `no` |
 | `development` | `intel-device-plugins-operator` | `./kubernetes/infra/controllers/intel-device-plugins/operator` | `cert-manager` | `cluster-vars` | `no` |
 | `development` | `intel-gpu-device-plugin` | `./kubernetes/infra/controllers/intel-device-plugins/gpu` | `intel-device-plugins-operator` | `cluster-vars` | `no` |
+| `development` | `local-path-provisioner` | `./kubernetes/infra/controllers/local-path-provisioner` | (none) | `(none)` | `no` |
 | `development` | `metrics-server` | `./kubernetes/infra/controllers/metrics-server` | `crds`, `cilium` | `cluster-vars` | `no` |
 | `development` | `nfs-csi` | `./kubernetes/infra/controllers/nfs-csi` | (none) | `cluster-vars` | `no` |
 
@@ -96,12 +100,13 @@ This document is generated for agentic repo navigation. It records relationships
 | `production` | `app-foundryvtt` | `./kubernetes/apps/foundryvtt` | `gateway`, `nfs-csi` | `cluster-vars` | `sops` |
 | `production` | `app-home-assistant` | `./kubernetes/apps/home-assistant` | `gateway`, `nfs-csi`, `authentik` | `cluster-vars` | `sops` |
 | `production` | `app-homepage` | `./kubernetes/apps/homepage` | `gateway`, `metrics-server` | `cluster-vars` | `no` |
+| `production` | `app-immich` | `./kubernetes/apps/immich` | `gateway`, `nfs-csi`, `local-path-provisioner`, `cloudnative-pg`, `authentik` | `cluster-vars` | `sops` |
 | `production` | `app-jellyfin` | `./kubernetes/apps/jellyfin` | `gateway`, `nfs-csi`, `intel-gpu-device-plugin` | `cluster-vars` | `no` |
 | `production` | `app-pihole` | `./kubernetes/apps/pihole` | `gateway` | `cluster-vars` | `sops` |
 | `production` | `private-apps` | `./kubernetes/clusters/production/apps` | `private-source` | `cluster-vars` | `sops` |
 | `production` | `private-source` | `./kubernetes/clusters/production/apps/private/source` | (none) | `(none)` | `sops` |
 | `production` | `app-renovate` | `./kubernetes/apps/renovate` | `gateway` | `cluster-vars` | `sops` |
-| `production` | `app-synthetics` | `./kubernetes/apps/synthetics` | `gateway`, `grafana`, `authentik`, `app-whoami`, `app-homepage`, `app-jellyfin`, `app-home-assistant`, `app-pihole`, `app-foundryvtt` | `cluster-vars` | `no` |
+| `production` | `app-synthetics` | `./kubernetes/apps/synthetics` | `gateway`, `grafana`, `authentik`, `app-whoami`, `app-homepage`, `app-jellyfin`, `app-immich`, `app-home-assistant`, `app-pihole`, `app-foundryvtt` | `cluster-vars` | `no` |
 | `production` | `app-valheim` | `./kubernetes/apps/valheim` | `gateway`, `nfs-csi` | `cluster-vars` | `sops` |
 | `production` | `app-whoami` | `./kubernetes/apps/whoami` | `gateway` | `cluster-vars` | `no` |
 | `development` | `app-foundry-bluegreen-fixture` | `./kubernetes/apps/foundry-bluegreen-fixture` | `gateway`, `nfs-csi` | `cluster-vars` | `no` |
@@ -114,11 +119,13 @@ This document is generated for agentic repo navigation. It records relationships
 | --- | --- |
 | `kubernetes/infra/authentik` | `namespace.yaml`, `app.yaml`, `secret.yaml`, `httproute.yaml`, `blueprints` |
 | `kubernetes/infra/controllers/cert-manager` | `app.yaml`, `secret.yaml` |
+| `kubernetes/infra/controllers/cloudnative-pg` | `namespace.yaml`, `app.yaml` |
 | `kubernetes/infra/controllers/grafana-operator` | `namespace.yaml`, `app.yaml` |
 | `kubernetes/infra/controllers/intel-device-plugins/gpu` | `app.yaml` |
 | `kubernetes/infra/controllers/intel-device-plugins` | `./operator`, `./gpu` |
 | `kubernetes/infra/controllers/intel-device-plugins/operator` | `namespace.yaml`, `app.yaml` |
-| `kubernetes/infra/controllers` | `./nfs-csi`, `./cert-manager`, `./grafana-operator`, `./metrics-server`, `./intel-device-plugins` |
+| `kubernetes/infra/controllers` | `./local-path-provisioner`, `./nfs-csi`, `./cloudnative-pg`, `./cert-manager`, `./grafana-operator`, `./metrics-server`, `./intel-device-plugins` |
+| `kubernetes/infra/controllers/local-path-provisioner` | `github.com/rancher/local-path-provisioner/deploy?ref=v0.0.36` |
 | `kubernetes/infra/controllers/metrics-server` | `app.yaml` |
 | `kubernetes/infra/controllers/nfs-csi` | `app.yaml`, `media-storageclass.yaml`, `storageclass.yaml`, `volumesnapshotclass.yaml` |
 | `kubernetes/infra/crds/grafana` | `https://github.com/grafana/grafana-operator//config/crd?ref=v5.23.0` |
@@ -126,7 +133,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/infra/crds/prometheus` | `app.yaml` |
 | `kubernetes/infra/monitoring/alloy` | `repositories.yaml`, `namespace.yaml`, `app.yaml` |
 | `kubernetes/infra/monitoring/grafana/alerting` | `alert-rules-kubernetes.yaml`, `alert-rules-certificates.yaml`, `alert-rules-gateway-cilium.yaml`, `alert-rules-observability.yaml`, `alert-rules-apps.yaml`, `alert-rules-proxmox.yaml`, `alert-rules-flux.yaml`, `alert-rules-valheim.yaml`, `alert-rules-synthetics.yaml` |
-| `kubernetes/infra/monitoring/grafana/dashboards` | `proxmox-dashboard.yaml`, `flux-dashboard.yaml`, `kubernetes-dashboard.yaml`, `authentik-dashboard.yaml`, `jellyfin-dashboard.yaml`, `home-assistant-dashboard.yaml`, `observability-health-dashboard.yaml`, `codex-operations-dashboard.yaml`, `synthetic-smoke-dashboard.yaml`, `monitoring-radar-dashboard.yaml` |
+| `kubernetes/infra/monitoring/grafana/dashboards` | `proxmox-dashboard.yaml`, `flux-dashboard.yaml`, `kubernetes-dashboard.yaml`, `authentik-dashboard.yaml`, `jellyfin-dashboard.yaml`, `immich-dashboard.yaml`, `home-assistant-dashboard.yaml`, `observability-health-dashboard.yaml`, `codex-operations-dashboard.yaml`, `synthetic-smoke-dashboard.yaml`, `monitoring-radar-dashboard.yaml` |
 | `kubernetes/infra/monitoring/grafana` | `namespace.yaml`, `repositories.yaml`, `app.yaml`, `secret.yaml`, `grafana-env.yaml`, `gateway.yaml`, `grafana-instance.yaml`, `folders.yaml`, `dashboards`, `alerting` |
 | `kubernetes/infra/monitoring/kube-state-metrics` | `repositories.yaml`, `app.yaml` |
 | `kubernetes/infra/monitoring` | `namespace.yaml`, `kube-state-metrics`, `snmp-exporter`, `pretty-discord-alerts` |
@@ -150,6 +157,9 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/apps/homepage/branch` | `homepage.yaml` |
 | `kubernetes/apps/homepage/development` | `../base` |
 | `kubernetes/apps/homepage` | `base` |
+| `kubernetes/apps/immich/base` | `namespace.yaml`, `pvc.yaml`, `postgres.yaml`, `app.yaml`, `httproute.yaml`, `secret.yaml` |
+| `kubernetes/apps/immich/branch` | `../base` |
+| `kubernetes/apps/immich` | `base` |
 | `kubernetes/apps/jellyfin/branch` | `jellyfin.yaml` |
 | `kubernetes/apps/jellyfin` | `./app.yaml`, `./pvc.yaml`, `./httproute.yaml`, `./secret.yaml`, `./sso-bootstrap.yaml` |
 | `kubernetes/apps/pihole` | `app.yaml`, `secret.yaml`, `httproute.yaml` |
@@ -174,6 +184,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `HTTPRoute` | `home-assistant/home-assistant` | `homeassistant.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `home-assistant:80` |
 | `HTTPRoute` | `homepage-${branch_slug}/homepage-${branch_slug}` | `homepage-${branch_slug}.${cluster_domain}` | `gateway/internal/https-gateway` | `homepage-${branch_slug}:80` |
 | `HTTPRoute` | `homepage/homepage` | `homepage.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `homepage:80` |
+| `HTTPRoute` | `immich/immich` | `immich.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `immich-server:2283` |
 | `HTTPRoute` | `jellyfin-${branch_slug}/jellyfin-${branch_slug}` | `jellyfin-${branch_slug}.${cluster_domain}` | `gateway/internal/https-gateway` | `jellyfin-${branch_slug}-metrics-deny:8096` |
 | `HTTPRoute` | `jellyfin/jellyfin` | `jellyfin.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `jellyfin-metrics-deny:8096` |
 | `HTTPRoute` | `otel-collector/otel-collector` | `otel.${cluster_domain}` | `gateway/internal/https-gateway` | `otel-collector-opentelemetry-collector:4318` |
@@ -198,10 +209,12 @@ This document is generated for agentic repo navigation. It records relationships
 | PVC | `foundryvtt/foundryvtt-data-pvc` | `nfs-csi-storage` | `kubernetes/apps/foundryvtt/pvc.yaml` |
 | PVC | `home-assistant-${branch_slug}/home-assistant-config-${branch_slug}` | `nfs-csi-storage` | `kubernetes/apps/home-assistant/branch/home-assistant.yaml` |
 | PVC | `home-assistant/home-assistant-config` | `nfs-csi-storage` | `kubernetes/apps/home-assistant/pvc.yaml` |
+| PVC | `immich/immich-library` | `nfs-csi-media-storage` | `kubernetes/apps/immich/base/pvc.yaml` |
 | PVC | `jellyfin-${branch_slug}/jellyfin-config-${branch_slug}` | `nfs-csi-storage` | `kubernetes/apps/jellyfin/branch/jellyfin.yaml` |
 | PVC | `jellyfin/jellyfin-config-v2` | `nfs-csi-storage` | `kubernetes/apps/jellyfin/pvc.yaml` |
 | PVC | `wireguard/wireguard-pvc` | `nfs-csi-storage` | `kubernetes/infra/network/vpn/pvc.yaml` |
 | Values file | `authentik` | `nfs-csi-storage` | `kubernetes/infra/authentik/values.yaml` |
+| Values file | `immich` | `nfs-csi-storage` | `kubernetes/apps/immich/base/values.yaml` |
 | Values file | `jellyfin` | `nfs-csi-storage` | `kubernetes/apps/jellyfin/values.yaml` |
 
 ## Secret Manifests
@@ -215,6 +228,8 @@ This lists secret manifest presence only. Secret values are not rendered.
 | `controllers/cert-manager` | `cert-manager/cloudflare-api-token` | `yes` | `kubernetes/infra/controllers/cert-manager/secret.yaml` |
 | `foundryvtt` | `foundryvtt/foundryvtt-secret` | `yes` | `kubernetes/apps/foundryvtt/secret.yaml` |
 | `home-assistant` | `home-assistant/home-assistant-secrets` | `yes` | `kubernetes/apps/home-assistant/secret.yaml` |
+| `immich` | `immich/immich-postgres-user` | `yes` | `kubernetes/apps/immich/base/secret.yaml` |
+| `immich` | `immich/immich-secrets` | `yes` | `kubernetes/apps/immich/base/secret.yaml` |
 | `jellyfin` | `jellyfin/jellyfin-secrets` | `yes` | `kubernetes/apps/jellyfin/secret.yaml` |
 | `monitoring/grafana` | `grafana/grafana-credentials` | `yes` | `kubernetes/infra/monitoring/grafana/secret.yaml` |
 | `monitoring/grafana` | `grafana/grafana-env` | `yes` | `kubernetes/infra/monitoring/grafana/grafana-env.yaml` |

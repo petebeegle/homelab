@@ -2,28 +2,28 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: app-synthetics
+  name: app-immich
   namespace: flux-system
 spec:
   interval: 5m
   retryInterval: 2m
-  path: ./kubernetes/apps/synthetics
+  path: ./kubernetes/apps/immich
   prune: true
   wait: true
+  timeout: 20m
   sourceRef:
     kind: GitRepository
     name: flux-system
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
   dependsOn:
     - name: gateway
-    - name: grafana
+    - name: nfs-csi
+    - name: local-path-provisioner
+    - name: cloudnative-pg
     - name: authentik
-    - name: app-whoami
-    - name: app-homepage
-    - name: app-jellyfin
-    - name: app-immich
-    - name: app-home-assistant
-    - name: app-pihole
-    - name: app-foundryvtt
   postBuild:
     substituteFrom:
       - kind: ConfigMap

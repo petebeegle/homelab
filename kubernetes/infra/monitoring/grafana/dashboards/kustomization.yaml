@@ -33,6 +33,12 @@ configMapGenerator:
       - dashboard.json=jellyfin-dashboard.json
     options:
       disableNameSuffixHash: true
+  - name: immich-dashboard
+    namespace: grafana
+    files:
+      - dashboard.json=immich-dashboard.json
+    options:
+      disableNameSuffixHash: true
   - name: home-assistant-dashboard
     namespace: grafana
     files:
@@ -69,6 +75,7 @@ resources:
   - kubernetes-dashboard.yaml
   - authentik-dashboard.yaml
   - jellyfin-dashboard.yaml
+  - immich-dashboard.yaml
   - home-assistant-dashboard.yaml
   - observability-health-dashboard.yaml
   - codex-operations-dashboard.yaml
