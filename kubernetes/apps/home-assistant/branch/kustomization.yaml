@@ -8,7 +8,6 @@ configMapGenerator:
     namespace: home-assistant-${branch_slug}
     files:
       - configuration.yaml=config/configuration.yaml
-      - automations.yaml=config/automations.yaml
       - scripts.yaml=config/scripts.yaml
       - scenes.yaml=config/scenes.yaml
     options:
