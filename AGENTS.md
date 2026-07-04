@@ -47,7 +47,12 @@ Synology NFS, Grafana/Loki/Mimir/Alloy.
   `/workspaces/homelab-worktrees/<implementation>` on branch
   `codex/<implementation>`. Use the current checkout only when explicitly
   requested; sibling clones are an allowed fallback.
-- Run the Spec Kit cycle: specify, plan, tasks, then implement.
+- Treat SDD as a human decision workflow. Humans own intent, constraints, and
+  acceptance; agents draft artifacts and stop for the spec, plan, and
+  task/analysis gates before implementation unless a lightweight exception is
+  recorded.
+- For meaningful work, run the full Spec Kit cycle: specify, clarify, plan,
+  checklist, tasks, analyze, implement, then converge.
 - In `plan.md`, declare SDD tier, workflow risk tier, smoke strategy, fanout
   targets, and exceptions before implementation edits.
 - In `tasks.md`, mark independent non-conflicting fanout work with `[P]`;

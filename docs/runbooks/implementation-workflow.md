@@ -31,8 +31,12 @@ Use this runbook for every repository code change. The binding decision is
    `.codex/tmp/implementation-secrets/<implementation>/` in the main checkout,
    preserving repo-relative paths and never logging contents. Install staged
    files into the worktree or clone before commands that need them.
-4. Run the Spec Kit cycle in the implementation worktree or checkout:
-   `specify -> plan -> tasks -> implement`.
+4. Run the Spec Kit cycle in the implementation worktree or checkout as a
+   human decision workflow. For meaningful work, use:
+   `specify -> clarify -> human spec approval -> plan -> checklist -> human plan approval -> tasks -> analyze -> human implementation approval -> implement -> converge`.
+   Tiny wording-only changes and obvious low-risk local edits may skip selected
+   quality gates only when the skipped `clarify`, `checklist`, `analyze`, or
+   `converge` step and rationale are recorded in evidence.
 5. Keep durable implementation context in `specs/<implementation>/`:
    `spec.md`, `plan.md`, `tasks.md`, and `evidence.md`.
 6. In `plan.md`, declare the SDD tier, workflow risk tier, smoke strategy,
@@ -63,6 +67,27 @@ The local workflow guard enforces the branch and artifact contract:
 
 Local owner attestations, verifier attestations, delegation token files, and
 exact-`HEAD` verifier approval files are no longer part of the workflow.
+Human approval gates are recorded in SDD artifacts and PR review evidence; the
+local guard intentionally does not add hard blockers for those gates.
+
+## Human Gate Sequence
+
+Humans provide intent, constraints, and acceptance. Agents draft artifacts and
+pause when a decision changes the next phase of work:
+
+- **Spec gate**: After `specify` and any needed `clarify`, confirm the desired
+  behavior, non-goals, affected systems, edge cases, and acceptance criteria.
+- **Plan gate**: After `plan` and any useful `checklist`, confirm the technical
+  approach, blast radius, validation strategy, rollback/exception handling, and
+  fit with binding ADRs.
+- **Task/analyze gate**: After `tasks` and `analyze`, confirm the work is
+  ordered, testable, traceable to requirements, and small enough to implement.
+- **Converge/evidence gate**: After implementation, run `converge` or record a
+  skipped-converge exception, update artifacts for discoveries, and record final
+  evidence before PR handoff.
+
+For `tiny` and clear `low` changes, a single human approval may cover multiple
+gates. The evidence must still state which quality gates were skipped and why.
 
 ## Prompt Catch
 
@@ -183,6 +208,8 @@ precise status words such as `rendered`, `pushed`, `merged`, `fetched by Flux`,
 
 Before requesting PR review, audit:
 
+- Human gate evidence records spec, plan, task/analysis, and converge status or
+  explicit skipped-gate exceptions.
 - The plan declares the intended TDD and development validation expectations for
   the risk tier.
 - Skipped tests, missing smoke profiles, unavailable infrastructure, or other

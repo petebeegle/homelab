@@ -8,7 +8,16 @@ description: "Homelab SDD task list template"
 `specs/[IMPLEMENTATION]/plan.md`
 **Risk Tier**: [tiny|low|medium|high]
 **Prerequisites**: Branch `codex/[IMPLEMENTATION]` and matching
-`specs/[IMPLEMENTATION]/` artifacts.
+`specs/[IMPLEMENTATION]/` artifacts. `spec.md` and `plan.md` are approved
+inputs to this task list, not implementation tasks.
+
+## Human Gate Status
+
+**Spec Gate**: [approved by <who/context>]
+
+**Plan Gate**: [approved by <who/context>]
+
+**Analyze Requirement**: [run before implementation | skipped with rationale]
 
 ## Format: `[ID] [P?] [Req] Description`
 
@@ -20,34 +29,37 @@ description: "Homelab SDD task list template"
 - Keep fanout coordinated through this task list and consolidate all results
   into `specs/[IMPLEMENTATION]/evidence.md`.
 
-## Phase 1: Spec And Plan
+## Phase 1: Setup
 
-- [ ] T001 [FR-SPEC] Create or update `specs/[IMPLEMENTATION]/spec.md`.
-- [ ] T002 [FR-PLAN] Create or update `specs/[IMPLEMENTATION]/plan.md`,
-      including tiered TDD and development validation expectations.
-- [ ] T003 [FR-DOCS] Confirm documentation impact and generated architecture
+- [ ] T001 [FR-SETUP] Confirm branch, approved spec/plan, and documentation
       expectations.
+- [ ] T002 [FR-SETUP] Prepare any required local fixtures, generated inputs, or
+      test harness state.
 
 ## Phase 2: Implementation
 
+- [ ] T003 [P] [FR-IMPL] Edit [path].
 - [ ] T004 [P] [FR-IMPL] Edit [path].
-- [ ] T005 [P] [FR-IMPL] Edit [path].
-- [ ] T006 [FR-IMPL] Re-check constitution gates after implementation edits.
+- [ ] T005 [FR-IMPL] Re-check constitution gates after implementation edits.
 
 ## Phase 3: Verification
 
+- [ ] T006 [FR-ANALYZE] Run Spec Kit analyze before implementation, or record
+      skipped-analyze rationale in evidence for lightweight work.
 - [ ] T007 [FR-TEST] Run [focused local command].
 - [ ] T008 [FR-TEST] Run [broader local command].
 - [ ] T009 [FR-SMOKE] Run development smoke validation or record why the tier
       does not require it.
-- [ ] T010 [FR-EVIDENCE] Record command outcomes, SHAs, URLs when applicable,
+- [ ] T010 [FR-CONVERGE] Run Spec Kit converge after implementation, or record
+      skipped-converge rationale in evidence.
+- [ ] T011 [FR-EVIDENCE] Record command outcomes, human gate status, SHAs, URLs when applicable,
       smoke evidence, skipped checks, exceptions, final live verification, and
       final `HEAD` in `specs/[IMPLEMENTATION]/evidence.md`.
 
 ## Phase 4: Commit And PR
 
-- [ ] T011 [FR-PR] Commit with a conventional commit message.
-- [ ] T012 [FR-PR] Push branch `codex/[IMPLEMENTATION]` and open a PR.
+- [ ] T012 [FR-PR] Commit with a conventional commit message.
+- [ ] T013 [FR-PR] Push branch `codex/[IMPLEMENTATION]` and open a PR.
 
 ## Tier Guidance
 
