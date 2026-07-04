@@ -14,6 +14,18 @@ async function gotoOk(page, url) {
   return response;
 }
 
+async function expectNotHomeAssistantOnboarding(page) {
+  const pageUrl = new URL(page.url());
+  const bodyText = await page.locator("body").innerText({ timeout: 5_000 }).catch(() => "");
+  const onboardingDetected =
+    /\/onboarding\.html$/i.test(pageUrl.pathname) || /Create my smart home|first[- ]run onboarding|onboarding/i.test(bodyText);
+
+  expect(
+    onboardingDetected,
+    "Home Assistant is serving first-run onboarding; confirm the GitOps onboarding seed is mounted and verify Authentik OIDC before accepting production smoke."
+  ).toBe(false);
+}
+
 test.describe("homelab routed services", () => {
   test("homepage serves the dashboard at the root domain", async ({ page }) => {
     await gotoOk(page, urlFor(""));
@@ -38,6 +50,14 @@ test.describe("homelab routed services", () => {
   test("jellyfin reaches the public web shell", async ({ page }) => {
     await gotoOk(page, urlFor("jellyfin"));
     await expect(page.locator("body")).toContainText(/Jellyfin|Please sign in|Wizard|Login/i);
+  });
+
+  test("home assistant reaches OIDC or Authentik login without onboarding", async ({ page }) => {
+    const response = await gotoOk(page, urlFor("homeassistant"));
+    test.skip(!process.env.CI && response.status() === 404, "Home Assistant route is not deployed in the live production cluster yet");
+    await expectNotHomeAssistantOnboarding(page);
+    await expect(page).toHaveURL(/authentik\.|homeassistant\.[^/]+\/auth\/oidc\/(?:welcome|redirect|callback)/i);
+    await expect(page.locator("body")).toContainText(/Home Assistant|Authentik|Sign in|Login|Username/i);
   });
 
   test("pihole root redirects to the admin shell", async ({ page }) => {

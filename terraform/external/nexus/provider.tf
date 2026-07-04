@@ -12,12 +12,12 @@ terraform {
   required_providers {
     nexus = {
       source  = "datadrivers/nexus"
-      version = "2.7.1"
+      version = "2.8.0"
     }
 
     random = {
       source  = "hashicorp/random"
-      version = "3.8.1"
+      version = "3.9.0"
     }
   }
 }

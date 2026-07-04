@@ -12,6 +12,11 @@ data:
             lameduck 5s
         }
         ready
+        template IN A dev.lab.petebeegle.com {
+            match ^(.+\.)?dev\.lab\.petebeegle\.com\.$
+            answer "{{ .Name }} 60 IN A 192.168.40.225"
+            fallthrough
+        }
         template IN A lab.petebeegle.com {
             match ^lab\.petebeegle\.com\.$
             answer "{{ .Name }} 60 IN A 192.168.40.241"

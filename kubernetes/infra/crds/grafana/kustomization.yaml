@@ -2,4 +2,4 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - app.yaml
+  - https://github.com/grafana/grafana-operator//config/crd?ref=v5.23.0

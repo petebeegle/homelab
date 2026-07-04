@@ -56,26 +56,83 @@ spec:
 
     backend:
       replicas: 1
+      resources:
+        requests:
+          cpu: 250m
+          memory: 512Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
       service:
         annotations:
           prometheus.io/scrape: "true"
           prometheus.io/port: "3100"
     read:
       replicas: 1
+      resources:
+        requests:
+          cpu: 250m
+          memory: 512Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
       service:
         annotations:
           prometheus.io/scrape: "true"
           prometheus.io/port: "3100"
     write:
       replicas: 1
+      resources:
+        requests:
+          cpu: 250m
+          memory: 768Mi
+        limits:
+          cpu: 1000m
+          memory: 1536Mi
       service:
         annotations:
           prometheus.io/scrape: "true"
           prometheus.io/port: "3100"
 
+    gateway:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 250m
+          memory: 256Mi
+
     # Enable minio for storage
     minio:
       enabled: true
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+    chunksCache:
+      allocatedMemory: 512
+      resources:
+        requests:
+          cpu: 50m
+          memory: 640Mi
+        limits:
+          cpu: 500m
+          memory: 768Mi
+
+    resultsCache:
+      allocatedMemory: 256
+      resources:
+        requests:
+          cpu: 25m
+          memory: 320Mi
+        limits:
+          cpu: 250m
+          memory: 384Mi
 
     # Zero out replica counts of other deployment modes
     singleBinary:

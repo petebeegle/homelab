@@ -1,0 +1,26 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+  - pvc.yaml
+  - secret.yaml
+  - deployment.yaml
+  - service.yaml
+  - httproute.yaml
+configMapGenerator:
+  - name: home-assistant-config
+    namespace: home-assistant
+    files:
+      - configuration.yaml=config/configuration.yaml
+      - automations.yaml=config/automations.yaml
+      - scripts.yaml=config/scripts.yaml
+      - scenes.yaml=config/scenes.yaml
+  - name: home-assistant-packages
+    namespace: home-assistant
+    files:
+      - code_first.yaml=config/packages/code_first.yaml
+  - name: home-assistant-storage
+    namespace: home-assistant
+    files:
+      - onboarding=config/storage/onboarding

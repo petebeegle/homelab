@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from .checks import (
     assert_httproute_ready,
+    assert_tlsroute_ready,
     assert_pvc_bound,
     assert_pvc_ready,
     assert_smoke_profile,
@@ -75,6 +76,7 @@ __all__ = (
     "VerificationError",
     "apply_activation",
     "assert_httproute_ready",
+    "assert_tlsroute_ready",
     "assert_pvc_bound",
     "assert_pvc_ready",
     "assert_smoke_profile",

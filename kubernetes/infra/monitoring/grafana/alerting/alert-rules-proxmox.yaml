@@ -224,15 +224,15 @@ spec:
             refId: C
 
     - uid: proxmox-host-memory-high
-      title: Proxmox Host Memory High
+      title: Proxmox Host Memory Headroom Low
       condition: C
       for: 30m
       noDataState: NoData
       execErrState: Error
       annotations:
-        description: "The busiest Proxmox host is reporting {{ $values.B.Value | humanize }}% raw host memory used. This is a host observation and may include Linux cache; confirm real pressure before treating it as a workload leak."
-        summary: Proxmox host memory usage is high
-        runbook: "Start with: check the Proxmox UI node memory view; compare VM memory in Grafana; kubectl top nodes can show whether Kubernetes workloads correlate"
+        description: "The lowest Proxmox host memory headroom is {{ $values.B.Value | humanize }} GiB free. Fixed VM allocation can hold raw host memory usage around 90-94%; that is not actionable unless free host memory falls below 3 GiB."
+        summary: Proxmox host memory headroom is below 3 GiB
+        runbook: "Start with: check the Proxmox UI node memory view for free host memory; compare VM allocation and ballooning in Grafana. Raw usage around 90-94% from fixed VM allocation is expected unless free host memory is below 3 GiB."
       labels:
         severity: warning
         component: proxmox
@@ -243,7 +243,7 @@ spec:
             to: 0
           datasourceUid: prometheus
           model:
-            expr: max(100 * (proxmox_proxmox_node_memory_memused_bytes / proxmox_proxmox_node_memory_memtotal_bytes)) OR vector(0)
+            expr: min((proxmox_proxmox_node_memory_memtotal_bytes - proxmox_proxmox_node_memory_memused_bytes) / 1024 / 1024 / 1024)
             refId: A
         - refId: B
           relativeTimeRange:
@@ -265,8 +265,8 @@ spec:
             conditions:
               - evaluator:
                   params:
-                    - 90
-                  type: gt
+                    - 3
+                  type: lt
                 operator:
                   type: and
                 query:

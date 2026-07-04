@@ -3,3 +3,38 @@ crds:
   keep: true
 config:
   enableGatewayAPI: true
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+webhook:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 128Mi
+  livenessProbe:
+    timeoutSeconds: 5
+  readinessProbe:
+    timeoutSeconds: 5
+cainjector:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+startupapicheck:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi

@@ -1,5 +1,9 @@
 # PLANS.md
 
+Historical migration plan notes. Current implementation planning now lives in
+`specs/<implementation>/` per `docs/runbooks/spec-driven-development.md`; this
+file is not part of default binding agent context.
+
 ## Codex Harness Documentation Migration
 
 Status: implemented for the repository documentation surface.

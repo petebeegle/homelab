@@ -20,6 +20,7 @@ spec:
     - name: app-whoami
     - name: app-homepage
     - name: app-jellyfin
+    - name: app-home-assistant
     - name: app-pihole
     - name: app-foundryvtt
   postBuild:

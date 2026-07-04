@@ -34,31 +34,39 @@ if [[ "$remote_name" != "origin" ]]; then
   exit 0
 fi
 
+branch="$(git branch --show-current)"
 head_sha="$(git rev-parse HEAD)"
-approval_file=".codex/tmp/verifier-approved"
-attestation_file=".codex/tmp/verifier-attestation.yaml"
-attestation_validator="tools/codex-harness/validate_workflow_attestations.py"
 
-if [[ ! -f "$approval_file" ]] || ! grep -Fxq "$head_sha" "$approval_file"; then
+fail() {
   {
-    printf 'Verifier push guard: refusing to push to origin.\n'
-    printf 'Expected %s to contain the exact HEAD SHA:\n' "$approval_file"
-    printf '  %s\n' "$head_sha"
-    printf 'Run verifier-agent review, resolve any blockers, then record approval for the exact HEAD before pushing.\n'
+    printf 'Spec Kit push guard: refusing to push to origin.\n'
+    printf '%s\n' "$1"
   } >&2
   exit 1
+}
+
+if [[ "$branch" == "main" ]]; then
+  fail "Current branch is main."
 fi
 
-if [[ ! -f "$attestation_file" ]]; then
-  {
-    printf 'Verifier push guard: refusing to push to origin.\n'
-    printf 'Expected %s to contain verifier identity and exact approved_head:\n' "$attestation_file"
-    printf '  %s\n' "$head_sha"
-  } >&2
-  exit 1
+if [[ ! "$branch" =~ ^codex/.+ ]]; then
+  fail "Current branch '$branch' does not match codex/<implementation>."
 fi
 
-if ! python3 "$attestation_validator" --kind verifier --attestation "$attestation_file" --head "$head_sha"; then
-  printf 'Verifier push guard: verifier attestation validation failed.\n' >&2
-  exit 1
+implementation="${branch#codex/}"
+for artifact in spec.md plan.md tasks.md evidence.md; do
+  if [[ ! -s "specs/$implementation/$artifact" ]]; then
+    fail "Missing required SDD artifact: specs/$implementation/$artifact"
+  fi
+done
+
+if ! python3 tools/codex-harness/validate_sdd_context.py \
+  --root "$root" \
+  --branch "$branch" \
+  --require-plan-artifacts \
+  --require-evidence \
+  --head "$head_sha" \
+  2>/tmp/spec-kit-push-guard.err; then
+  cat /tmp/spec-kit-push-guard.err >&2
+  fail "SDD evidence validation failed."
 fi

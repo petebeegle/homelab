@@ -5,3 +5,4 @@ resources:
   - whoami-template.yaml
   - jellyfin-template.yaml
   - homepage-template.yaml
+  - home-assistant-template.yaml

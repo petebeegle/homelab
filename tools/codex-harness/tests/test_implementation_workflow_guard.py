@@ -12,67 +12,21 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[3]
 HOOK_SOURCE = REPO_ROOT / ".codex" / "hooks" / "implementation_workflow_guard.sh"
 USER_PROMPT_HOOK_SOURCE = REPO_ROOT / ".codex" / "hooks" / "user_prompt_submit.sh"
-ACTIVE_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_active_implementation.py"
-PLAN_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_implementation_plan.py"
-ATTESTATION_VALIDATOR = REPO_ROOT / "tools" / "codex-harness" / "validate_workflow_attestations.py"
-VALIDATION_COMMON = REPO_ROOT / "tools" / "codex-harness" / "validation_common.py"
-TOOLS_LIB_SOURCE = REPO_ROOT / "tools" / "lib"
 
 
 class ImplementationWorkflowGuardTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.temp_parent = tempfile.TemporaryDirectory(prefix="guard-root-")
-        self.sibling_root = Path(self.temp_parent.name) / "homelab-ideas"
-        self.sibling_root.mkdir()
-        self.tmpdir = tempfile.TemporaryDirectory(dir=self.sibling_root, prefix="guard-test-")
+        self.tmpdir = tempfile.TemporaryDirectory(prefix="guard-test-")
         self.root = Path(self.tmpdir.name)
-        self.implementation = self.root.name
+        self.implementation = "guard-test"
         self.branch = f"codex/{self.implementation}"
         self._init_repo()
         self._install_harness_files()
 
     def tearDown(self) -> None:
         self.tmpdir.cleanup()
-        self.temp_parent.cleanup()
 
-    def test_post_change_blocks_without_plan(self) -> None:
-        self._switch_to_implementation_branch()
-        self._write_marker()
-        (self.root / "README.md").write_text("# changed\n", encoding="utf-8")
-
-        result = self._run_hook()
-
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("Missing .codex/tmp/implementation-plan.yaml", result.stderr)
-
-    def test_post_change_blocks_without_owner_attestation(self) -> None:
-        self._switch_to_implementation_branch()
-        self._write_marker()
-        self._write_plan()
-        (self.root / "README.md").write_text("# changed\n", encoding="utf-8")
-
-        result = self._run_hook()
-
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("Missing .codex/tmp/implementation-owner-attestation.yaml", result.stderr)
-
-    def test_post_change_allows_matching_marker_plan_and_owner_attestation(self) -> None:
-        self._switch_to_implementation_branch()
-        self._write_marker()
-        self._write_plan()
-        self._write_owner_attestation()
-        (self.root / "README.md").write_text("# changed\n", encoding="utf-8")
-
-        result = self._run_hook()
-
-        self.assertEqual(result.returncode, 0, result.stderr)
-
-    def test_post_change_blocks_after_repo_change_intent_without_workflow(self) -> None:
-        (self.root / ".codex" / "tmp").mkdir(parents=True, exist_ok=True)
-        (self.root / ".codex" / "tmp" / "repo-change-intent").write_text(
-            "repo_change_intent=true\nhook=UserPromptSubmit\n",
-            encoding="utf-8",
-        )
+    def test_post_change_blocks_on_main(self) -> None:
         (self.root / "README.md").write_text("# changed\n", encoding="utf-8")
 
         result = self._run_hook()
@@ -80,58 +34,76 @@ class ImplementationWorkflowGuardTest(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Current branch is main", result.stderr)
 
-    def test_preflight_bash_blocks_mutating_command_without_plan(self) -> None:
-        self._switch_to_implementation_branch()
-        self._write_marker()
+    def test_post_change_blocks_on_non_codex_branch(self) -> None:
+        subprocess.run(["git", "switch", "-c", "feature/test"], cwd=self.root, check=True, stdout=subprocess.DEVNULL)
+        (self.root / "README.md").write_text("# changed\n", encoding="utf-8")
 
-        result = self._run_hook("--preflight-bash", {"command": "git add README.md"})
+        result = self._run_hook()
 
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("Missing .codex/tmp/implementation-plan.yaml", result.stderr)
+        self.assertIn("does not match codex/<implementation>", result.stderr)
 
-    def test_preflight_bash_allows_read_only_command_without_plan(self) -> None:
+    def test_post_change_allows_sdd_artifact_bootstrap(self) -> None:
+        self._switch_to_implementation_branch()
+        specs = self.root / "specs" / self.implementation
+        specs.mkdir(parents=True, exist_ok=True)
+        (specs / "spec.md").write_text("# Spec\n", encoding="utf-8")
+
+        result = self._run_hook()
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_post_change_allows_matching_branch_and_sdd_context(self) -> None:
+        self._switch_to_implementation_branch()
+        self._write_sdd_artifacts()
+        (self.root / "README.md").write_text("# changed\n", encoding="utf-8")
+
+        result = self._run_hook()
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_post_change_blocks_without_sdd_context_after_bootstrap(self) -> None:
+        self._switch_to_implementation_branch()
+        self._write_sdd_artifacts()
+        subprocess.run(["git", "add", "specs"], cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-m", "test: add specs"], cwd=self.root, check=True, stdout=subprocess.DEVNULL)
+        (self.root / "specs" / self.implementation / "tasks.md").unlink()
+        (self.root / "README.md").write_text("# changed\n", encoding="utf-8")
+
+        result = self._run_hook()
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Missing required SDD artifact", result.stderr)
+
+    def test_preflight_bash_allows_read_only_command_on_main(self) -> None:
         result = self._run_hook("--preflight-bash", {"command": "git status --short"})
 
         self.assertEqual(result.returncode, 0, result.stderr)
 
-    def test_preflight_bash_allows_workflow_bootstrap_commands_without_plan(self) -> None:
-        clone = self._run_hook(
+    def test_preflight_bash_allows_default_worktree_setup_on_main(self) -> None:
+        result = self._run_hook(
             "--preflight-bash",
             {
                 "command": (
-                    "git clone https://github.com/petebeegle/homelab.git "
-                    f"{self.sibling_root}/bootstrap-test"
+                    "git worktree add /workspaces/homelab-worktrees/example "
+                    "-b codex/example origin/main"
                 )
             },
         )
-        branch = self._run_hook(
-            "--preflight-bash",
-            {"command": "git switch -c codex/bootstrap-test origin/main"},
-        )
 
-        self.assertEqual(clone.returncode, 0, clone.stderr)
-        self.assertEqual(branch.returncode, 0, branch.stderr)
+        self.assertEqual(result.returncode, 0, result.stderr)
 
-    def test_preflight_bash_blocks_branch_bootstrap_outside_sibling_clone(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="planner-test-") as directory:
-            root = Path(directory)
-            self._init_external_repo(root)
-            self._install_harness_files(root)
-
-            result = self._run_hook(
-                "--preflight-bash",
-                {"command": "git switch -c codex/bootstrap-test origin/main"},
-                cwd=root,
-            )
+    def test_preflight_bash_blocks_mutating_command_on_main(self) -> None:
+        result = self._run_hook("--preflight-bash", {"command": "git add README.md"})
 
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Current branch is main", result.stderr)
 
-    def test_preflight_mutation_allows_workflow_bootstrap_paths(self) -> None:
-        result = self._run_hook(
-            "--preflight-mutation",
-            {"tool_input": {"path": ".codex/tmp/implementation-owner-attestation.yaml"}},
-        )
+    def test_preflight_bash_allows_mutating_command_with_sdd_context(self) -> None:
+        self._switch_to_implementation_branch()
+        self._write_sdd_artifacts()
+
+        result = self._run_hook("--preflight-bash", {"command": "git add README.md"})
 
         self.assertEqual(result.returncode, 0, result.stderr)
 
@@ -143,29 +115,34 @@ class ImplementationWorkflowGuardTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stderr)
 
-    def test_user_prompt_submit_marks_repo_change_intent_and_reminds(self) -> None:
+    def test_preflight_mutation_allows_sdd_artifact_bootstrap_on_codex_branch(self) -> None:
+        self._switch_to_implementation_branch()
+
+        result = self._run_hook(
+            "--preflight-mutation",
+            {"tool_input": {"path": f"specs/{self.implementation}/spec.md"}},
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_preflight_mutation_blocks_non_sdd_change_without_artifacts(self) -> None:
+        self._switch_to_implementation_branch()
+
+        result = self._run_hook("--preflight-mutation", {"tool_input": {"path": "README.md"}})
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Missing required SDD artifact", result.stderr)
+
+    def test_user_prompt_submit_marks_repo_change_intent_and_recommends_worktree(self) -> None:
         result = self._run_prompt_hook({"prompt": "Please update the workflow harness tests."})
 
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("implementation-agent-*", result.stdout)
+        self.assertIn("dedicated worktree", result.stdout)
+        self.assertIn("/workspaces/homelab-worktrees/<implementation>", result.stdout)
         self.assertTrue((self.root / ".codex" / "tmp" / "repo-change-intent").is_file())
 
     def test_user_prompt_submit_ignores_read_only_prompt(self) -> None:
         result = self._run_prompt_hook({"prompt": "Please explain the workflow harness tests."})
-
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual("", result.stdout)
-        self.assertFalse((self.root / ".codex" / "tmp" / "repo-change-intent").exists())
-
-    def test_user_prompt_submit_ignores_explicit_no_edit_review_prompt(self) -> None:
-        result = self._run_prompt_hook({"prompt": "Final verifier pass, review only; do not edit files."})
-
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual("", result.stdout)
-        self.assertFalse((self.root / ".codex" / "tmp" / "repo-change-intent").exists())
-
-    def test_user_prompt_submit_ignores_pr_review_prompt(self) -> None:
-        result = self._run_prompt_hook({"prompt": "Please review the PR code before approval."})
 
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual("", result.stdout)
@@ -186,56 +163,23 @@ class ImplementationWorkflowGuardTest(unittest.TestCase):
                 self.assertEqual("", result.stdout)
                 self.assertFalse((self.root / ".codex" / "tmp" / "repo-change-intent").exists())
 
-    def test_user_prompt_submit_marks_review_then_change_prompt(self) -> None:
-        result = self._run_prompt_hook({"prompt": "Please review the workflow tests and update them."})
-
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("implementation-agent-*", result.stdout)
-        self.assertTrue((self.root / ".codex" / "tmp" / "repo-change-intent").is_file())
-
     def _init_repo(self) -> None:
-        self._init_external_repo(self.root)
+        subprocess.run(["git", "init", "-b", "main"], cwd=self.root, check=True, stdout=subprocess.DEVNULL)
+        subprocess.run(["git", "config", "user.email", "codex@example.invalid"], cwd=self.root, check=True)
+        subprocess.run(["git", "config", "user.name", "Codex"], cwd=self.root, check=True)
+        subprocess.run(["git", "remote", "add", "origin", "https://github.com/petebeegle/homelab.git"], cwd=self.root, check=True)
+        (self.root / "README.md").write_text("# test\n", encoding="utf-8")
+        subprocess.run(["git", "add", "README.md"], cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-m", "test: initialize"], cwd=self.root, check=True, stdout=subprocess.DEVNULL)
 
-    def _init_external_repo(self, root: Path) -> None:
-        subprocess.run(["git", "init", "-b", "main"], cwd=root, check=True, stdout=subprocess.DEVNULL)
-        subprocess.run(["git", "config", "user.email", "codex@example.invalid"], cwd=root, check=True)
-        subprocess.run(["git", "config", "user.name", "Codex"], cwd=root, check=True)
-        subprocess.run(["git", "remote", "add", "origin", "https://github.com/petebeegle/homelab.git"], cwd=root, check=True)
-        (root / "README.md").write_text("# test\n", encoding="utf-8")
-        subprocess.run(["git", "add", "README.md"], cwd=root, check=True)
-        subprocess.run(["git", "commit", "-m", "test: initialize"], cwd=root, check=True, stdout=subprocess.DEVNULL)
-
-    def _install_harness_files(self, root: Path | None = None) -> None:
-        target_root = root or self.root
-        hook_path = target_root / ".codex" / "hooks" / "implementation_workflow_guard.sh"
-        prompt_hook_path = target_root / ".codex" / "hooks" / "user_prompt_submit.sh"
-        tool_dir = target_root / "tools" / "codex-harness"
+    def _install_harness_files(self) -> None:
+        hook_path = self.root / ".codex" / "hooks" / "implementation_workflow_guard.sh"
+        prompt_hook_path = self.root / ".codex" / "hooks" / "user_prompt_submit.sh"
         hook_path.parent.mkdir(parents=True, exist_ok=True)
-        tool_dir.mkdir(parents=True, exist_ok=True)
         shutil.copy2(HOOK_SOURCE, hook_path)
         shutil.copy2(USER_PROMPT_HOOK_SOURCE, prompt_hook_path)
-        shutil.copy2(ACTIVE_VALIDATOR, tool_dir / "validate_active_implementation.py")
-        shutil.copy2(PLAN_VALIDATOR, tool_dir / "validate_implementation_plan.py")
-        shutil.copy2(ATTESTATION_VALIDATOR, tool_dir / "validate_workflow_attestations.py")
-        shutil.copy2(VALIDATION_COMMON, tool_dir / "validation_common.py")
-        shutil.copytree(TOOLS_LIB_SOURCE, target_root / "tools" / "lib")
-        self._patch_sibling_root(
-            hook_path,
-            tool_dir / "validate_active_implementation.py",
-            tool_dir / "validate_implementation_plan.py",
-        )
         hook_path.chmod(0o755)
         prompt_hook_path.chmod(0o755)
-
-    def _patch_sibling_root(self, *paths: Path) -> None:
-        for path in paths:
-            path.write_text(
-                path.read_text(encoding="utf-8").replace(
-                    "/workspaces/homelab-ideas",
-                    str(self.sibling_root),
-                ),
-                encoding="utf-8",
-            )
 
     def _switch_to_implementation_branch(self) -> None:
         subprocess.run(
@@ -246,97 +190,18 @@ class ImplementationWorkflowGuardTest(unittest.TestCase):
             stderr=subprocess.DEVNULL,
         )
 
-    def _write_marker(self) -> None:
-        tmp = self.root / ".codex" / "tmp"
-        tmp.mkdir(parents=True, exist_ok=True)
-        (tmp / "active-implementation").write_text(
-            "\n".join(
-                [
-                    f"implementation={self.implementation}",
-                    f"branch={self.branch}",
-                    "base=origin/main",
-                    "role=implementation",
-                    f"clone_path={self.root}",
-                    "owner_role=implementation-agent",
-                    "owner_agent=implementation-agent-deterministic-role-enforcement",
-                ]
-            )
-            + "\n",
-            encoding="utf-8",
-        )
-
-    def _write_plan(self) -> None:
-        tmp = self.root / ".codex" / "tmp"
-        tmp.mkdir(parents=True, exist_ok=True)
-        (tmp / "implementation-plan.yaml").write_text(
-            "\n".join(
-                [
-                    f"implementation: {self.implementation}",
-                    f"branch: {self.branch}",
-                    "base: origin/main",
-                    f"clone_path: {self.root}",
-                    "owner_agent: implementation-agent-deterministic-role-enforcement",
-                    "summary: Harden implementation workflow enforcement.",
-                    "scope:",
-                    "  - Add plan validation.",
-                    "out_of_scope:",
-                    "  - Live cluster changes.",
-                    "planned_changes:",
-                    "  - Add validator and hook checks.",
-                    "docs_impact: Update ADR and runbook authority.",
-                    "tests:",
-                    "  - python3 -m unittest discover -s tools/codex-harness/tests",
-                    "verification:",
-                    "  - Harness tests pass.",
-                    "risks:",
-                    "  - Conservative command classification.",
-                ]
-            )
-            + "\n",
-            encoding="utf-8",
-        )
-
-    def _write_owner_attestation(self) -> None:
-        tmp = self.root / ".codex" / "tmp"
-        tmp.mkdir(parents=True, exist_ok=True)
-        token_path = tmp / "delegation-tokens" / "implementation-agent-deterministic-role-enforcement.token"
-        token_path.parent.mkdir(parents=True, exist_ok=True)
-        token_path.write_text(
-            "\n".join(
-                [
-                    "delegation_token: implementation-token-deterministic-role-enforcement",
-                    f"implementation: {self.implementation}",
-                    "role: implementation-agent",
-                    "agent_id: implementation-agent-deterministic-role-enforcement",
-                    "created_at: 2026-05-11T00:00:00Z",
-                ]
-            )
-            + "\n",
-            encoding="utf-8",
-        )
-        (tmp / "implementation-owner-attestation.yaml").write_text(
-            "\n".join(
-                [
-                    f"implementation: {self.implementation}",
-                    f"branch: {self.branch}",
-                    "base: origin/main",
-                    "role: implementation-agent",
-                    "agent_id: implementation-agent-deterministic-role-enforcement",
-                    f"clone_path: {self.root}",
-                    "created_at: 2026-05-11T00:00:00Z",
-                    "delegation_token: implementation-token-deterministic-role-enforcement",
-                    "delegation_token_path: .codex/tmp/delegation-tokens/implementation-agent-deterministic-role-enforcement.token",
-                ]
-            )
-            + "\n",
-            encoding="utf-8",
-        )
+    def _write_sdd_artifacts(self) -> None:
+        specs = self.root / "specs" / self.implementation
+        specs.mkdir(parents=True, exist_ok=True)
+        (specs / "spec.md").write_text("# Spec\n", encoding="utf-8")
+        (specs / "plan.md").write_text("# Plan\n", encoding="utf-8")
+        (specs / "tasks.md").write_text("# Tasks\n", encoding="utf-8")
+        (specs / "evidence.md").write_text("# Evidence\n", encoding="utf-8")
 
     def _run_hook(
         self,
         arg: str | None = None,
         payload: dict[str, object] | None = None,
-        cwd: Path | None = None,
     ) -> subprocess.CompletedProcess[str]:
         command = ["bash", ".codex/hooks/implementation_workflow_guard.sh"]
         if arg is not None:
@@ -344,7 +209,7 @@ class ImplementationWorkflowGuardTest(unittest.TestCase):
         env = os.environ.copy()
         return subprocess.run(
             command,
-            cwd=cwd or self.root,
+            cwd=self.root,
             input=json.dumps(payload or {}),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

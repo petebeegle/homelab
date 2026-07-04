@@ -20,10 +20,10 @@ Use this runbook to create, bootstrap, test, and clean up the dedicated developm
 - Cluster name: `homelab-development`
 - Endpoint: `https://192.168.30.170:6443`
 - Default node: VM `170` on `pve04`, IP `192.168.30.170`, single schedulable control-plane node, 4 CPU, 24576 MB memory, 180 GB disk
-- Domain: `development.lab.petebeegle.com`
+- Domain: `dev.lab.petebeegle.com`
 - LoadBalancer pools: internal `192.168.30.224/28`, external `192.168.40.224/28`
 - Gateway IPs: internal `192.168.30.225`, passthrough `192.168.30.226`, external `192.168.40.225`, external passthrough `192.168.40.226`
-- ACME: Let's Encrypt staging through the shared Cloudflare issuer
+- ACME: trusted Let's Encrypt production issuance through the shared Cloudflare issuer
 
 The development base intentionally includes CRDs, Cilium, cert-manager/certs, Gateway API, NFS CSI, whoami, and the development Homepage deployment at `homepage.${cluster_domain}`. In the live development cluster, that resolves to `https://homepage.dev.lab.petebeegle.com`. Authentik, games/media apps, Cloudflare tunnels, Renovate, VPN, and the full monitoring stack are omitted to keep the single-node cluster resource-conscious and to avoid production-only secrets or traffic paths unless a test explicitly needs them.
 
@@ -125,13 +125,12 @@ kd get httproute -A
 Branch environments are for app-scoped validation on the development cluster. Use `branch_slug` for all uniqueness and route hostnames:
 
 ```text
-<app>-${branch_slug}.development.lab.petebeegle.com
+<app>-${branch_slug}.dev.lab.petebeegle.com
 ```
 
-Use `tools/development/verify_branch_deploy.py` as the canonical path for future branch validation. The tool loads JSON smoke profiles from `tools/development/smoke-profiles/`, renders the matching activation template, applies it directly to the development cluster, forces Flux reconciliation, checks the branch namespace and active pods, runs profile resource checks, and then removes the temporary branch Flux resources unless `--keep` is set. Automated profiles currently cover `whoami`, `jellyfin`, and `homepage`.
+Use `tools/development/verify_branch_deploy.py` as the canonical path for future branch validation. The tool loads JSON smoke profiles from `tools/development/smoke-profiles/`, renders the matching activation template, applies it directly to the development cluster, forces Flux reconciliation, checks the branch namespace and active pods, runs profile resource checks, and then removes the temporary branch Flux resources unless `--keep` is set. Automated profiles currently cover `whoami`, `jellyfin`, `home-assistant`, and `homepage`.
 
-The `whoami` profile checks the branch namespace, active pods, Service, and HTTPRoute. The `jellyfin` profile checks the branch namespace, branch Flux Kustomization readiness, HelmRelease readiness, active pods, config PVC binding on `nfs-csi-storage`, Service, HTTPRoute, and an in-cluster HTTP probe for the Jellyfin web shell.
-The `homepage` profile checks the branch namespace, active pods, Service, HTTPRoute, and an in-cluster HTTP probe for the dashboard shell.
+The `whoami` profile checks the branch namespace, branch Flux Kustomization readiness, active pods, Service, and HTTPRoute. The `jellyfin` profile checks the branch namespace, branch Flux Kustomization readiness, HelmRelease readiness, active pods, config PVC binding on `nfs-csi-storage`, Service, HTTPRoute, and an in-cluster HTTP probe for the Jellyfin web shell. The `home-assistant` profile checks the branch namespace, branch Flux Kustomization readiness, active pods, config PVC binding on `nfs-csi-storage`, Service, HTTPRoute, and an in-cluster HTTP probe for the Home Assistant web shell. The `homepage` profile checks the branch namespace, active pods, Service, HTTPRoute, and an in-cluster HTTP probe for the dashboard shell.
 
 Activation templates are in `kubernetes/clusters/development/branches/`, and branch-aware app payload overlays live under paths such as `kubernetes/apps/whoami/branch/` and `kubernetes/apps/jellyfin/branch/`. The cluster-layer template creates the Flux `GitRepository` and `Kustomization` that point at a branch; the app overlay is the rendered workload payload that Flux applies after substituting `${branch_slug}`. The templates are not referenced from the live development entrypoint and are suspended by default. The verification tool fills `branch_name` and `branch_slug`, sets both Flux objects to `suspend: false`, and applies the rendered activation temporarily.
 
@@ -150,6 +149,10 @@ Prerequisites:
 - The development cluster exists and the base Flux path is healthy.
 - `terraform`, `kubectl`, and `flux` are installed locally.
 - The default kubeconfig exists at `~/.kube/homelab-development.config`, or pass `--kubeconfig <path>`.
+- Ignored development Terraform vars are staged into the clone that runs smoke
+  when Terraform preflight may run:
+  `.codex/scripts/prepare_development_smoke_secrets.sh <implementation>
+  [/workspaces/homelab-worktrees/<implementation> ...]`.
 - The branch named by `--branch` is available on origin. Use `--push` to push the current HEAD to origin as that branch before activation.
 - `--slug` is deterministic and DNS-safe: lowercase letters, numbers, and hyphens; starts and ends with an alphanumeric character; and is short enough for the selected app's `${app}-${branch_slug}` Kubernetes names.
 
@@ -169,6 +172,12 @@ Normal live verification for Homepage:
 
 ```sh
 python3 tools/development/verify_branch_deploy.py --app homepage --branch codex/homepage-change --slug homepage-change --push
+```
+
+Normal live verification for Home Assistant:
+
+```sh
+python3 tools/development/verify_branch_deploy.py --app home-assistant --branch codex/home-assistant-change --slug home-assistant-change --push
 ```
 
 Run Terraform apply first when the development cluster base may need to be created or repaired:
@@ -205,7 +214,7 @@ kubectl --kubeconfig ~/.kube/homelab-development.config wait namespace/whoami-ex
 kubectl --kubeconfig ~/.kube/homelab-development.config -n flux-system delete gitrepository.source.toolkit.fluxcd.io/branch-example-change
 ```
 
-This proves that the pushed branch can be fetched by Flux, the selected app branch overlay can reconcile on the development cluster, the branch namespace exists, at least one branch app pod is active, active branch app pods report Ready, and the selected profile checks pass. For `whoami`, that includes Service existence and an HTTPRoute with `Accepted` and `ResolvedRefs`. For `jellyfin`, that also includes HelmRelease readiness, config PVC binding, and an in-cluster Jellyfin web-shell probe. Without `--include-cluster-base`, it does not prove production readiness, cross-app behavior, cluster-scoped changes, public Cloudflare routing, or apps without a selected smoke profile.
+This proves that the pushed branch can be fetched by Flux, the selected app branch overlay can reconcile on the development cluster, the branch namespace exists, at least one branch app pod is active, active branch app pods report Ready, and the selected profile checks pass. For `whoami`, that includes Service existence and an HTTPRoute with `Accepted` and `ResolvedRefs`. For `jellyfin`, that also includes HelmRelease readiness, config PVC binding, and an in-cluster Jellyfin web-shell probe. For `home-assistant`, that includes config PVC binding and an in-cluster Home Assistant web-shell probe. Without `--include-cluster-base`, it does not prove production readiness, cross-app behavior, cluster-scoped changes, public Cloudflare routing, or apps without a selected smoke profile.
 
 ### Touched-App Smoke Matrix
 
@@ -222,7 +231,45 @@ For each implementation that changes app behavior, manifests, Gateway routing, s
 
 ### Smoke Profiles
 
-Smoke profiles are JSON files under `tools/development/smoke-profiles/`. A profile names the app, branch GitRepository, activation template, expected namespace, Services, routes, PVCs, HelmReleases, app-specific probes, and any other checks the verifier can run consistently for that app.
+Smoke profiles are JSON files under `tools/development/smoke-profiles/`. A profile names the app, branch GitRepository, activation template, expected namespace, route URLs for browser handoff, Services, routes, PVCs, HelmReleases, app-specific probes, and any other checks the verifier can run consistently for that app.
+
+Supported profile fields:
+
+| Field | Meaning |
+| --- | --- |
+| `routeUrls` | External branch URLs, usually under `dev.lab.petebeegle.com`, that can be printed for browser or Playwright smoke handoff. |
+| `checks.kustomizations` | Flux `Kustomization` names in `flux-system` that must reach Ready. |
+| `checks.helmReleases` | HelmRelease names in the profile namespace that must reach Ready. |
+| `checks.services` | Service names in the profile namespace that must exist. |
+| `checks.httpRoutes` | HTTPRoute names in the profile namespace that must have one parent with `Accepted=True` and `ResolvedRefs=True`. |
+| `checks.tlsRoutes` | TLSRoute names in the profile namespace that must have one parent with `Accepted=True` and `ResolvedRefs=True`. |
+| `checks.secretRefs` | Kubernetes Secret names in the profile namespace that must exist; the verifier does not request or print Secret data. |
+| `checks.pvcs` | PVC names and optional `storageClass` expectations. |
+| `checks.httpProbes` | In-cluster HTTP probes against profile Services. |
+
+Print the rendered route URLs without applying anything to the cluster:
+
+```sh
+python3 tools/development/verify_branch_deploy.py --app whoami --branch codex/example-change --slug example-change --print-route-urls
+```
+
+When a profile exposes `routeUrls`, browser smoke can use those rendered URLs as the Playwright target under `dev.lab.petebeegle.com`. The repository does not yet run a generic profile-driven Playwright command for branch URLs; record screenshots and traces only for failed browser smoke attempts and attach the failure artifact path in implementation evidence.
+
+### Current Profile Coverage And Gaps
+
+| App or stack | Development profile status | Notes |
+| --- | --- | --- |
+| `whoami` | Automated | Branch overlay is isolated by `${branch_slug}` and verifies Flux Kustomization, namespace, pods, Service, and HTTPRoute. |
+| `jellyfin` | Automated | Branch overlay is isolated by `${branch_slug}` and verifies Flux Kustomization, HelmRelease, PVC, Service, HTTPRoute, and web-shell probe. |
+| `home-assistant` | Automated | Branch overlay is isolated by `${branch_slug}` and verifies Flux Kustomization, PVC, Service, HTTPRoute, and web-shell probe. |
+| `pihole` | Gap | Production app uses a SOPS-managed admin password Secret and a DNS LoadBalancer address. Add a branch overlay only with staged development secret evidence and a development-safe DNS Service shape. |
+| `foundryvtt` | Gap | Production app requires the SOPS-managed Foundry credential/license Secret and persistent data PVC. Use the existing foundry blue/green fixture for deployment mechanics; add a real branch smoke only with safe development secrets and storage expectations. |
+| `authentik` | Gap | Lives under `kubernetes/infra/authentik`, depends on encrypted secrets and infra-level dependencies, and is not part of the current development app branch overlay model. |
+| `monitoring`/Grafana | Gap | Lives under `kubernetes/infra/monitoring`, spans multiple namespaces and Grafana operator resources, and requires encrypted Grafana credentials/env secrets. Use monitoring-specific validation until a dedicated development infra profile exists. |
+
+### Synthetic Smoke Source Audit
+
+There are two Playwright smoke source trees: `tests/smoke` for local/manual smoke and `kubernetes/apps/synthetics/smoke` for the in-cluster synthetics workload. They are not currently exact mirrors. The in-cluster tree includes `run-smoke.sh`, summary reporter code, unit tests, and a Home Assistant route case that the local tree does not contain. Until a generation or mirror check exists, update both trees intentionally or record why only one tree changed.
 
 Document one of:
 
@@ -246,7 +293,7 @@ Local manifest verification does not require pushing a branch:
 
 ```sh
 export branch_slug=example
-export cluster_domain=development.lab.petebeegle.com
+export cluster_domain=dev.lab.petebeegle.com
 kubectl kustomize kubernetes/apps/whoami/branch | flux envsubst --strict
 kubectl kustomize kubernetes/apps/jellyfin/branch | flux envsubst --strict
 

@@ -41,8 +41,8 @@ repos:
           - test
   - repo: local
     hooks:
-      - id: verifier-push-guard
-        name: Require verifier approval before origin push
+      - id: spec-kit-push-guard
+        name: Require Spec Kit evidence before origin push
         entry: .codex/hooks/verifier_push_guard.sh
         language: system
         stages: [pre-push]
@@ -79,9 +79,9 @@ repos:
         language: system
         files: ^(\.mcp\.json|\.codex/config\.toml|tools/policy/check_mcp_config_consistency\.py|\.pre-commit-config\.yaml)$
         pass_filenames: false
-      - id: agent-memory-lint
-        name: Lint Codex memory docs
-        entry: bash -c 'PYTHONPATH=tools/agent-memory/src python3 -m agent_memory.cli lint'
+      - id: synthetic-smoke-mirroring
+        name: Check synthetic smoke mirrored files
+        entry: python3 tools/policy/check_synthetic_smoke_mirroring.py
         language: system
-        files: ^(\.codex/memory/|tools/agent-memory/|\.pre-commit-config\.yaml$)
+        files: ^(tests/smoke/(routes\.spec\.js|package-lock\.json)|kubernetes/apps/synthetics/smoke/(routes\.spec\.js|package-lock\.json)|tools/policy/check_synthetic_smoke_mirroring\.py|\.pre-commit-config\.yaml)$
         pass_filenames: false

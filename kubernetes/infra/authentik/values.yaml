@@ -14,6 +14,18 @@ postgresql:
     secretKeys:
       adminPasswordKey: password
   primary:
+    extendedConfiguration: |
+      max_connections = 500
+      checkpoint_completion_target = 0.9
+      checkpoint_timeout = 15min
+      max_wal_size = 2GB
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
     persistence:
       enabled: true
       storageClass: nfs-csi-storage
@@ -27,10 +39,20 @@ server:
         name: authentik-secrets
   resources:
     requests:
-      cpu: 100m
+      cpu: 250m
       memory: 512Mi
     limits:
+      cpu: 1000m
       memory: 1Gi
+  livenessProbe:
+    failureThreshold: 6
+    timeoutSeconds: 10
+  readinessProbe:
+    failureThreshold: 6
+    timeoutSeconds: 10
+  startupProbe:
+    failureThreshold: 60
+    timeoutSeconds: 10
   ingress:
     enabled: false  # Using Gateway API
   metrics:
@@ -51,10 +73,20 @@ worker:
         name: authentik-secrets
   resources:
     requests:
-      cpu: 100m
+      cpu: 250m
       memory: 512Mi
     limits:
+      cpu: 1000m
       memory: 1Gi
+  livenessProbe:
+    failureThreshold: 6
+    timeoutSeconds: 10
+  readinessProbe:
+    failureThreshold: 6
+    timeoutSeconds: 10
+  startupProbe:
+    failureThreshold: 60
+    timeoutSeconds: 10
   metrics:
     enabled: true
     service:

@@ -4,4 +4,3 @@ kind: Kustomization
 resources:
   - private-source.yaml
   - private-apps.yaml
-  - transfer.yaml

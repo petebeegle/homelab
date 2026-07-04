@@ -1,0 +1,38 @@
+---
+default_config:
+
+homeassistant:
+  name: Home
+  latitude: !secret home_latitude
+  longitude: !secret home_longitude
+  elevation: !secret home_elevation
+  radius: 100
+  unit_system: us_customary
+  currency: USD
+  country: US
+  time_zone: America/New_York
+  external_url: https://homeassistant.${cluster_domain}
+  internal_url: https://homeassistant.${cluster_domain}
+  auth_providers:
+    - type: homeassistant
+  packages: !include_dir_named packages
+
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 10.244.0.0/16
+
+auth_oidc:
+  client_id: home-assistant
+  discovery_url: https://authentik.${cluster_domain}/application/o/home-assistant/.well-known/openid-configuration
+  display_name: Authentik
+  roles:
+    admin: Home Assistant Admins
+    user: Home Assistant Users
+  features:
+    default_redirect: true
+    force_https: true
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml

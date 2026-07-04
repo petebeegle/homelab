@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
+import io
 import json
 import subprocess
 import sys
@@ -32,6 +34,8 @@ READY_HTTPROUTE = """{
   }
 }"""
 
+READY_TLSROUTE = READY_HTTPROUTE
+
 READY_PODS = json.dumps(
     {
         "items": [
@@ -54,9 +58,28 @@ READY_JELLYFIN_PODS = json.dumps(
     }
 )
 
+READY_HOME_ASSISTANT_PODS = json.dumps(
+    {
+        "items": [
+            {
+                "metadata": {"name": "home-assistant-example-change-6f7d8", "namespace": "home-assistant-example-change"},
+                "status": {"phase": "Running", "conditions": [{"type": "Ready", "status": "True"}]},
+            }
+        ]
+    }
+)
+
 READY_PVC = json.dumps(
     {
         "metadata": {"name": "jellyfin-config-example-change", "namespace": "jellyfin-example-change"},
+        "spec": {"storageClassName": "nfs-csi-storage"},
+        "status": {"phase": "Bound"},
+    }
+)
+
+READY_HOME_ASSISTANT_PVC = json.dumps(
+    {
+        "metadata": {"name": "home-assistant-config-example-change", "namespace": "home-assistant-example-change"},
         "spec": {"storageClassName": "nfs-csi-storage"},
         "status": {"phase": "Bound"},
     }
@@ -164,6 +187,8 @@ class FakeRunner:
             return SimpleNamespace(returncode=0, stdout=self.pods_json)
         if "get" in args and "httproute" in args and args[-2:] == ["-o", "json"]:
             return SimpleNamespace(returncode=0, stdout=READY_HTTPROUTE)
+        if "get" in args and "tlsroute" in args and args[-2:] == ["-o", "json"]:
+            return SimpleNamespace(returncode=0, stdout=READY_TLSROUTE)
         if "get" in args and "pvc" in args and args[-2:] == ["-o", "json"]:
             return SimpleNamespace(returncode=0, stdout=self.pvc_json)
         return SimpleNamespace(returncode=0, stdout="")
@@ -185,16 +210,22 @@ class VerifyBranchDeployTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("Verify an app branch environment", result.stdout)
 
-    def test_profile_loading_discovers_whoami_jellyfin_and_homepage(self) -> None:
+    def test_profile_loading_discovers_current_supported_apps(self) -> None:
         profiles = verify.load_smoke_profiles()
 
-        self.assertEqual(set(profiles), {"homepage", "jellyfin", "whoami"})
+        self.assertEqual(set(profiles), {"home-assistant", "homepage", "jellyfin", "whoami"})
         self.assertEqual(profiles["homepage"].activation_template, "kubernetes/clusters/development/branches/homepage-template.yaml")
         self.assertEqual(profiles["homepage"].git_repository, "branch-homepage-${branch_slug}")
         self.assertEqual(profiles["whoami"].activation_template, "kubernetes/clusters/development/branches/whoami-template.yaml")
         self.assertEqual(profiles["whoami"].git_repository, "branch-${branch_slug}")
+        self.assertEqual(profiles["whoami"].kustomizations, ("branch-whoami-${branch_slug}",))
+        self.assertEqual(profiles["whoami"].route_urls, ("https://whoami-${branch_slug}.dev.lab.petebeegle.com",))
         self.assertEqual(profiles["jellyfin"].git_repository, "branch-jellyfin-${branch_slug}")
+        self.assertEqual(profiles["jellyfin"].kustomizations, ("branch-jellyfin-${branch_slug}",))
         self.assertEqual(profiles["jellyfin"].pvcs[0].name, "jellyfin-config-${branch_slug}")
+        self.assertEqual(profiles["home-assistant"].git_repository, "branch-home-assistant-${branch_slug}")
+        self.assertEqual(profiles["home-assistant"].kustomizations, ("branch-home-assistant-${branch_slug}",))
+        self.assertEqual(profiles["home-assistant"].pvcs[0].name, "home-assistant-config-${branch_slug}")
 
     def test_supported_apps_are_loaded_from_profile_json(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -205,13 +236,25 @@ class VerifyBranchDeployTest(unittest.TestCase):
                         "app": "custom",
                         "activationTemplate": "template.yaml",
                         "namespace": "custom-${branch_slug}",
-                        "checks": {"services": ["custom-${branch_slug}"]},
+                        "routeUrls": ["https://custom-${branch_slug}.dev.lab.petebeegle.com"],
+                        "checks": {
+                            "kustomizations": ["branch-custom-${branch_slug}"],
+                            "services": ["custom-${branch_slug}"],
+                            "tlsRoutes": ["custom-${branch_slug}"],
+                            "secretRefs": ["custom-secret-${branch_slug}"],
+                        },
                     }
                 ),
                 encoding="utf-8",
             )
 
+            profiles = verify.load_smoke_profiles(profile_dir)
+
             self.assertEqual(verify.supported_apps(profile_dir), frozenset({"custom"}))
+            self.assertEqual(profiles["custom"].kustomizations, ("branch-custom-${branch_slug}",))
+            self.assertEqual(profiles["custom"].tls_routes, ("custom-${branch_slug}",))
+            self.assertEqual(profiles["custom"].secret_refs, ("custom-secret-${branch_slug}",))
+            self.assertEqual(profiles["custom"].route_urls, ("https://custom-${branch_slug}.dev.lab.petebeegle.com",))
 
     def test_branch_validation_accepts_common_git_branch_name(self) -> None:
         self.assertEqual(verify.validate_branch("codex/example-change"), "codex/example-change")
@@ -257,6 +300,25 @@ class VerifyBranchDeployTest(unittest.TestCase):
         self.assertEqual(verify.parse_duration("1h30m5s").seconds, 5405)
         with self.assertRaises(argparse.ArgumentTypeError):
             verify.parse_duration("soon")
+
+    def test_print_route_urls_renders_profile_urls_without_cluster_access(self) -> None:
+        stdout = io.StringIO()
+
+        with contextlib.redirect_stdout(stdout):
+            result = verify.main(
+                [
+                    "--app",
+                    "whoami",
+                    "--branch",
+                    "codex/example-change",
+                    "--slug",
+                    "example-change",
+                    "--print-route-urls",
+                ]
+            )
+
+        self.assertEqual(result, 0)
+        self.assertEqual(stdout.getvalue().strip(), "https://whoami-example-change.dev.lab.petebeegle.com")
 
     def test_run_command_wraps_subprocess_timeout(self) -> None:
         config = self._config()
@@ -318,6 +380,19 @@ class VerifyBranchDeployTest(unittest.TestCase):
         with self.assertRaisesRegex(verify.VerificationError, "Accepted and ResolvedRefs"):
             verify.assert_httproute_ready(missing_resolved_refs, route_name="whoami-example-change")
 
+    def test_tlsroute_assert_requires_accepted_and_resolved_refs_on_one_parent(self) -> None:
+        missing_resolved_refs = """{
+          "status": {
+            "parents": [
+              {"conditions": [{"type": "Accepted", "status": "True"}]},
+              {"conditions": [{"type": "ResolvedRefs", "status": "True"}]}
+            ]
+          }
+        }"""
+
+        with self.assertRaisesRegex(verify.VerificationError, "Accepted and ResolvedRefs"):
+            verify.assert_tlsroute_ready(missing_resolved_refs, route_name="whoami-example-change")
+
     def test_pod_readiness_waits_for_active_pods(self) -> None:
         runner = FakeRunner()
         config = self._config()
@@ -364,8 +439,43 @@ class VerifyBranchDeployTest(unittest.TestCase):
         verify.assert_whoami(config, runner=runner)
 
         commands = [" ".join(command) for command in runner.commands]
+        self.assertTrue(any("wait kustomization.kustomize.toolkit.fluxcd.io/branch-whoami-example-change" in command for command in commands))
         self.assertTrue(any("get service whoami-example-change" in command for command in commands))
         self.assertTrue(any("get httproute whoami-example-change -o json" in command for command in commands))
+
+    def test_profile_checks_flux_kustomization_secret_reference_tlsroute_and_keeps_secret_data_unread(self) -> None:
+        runner = FakeRunner()
+        config = self._config()
+        profile = verify.SmokeProfile(
+            app="whoami",
+            git_repository="branch-${branch_slug}",
+            activation_template="template.yaml",
+            namespace="whoami-${branch_slug}",
+            kustomizations=("branch-whoami-${branch_slug}",),
+            helm_releases=(),
+            services=("whoami-${branch_slug}",),
+            http_routes=(),
+            tls_routes=("whoami-tls-${branch_slug}",),
+            secret_refs=("whoami-secret-${branch_slug}",),
+            pvcs=(),
+            http_probes=(),
+            route_urls=("https://whoami-${branch_slug}.dev.lab.petebeegle.com",),
+        )
+
+        verify.assert_smoke_profile(config, profile, runner=runner)
+
+        commands = [" ".join(command) for command in runner.commands]
+        kustomization_index = self._index_containing(
+            commands,
+            "wait kustomization.kustomize.toolkit.fluxcd.io/branch-whoami-example-change",
+        )
+        secret_index = self._index_containing(commands, "get secret whoami-secret-example-change")
+        pods_index = self._index_containing(commands, "get pods -o json")
+        tlsroute_index = self._index_containing(commands, "get tlsroute whoami-tls-example-change -o json")
+        self.assertLess(kustomization_index, secret_index)
+        self.assertLess(secret_index, pods_index)
+        self.assertLess(pods_index, tlsroute_index)
+        self.assertFalse(any("secret whoami-secret-example-change -o json" in command for command in commands))
 
     def test_jellyfin_profile_checks_helm_pvc_service_route_and_http_probe(self) -> None:
         runner = FakeRunner(pods_json=READY_JELLYFIN_PODS)
@@ -392,6 +502,19 @@ class VerifyBranchDeployTest(unittest.TestCase):
         self.assertTrue(any("get service homepage-example-change" in command for command in commands))
         self.assertTrue(any("get httproute homepage-example-change -o json" in command for command in commands))
         self.assertTrue(any("run probe-example-change" in command and "Home Lab|Branch|Homepage" in command for command in commands))
+
+    def test_home_assistant_profile_checks_pvc_service_route_and_http_probe(self) -> None:
+        runner = FakeRunner(pods_json=READY_HOME_ASSISTANT_PODS, pvc_json=READY_HOME_ASSISTANT_PVC)
+        config = self._config(app="home-assistant")
+
+        verify.assert_smoke_profile(config, verify.load_smoke_profile("home-assistant"), runner=runner)
+
+        commands = [" ".join(command) for command in runner.commands]
+        self.assertTrue(any("get namespace home-assistant-example-change" in command for command in commands))
+        self.assertTrue(any("get pvc home-assistant-config-example-change -o json" in command for command in commands))
+        self.assertTrue(any("get service home-assistant-example-change" in command for command in commands))
+        self.assertTrue(any("get httproute home-assistant-example-change -o json" in command for command in commands))
+        self.assertTrue(any("run probe-example-change" in command and "curlimages/curl:8.16.0" in command for command in commands))
 
     def test_pvc_assert_requires_bound_phase_and_expected_storage_class(self) -> None:
         verify.assert_pvc_bound(READY_PVC, pvc_name="jellyfin-config-example-change", storage_class="nfs-csi-storage")
@@ -427,6 +550,33 @@ class VerifyBranchDeployTest(unittest.TestCase):
         self.assertIn("http://jellyfin-example-change.jellyfin-example-change.svc.cluster.local:8096/", script)
         self.assertIn("curl -LfsS", script)
         self.assertIn("Jellyfin|Please sign in|Wizard|Login", script)
+        self.assertIn("seq 1 60", script)
+
+    def test_home_assistant_http_probe_command_targets_service_and_matches_web_shell(self) -> None:
+        config = self._config(app="home-assistant")
+
+        command = verify.build_http_probe_command(
+            config,
+            namespace=config.namespace,
+            probe=verify.HttpProbe(
+                service="home-assistant-${branch_slug}",
+                port=80,
+                path="/",
+                body_regex="Home Assistant|Create my smart home|Sign in|Login",
+            ),
+            probe_index=0,
+            total_probes=1,
+        )
+
+        self.assertIn("probe-example-change", command)
+        self.assertIn("--image=curlimages/curl:8.16.0", command)
+        self.assertIn("--overrides", command)
+        overrides = json.loads(command[command.index("--overrides") + 1])
+        self.assertEqual(overrides["spec"]["containers"][0]["command"], ["sh", "-ec"])
+        script = overrides["spec"]["containers"][0]["args"][0]
+        self.assertIn("http://home-assistant-example-change.home-assistant-example-change.svc.cluster.local:80/", script)
+        self.assertIn("curl -LfsS", script)
+        self.assertIn("Home Assistant|Create my smart home|Sign in|Login", script)
         self.assertIn("seq 1 60", script)
 
     def test_probe_pod_overrides_use_restricted_security_context(self) -> None:
@@ -527,6 +677,7 @@ class VerifyBranchDeployTest(unittest.TestCase):
             "--push",
             "--terraform-apply",
             "--include-cluster-base",
+            "--print-route-urls",
             "--kubeconfig",
             "--timeout",
             "--keep",

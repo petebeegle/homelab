@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: cloudflared
-          image: cloudflare/cloudflared:2026.5.0
+          image: cloudflare/cloudflared:2026.5.2
           imagePullPolicy: IfNotPresent
           args:
             - tunnel
@@ -35,9 +35,10 @@ spec:
               # it has an active connection to the edge.
               path: /ready
               port: 2000
-            failureThreshold: 1
+            failureThreshold: 3
             initialDelaySeconds: 10
             periodSeconds: 10
+            timeoutSeconds: 5
           volumeMounts:
             - name: config
               mountPath: /etc/cloudflared/config
@@ -55,8 +56,24 @@ spec:
               cpu: 500m
               memory: 512Mi
             requests:
-              cpu: 10m
-              memory: 64Mi
+              cpu: 100m
+              memory: 128Mi
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: cloudflared
+                topologyKey: kubernetes.io/hostname
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: cloudflared
       volumes:
         - name: creds
           secret:

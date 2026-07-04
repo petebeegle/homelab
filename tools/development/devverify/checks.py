@@ -6,7 +6,7 @@ import json
 import shlex
 from typing import Sequence
 
-from .config import AppConfig, HttpProbe, Runner, VerificationError
+from .config import FLUX_NAMESPACE, AppConfig, HttpProbe, Runner, VerificationError
 from .kube import kubectl, run_command
 from .profiles import load_smoke_profile, render_profile_value
 
@@ -14,6 +14,24 @@ from .profiles import load_smoke_profile, render_profile_value
 def assert_smoke_profile(config: AppConfig, profile, *, runner: Runner) -> None:
     name = render_profile_value(profile.namespace, config=config, field="namespace")
     run_command(kubectl(config, "get", "namespace", name), runner=runner, timeout=config.timeout)
+    for kustomization in profile.kustomizations:
+        resource_name = render_profile_value(kustomization, config=config, field="kustomization")
+        run_command(
+            kubectl(
+                config,
+                "-n",
+                FLUX_NAMESPACE,
+                "wait",
+                f"kustomization.kustomize.toolkit.fluxcd.io/{resource_name}",
+                "--for=condition=Ready",
+                f"--timeout={config.timeout.raw}",
+            ),
+            runner=runner,
+            timeout=config.timeout,
+        )
+    for secret_ref in profile.secret_refs:
+        resource_name = render_profile_value(secret_ref, config=config, field="secretRef")
+        run_command(kubectl(config, "-n", name, "get", "secret", resource_name), runner=runner, timeout=config.timeout)
     for helm_release in profile.helm_releases:
         resource_name = render_profile_value(helm_release, config=config, field="helmRelease")
         run_command(
@@ -51,6 +69,15 @@ def assert_smoke_profile(config: AppConfig, profile, *, runner: Runner) -> None:
             capture_output=True,
         )
         assert_httproute_ready(str(getattr(route, "stdout", "")), route_name=resource_name)
+    for tls_route in profile.tls_routes:
+        resource_name = render_profile_value(tls_route, config=config, field="tlsRoute")
+        route = run_command(
+            kubectl(config, "-n", name, "get", "tlsroute", resource_name, "-o", "json"),
+            runner=runner,
+            timeout=config.timeout,
+            capture_output=True,
+        )
+        assert_tlsroute_ready(str(getattr(route, "stdout", "")), route_name=resource_name)
     for index, probe in enumerate(profile.http_probes):
         run_command(
             build_http_probe_command(config, namespace=name, probe=probe, probe_index=index, total_probes=len(profile.http_probes)),
@@ -254,10 +281,18 @@ def pod_namespace_name(pod: dict[str, object], *, default: str | None) -> str | 
 
 
 def assert_httproute_ready(route_json: str, *, route_name: str) -> None:
+    assert_gateway_route_ready(route_json, route_kind="HTTPRoute", route_name=route_name)
+
+
+def assert_tlsroute_ready(route_json: str, *, route_name: str) -> None:
+    assert_gateway_route_ready(route_json, route_kind="TLSRoute", route_name=route_name)
+
+
+def assert_gateway_route_ready(route_json: str, *, route_kind: str, route_name: str) -> None:
     try:
         route = json.loads(route_json)
     except json.JSONDecodeError as exc:
-        raise VerificationError(f"HTTPRoute {route_name} did not return valid JSON: {exc}") from exc
+        raise VerificationError(f"{route_kind} {route_name} did not return valid JSON: {exc}") from exc
 
     parents = route.get("status", {}).get("parents", [])
     for parent in parents:
@@ -267,4 +302,4 @@ def assert_httproute_ready(route_json: str, *, route_name: str) -> None:
             for condition_type in ("Accepted", "ResolvedRefs")
         ):
             return
-    raise VerificationError(f"HTTPRoute {route_name} has no parent with Accepted and ResolvedRefs conditions")
+    raise VerificationError(f"{route_kind} {route_name} has no parent with Accepted and ResolvedRefs conditions")

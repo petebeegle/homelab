@@ -6,3 +6,4 @@ resources:
   - ./cert-manager
   - ./grafana-operator
   - ./metrics-server
+  - ./intel-device-plugins

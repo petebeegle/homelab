@@ -3,7 +3,13 @@
   "gitRepository": "branch-${branch_slug}",
   "activationTemplate": "kubernetes/clusters/development/branches/whoami-template.yaml",
   "namespace": "whoami-${branch_slug}",
+  "routeUrls": [
+    "https://whoami-${branch_slug}.dev.lab.petebeegle.com"
+  ],
   "checks": {
+    "kustomizations": [
+      "branch-whoami-${branch_slug}"
+    ],
     "services": [
       "whoami-${branch_slug}"
     ],

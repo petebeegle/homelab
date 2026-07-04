@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "homelab-python-tooling"
 version = "0.1.0"
 description = "Shared local Python helpers for the homelab repository."
-requires-python = "==3.14.5"
+requires-python = "==3.14.6"
 
 [tool.setuptools.packages.find]
 where = ["tools/lib"]

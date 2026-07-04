@@ -16,6 +16,7 @@ spec:
   dependsOn:
     - name: gateway
     - name: nfs-csi
+    - name: intel-gpu-device-plugin
   postBuild:
     substituteFrom:
       - kind: ConfigMap

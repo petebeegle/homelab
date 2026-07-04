@@ -9,6 +9,7 @@ spec:
   dnsNames:
     - ${cluster_domain}
     - "*.${cluster_domain}"
+    - ${cluster_domain}
   issuerRef:
     name: cloudflare
     kind: ClusterIssuer

@@ -9,15 +9,15 @@ Keep local shared credentials in ignored `terraform/development/terraform.tfvars
 
 | Name | Version |
 | ---- | ------- |
-| <a name="requirement_helm"></a> [helm](#requirement\_helm) | 3.1.1 |
+| <a name="requirement_helm"></a> [helm](#requirement\_helm) | 3.2.0 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | 3.1.0 |
-| <a name="requirement_proxmox"></a> [proxmox](#requirement\_proxmox) | 0.106.0 |
+| <a name="requirement_proxmox"></a> [proxmox](#requirement\_proxmox) | 0.111.0 |
 
 ## Providers
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_proxmox"></a> [proxmox](#provider\_proxmox) | 0.106.0 |
+| <a name="provider_proxmox"></a> [proxmox](#provider\_proxmox) | 0.111.0 |
 | <a name="provider_terraform"></a> [terraform](#provider\_terraform) | n/a |
 
 ## Modules
@@ -32,7 +32,8 @@ Keep local shared credentials in ignored `terraform/development/terraform.tfvars
 
 | Name | Type |
 | ---- | ---- |
-| [proxmox_virtual_environment_file.talos_iso](https://registry.terraform.io/providers/bpg/proxmox/0.106.0/docs/resources/virtual_environment_file) | resource |
+| [proxmox_hardware_mapping_pci.jellyfin_igpu](https://registry.terraform.io/providers/bpg/proxmox/0.111.0/docs/resources/hardware_mapping_pci) | resource |
+| [proxmox_virtual_environment_file.talos_iso](https://registry.terraform.io/providers/bpg/proxmox/0.111.0/docs/resources/virtual_environment_file) | resource |
 | [terraform_data.bootstrap_script](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) | resource |
 
 ## Inputs

@@ -78,6 +78,12 @@ variable "worker_nodes" {
   type        = set(string)
 }
 
+variable "node_labels" {
+  description = "Kubernetes node labels to apply through Talos machine.nodeLabels, keyed by node address."
+  type        = map(map(string))
+  default     = {}
+}
+
 variable "cluster" {
   description = "Information about the cluster to join"
   type = object({

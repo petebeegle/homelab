@@ -10,17 +10,17 @@ This document is generated for agentic repo navigation. It records relationships
 
 - Root Kustomization: `kubernetes/clusters/production/kustomization.yaml`.
 - Root resources: `flux-system`, `cluster-vars.yaml`, `infra`, `apps`.
-- Infra activation list: `crds.yaml`, `cert-manager.yaml`, `grafana-operator.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `metrics-server.yaml`, `certs.yaml`, `gateway.yaml`, `vpn.yaml`, `monitoring.yaml`, `loki.yaml`, `mimir.yaml`, `alloy.yaml`, `grafana.yaml`, `otel-collector.yaml`, `authentik.yaml`.
-- App activation list: `external.yaml`, `homepage.yaml`, `pihole.yaml`, `whoami.yaml`, `renovate.yaml`, `cloudflare-tunnels.yaml`, `jellyfin.yaml`, `foundryvtt.yaml`, `valheim.yaml`, `synthetics.yaml`, `private`.
+- Infra activation list: `crds.yaml`, `cert-manager.yaml`, `grafana-operator.yaml`, `intel-device-plugins-operator.yaml`, `intel-gpu-device-plugin.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `metrics-server.yaml`, `certs.yaml`, `gateway.yaml`, `vpn.yaml`, `monitoring.yaml`, `loki.yaml`, `mimir.yaml`, `alloy.yaml`, `grafana.yaml`, `otel-collector.yaml`, `authentik.yaml`.
+- App activation list: `external.yaml`, `homepage.yaml`, `pihole.yaml`, `whoami.yaml`, `renovate.yaml`, `cloudflare-tunnels.yaml`, `jellyfin.yaml`, `home-assistant.yaml`, `foundryvtt.yaml`, `valheim.yaml`, `synthetics.yaml`, `private`.
 
 ### Development
 
 - Root Kustomization: `kubernetes/clusters/development/kustomization.yaml`.
 - Root resources: `flux-system`, `cluster-vars.yaml`, `infra`, `apps`.
-- Infra activation list: `crds.yaml`, `cert-manager.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `metrics-server.yaml`, `certs.yaml`, `gateway.yaml`.
+- Infra activation list: `crds.yaml`, `cert-manager.yaml`, `intel-device-plugins-operator.yaml`, `intel-gpu-device-plugin.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `metrics-server.yaml`, `certs.yaml`, `gateway.yaml`.
 - App activation list: `whoami.yaml`, `homepage.yaml`, `foundry-bluegreen-fixture.yaml`.
 
-- Branch environment templates: `whoami-template.yaml`, `jellyfin-template.yaml`, `homepage-template.yaml`.
+- Branch environment templates: `whoami-template.yaml`, `jellyfin-template.yaml`, `homepage-template.yaml`, `home-assistant-template.yaml`.
 
 ### Flux Substitution Variables
 
@@ -49,7 +49,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `development` | `gateway_internal_pool` | `192.168.30.224/28` |
 | `development` | `gateway_passthrough_ip` | `192.168.30.226` |
 | `development` | `homepage_target_domain` | `lab.petebeegle.com` |
-| `development` | `letsencrypt_server` | `https://acme-staging-v02.api.letsencrypt.org/directory` |
+| `development` | `letsencrypt_server` | `https://acme-v02.api.letsencrypt.org/directory` |
 | `development` | `nfs_server` | `192.168.30.99` |
 | `development` | `wildcard_cert_name` | `wildcard-dev-lab-petebeegle-com` |
 
@@ -68,6 +68,8 @@ This document is generated for agentic repo navigation. It records relationships
 | `production` | `gateway` | `./kubernetes/clusters/production/overlays/gateway` | `crds`, `cilium`, `certs` | `cluster-vars` | `no` |
 | `production` | `grafana-operator` | `./kubernetes/infra/controllers/grafana-operator` | `crds` | `cluster-vars` | `no` |
 | `production` | `grafana` | `./kubernetes/infra/monitoring/grafana` | `gateway`, `grafana-operator`, `loki`, `mimir` | `cluster-vars` | `sops` |
+| `production` | `intel-device-plugins-operator` | `./kubernetes/infra/controllers/intel-device-plugins/operator` | `cert-manager` | `cluster-vars` | `no` |
+| `production` | `intel-gpu-device-plugin` | `./kubernetes/infra/controllers/intel-device-plugins/gpu` | `intel-device-plugins-operator` | `cluster-vars` | `no` |
 | `production` | `loki` | `./kubernetes/infra/monitoring/loki` | `crds` | `cluster-vars` | `no` |
 | `production` | `metrics-server` | `./kubernetes/infra/controllers/metrics-server` | `crds`, `cilium` | `cluster-vars` | `no` |
 | `production` | `mimir` | `./kubernetes/infra/monitoring/mimir` | `crds`, `nfs-csi` | `cluster-vars` | `no` |
@@ -80,6 +82,8 @@ This document is generated for agentic repo navigation. It records relationships
 | `development` | `cilium` | `./kubernetes/infra/network/cilium` | `crds` | `cluster-vars` | `no` |
 | `development` | `crds` | `./kubernetes/infra/crds` | (none) | `cluster-vars` | `no` |
 | `development` | `gateway` | `./kubernetes/infra/network/gateway` | `crds`, `cilium`, `certs` | `cluster-vars` | `no` |
+| `development` | `intel-device-plugins-operator` | `./kubernetes/infra/controllers/intel-device-plugins/operator` | `cert-manager` | `cluster-vars` | `no` |
+| `development` | `intel-gpu-device-plugin` | `./kubernetes/infra/controllers/intel-device-plugins/gpu` | `intel-device-plugins-operator` | `cluster-vars` | `no` |
 | `development` | `metrics-server` | `./kubernetes/infra/controllers/metrics-server` | `crds`, `cilium` | `cluster-vars` | `no` |
 | `development` | `nfs-csi` | `./kubernetes/infra/controllers/nfs-csi` | (none) | `cluster-vars` | `no` |
 
@@ -90,14 +94,14 @@ This document is generated for agentic repo navigation. It records relationships
 | `production` | `app-cloudflare-tunnels` | `./kubernetes/apps/cloudflare-tunnels` | `gateway` | `cluster-vars` | `sops` |
 | `production` | `app-external` | `./kubernetes/apps/external` | `gateway` | `cluster-vars` | `no` |
 | `production` | `app-foundryvtt` | `./kubernetes/apps/foundryvtt` | `gateway`, `nfs-csi` | `cluster-vars` | `sops` |
+| `production` | `app-home-assistant` | `./kubernetes/apps/home-assistant` | `gateway`, `nfs-csi`, `authentik` | `cluster-vars` | `sops` |
 | `production` | `app-homepage` | `./kubernetes/apps/homepage` | `gateway`, `metrics-server` | `cluster-vars` | `no` |
-| `production` | `app-jellyfin` | `./kubernetes/apps/jellyfin` | `gateway`, `nfs-csi` | `cluster-vars` | `no` |
+| `production` | `app-jellyfin` | `./kubernetes/apps/jellyfin` | `gateway`, `nfs-csi`, `intel-gpu-device-plugin` | `cluster-vars` | `no` |
 | `production` | `app-pihole` | `./kubernetes/apps/pihole` | `gateway` | `cluster-vars` | `sops` |
 | `production` | `private-apps` | `./kubernetes/clusters/production/apps` | `private-source` | `cluster-vars` | `sops` |
 | `production` | `private-source` | `./kubernetes/clusters/production/apps/private/source` | (none) | `(none)` | `sops` |
-| `production` | `app-transfer` | `./kubernetes/apps/transfer` | `private-source`, `gateway`, `nfs-csi` | `cluster-vars` | `sops` |
 | `production` | `app-renovate` | `./kubernetes/apps/renovate` | `gateway` | `cluster-vars` | `sops` |
-| `production` | `app-synthetics` | `./kubernetes/apps/synthetics` | `gateway`, `grafana`, `authentik`, `app-whoami`, `app-homepage`, `app-jellyfin`, `app-pihole`, `app-foundryvtt` | `cluster-vars` | `no` |
+| `production` | `app-synthetics` | `./kubernetes/apps/synthetics` | `gateway`, `grafana`, `authentik`, `app-whoami`, `app-homepage`, `app-jellyfin`, `app-home-assistant`, `app-pihole`, `app-foundryvtt` | `cluster-vars` | `no` |
 | `production` | `app-valheim` | `./kubernetes/apps/valheim` | `gateway`, `nfs-csi` | `cluster-vars` | `sops` |
 | `production` | `app-whoami` | `./kubernetes/apps/whoami` | `gateway` | `cluster-vars` | `no` |
 | `development` | `app-foundry-bluegreen-fixture` | `./kubernetes/apps/foundry-bluegreen-fixture` | `gateway`, `nfs-csi` | `cluster-vars` | `no` |
@@ -111,15 +115,18 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/infra/authentik` | `namespace.yaml`, `app.yaml`, `secret.yaml`, `httproute.yaml`, `blueprints` |
 | `kubernetes/infra/controllers/cert-manager` | `app.yaml`, `secret.yaml` |
 | `kubernetes/infra/controllers/grafana-operator` | `namespace.yaml`, `app.yaml` |
-| `kubernetes/infra/controllers` | `./nfs-csi`, `./cert-manager`, `./grafana-operator`, `./metrics-server` |
+| `kubernetes/infra/controllers/intel-device-plugins/gpu` | `app.yaml` |
+| `kubernetes/infra/controllers/intel-device-plugins` | `./operator`, `./gpu` |
+| `kubernetes/infra/controllers/intel-device-plugins/operator` | `namespace.yaml`, `app.yaml` |
+| `kubernetes/infra/controllers` | `./nfs-csi`, `./cert-manager`, `./grafana-operator`, `./metrics-server`, `./intel-device-plugins` |
 | `kubernetes/infra/controllers/metrics-server` | `app.yaml` |
 | `kubernetes/infra/controllers/nfs-csi` | `app.yaml`, `media-storageclass.yaml`, `storageclass.yaml`, `volumesnapshotclass.yaml` |
-| `kubernetes/infra/crds/grafana` | `app.yaml` |
-| `kubernetes/infra/crds` | `https://github.com/kubernetes-csi/external-snapshotter//client/config/crd?ref=v8.5.0`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/standard/gateway.networking.k8s.io_gatewayclasses.yaml`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/experimental/gateway.networking.k8s.io_gateways.yaml`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/standard/gateway.networking.k8s.io_httproutes.yaml`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/standard/gateway.networking.k8s.io_referencegrants.yaml`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/standard/gateway.networking.k8s.io_grpcroutes.yaml`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/experimental/gateway.networking.k8s.io_tlsroutes.yaml`, `prometheus`, `grafana` |
+| `kubernetes/infra/crds/grafana` | `https://github.com/grafana/grafana-operator//config/crd?ref=v5.23.0` |
+| `kubernetes/infra/crds` | `https://github.com/kubernetes-csi/external-snapshotter//client/config/crd?ref=v8.6.0`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/standard/gateway.networking.k8s.io_gatewayclasses.yaml`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/experimental/gateway.networking.k8s.io_gateways.yaml`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/standard/gateway.networking.k8s.io_httproutes.yaml`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/standard/gateway.networking.k8s.io_referencegrants.yaml`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/standard/gateway.networking.k8s.io_grpcroutes.yaml`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/experimental/gateway.networking.k8s.io_tlsroutes.yaml`, `prometheus`, `grafana` |
 | `kubernetes/infra/crds/prometheus` | `app.yaml` |
 | `kubernetes/infra/monitoring/alloy` | `repositories.yaml`, `namespace.yaml`, `app.yaml` |
 | `kubernetes/infra/monitoring/grafana/alerting` | `alert-rules-kubernetes.yaml`, `alert-rules-certificates.yaml`, `alert-rules-gateway-cilium.yaml`, `alert-rules-observability.yaml`, `alert-rules-apps.yaml`, `alert-rules-proxmox.yaml`, `alert-rules-flux.yaml`, `alert-rules-valheim.yaml`, `alert-rules-synthetics.yaml` |
-| `kubernetes/infra/monitoring/grafana/dashboards` | `proxmox-dashboard.yaml`, `flux-dashboard.yaml`, `kubernetes-dashboard.yaml`, `authentik-dashboard.yaml`, `jellyfin-dashboard.yaml`, `observability-health-dashboard.yaml`, `codex-operations-dashboard.yaml`, `synthetic-smoke-dashboard.yaml`, `monitoring-radar-dashboard.yaml` |
+| `kubernetes/infra/monitoring/grafana/dashboards` | `proxmox-dashboard.yaml`, `flux-dashboard.yaml`, `kubernetes-dashboard.yaml`, `authentik-dashboard.yaml`, `jellyfin-dashboard.yaml`, `home-assistant-dashboard.yaml`, `observability-health-dashboard.yaml`, `codex-operations-dashboard.yaml`, `synthetic-smoke-dashboard.yaml`, `monitoring-radar-dashboard.yaml` |
 | `kubernetes/infra/monitoring/grafana` | `namespace.yaml`, `repositories.yaml`, `app.yaml`, `secret.yaml`, `grafana-env.yaml`, `gateway.yaml`, `grafana-instance.yaml`, `folders.yaml`, `dashboards`, `alerting` |
 | `kubernetes/infra/monitoring/kube-state-metrics` | `repositories.yaml`, `app.yaml` |
 | `kubernetes/infra/monitoring` | `namespace.yaml`, `kube-state-metrics`, `snmp-exporter`, `pretty-discord-alerts` |
@@ -137,12 +144,14 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/apps/external` | `namespace.yaml`, `synology.yaml` |
 | `kubernetes/apps/foundry-bluegreen-fixture` | `namespace.yaml`, `pvc-blue.yaml`, `pvc-green.yaml`, `deployment-blue.yaml`, `deployment-green.yaml`, `service-blue.yaml`, `service-green.yaml`, `httproute-green-preview.yaml` |
 | `kubernetes/apps/foundryvtt` | `namespace.yaml`, `pvc.yaml`, `secret.yaml`, `deployment.yaml`, `service.yaml`, `httproute.yaml`, `httproute-public.yaml` |
+| `kubernetes/apps/home-assistant/branch` | `home-assistant.yaml` |
+| `kubernetes/apps/home-assistant` | `namespace.yaml`, `pvc.yaml`, `secret.yaml`, `deployment.yaml`, `service.yaml`, `httproute.yaml` |
 | `kubernetes/apps/homepage/base` | `namespace.yaml`, `rbac.yaml`, `configmap.yaml`, `deployment.yaml`, `service.yaml`, `pdb.yaml`, `httproute.yaml` |
 | `kubernetes/apps/homepage/branch` | `homepage.yaml` |
 | `kubernetes/apps/homepage/development` | `../base` |
 | `kubernetes/apps/homepage` | `base` |
 | `kubernetes/apps/jellyfin/branch` | `jellyfin.yaml` |
-| `kubernetes/apps/jellyfin` | `./app.yaml`, `./pvc.yaml`, `./httproute.yaml` |
+| `kubernetes/apps/jellyfin` | `./app.yaml`, `./pvc.yaml`, `./httproute.yaml`, `./secret.yaml`, `./sso-bootstrap.yaml` |
 | `kubernetes/apps/pihole` | `app.yaml`, `secret.yaml`, `httproute.yaml` |
 | `kubernetes/apps/renovate` | `app.yaml`, `secret.yaml` |
 | `kubernetes/apps/synthetics` | `namespace.yaml`, `cronjob.yaml` |
@@ -156,11 +165,13 @@ This document is generated for agentic repo navigation. It records relationships
 | --- | --- | --- | --- | --- |
 | `HTTPRoute` | `authentik/authentik` | `authentik.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `authentik-server:80` |
 | `HTTPRoute` | `external/synology-route` | `synology.petebeegle.com` | `gateway/internal/synology-https-gateway` | `synology-proxy:8080` |
-| `HTTPRoute` | `foundry-bluegreen-fixture/foundry-fixture-green-preview` | `foundry-green-preview.development.lab.petebeegle.com` | `gateway/internal/https-gateway` | `foundry-fixture-green:80` |
+| `HTTPRoute` | `foundry-bluegreen-fixture/foundry-fixture-green-preview` | `foundry-green-preview.dev.lab.petebeegle.com` | `gateway/internal/https-gateway` | `foundry-fixture-green:80` |
 | `HTTPRoute` | `foundryvtt/foundryvtt-public` | `foundry.petebeegle.com` | `gateway/public/http-gateway` | `foundryvtt:80` |
 | `HTTPRoute` | `foundryvtt/foundryvtt` | `foundry.${cluster_domain}` | `gateway/internal/https-gateway` | `foundryvtt:80` |
 | `HTTPRoute` | `gateway/https-redirect` | `*.${cluster_domain}, ${cluster_domain}` | `gateway/internal/http-gateway, gateway/external/http-gateway` | `(none)` |
 | `HTTPRoute` | `grafana/monitoring` | `monitoring.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `grafana:80` |
+| `HTTPRoute` | `home-assistant-${branch_slug}/home-assistant-${branch_slug}` | `homeassistant-${branch_slug}.${cluster_domain}` | `gateway/internal/https-gateway` | `home-assistant-${branch_slug}:80` |
+| `HTTPRoute` | `home-assistant/home-assistant` | `homeassistant.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `home-assistant:80` |
 | `HTTPRoute` | `homepage-${branch_slug}/homepage-${branch_slug}` | `homepage-${branch_slug}.${cluster_domain}` | `gateway/internal/https-gateway` | `homepage-${branch_slug}:80` |
 | `HTTPRoute` | `homepage/homepage` | `${cluster_domain}` | `gateway/internal/https-domain-gateway, gateway/external/https-domain-gateway` | `homepage:80` |
 | `HTTPRoute` | `jellyfin-${branch_slug}/jellyfin-${branch_slug}` | `jellyfin-${branch_slug}.${cluster_domain}` | `gateway/internal/https-gateway` | `jellyfin-${branch_slug}-metrics-deny:8096` |
@@ -185,6 +196,8 @@ This document is generated for agentic repo navigation. It records relationships
 | PVC | `foundry-bluegreen-fixture/foundry-fixture-blue` | `nfs-csi-storage` | `kubernetes/apps/foundry-bluegreen-fixture/pvc-blue.yaml` |
 | PVC | `foundry-bluegreen-fixture/foundry-fixture-green` | `nfs-csi-storage` | `kubernetes/apps/foundry-bluegreen-fixture/pvc-green.yaml` |
 | PVC | `foundryvtt/foundryvtt-data-pvc` | `nfs-csi-storage` | `kubernetes/apps/foundryvtt/pvc.yaml` |
+| PVC | `home-assistant-${branch_slug}/home-assistant-config-${branch_slug}` | `nfs-csi-storage` | `kubernetes/apps/home-assistant/branch/home-assistant.yaml` |
+| PVC | `home-assistant/home-assistant-config` | `nfs-csi-storage` | `kubernetes/apps/home-assistant/pvc.yaml` |
 | PVC | `jellyfin-${branch_slug}/jellyfin-config-${branch_slug}` | `nfs-csi-storage` | `kubernetes/apps/jellyfin/branch/jellyfin.yaml` |
 | PVC | `jellyfin/jellyfin-config-v2` | `nfs-csi-storage` | `kubernetes/apps/jellyfin/pvc.yaml` |
 | PVC | `wireguard/wireguard-pvc` | `nfs-csi-storage` | `kubernetes/infra/network/vpn/pvc.yaml` |
@@ -201,6 +214,8 @@ This lists secret manifest presence only. Secret values are not rendered.
 | `cloudflare-tunnels` | `cloudflare/tunnel-credentials` | `yes` | `kubernetes/apps/cloudflare-tunnels/secret.yaml` |
 | `controllers/cert-manager` | `cert-manager/cloudflare-api-token` | `yes` | `kubernetes/infra/controllers/cert-manager/secret.yaml` |
 | `foundryvtt` | `foundryvtt/foundryvtt-secret` | `yes` | `kubernetes/apps/foundryvtt/secret.yaml` |
+| `home-assistant` | `home-assistant/home-assistant-secrets` | `yes` | `kubernetes/apps/home-assistant/secret.yaml` |
+| `jellyfin` | `jellyfin/jellyfin-secrets` | `yes` | `kubernetes/apps/jellyfin/secret.yaml` |
 | `monitoring/grafana` | `grafana/grafana-credentials` | `yes` | `kubernetes/infra/monitoring/grafana/secret.yaml` |
 | `monitoring/grafana` | `grafana/grafana-env` | `yes` | `kubernetes/infra/monitoring/grafana/grafana-env.yaml` |
 | `monitoring/pretty-discord-alerts` | `monitoring/grafana-env` | `yes` | `kubernetes/infra/monitoring/pretty-discord-alerts/grafana-env.yaml` |
@@ -217,10 +232,12 @@ This lists secret manifest presence only. Secret values are not rendered.
 | `development` | Module | `kubernetes_nodes` | `../modules/vm` | `(none)` |
 | `development` | Module | `talos_bootstrap` | `../modules/talos-bootstrap` | `kubernetes_nodes, talos_provision` |
 | `development` | Module | `talos_provision` | `../modules/talos-provision` | `(none)` |
+| `development` | Root resource | `proxmox_hardware_mapping_pci.jellyfin_igpu` | `(root)` | `(none)` |
 | `development` | Root resource | `proxmox_virtual_environment_file.talos_iso` | `(root)` | `talos_provision` |
 | `development` | Root resource | `terraform_data.bootstrap_script` | `(root)` | `talos_bootstrap` |
 | `production` | Module | `kubernetes_nodes` | `../modules/vm` | `(none)` |
 | `production` | Module | `talos_bootstrap` | `../modules/talos-bootstrap` | `kubernetes_nodes, talos_provision` |
 | `production` | Module | `talos_provision` | `../modules/talos-provision` | `(none)` |
+| `production` | Root resource | `proxmox_hardware_mapping_pci.jellyfin_igpu` | `(root)` | `(none)` |
 | `production` | Root resource | `proxmox_virtual_environment_file.talos_iso` | `(root)` | `talos_provision` |
 | `production` | Root resource | `terraform_data.bootstrap_script` | `(root)` | `talos_bootstrap` |

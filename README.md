@@ -161,7 +161,7 @@ All shared manifests use `${variable}` placeholders instead of hardcoded values.
 | `gateway_external_passthrough_ip` | `192.168.40.242` | L2 IP for the external WireGuard-reachable TLS passthrough Gateway |
 | `cilium_operator_replicas` | `3` | Cilium operator replica count for the environment |
 | `nfs_server` | `192.168.30.99` | NFS server IP for storage |
-| `letsencrypt_server` | `https://acme-v02...` | ACME server URL (use staging for test envs) |
+| `letsencrypt_server` | `https://acme-v02...` | ACME server URL for trusted Let's Encrypt issuance |
 | `wildcard_cert_name` | `wildcard-lab-petebeegle-com` | Name of the wildcard TLS Secret |
 
 **To add a new environment:**
@@ -172,7 +172,7 @@ All shared manifests use `${variable}` placeholders instead of hardcoded values.
 5. Run `flux bootstrap` pointing at `./kubernetes/clusters/<env>` or use the matching Terraform root
 6. Apply a per-environment SOPS age key as the `sops-age` Secret in `flux-system`
 
-The development environment starts at `kubernetes/clusters/development`, uses `development.lab.petebeegle.com`, ACME staging, reduced Cilium operator replicas, and only the resource-conscious base plus whoami. Heavy production services stay out of the base until a test explicitly needs them.
+The development environment starts at `kubernetes/clusters/development`, uses `dev.lab.petebeegle.com`, trusted Let's Encrypt production issuance through the shared Cloudflare issuer, reduced Cilium operator replicas, and only the resource-conscious base plus whoami. Heavy production services stay out of the base until a test explicitly needs them.
 
 Production Terraform writes operator config to `~/.kube/homelab-production.config` and `~/.talos/homelab-production.config` by default instead of overwriting `~/.kube/config` or `~/.talos/config`. Export `KUBECONFIG` and `TALOSCONFIG` to those cluster-specific files for local production workflows, or override the Terraform output path variables if you intentionally want the old global locations.
 
