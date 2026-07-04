@@ -7,7 +7,7 @@
 
 ## Summary
 
-Apply the already-approved upstream relay release to homelab desired state by updating the pretty-discord-alerts Deployment image to v1.4.0 and lowering normal log verbosity to info. Keep the change narrow, validate local render and workflow gates, and record that a real Grafana-to-relay Discord test alert remains required before verifier approval or merge readiness.
+Apply the already-approved upstream relay release to homelab desired state by updating the pretty-discord-alerts Deployment image to v1.4.0 and lowering normal log verbosity to info. Keep the change narrow, validate local render and workflow gates, and record the user-approved temporary production Grafana-to-relay smoke evidence.
 
 ## Technical Context
 
@@ -18,14 +18,14 @@ Apply the already-approved upstream relay release to homelab desired state by up
 **Storage**: N/A; relay is stateless and does not use PVCs
 **Ingress**: N/A; no Gateway API or Ingress changes
 **Secrets**: Existing SOPS-encrypted `grafana-env` secret reference is preserved; no plaintext secret edits
-**Development Validation**: Manual smoke expected when kube context and credentials are available; otherwise record blocker and substitute local checks. One operator-visible Grafana/relay test alert is required before verifier approval or merge readiness.
+**Development Validation**: Manual smoke completed through a user-approved temporary production validation because development-cluster validation was not available to the implementation owner. The smoke proved Grafana reached the v1.4.0 relay and the relay reported a successful Discord webhook send; the agent cannot visually inspect Discord UI from this environment.
 
 ## Constitution Check
 
 *GATE: Must pass before tracked edits and be re-checked before commit.*
 
 - [x] GitOps source of truth preserved; no durable live-cluster-only state.
-- [x] No production-first mutation; development validation plan or exception is recorded for covered changes.
+- [x] No durable production-first mutation; temporary production validation was explicitly user-approved, cleaned up, and recorded for this covered change.
 - [x] Gateway API invariant preserved; no new Kubernetes `Ingress` resources.
 - [x] SOPS invariant preserved; no plaintext secret manifests staged.
 - [x] NFS default considered for PVC-backed workloads; not applicable to this stateless relay.
@@ -69,7 +69,7 @@ specs/pretty-discord-alert-triage-cards/evidence.md
 - `kubectl kustomize kubernetes/infra/monitoring/pretty-discord-alerts`
 - `python3 tools/architecture/render.py --check`
 
-**Development smoke**: Manual. Attempt to inspect kube context availability and, if a development context is available, validate the Deployment path and trigger a Grafana test alert through the relay. If unavailable, record the blocker and leave the operator-visible alert gate pending for verifier approval.
+**Development smoke**: Manual. Development context was unavailable to the implementation owner, so the user explicitly approved temporary production validation. The smoke created temporary `pretty-discord-alerts-triage-smoke` Deployment and Service resources, invoked the Grafana contact-point test API, confirmed relay success logs and metrics, and cleaned up the temporary resources.
 
 **Evidence destination**: `specs/pretty-discord-alert-triage-cards/evidence.md`.
 
@@ -93,8 +93,8 @@ No runbook, ADR, or generated architecture source change is required. `docs/arch
 | Risk | Mitigation |
 | ---- | ---------- |
 | GHCR image tag is missing or multi-arch support is incomplete | Record upstream image verification including digest and platforms. |
-| YAML render passes but Discord card formatting is wrong | Require one operator-visible Grafana/relay test alert before verifier approval or merge readiness. |
-| Development kube context or credentials are unavailable to this agent | Record exact blocker and substitute local checks; leave merge readiness pending. |
+| YAML render passes but Discord card formatting is wrong | Record user-approved Grafana-to-relay smoke evidence and note that the agent cannot visually inspect Discord UI. |
+| Development kube context or credentials are unavailable to this agent | Use explicitly approved temporary production validation, then delete all temporary resources and record cleanup evidence. |
 | Accidentally changing unrelated desired state | Keep tracked edits limited to the Deployment and SDD artifacts; inspect git diff before commit. |
 
 ## Complexity Tracking

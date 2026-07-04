@@ -35,7 +35,7 @@ description: "Homelab SDD task list for pretty Discord alert triage cards"
 - [x] T011 [FR-TEST] Run `python3 tools/architecture/render.py --check` and record the result.
 - [x] T012 [FR-SDD] Run required SDD/context validator and record the result.
 - [x] T013 [FR-007] Attempt development-cluster validation or record exact blocker and substitute checks.
-- [x] T014 [FR-005] Record that one operator-visible Grafana/relay test alert remains required before verifier approval or merge readiness.
+- [x] T014 [FR-005] Record user-approved Grafana/relay smoke evidence for the operator-visible test alert gate, including the note that the agent cannot visually inspect Discord UI.
 - [x] T015 [FR-EVIDENCE] Record command outcomes, smoke evidence, exceptions, and final local state in `specs/pretty-discord-alert-triage-cards/evidence.md`.
 
 ## Phase 4: Commit And PR

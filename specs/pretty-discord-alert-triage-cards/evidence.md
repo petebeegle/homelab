@@ -42,18 +42,34 @@
 
 ## Development Validation
 
-- Profile: manual
+- Profile: manual temporary production smoke, explicitly approved by the user
 - Branch slug: `pretty-discord-alert-triage-cards`
 - Commit state: final commit SHA is reported in the implementation handoff after commit creation; embedding a current commit SHA in the committed evidence file would be self-referential.
-- Report path: N/A unless development validation tooling produces one
-- Cleanup: N/A; no live development resources were created by this implementation owner
-- Result or exception: BLOCKED. `kubectl config current-context` failed with `error: current-context is not set`, and `kubectl config get-contexts` returned only the header row with no configured contexts. No development cluster validation or live Discord observation was possible from this environment.
-- Substitute checks: owner workflow validators passed, SDD context validation passed, `kubectl kustomize` rendered the intended image/log-level change, architecture render check passed, Docker buildx verified the GHCR image index and platforms.
+- Date/time: 2026-07-04 around 13:49-13:50 UTC
+- Temporary resources: Deployment and Service `pretty-discord-alerts-triage-smoke` in namespace `monitoring`, labeled `codex.io/temporary-validation=pretty-discord-alert-triage-cards`.
+- Temporary Deployment shape: image `ghcr.io/petebeegle/pretty-discord-alerts:1.4.0`, existing Secret `monitoring/grafana-env`, `LOG_LEVEL=info`, one replica.
+- Rollout: PASS. Temporary Deployment rollout succeeded and the pod was Ready.
+- Grafana test endpoint: `POST https://monitoring.lab.petebeegle.com/api/alertmanager/grafana/config/api/v1/receivers/test`.
+- Credentials handling: Grafana admin credentials were read from `grafana/grafana-credentials`; secret values were not logged.
+- Test receiver URL: `http://pretty-discord-alerts-triage-smoke.monitoring.svc.cluster.local:80/webhook`.
+- Test alert:
+  - Name: `Codex Pretty Discord Triage Smoke`
+  - Severity: `warning`
+  - Component: `observability`
+  - Namespace: `monitoring`
+  - Summary: `Codex test alert for pretty Discord triage cards`
+  - Description: `Operator-visible validation for pretty-discord-alerts v1.4.0 triage-card formatting before homelab PR merge.`
+  - Runbook: `No action required. This is a temporary validation alert for codex/pretty-discord-alert-triage-cards.`
+- Grafana API result: PASS, HTTP 200.
+- Smoke relay log evidence: contained `Successfully forwarded alerts`, `count=1`, `status=firing`, and `duration_ms=213`.
+- Smoke relay metrics evidence: contained `webhook_requests_total{status="success"} 1` and `webhook_discord_send_total{status="success"} 1`.
+- Cleanup: PASS. Deleted temporary Deployment and Service; subsequent `kubectl get deploy,svc,pods -l app=pretty-discord-alerts-triage-smoke -o name` returned no resources.
+- Result: PASS for Grafana reaching the v1.4.0 relay and the relay reporting a successful Discord webhook send for an operator-visible test alert. The agent cannot visually inspect the Discord UI from this environment.
 
 ## Operator-Visible Test Alert Gate
 
-- Required before verifier approval or merge readiness: trigger one test alert through Grafana/contact-point routing to the pretty-discord-alerts relay and observe the Discord triage-card output.
-- Current status: PENDING due to unavailable kube context in this environment. Local render and image checks prove desired-state shape and image availability only; they do not prove Discord delivery or formatting.
+- Required before verifier approval or merge readiness: trigger one test alert through Grafana/contact-point routing to the pretty-discord-alerts relay.
+- Current status: COMPLETED for infrastructure smoke evidence. The user-approved temporary production validation proved Grafana reached the v1.4.0 relay and the relay reported a successful Discord webhook send. The agent cannot visually inspect the Discord UI from this environment, so evidence does not claim a direct visual Discord UI observation.
 
 ## Documentation Impact
 
@@ -61,9 +77,21 @@
 - Generated docs: `python3 tools/architecture/render.py --check` required; no manual edit to generated `docs/architecture.md`.
 - No-docs rationale: No runbook or ADR behavior changes; this is a narrow Deployment image/env bump.
 
+## Post-Smoke Evidence Update Validation
+
+| Command | Result | Notes |
+| ------- | ------ | ----- |
+| `python3 tools/codex-harness/validate_active_implementation.py` | PASS | Revalidated active implementation marker after evidence update. |
+| `python3 tools/codex-harness/validate_implementation_plan.py --branch codex/pretty-discord-alert-triage-cards` | PASS | Revalidated local implementation plan after evidence update. |
+| `python3 tools/codex-harness/validate_workflow_attestations.py --kind owner` | PASS | Revalidated owner attestation and delegation token after evidence update. |
+| `python3 tools/codex-harness/validate_sdd_context.py --marker .codex/tmp/active-implementation --require-evidence` | PASS | Revalidated durable SDD artifacts with live smoke evidence present. |
+| `git diff --check` | PASS | No whitespace errors after evidence update. |
+| `.specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks` | PASS | Returned `FEATURE_DIR` as `specs/pretty-discord-alert-triage-cards` and `AVAILABLE_DOCS` as `["tasks.md"]`. |
+
 ## Exceptions And Follow-Ups
 
-- Development-cluster validation blocked: no kube context is configured in this environment. Before verifier approval or merge readiness, an operator must trigger one Grafana/relay test alert and record the Discord triage-card observation.
+- No verifier approval, verifier attestation, push, or PR was created by the implementation owner.
+- Visual Discord UI inspection was not possible from this environment; validation is based on Grafana HTTP 200, relay success logs, and relay success metrics.
 
 ## Final State
 

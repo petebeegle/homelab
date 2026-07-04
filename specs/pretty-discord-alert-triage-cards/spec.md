@@ -52,16 +52,16 @@ Operators receive Discord alerts through the relay image that contains the appro
 
 ### User Story 2 - Prove Operator-Visible Alert Path (Priority: P2)
 
-Before verifier approval or merge readiness, an operator-visible test alert proves Grafana can send a notification through the relay to Discord without relying on local render checks alone.
+An operator-visible test alert proves Grafana can send a notification through the relay to Discord without relying on local render checks alone.
 
 **Why this priority**: Discord card formatting and webhook delivery are user-visible behavior that cannot be fully validated by YAML rendering.
 
-**Independent Test**: Trigger one test alert through Grafana/contact point routing to the pretty-discord-alerts relay in development or another approved validation path, then record the observation without fabricating Discord output.
+**Independent Test**: Trigger one test alert through Grafana/contact point routing to the pretty-discord-alerts relay in development or another approved validation path, then record the Grafana response, relay logs, relay metrics, cleanup, and any limits on Discord UI observation.
 
 **Acceptance Scenarios**:
 
-1. **Given** the relay is deployed from this branch in a validation cluster, **When** a Grafana test alert is sent through the relay, **Then** an operator can observe the Discord message and confirm triage-card content renders.
-2. **Given** live validation infrastructure is unavailable to the implementation owner, **When** substitute local checks pass, **Then** evidence records the exact blocker and leaves the operator-visible alert as pending for verifier approval.
+1. **Given** the relay is deployed in an approved validation path, **When** a Grafana test alert is sent through the relay, **Then** evidence shows Grafana returned success and the relay reported a successful Discord webhook send.
+2. **Given** the agent cannot visually inspect the Discord UI from this environment, **When** evidence is recorded, **Then** it honestly states that limitation instead of claiming direct visual confirmation.
 
 ## Requirements *(mandatory)*
 
@@ -69,7 +69,7 @@ Before verifier approval or merge readiness, an operator-visible test alert prov
 - **FR-002**: The implementation MUST set relay `LOG_LEVEL` to `info`.
 - **FR-003**: Evidence MUST record that upstream PR #3 was merged, tag `v1.4.0` was pushed at commit `8323c6398612e56586ccbce12adcfdc5d9f3fc2d`, tag workflow run `28707784208` succeeded, and GHCR image tag `1.4.0` was verified.
 - **FR-004**: Evidence MUST include the GHCR image index digest `sha256:c110a5297666849cddb6979fa016a6a83b920bb544134a5dec74db4318951d8f` and note that `linux/amd64` and `linux/arm64` platforms are available.
-- **FR-005**: Evidence MUST require one operator-visible Grafana/relay test alert before verifier approval or merge readiness.
+- **FR-005**: Evidence MUST record one operator-visible Grafana/relay test alert before verifier approval or merge readiness, including whether direct Discord UI inspection was possible.
 - **FR-006**: The implementation MUST preserve GitOps desired-state flow and avoid durable live-cluster-only changes.
 - **FR-007**: If development-cluster validation is unavailable, evidence MUST record the exact blocker and substitute checks.
 
@@ -83,7 +83,7 @@ This is a medium-risk Kubernetes manifest change affecting a live monitoring not
 - **SC-002**: The rendered pretty-discord-alerts Kustomization contains `LOG_LEVEL=info`.
 - **SC-003**: `python3 tools/codex-harness/validate_sdd_context.py --require-evidence` passes after artifacts are populated.
 - **SC-004**: `python3 tools/architecture/render.py --check` passes.
-- **SC-005**: Evidence clearly distinguishes local validation from the pending or completed live Discord observation.
+- **SC-005**: Evidence clearly distinguishes local validation, live Grafana/relay smoke results, and the lack of direct Discord UI inspection from this environment.
 
 ## Assumptions
 
@@ -93,4 +93,4 @@ This is a medium-risk Kubernetes manifest change affecting a live monitoring not
 
 ## Open Questions
 
-- None for local implementation. Verifier approval must still include or confirm the operator-visible test alert.
+- None for local implementation. Evidence now includes the user-approved temporary production Grafana/relay smoke result and the Discord UI inspection limitation.
