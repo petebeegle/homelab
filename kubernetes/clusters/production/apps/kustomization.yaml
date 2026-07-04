@@ -9,6 +9,7 @@ resources:
   - renovate.yaml
   - cloudflare-tunnels.yaml
   - jellyfin.yaml
+  - immich.yaml
   - home-assistant.yaml
   - foundryvtt.yaml
   - valheim.yaml

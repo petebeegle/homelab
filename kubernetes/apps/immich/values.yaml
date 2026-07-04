@@ -1,0 +1,66 @@
+controllers:
+  main:
+    containers:
+      main:
+        image:
+          tag: v3.0.1
+        env:
+          TZ: America/New_York
+          REDIS_HOSTNAME: immich-valkey
+          IMMICH_MACHINE_LEARNING_URL: http://immich-machine-learning:3003
+          DB_HOSTNAME: immich-postgres-rw
+          DB_PORT: "5432"
+          DB_USERNAME: immich
+          DB_DATABASE_NAME: immich
+          DB_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: immich-postgres-user
+                key: password
+server:
+  service:
+    main:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8081"
+        prometheus.io/path: /metrics
+  controllers:
+    main:
+      containers:
+        main:
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: "4"
+              memory: 4Gi
+immich:
+  metrics:
+    enabled: true
+  persistence:
+    library:
+      existingClaim: immich-library
+  existingConfiguration: immich-secrets
+  configurationKind: Secret
+valkey:
+  enabled: true
+machine-learning:
+  persistence:
+    cache:
+      enabled: true
+      type: persistentVolumeClaim
+      size: 20Gi
+      accessMode: ReadWriteOnce
+      storageClass: nfs-csi-storage
+  controllers:
+    main:
+      containers:
+        main:
+          resources:
+            requests:
+              cpu: 500m
+              memory: 2Gi
+            limits:
+              cpu: "4"
+              memory: 6Gi

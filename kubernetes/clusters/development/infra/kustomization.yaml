@@ -4,6 +4,8 @@ kind: Kustomization
 resources:
   - crds.yaml
   - cert-manager.yaml
+  - local-path-provisioner.yaml
+  - cloudnative-pg.yaml
   - intel-device-plugins-operator.yaml
   - intel-gpu-device-plugin.yaml
   - nfs-csi.yaml

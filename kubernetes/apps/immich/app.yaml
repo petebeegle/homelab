@@ -1,0 +1,36 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: immich
+  namespace: flux-system
+spec:
+  interval: 12h
+  url: oci://ghcr.io/immich-app/immich-charts/immich
+  ref:
+    tag: 0.13.1
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: immich
+  namespace: immich
+spec:
+  interval: 5m
+  releaseName: immich
+  install:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+      remediateLastFailure: true
+  chartRef:
+    kind: OCIRepository
+    name: immich
+    namespace: flux-system
+  valuesFrom:
+    - kind: ConfigMap
+      name: immich-values

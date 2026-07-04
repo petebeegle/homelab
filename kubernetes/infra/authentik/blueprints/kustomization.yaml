@@ -14,6 +14,9 @@ configMapGenerator:
   - name: jellyfin-oauth-blueprint
     files:
       - jellyfin-oauth.yaml
+  - name: immich-oauth-blueprint
+    files:
+      - immich-oauth.yaml
   - name: synology-oauth-blueprint
     files:
       - synology-oauth.yaml

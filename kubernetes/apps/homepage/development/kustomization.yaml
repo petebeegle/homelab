@@ -47,6 +47,10 @@ patches:
                   icon: jellyfin.png
                   href: https://jellyfin.lab.petebeegle.com
                   description: Media library
+              - Immich:
+                  icon: immich.png
+                  href: https://immich.lab.petebeegle.com
+                  description: Photo and video backup
               - Foundry VTT:
                   icon: foundry-vtt.png
                   href: https://foundry.lab.petebeegle.com
