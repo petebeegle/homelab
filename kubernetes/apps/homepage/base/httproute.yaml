@@ -10,10 +10,10 @@ spec:
   parentRefs:
     - name: internal
       namespace: gateway
-      sectionName: https-domain-gateway
+      sectionName: https-gateway
     - name: external
       namespace: gateway
-      sectionName: https-domain-gateway
+      sectionName: https-gateway
   hostnames:
     - homepage.${cluster_domain}
   rules:
