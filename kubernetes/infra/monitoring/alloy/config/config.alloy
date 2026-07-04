@@ -55,6 +55,15 @@ discovery.relabel "service" {
 		action        = "keep"
 	}
 
+	// CloudNativePG metrics are exposed on PostgreSQL pods. Its generated
+	// Services expose database ports, so inherited metrics annotations create
+	// unreachable service scrape targets.
+	rule {
+		source_labels = ["__meta_kubernetes_service_label_cnpg_io_cluster"]
+		regex         = ".+"
+		action        = "drop"
+	}
+
 	// Use custom port from annotation if specified
 	rule {
 		source_labels = ["__address__", "__meta_kubernetes_service_annotation_prometheus_io_port"]
