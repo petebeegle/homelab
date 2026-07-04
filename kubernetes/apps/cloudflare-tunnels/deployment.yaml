@@ -123,5 +123,7 @@ data:
     # Public hostnames enter the cluster through gateway/public, then route by HTTPRoute.
     - hostname: foundry.petebeegle.com
       service: http://cilium-gateway-public.gateway.svc.cluster.local:80
+    - hostname: onboard.petebeegle.com
+      service: http://cilium-gateway-public.gateway.svc.cluster.local:80
     # This rule matches any traffic which didn't match a previous rule, and responds with HTTP 404.
     - service: http_status:404
