@@ -765,7 +765,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "{namespace=\"home-assistant\", container=\"home-assistant\"} |~ \"(?i)(integration|setup|custom_components|config_entry|platform|device|entity)\"",
+          "expr": "{namespace=\"home-assistant\", container=\"home-assistant\"} |~ \"(?i)(integration|setup|custom_components|config_entry|platform|device|entity)\" !~ \"(?i)(homeassistant\\\\.config].*package|invalid package definition|packages/)\"",
           "queryType": "range",
           "refId": "A"
         }

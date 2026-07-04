@@ -39,7 +39,7 @@ Strict pass rule: every included dashboard query must return at least one series
 | `kube_pod_status_phase{exported_namespace="synthetics",pod=~"synthetic-smoke-.*"}` | PASS | 75 series. |
 | `{namespace="home-assistant", container="home-assistant"}` | PASS | 5 streams, 20 sampled lines. |
 | `{namespace="home-assistant", container="home-assistant"} \|~ "(?i)(warning\|error\|exception\|failed\|timeout\|traceback\|invalid\|auth\|oidc\|onboarding)"` | PASS | 3 streams, 6 sampled lines. |
-| `{namespace="home-assistant", container="home-assistant"} \|~ "(?i)(integration\|setup\|custom_components\|config_entry\|platform\|device\|entity)"` | PASS | 3 streams, 3 sampled lines. |
+| `{namespace="home-assistant", container="home-assistant"} \|~ "(?i)(integration\|setup\|custom_components\|config_entry\|platform\|device\|entity)" !~ "(?i)(homeassistant\\.config].*package\|invalid package definition\|packages/)"` | PASS | Narrowed from the previously smoke-tested integration activity query to exclude Home Assistant package/config-definition errors such as invalid `packages/code-first.yaml` slug noise. |
 | `{namespace="synthetics", app="synthetic-smoke"} \|= "SMOKE_RUN_SUMMARY"` | PASS | 20 streams, 20 sampled lines. |
 | `{namespace="synthetics", app="synthetic-smoke"} \|~ "(?i)(home assistant\|homeassistant\|authentik\|oidc\|onboarding)"` | PASS | 9 streams, 20 sampled lines. |
 
@@ -52,6 +52,16 @@ Strict pass rule: every included dashboard query must return at least one series
 | `kubectl kustomize kubernetes/infra/monitoring/grafana` | PASS | Rendered parent Grafana kustomization with the Home Assistant folder; output stored at `.codex/tmp/grafana.render.yaml`. |
 | `python3 tools/architecture/render.py --check` | PASS | Failed before generated docs refresh, passed after `python3 tools/architecture/render.py --write`. |
 | `python3 tools/codex-harness/validate_sdd_context.py ... --require-plan-artifacts` | PASS | SDD context validated after spec, plan, tasks, and evidence existed. |
+
+## Follow-Up Filter Evidence
+
+| Command | Result | Notes |
+| ------- | ------ | ----- |
+| Python regex check against reported `packages/code-first.yaml` log line | PASS | Include regex matched, exclusion regex matched, final display decision was `False`. |
+| `source scripts/kube-aliases.sh && kd config current-context` | PASS | Confirmed `admin@homelab-development`. |
+| `source scripts/kube-aliases.sh && kd get crd grafanadashboards.grafana.integreatly.org grafanafolders.grafana.integreatly.org` | PASS | Development cluster has the required Grafana Operator CRDs. |
+| `source scripts/kube-aliases.sh && kd apply --server-side --dry-run=server -f kubernetes/infra/monitoring/grafana/dashboards/home-assistant-dashboard.yaml` | BLOCKED | Development API server rejected the namespaced resource because namespace `grafana` does not exist in development. |
+| `source scripts/kube-aliases.sh && kp -n home-assistant logs <pod> --since=24h` with the dashboard include/exclude regexes | PASS | Production pod logs had 1 integration-activity match before the exclusion and 1 after it; the narrowed signal is non-empty. |
 
 ## Development Validation
 
