@@ -1,0 +1,14 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: home-assistant-overview
+  namespace: grafana
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  folderRef: "home-assistant"
+  configMapRef:
+    name: home-assistant-dashboard
+    key: dashboard.json

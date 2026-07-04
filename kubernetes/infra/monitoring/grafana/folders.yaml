@@ -68,6 +68,17 @@ spec:
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaFolder
 metadata:
+  name: home-assistant
+  namespace: grafana
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  title: "Home Assistant"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
   name: synthetics
   namespace: grafana
 spec:

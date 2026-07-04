@@ -119,7 +119,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/infra/crds/prometheus` | `app.yaml` |
 | `kubernetes/infra/monitoring/alloy` | `repositories.yaml`, `namespace.yaml`, `app.yaml` |
 | `kubernetes/infra/monitoring/grafana/alerting` | `alert-rules-kubernetes.yaml`, `alert-rules-certificates.yaml`, `alert-rules-gateway-cilium.yaml`, `alert-rules-observability.yaml`, `alert-rules-apps.yaml`, `alert-rules-proxmox.yaml`, `alert-rules-flux.yaml`, `alert-rules-valheim.yaml`, `alert-rules-synthetics.yaml` |
-| `kubernetes/infra/monitoring/grafana/dashboards` | `proxmox-dashboard.yaml`, `flux-dashboard.yaml`, `kubernetes-dashboard.yaml`, `authentik-dashboard.yaml`, `jellyfin-dashboard.yaml`, `observability-health-dashboard.yaml`, `codex-operations-dashboard.yaml`, `synthetic-smoke-dashboard.yaml`, `monitoring-radar-dashboard.yaml` |
+| `kubernetes/infra/monitoring/grafana/dashboards` | `proxmox-dashboard.yaml`, `flux-dashboard.yaml`, `kubernetes-dashboard.yaml`, `authentik-dashboard.yaml`, `jellyfin-dashboard.yaml`, `home-assistant-dashboard.yaml`, `observability-health-dashboard.yaml`, `codex-operations-dashboard.yaml`, `synthetic-smoke-dashboard.yaml`, `monitoring-radar-dashboard.yaml` |
 | `kubernetes/infra/monitoring/grafana` | `namespace.yaml`, `repositories.yaml`, `app.yaml`, `secret.yaml`, `grafana-env.yaml`, `gateway.yaml`, `grafana-instance.yaml`, `folders.yaml`, `dashboards`, `alerting` |
 | `kubernetes/infra/monitoring/kube-state-metrics` | `repositories.yaml`, `app.yaml` |
 | `kubernetes/infra/monitoring` | `namespace.yaml`, `kube-state-metrics`, `snmp-exporter`, `pretty-discord-alerts` |
