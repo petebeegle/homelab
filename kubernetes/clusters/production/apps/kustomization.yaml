@@ -14,4 +14,5 @@ resources:
   - foundryvtt.yaml
   - valheim.yaml
   - synthetics.yaml
+  - access-broker.yaml
   - private

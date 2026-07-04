@@ -10,7 +10,7 @@ spec:
       namespace: gateway
       sectionName: http-gateway
   hostnames:
-    - onboard.${cluster_domain}
+    - onboard.petebeegle.com
   rules:
     - matches:
         - path:

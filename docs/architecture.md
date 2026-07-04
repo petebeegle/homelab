@@ -11,7 +11,7 @@ This document is generated for agentic repo navigation. It records relationships
 - Root Kustomization: `kubernetes/clusters/production/kustomization.yaml`.
 - Root resources: `flux-system`, `cluster-vars.yaml`, `infra`, `apps`.
 - Infra activation list: `crds.yaml`, `cert-manager.yaml`, `local-path-provisioner.yaml`, `cloudnative-pg.yaml`, `grafana-operator.yaml`, `intel-device-plugins-operator.yaml`, `intel-gpu-device-plugin.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `metrics-server.yaml`, `certs.yaml`, `gateway.yaml`, `vpn.yaml`, `monitoring.yaml`, `loki.yaml`, `mimir.yaml`, `alloy.yaml`, `grafana.yaml`, `otel-collector.yaml`, `authentik.yaml`.
-- App activation list: `external.yaml`, `homepage.yaml`, `pihole.yaml`, `whoami.yaml`, `renovate.yaml`, `cloudflare-tunnels.yaml`, `jellyfin.yaml`, `immich.yaml`, `home-assistant.yaml`, `foundryvtt.yaml`, `valheim.yaml`, `synthetics.yaml`, `private`.
+- App activation list: `external.yaml`, `homepage.yaml`, `pihole.yaml`, `whoami.yaml`, `renovate.yaml`, `cloudflare-tunnels.yaml`, `jellyfin.yaml`, `immich.yaml`, `home-assistant.yaml`, `foundryvtt.yaml`, `valheim.yaml`, `synthetics.yaml`, `access-broker.yaml`, `private`.
 
 ### Development
 
@@ -95,6 +95,7 @@ This document is generated for agentic repo navigation. It records relationships
 
 | Cluster | Kustomization | Path | Depends on | Substitute from | SOPS |
 | --- | --- | --- | --- | --- | --- |
+| `production` | `app-access-broker` | `./kubernetes/apps/access-broker` | `gateway`, `nfs-csi`, `app-cloudflare-tunnels` | `cluster-vars` | `sops` |
 | `production` | `app-cloudflare-tunnels` | `./kubernetes/apps/cloudflare-tunnels` | `gateway` | `cluster-vars` | `sops` |
 | `production` | `app-external` | `./kubernetes/apps/external` | `gateway` | `cluster-vars` | `no` |
 | `production` | `app-foundryvtt` | `./kubernetes/apps/foundryvtt` | `gateway`, `nfs-csi` | `cluster-vars` | `sops` |
@@ -174,7 +175,7 @@ This document is generated for agentic repo navigation. It records relationships
 
 | Kind | Route | Hostnames | Parent Gateway | Backend refs |
 | --- | --- | --- | --- | --- |
-| `HTTPRoute` | `access-broker/access-broker-public` | `onboard.${cluster_domain}` | `gateway/public/http-gateway` | `access-broker:80` |
+| `HTTPRoute` | `access-broker/access-broker-public` | `onboard.petebeegle.com` | `gateway/public/http-gateway` | `access-broker:80` |
 | `HTTPRoute` | `authentik/authentik` | `authentik.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `authentik-server:80` |
 | `HTTPRoute` | `external/synology-route` | `synology.petebeegle.com` | `gateway/internal/synology-https-gateway` | `synology-proxy:8080` |
 | `HTTPRoute` | `foundry-bluegreen-fixture/foundry-fixture-green-preview` | `foundry-green-preview.dev.lab.petebeegle.com` | `gateway/internal/https-gateway` | `foundry-fixture-green:80` |
