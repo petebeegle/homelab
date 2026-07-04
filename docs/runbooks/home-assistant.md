@@ -56,6 +56,13 @@ add code-owned Elgato scenes, scripts, automations, or package YAML in
 `config/scenes.yaml`, `config/scripts.yaml`, `config/automations.yaml`, or
 `config/packages/code_first.yaml`.
 
+The desk Elgato ambient-balance automation is Git-owned in
+`config/packages/code_first.yaml`. It is gated by
+`input_boolean.desk_light_auto_balance`, reads
+`sensor.office_desk_illuminance`, and controls
+`light.elgato_key_light_air_ambient` plus
+`light.elgato_key_light_air_camera`.
+
 Philips Hue V2 is a runtime config-flow integration, not a declarative Git-owned integration. Pair the Hue bridge through the Home Assistant UI while the bridge link button is available; Home Assistant stores the resulting config entry and tokens under `/config/.storage` on the `home-assistant-config` PVC. Do not commit Hue `.storage` files, `config_entries`, bridge credentials, access or refresh tokens, or fake integration YAML. Do not add an empty `hue.yaml` package as a placeholder.
 
 After pairing, record the runtime inventory before adding Git-owned Hue packages or automations: bridge name, light entity IDs, room/zone/grouped-light entities, scenes, remotes or switches, and any disabled grouped-light entities worth enabling. Once those entity IDs exist, add packages, scripts, scenes, or automations in Git against the observed IDs and keep credentials on the PVC.

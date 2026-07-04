@@ -8,24 +8,26 @@
 
 ## Summary
 
-Document the safe Elgato Light onboarding path for Home Assistant. Elgato Light
-is a runtime config-flow integration discovered through zeroconf or added
-manually by host/IP, so this implementation updates operator guidance and SDD
-evidence without adding declarative Home Assistant integration YAML or committing
-runtime storage.
+Add the GitOps-owned Home Assistant helper and automation for the desk Elgato
+ambient-balance behavior now that the required runtime entity IDs are known. The
+automation lives in the existing `code_first.yaml` package so the helper and
+automation are managed together in production/base and the branch overlay.
 
 ## Technical Context
 
-**Risk Tier**: tiny
-**Workflow Tier**: docs-only
-**Primary Areas**: documentation, SDD artifacts
-**Dependencies**: Home Assistant docs, existing Home Assistant kustomizations
+**Risk Tier**: medium
+**Workflow Tier**: medium
+**Primary Areas**: Home Assistant package YAML, branch overlay, SDD artifacts,
+Home Assistant runbook note
+**Dependencies**: Existing Home Assistant package include, known Elgato and
+illuminance entity IDs
 **Storage**: Existing Home Assistant PVC remains unchanged; runtime integration
 state stays under `/config/.storage`
 **Ingress**: No Gateway API route changes
 **Secrets**: No SOPS changes
-**Development Validation**: none; docs-only change with local render checks as
-substitute validation
+**Development Validation**: required for medium-risk app behavior when
+infrastructure is available; otherwise record an unavailable-infrastructure
+exception and substitute local render/static checks
 
 ## Constitution Check
 
@@ -59,47 +61,62 @@ specs/home-assistant-elgato-lighting/
 ### Source Or Documentation Changes
 
 ```text
+kubernetes/apps/home-assistant/config/packages/code_first.yaml
+kubernetes/apps/home-assistant/branch/config/packages/code_first.yaml
 docs/runbooks/home-assistant.md
 specs/home-assistant-elgato-lighting/
 ```
 
 ## Tiered TDD And Validation Plan
 
-**TDD expectation**: Docs-only tiny change; no executable behavior or test seam
-exists, so use review checks and cheap render validation.
+**TDD expectation**: Medium-risk configuration behavior. There is no local Home
+Assistant runtime test seam in this repo, so use static package review,
+production and branch kustomize renders, and a YAML/config sanity check as the
+local red/green substitute. Record any unavailable live Home Assistant
+validation exception.
 
 **Local checks**:
 
 - `kubectl kustomize kubernetes/apps/home-assistant`
 - `kubectl kustomize kubernetes/apps/home-assistant/branch`
-- `git diff --name-only`
+- YAML/config sanity check for the edited package files
+- Workflow harness validators
+- `git status --short`
 
-**Development smoke**: none; no Kubernetes, Flux, Gateway, storage, secret, or
-app behavior changes are made. Local render checks prove unchanged manifests
-still parse.
+**Development smoke**: Home Assistant app behavior validation is expected for
+medium risk when a development cluster and matching runtime entities are
+available. If unavailable, document the exception, include substitute local
+checks, and leave verifier review to decide whether more smoke is required.
 
 **Evidence destination**: `specs/home-assistant-elgato-lighting/evidence.md`.
 
 ## Documentation Impact
 
-Update `docs/runbooks/home-assistant.md` with Elgato-specific onboarding,
-manual setup, inventory capture, and runtime-state safety guidance. No generated
+Keep `docs/runbooks/home-assistant.md` current by noting that the desk Elgato
+ambient-balance automation is now Git-owned in `code_first.yaml`. No generated
 architecture update is required because Kubernetes and Terraform sources do not
-change.
+change shape beyond ConfigMap input content.
 
 ## Implementation Steps
 
-1. Create SDD artifacts for `home-assistant-elgato-lighting`.
-2. Add an Elgato lighting section to the Home Assistant runbook.
-3. Run local render checks and focused docs review.
-4. Record command outcomes and docs-only smoke exception in evidence.
+1. Revise SDD artifacts and local implementation plan from docs-only to
+   medium-risk Home Assistant app behavior/config.
+2. Add `input_boolean.desk_light_auto_balance` and the desk Elgato
+   ambient-balance automation to production/base `code_first.yaml`.
+3. Mirror the helper and automation in the branch-overlay `code_first.yaml`.
+4. Update the Home Assistant runbook only as needed to mention the Git-owned
+   automation.
+5. Run local render, YAML/config sanity, workflow, and status checks.
+6. Record command outcomes, development validation evidence or exception, and
+   final branch state in evidence.
 
 ## Risks
 
 | Risk | Mitigation |
 | ---- | ---------- |
-| Operator commits runtime Home Assistant state later | Explicitly warn not to commit `.storage`, `config_entries`, credentials, or generated registries |
-| Follow-up controls target guessed entity IDs | Require runtime inventory before adding Git-owned scenes, scripts, automations, or packages |
+| Helper defaults unexpectedly active | Define a normal `input_boolean`; Home Assistant defaults it off unless restored runtime state says otherwise |
+| Automation targets missing or renamed entities | Use the exact entity IDs from the user plan and require live HA validation or record the unavailable-infrastructure exception |
+| Package YAML syntax is invalid | Run static YAML/config sanity checks plus production and branch kustomize renders |
 
 ## Complexity Tracking
 
