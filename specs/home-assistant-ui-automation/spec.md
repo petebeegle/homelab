@@ -4,15 +4,15 @@
 **Created**: 2026-07-04
 **Status**: Draft
 **Risk Tier**: medium
-**Input**: User description: "user migrated the Desk Elgato Ambient Balance automation to the Home Assistant UI and wants the Git-owned version deleted from code"
+**Input**: User description: "user migrated the Desk Elgato Ambient Balance automation to the Home Assistant UI and wants the Git-owned version deleted from code; follow-up production bug found because Home Assistant cannot atomically replace ConfigMap-mounted `/config/automations.yaml`"
 
 ## Summary
 
 Operators need Git to stop owning the desk Elgato ambient-balance helper and
 automation because the behavior now lives in Home Assistant UI-managed runtime
-state. The repository should preserve only the minimal package structure and
-document that Git must not recreate those entities unless intentionally moving
-the behavior back to code.
+state. Home Assistant must also be able to save UI-managed automations by
+atomically replacing `/config/automations.yaml`, which requires that file to
+live on the writable PVC instead of being mounted read-only from a ConfigMap.
 
 ## Binding Sources
 
@@ -35,6 +35,12 @@ the behavior back to code.
   `homeassistant: customize: {}` package structure.
 - Update Home Assistant runbook guidance to state that the desk Elgato balance
   automation is UI-managed runtime state.
+- Stop mounting `/config/automations.yaml` from a ConfigMap in production/base
+  and branch Home Assistant workloads.
+- Remove the no-longer-referenced Git-owned base and branch `automations.yaml`
+  files from configMap generators and tracked files.
+- Seed `/config/automations.yaml` with `[]` on the writable PVC at startup when
+  the file is missing.
 - Record Spec Kit artifacts and evidence for a medium Home Assistant app config
   behavior change.
 
@@ -42,8 +48,8 @@ the behavior back to code.
 
 - Runtime Home Assistant `.storage`, generated registries, config entries, or
   UI state changes.
-- Kubernetes workload, Gateway, PVC, Service, Flux, secret, storage class, image,
-  or generated architecture documentation changes.
+- Gateway, PVC, Service, Flux, secret, storage class, image, script, scene,
+  OIDC, runtime `.storage`, or generated architecture documentation changes.
 - Verifier approval creation, branch push, or PR creation.
 
 ## User Scenarios & Testing *(mandatory)*
@@ -72,6 +78,32 @@ package/config files while the package YAML still renders through kustomize.
    is UI-managed runtime state and should not be re-added to Git unless moving
    it back to code intentionally.
 
+### User Story 2 - UI Automations Save To Writable PVC (Priority: P1)
+
+An operator can save Home Assistant UI automations because
+`/config/automations.yaml` is no longer a read-only ConfigMap subPath mount and
+exists on the writable PVC for fresh deployments.
+
+**Why this priority**: This fixes the production 500 error when Home Assistant
+tries to atomically replace `automations.yaml`.
+
+**Independent Test**: Render the base and branch manifests and confirm
+`/config/automations.yaml` is not mounted from the ConfigMap, the ConfigMap does
+not include `automations.yaml`, and the init container seeds `[]` when the file
+is missing.
+
+**Acceptance Scenarios**:
+
+1. **Given** a fresh Home Assistant PVC without `automations.yaml`, **When** the
+   pod starts, **Then** the init container creates `/config/automations.yaml`
+   with `[]`.
+2. **Given** Home Assistant saves UI automations, **When** it writes a temporary
+   file and renames it to `/config/automations.yaml`, **Then** the target path
+   is PVC-backed and writable rather than a read-only ConfigMap mount.
+3. **Given** existing UI-managed automations already exist on the PVC, **When**
+   the pod restarts, **Then** the init container does not overwrite the existing
+   file.
+
 ## Requirements *(mandatory)*
 
 - **FR-001**: The implementation MUST remove
@@ -91,18 +123,32 @@ package/config files while the package YAML still renders through kustomize.
 - **FR-006**: The implementation MUST NOT edit runtime `.storage`, secrets,
   Kubernetes workload/Gateway/PVC/Service/Flux wiring, or generated architecture
   docs.
-- **FR-007**: Evidence MUST record base and branch kustomize renders, package
+- **FR-007**: Production/base and branch Home Assistant workloads MUST NOT mount
+  `/config/automations.yaml` from a ConfigMap or other read-only source.
+- **FR-008**: Production/base and branch Home Assistant ConfigMap generators
+  MUST NOT include `automations.yaml=config/automations.yaml`.
+- **FR-009**: Git-owned base and branch `config/automations.yaml` files MUST be
+  removed when they are no longer referenced.
+- **FR-010**: Production/base and branch init containers MUST create
+  `/config/automations.yaml` with valid empty automation list content (`[]`)
+  only when the file is missing.
+- **FR-011**: `configuration.yaml` MUST continue to use
+  `automation: !include automations.yaml`.
+- **FR-012**: The Home Assistant runbook MUST document that UI-managed
+  automations require `/config/automations.yaml` to remain PVC-writable and not
+  ConfigMap-mounted.
+- **FR-013**: Evidence MUST record base and branch kustomize renders, package
   parity diff, removed-identifier search, workflow validators,
-  `git diff --check`, `git status --short`, and development smoke outcome or
-  exception.
+  automation mount/content checks, architecture render check, `git diff
+  --check`, `git status --short`, and development smoke outcome or exception.
 
 ## Risk And Validation Expectations
 
-**Medium**: This changes Git-owned Home Assistant app config behavior and the
-branch overlay. Run focused kustomize renders, package parity diff, static
-removed-identifier search, workflow validators, and development validation when
-feasible. If the development branch smoke is unavailable or inappropriate before
-push, record an exception and substitute local checks.
+**Medium**: This changes Git-owned Home Assistant app config behavior,
+Kubernetes workload mounts/init behavior, and the branch overlay. Run focused
+kustomize renders, package parity diff, static removed-identifier and mount
+checks, workflow validators, architecture render check, and development
+validation when feasible.
 
 ## Success Criteria *(mandatory)*
 
@@ -115,6 +161,11 @@ push, record an exception and substitute local checks.
   Home Assistant config.
 - **SC-006**: Workflow validators pass for the marker, implementation plan,
   owner attestation, delegation token evidence, and SDD context.
+- **SC-007**: Render/content checks confirm `automations.yaml` is absent from
+  ConfigMap-generated data and no longer mounted at `/config/automations.yaml`.
+- **SC-008**: Render/content checks confirm the init containers seed
+  `/config/automations.yaml` with `[]` only when missing.
+- **SC-009**: Development smoke passes for the Home Assistant branch profile.
 
 ## Assumptions
 
@@ -122,6 +173,8 @@ push, record an exception and substitute local checks.
   state through the Home Assistant UI.
 - Existing runtime UI state on the Home Assistant PVC will continue to own the
   behavior after Git stops defining these entities.
+- Existing runtime `/config/automations.yaml` should not be overwritten on pod
+  restart.
 - No generated architecture update is required because Kubernetes/Terraform
   wiring is unchanged.
 

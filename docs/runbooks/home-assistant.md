@@ -61,6 +61,11 @@ re-add `input_boolean.desk_light_auto_balance` or automation id
 `desk_elgato_ambient_balance` to Git unless intentionally moving the behavior
 back to code.
 
+UI-managed automations must keep `/config/automations.yaml` writable on the
+Home Assistant PVC. Do not mount that file from a ConfigMap; the pod init
+container only seeds it with `[]` when it is missing so the UI can save changes
+with Home Assistant's atomic file replacement.
+
 Philips Hue V2 is a runtime config-flow integration, not a declarative Git-owned integration. Pair the Hue bridge through the Home Assistant UI while the bridge link button is available; Home Assistant stores the resulting config entry and tokens under `/config/.storage` on the `home-assistant-config` PVC. Do not commit Hue `.storage` files, `config_entries`, bridge credentials, access or refresh tokens, or fake integration YAML. Do not add an empty `hue.yaml` package as a placeholder.
 
 After pairing, record the runtime inventory before adding Git-owned Hue packages or automations: bridge name, light entity IDs, room/zone/grouped-light entities, scenes, remotes or switches, and any disabled grouped-light entities worth enabling. Once those entity IDs exist, add packages, scripts, scenes, or automations in Git against the observed IDs and keep credentials on the PVC.

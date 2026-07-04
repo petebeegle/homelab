@@ -37,6 +37,7 @@ spec:
               mkdir -p /config/custom_components
               mv /tmp/hass-oidc-auth-1.1.1/custom_components/auth_oidc /config/custom_components/auth_oidc
               mkdir -p /config/.storage
+              [ -f /config/automations.yaml ] || printf '[]\n' > /config/automations.yaml
           volumeMounts:
             - name: config-storage
               mountPath: /config
@@ -71,10 +72,6 @@ spec:
             - name: home-assistant-config
               mountPath: /config/configuration.yaml
               subPath: configuration.yaml
-              readOnly: true
-            - name: home-assistant-config
-              mountPath: /config/automations.yaml
-              subPath: automations.yaml
               readOnly: true
             - name: home-assistant-config
               mountPath: /config/scripts.yaml

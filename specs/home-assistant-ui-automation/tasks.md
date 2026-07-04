@@ -35,6 +35,14 @@ description: "Homelab SDD task list for home-assistant-ui-automation"
       `kubernetes/apps/home-assistant/branch/config/packages/code_first.yaml`.
 - [x] T007 [FR-005] Update `docs/runbooks/home-assistant.md`.
 - [x] T008 [FR-006] Re-check constitution gates after implementation edits.
+- [x] T019 [FR-007,FR-008,FR-009] Remove Git-owned
+      `automations.yaml` ConfigMap entries, read-only mounts, and tracked files
+      from production/base and branch manifests.
+- [x] T020 [FR-010,FR-011] Add init-container seeding for writable PVC-backed
+      `/config/automations.yaml` while preserving
+      `automation: !include automations.yaml`.
+- [x] T021 [FR-012] Update `docs/runbooks/home-assistant.md` with the
+      PVC-writable `automations.yaml` requirement.
 
 ## Phase 3: Verification
 
@@ -53,6 +61,13 @@ description: "Homelab SDD task list for home-assistant-ui-automation"
       substitute checks.
 - [x] T016 [FR-007] Record command outcomes, smoke evidence, exceptions, and
       final branch state in `specs/home-assistant-ui-automation/evidence.md`.
+- [x] T022 [FR-013] Run render/content checks confirming `automations.yaml` is
+      not ConfigMap-mounted and init seeding is present.
+- [x] T023 [FR-013] Run `python3 tools/architecture/render.py --check`.
+- [x] T024 [FR-013] Re-run Home Assistant development smoke with `--push`.
+- [x] T025 [FR-013] Update
+      `specs/home-assistant-ui-automation/evidence.md` and
+      `.codex/tmp/pr-summary.md` for the expanded automations-writability scope.
 
 ## Phase 4: Commit
 
