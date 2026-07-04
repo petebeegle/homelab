@@ -26,6 +26,17 @@ none with reason]
 **Post-Implementation SDD Conformance**: [local docs only, upstream Spec Kit
 review required, or N/A]
 
+## Human Gates
+
+**Spec Gate**: [approved by <who/context> before planning, or pending]
+
+**Checklist Status**: [run with checklist path/summary | skipped with rationale]
+
+**Plan Gate**: [pending human approval | approved by <who/context> | rejected]
+
+**Expected Task/Analyze Gate**: [tasks plus analyze required before
+implementation | skipped/analyze exception allowed with rationale]
+
 ## Constitution Check
 
 *GATE: Must pass before tracked edits and be re-checked before commit.*

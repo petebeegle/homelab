@@ -1,10 +1,10 @@
 schema_version: "1.0"
 workflow:
   id: "speckit"
-  name: "Full SDD Cycle"
+  name: "Human-Gated SDD Cycle"
   version: "1.0.0"
   author: "GitHub"
-  description: "Runs specify → plan → tasks → implement with review gates"
+  description: "Runs specify → clarify → plan → checklist → tasks → analyze → implement → converge with review gates"
 
 requires:
   # 0.8.5 is the first release with engine-side resolution of the
@@ -12,13 +12,12 @@ requires:
   # as a literal integration key and fail at dispatch.
   speckit_version: ">=0.8.5"
   integrations:
-    # The four commands below (specify, plan, tasks, implement) are core
-    # spec-kit commands provided by every integration. The list here is an
-    # advisory, non-exhaustive compatibility hint following the documented
-    # ``any: [...]`` schema -- it is NOT a closed set. The workflow runs
-    # against any integration the project was initialized with, including
-    # ones not listed below, as long as that integration provides the four
-    # core commands referenced in ``steps``.
+    # The commands below follow the upstream production SDD path. The list here
+    # is an advisory, non-exhaustive compatibility hint following the documented
+    # ``any: [...]`` schema -- it is NOT a closed set. The workflow runs against
+    # any integration the project was initialized with, including ones not
+    # listed below, as long as that integration provides the commands
+    # referenced in ``steps``.
     any:
       - "claude"
       - "copilot"
@@ -46,9 +45,15 @@ steps:
     input:
       args: "{{ inputs.spec }}"
 
+  - id: clarify
+    command: speckit.clarify
+    integration: "{{ inputs.integration }}"
+    input:
+      args: "{{ inputs.spec }}"
+
   - id: review-spec
     type: gate
-    message: "Review the generated spec before planning."
+    message: "Review the generated spec and clarifications before planning."
     options: [approve, reject]
     on_reject: abort
 
@@ -58,9 +63,15 @@ steps:
     input:
       args: "{{ inputs.spec }}"
 
+  - id: checklist
+    command: speckit.checklist
+    integration: "{{ inputs.integration }}"
+    input:
+      args: "{{ inputs.spec }}"
+
   - id: review-plan
     type: gate
-    message: "Review the plan before generating tasks."
+    message: "Review the plan and checklist before generating tasks."
     options: [approve, reject]
     on_reject: abort
 
@@ -70,8 +81,32 @@ steps:
     input:
       args: "{{ inputs.spec }}"
 
+  - id: analyze
+    command: speckit.analyze
+    integration: "{{ inputs.integration }}"
+    input:
+      args: "{{ inputs.spec }}"
+
+  - id: review-tasks-analysis
+    type: gate
+    message: "Review tasks and analysis before implementation."
+    options: [approve, reject]
+    on_reject: abort
+
   - id: implement
     command: speckit.implement
     integration: "{{ inputs.integration }}"
     input:
       args: "{{ inputs.spec }}"
+
+  - id: converge
+    command: speckit.converge
+    integration: "{{ inputs.integration }}"
+    input:
+      args: "{{ inputs.spec }}"
+
+  - id: review-converge
+    type: gate
+    message: "Review converge results and final evidence before PR handoff."
+    options: [approve, reject]
+    on_reject: abort

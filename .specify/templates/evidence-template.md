@@ -12,6 +12,18 @@
 - Integration:
 - Fallback:
 
+## Human Gates
+
+| Gate | Result | Notes |
+| ---- | ------ | ----- |
+| Intent brief | [PASS/FAIL/SKIP] | [human-provided outcome, constraints, acceptance] |
+| Spec approval | [PASS/FAIL/PENDING] | [approver/context] |
+| Clarify | [PASS/SKIP] | [summary or skipped-gate rationale] |
+| Plan approval | [PASS/FAIL/PENDING] | [approver/context] |
+| Checklist | [PASS/SKIP] | [checklist path/summary or skipped-gate rationale] |
+| Tasks/analyze approval | [PASS/FAIL/PENDING] | [analyze result or skipped-analyze rationale] |
+| Converge | [PASS/SKIP] | [converge result or skipped-converge rationale] |
+
 ## Workflow Validation
 
 | Command | Result | Notes |
@@ -57,7 +69,7 @@
 
 - Local sources checked:
 - Upstream Spec Kit sources checked:
-- Spec -> Plan -> Tasks -> Implement alignment:
+- Human-gated Spec Kit alignment:
 - Artifact updates after implementation:
 
 ## Exceptions And Follow-Ups

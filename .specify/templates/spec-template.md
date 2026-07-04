@@ -6,6 +6,15 @@
 **Risk Tier**: [tiny|low|medium|high]
 **Input**: User description: "$ARGUMENTS"
 
+## Human Gate Status
+
+**Intent Brief**: [Outcome, affected users/systems, constraints, non-goals,
+risks, and acceptance signals supplied by the human.]
+
+**Clarify Status**: [run with summary | skipped with rationale]
+
+**Spec Gate**: [pending human approval | approved by <who/context> | rejected]
+
 ## Summary
 
 [State the intended operator/user outcome in plain language. Avoid implementation

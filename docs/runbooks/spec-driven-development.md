@@ -70,20 +70,58 @@ Each implementation owns:
 Runtime files under `.codex/tmp/` are ignored and are not durable
 documentation. Durable implementation context belongs in `specs/<implementation>/`.
 
+## Human Decision Workflow
+
+Treat SDD as a staged decision workflow, not as post-implementation
+documentation. Humans own intent, constraints, and acceptance. Agents draft the
+formal artifacts, surface ambiguity, and pause at gates before moving from
+"what" to "how" to "do."
+
+Start from a problem brief rather than a human-written implementation plan:
+
+- desired outcome and why it matters;
+- affected users, systems, clusters, or operators;
+- constraints, invariants, non-goals, and risks;
+- acceptance signals that would make the change obviously correct;
+- repo context, ADRs, runbooks, incidents, or links the agent should read.
+
+For meaningful work, use these gates:
+
+1. **Intent brief**: Human supplies outcome, constraints, risks, and context.
+2. **Spec gate**: Agent runs `specify` and, when ambiguity matters, `clarify`;
+   human approves the desired behavior before planning.
+3. **Plan gate**: Agent runs `plan` and, when useful, `checklist`; human approves
+   the technical approach before tasks.
+4. **Task/analyze gate**: Agent runs `tasks` and `analyze`; human approves that
+   the work is small enough, ordered, and testable before implementation.
+5. **Implementation**: Agent implements against approved artifacts.
+6. **Converge/evidence**: Agent runs `converge` or records why it is not needed,
+   updates artifacts for discoveries, and writes final evidence.
+
+Tiny wording-only changes and obvious low-risk local edits may skip selected
+gates, but the skipped `clarify`, `checklist`, `analyze`, or `converge` step and
+rationale must be recorded in `evidence.md`. Silent skipped gates should be
+treated as missing SDD, not lightweight SDD.
+
 ## Upstream Conformance
 
-Homelab follows the upstream Spec Kit phase order: Spec -> Plan -> Tasks ->
-Implement. Upstream Spec Kit documentation is useful for process checks and
-tooling updates, but repo-local sources remain binding when they are stricter:
-`AGENTS.md`, this runbook, `docs/runbooks/implementation-workflow.md`, binding
-ADRs, and harness validators.
+Homelab follows the upstream Spec Kit production path for meaningful work:
+Constitution -> Specify -> Clarify -> Plan -> Checklist -> Tasks -> Analyze ->
+Implement -> Converge. Upstream Spec Kit documentation is useful for process
+checks and tooling updates, but repo-local sources remain binding when they are
+stricter: `AGENTS.md`, this runbook,
+`docs/runbooks/implementation-workflow.md`, binding ADRs, and harness
+validators.
 
 After implementation, evidence should include a short SDD conformance check
 against both local workflow sources and upstream Spec Kit guidance when the
 change alters agent workflow, Spec Kit templates, or implementation standards.
 The check should confirm that the spec defines behavior before implementation,
-the plan records technical approach and constraints, tasks are actionable, and
-implementation evidence is reconciled back into the artifact set.
+clarifications or skipped clarifications are recorded, the plan records
+technical approach and constraints, checklist or skipped-checklist rationale is
+recorded, tasks are actionable, analyze ran before implementation or was
+explicitly skipped, and implementation evidence is reconciled back into the
+artifact set through converge or a recorded converge exception.
 
 ## Enforced Guard Behavior
 
@@ -138,16 +176,21 @@ risk tier in `plan.md` when needed.
 2. Create or reuse the default worktree:
    `/workspaces/homelab-worktrees/<implementation>` on branch
    `codex/<implementation>`.
-3. Create `specs/<implementation>/spec.md` from
+3. Capture the human intent brief and create `specs/<implementation>/spec.md` from
    `.specify/templates/spec-template.md`.
-4. Create `specs/<implementation>/plan.md` from
-   `.specify/templates/plan-template.md`.
-5. Create `specs/<implementation>/tasks.md` from
-   `.specify/templates/tasks-template.md`.
-6. Create `specs/<implementation>/evidence.md` from
+4. Run `clarify` for meaningful ambiguity, or record why it is skipped; stop for
+   human spec approval.
+5. Create `specs/<implementation>/plan.md` from
+   `.specify/templates/plan-template.md`, run checklist when useful, and stop
+   for human plan approval.
+6. Create `specs/<implementation>/tasks.md` from
+   `.specify/templates/tasks-template.md`, run `analyze`, and stop for human
+   task/analysis approval before implementation.
+7. Create `specs/<implementation>/evidence.md` from
    `.specify/templates/evidence-template.md`.
-7. Implement the change in the worktree or explicitly selected checkout.
-8. Record command outcomes, development validation, exceptions, final `HEAD`,
+8. Implement the change in the worktree or explicitly selected checkout.
+9. Run `converge` or record why it is skipped.
+10. Record command outcomes, development validation, exceptions, final `HEAD`,
    and documentation impact in `evidence.md`.
 
 ## Development Validation
@@ -190,6 +233,9 @@ one implementation, one branch, one `specs/<implementation>/`, one PR contract.
 ## Review Checklist
 
 - The spec links relevant binding ADRs and runbooks.
+- Human gate status is recorded for spec, plan, and task/analysis checkpoints.
+- Skipped `clarify`, `checklist`, `analyze`, or `converge` steps have explicit
+  evidence exceptions.
 - The plan declares SDD tier, workflow tier when needed, tests, smoke
   expectations, fanout targets, docs impact, and risks.
 - Tasks are concrete enough for an implementation owner to execute.
