@@ -33,6 +33,29 @@ The development branch profile deploys the same container, onboarding storage se
 
 Initial device onboarding remains UI-driven. Pair Elgato, UniFi, and similar integrations through the Home Assistant UI first; add code-owned automations, scripts, scenes, and package YAML after entity IDs are known.
 
+Elgato Light is a runtime config-flow integration, not a declarative Git-owned
+integration. Power on each Elgato light and confirm it is on the same LAN that
+the Home Assistant pod can reach. In Home Assistant, open
+`Settings > Devices & services` and accept any discovered `Elgato Light`
+integration. Discovery uses zeroconf/mDNS through `default_config`; if a light is
+not discovered, add `Elgato Light` manually and enter the device hostname or IP
+address.
+
+After pairing, confirm the generated entities before adding Git-owned controls.
+Each device should expose a primary `light.*` entity. Depending on the model,
+Home Assistant may also expose identify or restart buttons, a battery sensor, or
+a studio-mode switch. Record the device name, hostname or IP, entity IDs,
+supported features, room, and intended use in the implementation notes for the
+follow-up change.
+
+Home Assistant stores the Elgato config entry and generated device/entity
+registry state under `/config/.storage` on the `home-assistant-config` PVC. Do
+not commit Elgato `.storage` files, `config_entries`, device credentials, access
+tokens, generated registries, or placeholder YAML. Once real entity IDs exist,
+add code-owned Elgato scenes, scripts, automations, or package YAML in
+`config/scenes.yaml`, `config/scripts.yaml`, `config/automations.yaml`, or
+`config/packages/code_first.yaml`.
+
 Philips Hue V2 is a runtime config-flow integration, not a declarative Git-owned integration. Pair the Hue bridge through the Home Assistant UI while the bridge link button is available; Home Assistant stores the resulting config entry and tokens under `/config/.storage` on the `home-assistant-config` PVC. Do not commit Hue `.storage` files, `config_entries`, bridge credentials, access or refresh tokens, or fake integration YAML. Do not add an empty `hue.yaml` package as a placeholder.
 
 After pairing, record the runtime inventory before adding Git-owned Hue packages or automations: bridge name, light entity IDs, room/zone/grouped-light entities, scenes, remotes or switches, and any disabled grouped-light entities worth enabling. Once those entity IDs exist, add packages, scripts, scenes, or automations in Git against the observed IDs and keep credentials on the PVC.
@@ -43,6 +66,8 @@ Upstream references:
 - `hass-oidc-auth` Authentik guide: <https://github.com/christiaangoossens/hass-oidc-auth/blob/main/docs/provider-configurations/authentik.md>
 - Home Assistant auth providers: <https://www.home-assistant.io/docs/authentication/providers/>
 - Home Assistant HTTP reverse-proxy settings: <https://www.home-assistant.io/integrations/http/>
+- Home Assistant Elgato Light integration: <https://www.home-assistant.io/integrations/elgato/>
+- Home Assistant zeroconf integration: <https://www.home-assistant.io/integrations/zeroconf/>
 
 After reconcile, acceptance should confirm:
 
