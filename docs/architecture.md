@@ -173,7 +173,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `HTTPRoute` | `home-assistant-${branch_slug}/home-assistant-${branch_slug}` | `homeassistant-${branch_slug}.${cluster_domain}` | `gateway/internal/https-gateway` | `home-assistant-${branch_slug}:80` |
 | `HTTPRoute` | `home-assistant/home-assistant` | `homeassistant.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `home-assistant:80` |
 | `HTTPRoute` | `homepage-${branch_slug}/homepage-${branch_slug}` | `homepage-${branch_slug}.${cluster_domain}` | `gateway/internal/https-gateway` | `homepage-${branch_slug}:80` |
-| `HTTPRoute` | `homepage/homepage` | `${cluster_domain}` | `gateway/internal/https-domain-gateway, gateway/external/https-domain-gateway` | `homepage:80` |
+| `HTTPRoute` | `homepage/homepage` | `homepage.${cluster_domain}` | `gateway/internal/https-domain-gateway, gateway/external/https-domain-gateway` | `homepage:80` |
 | `HTTPRoute` | `jellyfin-${branch_slug}/jellyfin-${branch_slug}` | `jellyfin-${branch_slug}.${cluster_domain}` | `gateway/internal/https-gateway` | `jellyfin-${branch_slug}-metrics-deny:8096` |
 | `HTTPRoute` | `jellyfin/jellyfin` | `jellyfin.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `jellyfin-metrics-deny:8096` |
 | `HTTPRoute` | `otel-collector/otel-collector` | `otel.${cluster_domain}` | `gateway/internal/https-gateway` | `otel-collector-opentelemetry-collector:4318` |

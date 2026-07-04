@@ -100,7 +100,7 @@ spec:
           imagePullPolicy: IfNotPresent
           env:
             - name: HOMEPAGE_ALLOWED_HOSTS
-              value: ${cluster_domain}
+              value: homepage.${cluster_domain}
             - name: LOG_TARGETS
               value: stdout
           ports:

@@ -20,7 +20,7 @@ patches:
           - Core:
               - Homepage:
                   icon: homepage.png
-                  href: https://lab.petebeegle.com
+                  href: https://homepage.lab.petebeegle.com
                   description: Homelab dashboard
               - Authentik:
                   icon: authentik.png
