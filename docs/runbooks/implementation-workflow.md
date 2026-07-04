@@ -35,14 +35,18 @@ Use this runbook for every repository code change. The binding decision is
    `specify -> plan -> tasks -> implement`.
 5. Keep durable implementation context in `specs/<implementation>/`:
    `spec.md`, `plan.md`, `tasks.md`, and `evidence.md`.
-6. Make tracked-file changes only on `codex/<implementation>`, never on `main`.
-7. Run relevant checks, collect TDD evidence, and collect required development
+6. In `plan.md`, declare the SDD tier, workflow risk tier, smoke strategy,
+   fanout targets, and exceptions before implementation edits.
+7. In `tasks.md`, mark independent fanout work with `[P]` and keep all
+   fanout results coordinated through one `evidence.md`.
+8. Make tracked-file changes only on `codex/<implementation>`, never on `main`.
+9. Run relevant checks, collect TDD evidence, and collect required development
    validation evidence for covered cluster-affecting changes.
-8. Record command outcomes, development validation evidence or exceptions,
-   final branch state, and documentation impact in
+10. Record command outcomes, development validation evidence or exceptions,
+   SHAs, user-facing URLs, final branch state, and documentation impact in
    `specs/<implementation>/evidence.md`.
-9. Commit with a conventional commit message.
-10. Create the pull request against `main`. Review gating happens through
+11. Commit with a conventional commit message.
+12. Create the pull request against `main`. Review gating happens through
     normal GitHub PR review and status checks.
 
 ## Guard Gates
@@ -126,6 +130,55 @@ Default development validation paths:
   branch coverage that cannot be safely emulated manually, or production-only
   integrations that development cannot represent.
 
+Automated smoke is preferred whenever practical. For user-facing, routed,
+deployed, or operational changes, choose the strongest available automated
+validation in this order:
+
+1. Existing development branch smoke profile.
+2. Production synthetic smoke or a one-off in-cluster synthetic Job.
+3. Scriptable Gateway, DNS, HTTP, or browser smoke against the exact user URL.
+4. Manual browser verification only as supplemental evidence.
+
+Do not report routed or deployed work as complete from pod readiness, Service
+probes, render checks, or `Accepted=True` route status alone. Evidence must
+identify the layer proved: rendered intent, pushed branch, merged commit,
+Flux-fetched source, kustomization-applied revision, live resource spec, and
+user-facing behavior. If a layer is not verified, state that explicitly.
+
+## Fanout And Helper Lanes
+
+Use fanout to reduce elapsed time when workstreams are independent and
+non-conflicting. Good targets include repo inspection, test design, render
+validation, smoke execution, docs/evidence updates, public/private repo audits,
+and live read-only verification.
+
+Fanout must be declared in `plan.md`, represented with `[P]` tasks in
+`tasks.md`, and consolidated into the implementation's single `evidence.md`.
+Do not split responsibility across multiple branches or PRs unless the work is
+intentionally decomposed into separate implementations.
+
+Tracked edits that touch the same files should stay sequential unless the
+partition is explicit enough to avoid collisions. Read-only validation and
+smoke checks are preferred fanout targets.
+
+## Post-Merge Verification
+
+For deploy follow-up, verify the live system in layers before declaring the
+change deployed:
+
+1. The GitHub PR is merged and the merge SHA is known.
+2. The Flux source has fetched the merge SHA.
+3. The target Kustomization or HelmRelease applied the merge SHA.
+4. The live resource spec matches the intended rendered state.
+5. Gateway listener, DNS, certificate, backend, and route status match the
+   intended exposure when applicable.
+6. The exact user-facing URL, protocol, path, and network plane return the
+   expected HTTP/browser result.
+
+Record each verified layer in `evidence.md` or the PR/deploy handoff. Use
+precise status words such as `rendered`, `pushed`, `merged`, `fetched by Flux`,
+`applied`, and `verified from user path`.
+
 ## Evidence Audit
 
 Before requesting PR review, audit:
@@ -138,3 +191,7 @@ Before requesting PR review, audit:
 - Development validation evidence includes app name, branch, branch slug, exact
   `HEAD`, smoke profile or documented exception, report path if one was
   produced, and cleanup status.
+- User-facing or deploy evidence includes exact URLs, SHAs, live resource state,
+  and automated smoke result when applicable.
+- Workflow or template changes include a local SDD audit and, when they change
+  Spec Kit behavior or standards, an upstream Spec Kit conformance check.
