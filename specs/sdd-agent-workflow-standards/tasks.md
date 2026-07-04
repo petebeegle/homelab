@@ -59,8 +59,8 @@ description: "General SDD-first agent workflow implementation tasks"
 
 ## Phase 4: Commit And PR
 
-- [ ] T015 [FR-PR] Commit with a conventional commit message.
-- [ ] T016 [FR-PR] Push branch `codex/sdd-agent-workflow-standards` and open a
+- [X] T015 [FR-PR] Commit with a conventional commit message.
+- [X] T016 [FR-PR] Push branch `codex/sdd-agent-workflow-standards` and open a
       PR.
 
 ## Fanout Notes

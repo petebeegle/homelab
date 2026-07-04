@@ -67,6 +67,7 @@
 
 ## Final State
 
-- Final branch: PENDING
-- Final HEAD: PENDING
-- Commit: PENDING
+- Final branch: `codex/sdd-agent-workflow-standards`
+- Final HEAD: recorded by PR head after evidence handoff update
+- Commit: `2554e48 docs(workflow): strengthen SDD smoke and fanout standards`
+- Pull request: `https://github.com/petebeegle/homelab/pull/341`
