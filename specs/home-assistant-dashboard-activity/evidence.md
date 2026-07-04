@@ -35,6 +35,62 @@
 | `python3 tools/architecture/render.py --check` | PASS | Generated architecture document unchanged. |
 | `python3 tools/codex-harness/validate_sdd_context.py --marker .codex/tmp/active-implementation --root "$(pwd)" --branch "$(git branch --show-current)" --require-plan-artifacts --require-evidence --head "$(git rev-parse HEAD)"` | PASS | Passed against final committed SDD evidence. |
 
+## Follow-Up: Activity Panel Metric Semantics
+
+- Trigger: User feedback that some panels showed `0` and should not depend on
+  Grafana MCP query smoke when it is not returning properly.
+- Rationale: The follow-up avoids misleading zero-value stat panels and uses
+  known Home Assistant 2026.7.1 exporter metric names instead of guessed metric
+  shapes or Grafana MCP discovery. With namespace `homeassistant`, the dashboard
+  now uses `homeassistant_state_change_total`,
+  `homeassistant_last_updated_time_seconds`,
+  `homeassistant_entity_available`, `homeassistant_entity_info`,
+  `homeassistant_light_brightness_percent`, `homeassistant_switch_state`, and
+  `homeassistant_binary_sensor_state`.
+- Dashboard changes:
+  `Recent Entity Changes` is a table based on
+  `increase(homeassistant_state_change_total{domain=~"..."}[$__range])`;
+  `Recently Updated Entities` is a table based on
+  `homeassistant_last_updated_time_seconds`; `Unavailable Entities` remains a
+  table joined with `homeassistant_entity_info`; active lights, switches, and
+  binary sensors are combined into a `Current Active Entities` table using
+  known metrics; `Entities By Area` was renamed `Inventory By Area` so it is not
+  framed as activity.
+- Development smoke: skipped for this follow-up because only the Grafana
+  dashboard JSON and SDD/pr-summary evidence changed. Prior Home Assistant
+  branch development smoke passed for the app and Service/Gateway path; local
+  dashboard JSON and dashboard kustomize renders are the relevant substitute
+  checks.
+- Follow-up checks:
+  - `jq empty kubernetes/infra/monitoring/grafana/dashboards/home-assistant-dashboard.json`: PASS
+  - `kubectl kustomize kubernetes/infra/monitoring/grafana/dashboards`: PASS
+  - `python3 tools/architecture/render.py --check`: PASS
+  - Final SDD context validator with `--require-evidence --head`: PASS
+
+## Follow-Up: Post-Merge Branch Rebuild
+
+- Trigger: PR #336 merged the original implementation into `origin/main` as
+  squash commit `e4b1b72`, while the remote
+  `codex/home-assistant-dashboard-activity` branch still carried the old
+  pre-merge implementation history.
+- Action: Fetched origin, preserved the follow-up patch in `.codex/tmp/`, reset
+  local `codex/home-assistant-dashboard-activity` to current `origin/main`
+  (`22171e2` at rebuild time), and reapplied only
+  `fix(home-assistant): use exporter-backed activity tables`.
+- Result: `git log --oneline origin/main..HEAD` contains only the follow-up
+  commit, and `git diff --name-status origin/main..HEAD` contains only:
+  `kubernetes/infra/monitoring/grafana/dashboards/home-assistant-dashboard.json`,
+  `specs/home-assistant-dashboard-activity/evidence.md`, and
+  `specs/home-assistant-dashboard-activity/tasks.md`.
+- Development smoke: skipped for the rebuild because the resulting delta is
+  still dashboard JSON plus SDD evidence/tasks only; no Kubernetes app, Service,
+  Gateway, storage, or secret behavior changes were reintroduced.
+- Post-rebuild checks:
+  - `jq empty kubernetes/infra/monitoring/grafana/dashboards/home-assistant-dashboard.json`: PASS
+  - `kubectl kustomize kubernetes/infra/monitoring/grafana/dashboards`: PASS
+  - `python3 tools/architecture/render.py --check`: PASS
+  - Final SDD context validator with `--require-evidence --head`: PASS
+
 ## Development Validation
 
 - Profile: manual
@@ -85,6 +141,9 @@
   Grafana JSON-only change; focused render/schema checks are the substitute.
 - Grafana/Mimir live query smoke is blocked by Grafana datasource authorization
   in this session (`401 Unauthorized` for datasource UID `prometheus`).
+- Follow-up live query smoke intentionally not retried; the dashboard query
+  correction relies on Home Assistant exporter metric semantics supplied for
+  Home Assistant 2026.7.1, not Grafana MCP discovery.
 
 ## Final State
 

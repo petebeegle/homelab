@@ -405,17 +405,22 @@
       },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
           "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "showPoints": "auto",
-            "spanNulls": false
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
           },
           "unit": "short"
         },
@@ -429,18 +434,16 @@
       },
       "id": 21,
       "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull"
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
           ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
+          "show": false
         },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
+        "showHeader": true
       },
       "targets": [
         {
@@ -449,14 +452,16 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (__name__) (changes({__name__=~\"homeassistant_(light|switch|binary_sensor|person|device_tracker|automation|climate|cover|fan|lock|update)_state|homeassistant_sensor_.+\"}[$__rate_interval])) OR vector(0)",
-          "legendFormat": "{{__name__}}",
-          "range": true,
+          "expr": "topk(25, sum by (domain, entity, friendly_name) (increase(homeassistant_state_change_total{domain=~\"light|switch|binary_sensor|sensor|person|device_tracker|automation|climate|cover|fan|lock|update\"}[$__range])))",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "{{entity}}",
+          "range": false,
           "refId": "A"
         }
       ],
       "title": "Recent Entity Changes",
-      "type": "timeseries"
+      "type": "table"
     },
     {
       "datasource": {
@@ -491,6 +496,71 @@
         "w": 12,
         "x": 12,
         "y": 6
+      },
+      "id": 27,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "topk(25, max by (domain, entity, friendly_name, area) (homeassistant_last_updated_time_seconds{domain=~\"light|switch|binary_sensor|sensor|person|device_tracker|automation|climate|cover|fan|lock|update\"} * on(entity) group_left(area) homeassistant_entity_info))",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "{{entity}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Recently Updated Entities",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 14
       },
       "id": 22,
       "options": {
@@ -512,7 +582,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "(homeassistant_entity_available == 0) * on(entity) group_left(name, area) homeassistant_entity_info",
+          "expr": "(homeassistant_entity_available == 0) * on(entity) group_left(area) homeassistant_entity_info",
           "format": "table",
           "instant": true,
           "legendFormat": "{{entity}}",
@@ -522,210 +592,6 @@
       ],
       "title": "Unavailable Entities",
       "type": "table"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "blue",
-                "value": 1
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 0,
-        "y": 14
-      },
-      "id": 23,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "sum((homeassistant_light_state == 1) * on(entity) group_left(area) homeassistant_entity_info) OR vector(0)",
-          "instant": true,
-          "legendFormat": "lights on",
-          "range": false,
-          "refId": "A"
-        }
-      ],
-      "title": "Active Lights",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "blue",
-                "value": 1
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 6,
-        "y": 14
-      },
-      "id": 24,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "sum((homeassistant_switch_state == 1) * on(entity) group_left(area) homeassistant_entity_info) OR vector(0)",
-          "instant": true,
-          "legendFormat": "switches on",
-          "range": false,
-          "refId": "A"
-        }
-      ],
-      "title": "Active Switches",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "orange",
-                "value": 1
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 12,
-        "y": 14
-      },
-      "id": 25,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "sum((homeassistant_binary_sensor_state == 1) * on(entity) group_left(area) homeassistant_entity_info) OR vector(0)",
-          "instant": true,
-          "legendFormat": "binary sensors on",
-          "range": false,
-          "refId": "A"
-        }
-      ],
-      "title": "Active Binary Sensors",
-      "type": "stat"
     },
     {
       "datasource": {
@@ -757,9 +623,74 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 6,
-        "x": 18,
+        "w": 12,
+        "x": 12,
         "y": 14
+      },
+      "id": 23,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "label_replace((homeassistant_light_brightness_percent > 0) * on(entity) group_left(area) homeassistant_entity_info, \"active_metric\", \"light_brightness_percent\", \"entity\", \".*\") or label_replace((homeassistant_switch_state == 1) * on(entity) group_left(area) homeassistant_entity_info, \"active_metric\", \"switch_state\", \"entity\", \".*\") or label_replace((homeassistant_binary_sensor_state == 1) * on(entity) group_left(area) homeassistant_entity_info, \"active_metric\", \"binary_sensor_state\", \"entity\", \".*\")",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "{{entity}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Current Active Entities",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 22
       },
       "id": 26,
       "options": {
@@ -789,7 +720,7 @@
           "refId": "A"
         }
       ],
-      "title": "Entities By Area",
+      "title": "Inventory By Area",
       "type": "table"
     },
     {
@@ -798,7 +729,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 22
+        "y": 30
       },
       "id": 9,
       "panels": [],
@@ -832,7 +763,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 23
+        "y": 31
       },
       "id": 10,
       "options": {
@@ -892,7 +823,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 23
+        "y": 31
       },
       "id": 11,
       "options": {
@@ -931,7 +862,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 31
+        "y": 39
       },
       "id": 12,
       "panels": [],
@@ -947,7 +878,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 32
+        "y": 40
       },
       "id": 13,
       "options": {
@@ -984,7 +915,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 32
+        "y": 40
       },
       "id": 14,
       "options": {
@@ -1021,7 +952,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 40
+        "y": 48
       },
       "id": 15,
       "options": {
@@ -1069,6 +1000,6 @@
   "timezone": "browser",
   "title": "Home Assistant - Overview",
   "uid": "home-assistant-overview",
-  "version": 2,
+  "version": 3,
   "weekStart": ""
 }
