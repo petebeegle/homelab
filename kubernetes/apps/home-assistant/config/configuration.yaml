@@ -22,6 +22,24 @@ http:
   trusted_proxies:
     - 10.244.0.0/16
 
+prometheus:
+  namespace: homeassistant
+  requires_auth: false
+  filter:
+    include_domains:
+      - light
+      - switch
+      - binary_sensor
+      - sensor
+      - person
+      - device_tracker
+      - automation
+      - climate
+      - cover
+      - fan
+      - lock
+      - update
+
 auth_oidc:
   client_id: home-assistant
   discovery_url: https://authentik.${cluster_domain}/application/o/home-assistant/.well-known/openid-configuration

@@ -6,6 +6,10 @@ metadata:
   namespace: home-assistant
   labels:
     app.kubernetes.io/name: home-assistant
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "80"
+    prometheus.io/path: /api/prometheus
 spec:
   selector:
     app.kubernetes.io/name: home-assistant
