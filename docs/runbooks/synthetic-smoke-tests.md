@@ -20,24 +20,43 @@ The checks are intentionally deeper than pod readiness and lighter than full aut
 
 ## Manual Run
 
-Create a one-off Job from the CronJob:
+Source the opt-in cluster aliases before running manual smoke commands. These
+helpers keep the kubeconfig selection scoped to each command process, which is
+useful when Codex or an operator needs an explicit cluster context:
 
 ```bash
-kubectl create job -n synthetics synthetic-smoke-manual-$(date +%Y%m%d%H%M%S) \
+. scripts/kube-aliases.sh
+kp config current-context
+```
+
+`kd` and `fd` target the development kubeconfig. `kp` and `fp` target the
+production kubeconfig. Use `kd config current-context` or
+`kp config current-context` before smoke work when the active cluster is
+ambiguous.
+
+Production is the default target for the scheduled `synthetic-smoke` CronJob.
+Create a one-off Job from the production CronJob:
+
+```bash
+kp create job -n synthetics synthetic-smoke-manual-$(date +%Y%m%d%H%M%S) \
   --from=cronjob/synthetic-smoke
 ```
 
 Watch it finish:
 
 ```bash
-kubectl get jobs,pods -n synthetics -l app.kubernetes.io/name=synthetic-smoke
+kp get jobs,pods -n synthetics -l app.kubernetes.io/name=synthetic-smoke
 ```
 
 Read the Playwright output:
 
 ```bash
-kubectl logs -n synthetics -l app.kubernetes.io/name=synthetic-smoke --tail=200
+kp logs -n synthetics -l app.kubernetes.io/name=synthetic-smoke --tail=200
 ```
+
+When running development-cluster smoke checks instead, use `kd` for Kubernetes
+commands and `fd` for Flux commands so the development kubeconfig is selected
+without changing the shell's active `KUBECONFIG`.
 
 Every completed run should emit exactly one bounded summary line:
 
