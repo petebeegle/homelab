@@ -34,81 +34,39 @@ if [[ "$remote_name" != "origin" ]]; then
   exit 0
 fi
 
+branch="$(git branch --show-current)"
 head_sha="$(git rev-parse HEAD)"
-approval_file=".codex/tmp/verifier-approved"
-attestation_file=".codex/tmp/verifier-attestation.yaml"
-marker=".codex/tmp/active-implementation"
-plan=".codex/tmp/implementation-plan.yaml"
-owner_attestation=".codex/tmp/implementation-owner-attestation.yaml"
-marker_validator="tools/codex-harness/validate_active_implementation.py"
-plan_validator="tools/codex-harness/validate_implementation_plan.py"
-attestation_validator="tools/codex-harness/validate_workflow_attestations.py"
-sdd_validator="tools/codex-harness/validate_sdd_context.py"
-push_updates="$(cat || true)"
 
-allow_smoke_push() {
-  local branch
-  branch="$(git branch --show-current)"
-  [[ "$branch" =~ ^codex/.+ ]] || return 1
-  [[ -n "$push_updates" ]] || return 1
-
-  if ! PUSH_UPDATES="$push_updates" BRANCH="$branch" HEAD_SHA="$head_sha" python3 - <<'PY'
-import os
-import sys
-
-branch = os.environ["BRANCH"]
-head = os.environ["HEAD_SHA"]
-updates = [line.split() for line in os.environ.get("PUSH_UPDATES", "").splitlines() if line.strip()]
-if not updates:
-    sys.exit(1)
-
-remote_ref = f"refs/heads/{branch}"
-for fields in updates:
-    if len(fields) != 4:
-        sys.exit(1)
-    local_ref, local_oid, pushed_remote_ref, _remote_oid = fields
-    if pushed_remote_ref != remote_ref:
-        sys.exit(1)
-    if local_oid != head:
-        sys.exit(1)
-    if local_ref not in {"HEAD", remote_ref}:
-        sys.exit(1)
-sys.exit(0)
-PY
-  then
-    return 1
-  fi
-
-  python3 "$marker_validator" --marker "$marker" --root "$root" --branch "$branch" || return 1
-  python3 "$plan_validator" --plan "$plan" --marker "$marker" --root "$root" --branch "$branch" || return 1
-  python3 "$attestation_validator" --kind owner --attestation "$owner_attestation" --marker "$marker" --plan "$plan" --root "$root" --branch "$branch" || return 1
-  python3 "$sdd_validator" --marker "$marker" --root "$root" --branch "$branch" --require-plan-artifacts || return 1
-  return 0
+fail() {
+  {
+    printf 'Spec Kit push guard: refusing to push to origin.\n'
+    printf '%s\n' "$1"
+  } >&2
+  exit 1
 }
 
-if [[ ! -f "$approval_file" ]] || ! grep -Fxq "$head_sha" "$approval_file"; then
-  if allow_smoke_push; then
-    exit 0
+if [[ "$branch" == "main" ]]; then
+  fail "Current branch is main."
+fi
+
+if [[ ! "$branch" =~ ^codex/.+ ]]; then
+  fail "Current branch '$branch' does not match codex/<implementation>."
+fi
+
+implementation="${branch#codex/}"
+for artifact in spec.md plan.md tasks.md evidence.md; do
+  if [[ ! -s "specs/$implementation/$artifact" ]]; then
+    fail "Missing required SDD artifact: specs/$implementation/$artifact"
   fi
-  {
-    printf 'Verifier push guard: refusing to push to origin.\n'
-    printf 'Expected %s to contain the exact HEAD SHA:\n' "$approval_file"
-    printf '  %s\n' "$head_sha"
-    printf 'Run verifier-agent review, resolve any blockers, then record approval for the exact HEAD before pushing.\n'
-  } >&2
-  exit 1
-fi
+done
 
-if [[ ! -f "$attestation_file" ]]; then
-  {
-    printf 'Verifier push guard: refusing to push to origin.\n'
-    printf 'Expected %s to contain verifier identity and exact approved_head:\n' "$attestation_file"
-    printf '  %s\n' "$head_sha"
-  } >&2
-  exit 1
-fi
-
-if ! python3 "$attestation_validator" --kind verifier --attestation "$attestation_file" --marker "$marker" --owner-attestation "$owner_attestation" --head "$head_sha" --root "$root" --branch "$(git branch --show-current)"; then
-  printf 'Verifier push guard: verifier attestation validation failed.\n' >&2
-  exit 1
+if ! python3 tools/codex-harness/validate_sdd_context.py \
+  --root "$root" \
+  --branch "$branch" \
+  --require-plan-artifacts \
+  --require-evidence \
+  --head "$head_sha" \
+  2>/tmp/spec-kit-push-guard.err; then
+  cat /tmp/spec-kit-push-guard.err >&2
+  fail "SDD evidence validation failed."
 fi

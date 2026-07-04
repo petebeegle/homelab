@@ -152,7 +152,7 @@ Prerequisites:
 - Ignored development Terraform vars are staged into the clone that runs smoke
   when Terraform preflight may run:
   `.codex/scripts/prepare_development_smoke_secrets.sh <implementation>
-  [/workspaces/homelab-ideas/<implementation> ...]`.
+  [/workspaces/homelab-worktrees/<implementation> ...]`.
 - The branch named by `--branch` is available on origin. Use `--push` to push the current HEAD to origin as that branch before activation.
 - `--slug` is deterministic and DNS-safe: lowercase letters, numbers, and hyphens; starts and ends with an alphanumeric character; and is short enough for the selected app's `${app}-${branch_slug}` Kubernetes names.
 

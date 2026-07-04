@@ -60,12 +60,14 @@ Binding sources:
 - `docs/runbooks/development-cluster.md`
 - `docs/runbooks/implementation-workflow.md`
 
-### VII. One Owner, Separate Verifier
+### VII. Branch-Scoped Spec Kit Work
 
-Each implementation uses a sibling clone, one owner identity, one branch, and one
-PR. Runtime scratch files under `.codex/tmp/` prove local ownership and
-validation state but are not committed. A separate verifier approves the exact
-`HEAD`; implementation owners do not self-approve.
+Each implementation uses one `codex/<implementation>` branch, one
+`specs/<implementation>/` directory, and one PR. Tracked changes default to a
+dedicated worktree under `/workspaces/homelab-worktrees/<implementation>` so
+multiple efforts can run concurrently. Runtime scratch files under `.codex/tmp/`
+are local and non-durable; GitHub PR review and status checks provide review
+gating.
 
 Binding source: `docs/decisions/codex-implementation-workflow.md`.
 
@@ -83,9 +85,9 @@ Each implementation keeps durable planning artifacts in
 - `evidence.md` records commands, outcomes, smoke evidence, exceptions, and final
   branch state.
 
-`.codex/tmp/` remains local runtime scratch for active markers, attestations,
-tokens, PR summary drafts, and verifier files. Anything needed by future readers
-belongs in `specs/<implementation>/` or a canonical doc/runbook.
+`.codex/tmp/` remains local runtime scratch for prompt intent, temporary command
+state, and PR summary drafts. Anything needed by future readers belongs in
+`specs/<implementation>/` or a canonical doc/runbook.
 
 ## Tiered Workflow
 
@@ -100,8 +102,7 @@ Use these tiers when writing `plan.md`, `tasks.md`, and `evidence.md`:
   authentication, production traffic paths, secret handling, or multi-app impact.
 
 `docs-only` from `docs/runbooks/implementation-workflow.md` maps to `tiny` or
-`low` SDD work depending on review risk. If a workflow validator needs the exact
-implementation-workflow label, record both labels.
+`low` SDD work depending on review risk.
 
 ## Governance
 
@@ -112,7 +113,7 @@ validator and update this constitution in the same implementation.
 
 Amendments require:
 
-1. A named implementation and sibling-clone workflow.
+1. A named implementation on branch `codex/<implementation>`.
 2. Updated SDD artifacts under `specs/<implementation>/`.
 3. Links to new or changed ADRs/runbooks when authority changes.
 4. Evidence that relevant local checks passed or documented exceptions explain

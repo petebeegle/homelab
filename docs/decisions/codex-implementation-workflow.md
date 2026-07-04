@@ -7,7 +7,7 @@ scope:
   - agent-operations
 authority: binding
 created: 2026-05-10
-last_verified: 2026-05-16
+last_verified: 2026-07-03
 supersedes: []
 superseded_by:
 ---
@@ -16,41 +16,49 @@ superseded_by:
 
 ## Decision
 
-All repository code changes must use the mandatory implementation workflow in `docs/runbooks/implementation-workflow.md`.
+All repository code changes must use the Spec Kit implementation workflow in
+`docs/runbooks/implementation-workflow.md`.
 
-Implementation work must happen in a sibling clone under `/workspaces/homelab-ideas/<implementation>` on branch `codex/<implementation>`. Before tracked files change, the clone must contain a valid `.codex/tmp/active-implementation` marker, a valid `.codex/tmp/implementation-plan.yaml` plan, and a valid `.codex/tmp/implementation-owner-attestation.yaml` with matching delegation token evidence.
+Implementation work is isolated by branch and durable Spec Kit artifacts. Each
+implementation uses branch `codex/<implementation>`, directory
+`specs/<implementation>/`, and one PR. Tracked edits on `main` or on non-Codex
+implementation branches are rejected by local guards.
 
-When runtime tooling permits delegation, tracked implementation work must be owned by an implementation owner subagent, and verification must be owned by a separate verifier subagent. The main agent remains planner and orchestrator only: it may inspect, stage required ignored local config, and coordinate, but it does not own tracked implementation work or verifier sign-off.
+The default local execution mode is a dedicated worktree under
+`/workspaces/homelab-worktrees/<implementation>`. Users may explicitly request
+the current checkout or a sibling clone when appropriate.
 
-Runtime and developer policy outrank this repository documentation. If runtime tooling is unavailable or higher-priority policy blocks delegation, that blockage is not automatic permission for main-agent self-work. Self-implementation or self-verification requires explicit user consent for the specific task, and the approved fallback must be recorded in `.codex/tmp/pr-summary.md`.
+Before push or automatic PR creation, `specs/<implementation>/spec.md`,
+`plan.md`, `tasks.md`, and `evidence.md` must be present and non-empty. If
+`evidence.md` records an explicit final, verified, approved, branch, or current
+`HEAD`, that SHA must match the current branch `HEAD`.
 
-Pushes to `origin` and automatic PR creation require verifier approval for the exact `HEAD` in `.codex/tmp/verifier-approved` plus a valid `.codex/tmp/verifier-attestation.yaml` with `approved_head` equal to that same SHA and separate verifier delegation token evidence. The verifier `agent_id`, `delegation_token`, and `delegation_token_path` must differ from the implementation owner evidence.
-
-Approved memory may point to this workflow or summarize it at a high level, but it must not restate the binding workflow policy in full and is not the canonical authority for the policy.
+Local owner attestations, verifier attestations, delegation tokens, and
+exact-`HEAD` verifier approval files are no longer required. Review gating is
+provided by normal GitHub PR review and status checks.
 
 ## Rationale
 
-- Binding workflow policy belongs in decision records and runbooks, not only in approved memory.
-- Delegated implementation and verification keeps planner coordination separate from tracked edits and review approval.
-- A local implementation plan makes scope, documentation impact, tests, verification, and risks explicit before edits begin.
-- Deterministic local attestations and delegation token files make the implementation owner and verifier roles machine-checkable without relying on conversational context.
-- Hook enforcement catches accidental edits in the planner checkout or on non-implementation branches.
-- Exact-`HEAD` verifier approval before push and PR creation keeps review tied to the actual branch state.
+- Spec Kit now provides the standard implementation lifecycle and artifact
+  structure.
+- Worktrees keep concurrent efforts isolated without requiring local
+  attestation files.
+- Branch and SDD artifact guards catch accidental tracked edits on `main` or on
+  mismatched branches.
+- PR review and status checks are the durable review mechanism.
 
 ## Consequences
 
-- Code-change requests begin with planning in the main checkout and move to a sibling implementation clone for edits.
-- The implementation owner owns tracked edits, commits, `.codex/tmp/active-implementation`, `.codex/tmp/implementation-plan.yaml`, `.codex/tmp/implementation-owner-attestation.yaml`, `.codex/tmp/pr-summary.md`, and final branch state.
-- A separate verifier owns exact-`HEAD` verifier approval and verifier attestation.
-- The main agent plans and coordinates; it may perform self-work only with explicit task-specific user consent when delegation is unavailable or blocked by higher-priority policy.
-- Helper agents may research, test, smoke check, or prepare patch recommendations, but only the implementation owner mutates tracked files.
-- Generic identities such as `codex`, `assistant`, `planner`, `parent`, `main`, `self`, and `orchestrator` are not valid implementation owner or verifier identities. Owner identities must use the `implementation-agent-` prefix, and verifier identities must use the `verifier-agent-` prefix.
-- Hook enforcement happens at mutating tool or tracked-file-change boundaries; natural-language request detection remains advisory.
-- The approved memory entry for this workflow must remain an advisory pointer to this decision and the runbook.
+- Repo-changing prompts default to worktree setup guidance.
+- Sibling clones remain allowed, but are no longer required.
+- `.codex/tmp/` stays local scratch and must not contain durable requirements or
+  evidence.
+- Existing historical validators for old attestation files are not part of the
+  current workflow contract.
 
 ## Operational Notes
 
-- Validate the active marker with `tools/codex-harness/validate_active_implementation.py`.
-- Validate the local plan with `tools/codex-harness/validate_implementation_plan.py`.
-- Validate implementation owner and verifier attestations with `tools/codex-harness/validate_workflow_attestations.py`.
 - Use `docs/runbooks/implementation-workflow.md` as the step-by-step procedure.
+- Validate durable Spec Kit context with
+  `tools/codex-harness/validate_sdd_context.py`.
+- Keep useful evidence in `specs/<implementation>/evidence.md`.

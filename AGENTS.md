@@ -7,12 +7,10 @@ Synology NFS, Grafana/Loki/Mimir/Alloy.
 
 ## Start Here
 
-- Use Spec-Driven Development for repository changes. Start with
-  `docs/runbooks/spec-driven-development.md`, then keep implementation artifacts
+- Use Spec Kit for repository changes. Start with
+  `docs/runbooks/spec-driven-development.md`, follow
+  `docs/runbooks/implementation-workflow.md`, and keep implementation artifacts
   in `specs/<implementation>/`.
-- Use the mandatory implementation workflow in
-  `docs/runbooks/implementation-workflow.md`, accepted by
-  `docs/decisions/codex-implementation-workflow.md`.
 - Binding architecture and operating decisions live in `docs/decisions/`.
   SDD artifacts summarize and trace to them; they do not replace them.
 - General operational procedures live in `docs/runbooks/`; Codex-local notes live
@@ -41,27 +39,25 @@ Synology NFS, Grafana/Loki/Mimir/Alloy.
 - Preserve other people's work. Check the working tree before editing and avoid
   unrelated rewrites.
 
-## Implementation Ownership
+## Implementation Workflow
 
 - Break work into named implementations. One implementation maps to one branch,
   one `specs/<implementation>/` directory, and one PR.
-- Plan in `/workspaces/homelab`, but make tracked implementation edits only in
-  `/workspaces/homelab-ideas/<implementation>` on branch
-  `codex/<implementation>`.
-- Before tracked edits, create and validate `.codex/tmp/active-implementation`,
-  `.codex/tmp/implementation-plan.yaml`,
-  `.codex/tmp/implementation-owner-attestation.yaml`, and matching delegation
-  token evidence under `.codex/tmp/delegation-tokens/`.
-- Before cloning, stage required ignored local secret/config files under
+- Default tracked repository changes to a dedicated worktree:
+  `/workspaces/homelab-worktrees/<implementation>` on branch
+  `codex/<implementation>`. Use the current checkout only when explicitly
+  requested; sibling clones are an allowed fallback.
+- Run the Spec Kit cycle: specify, plan, tasks, then implement.
+- Before worktree or clone commands that need ignored local secret/config files,
+  stage them under
   `.codex/tmp/implementation-secrets/<implementation>/` in the main checkout
   without logging secret contents; install staged files into the same
-  repo-relative paths in implementation and verifier clones before commands that
-  need them.
+  repo-relative paths in worktrees or clones before commands that need them.
 - Runtime scratch files stay under `.codex/tmp/` and are not committed. Durable
   requirements, plans, tasks, and evidence stay under `specs/<implementation>/`.
-- Do not create verifier approval for your own implementation. A separate
-  verifier records `.codex/tmp/verifier-approved` and verifier attestation for
-  the exact `HEAD` before PR creation.
+- Push and PR automation require matching non-empty Spec Kit artifacts,
+  including `evidence.md`; normal GitHub PR review and status checks provide
+  review gating.
 
 ## Tool Routing
 

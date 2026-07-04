@@ -41,8 +41,8 @@ repos:
           - test
   - repo: local
     hooks:
-      - id: verifier-push-guard
-        name: Require verifier approval before origin push
+      - id: spec-kit-push-guard
+        name: Require Spec Kit evidence before origin push
         entry: .codex/hooks/verifier_push_guard.sh
         language: system
         stages: [pre-push]

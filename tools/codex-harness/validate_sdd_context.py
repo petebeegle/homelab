@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate durable Spec Kit context for an active implementation."""
+"""Validate durable Spec Kit context for a branch-scoped implementation."""
 
 from __future__ import annotations
 
@@ -19,9 +19,6 @@ if str(TOOLS_LIB) not in sys.path:
 
 from homelab_tools.git import discover_git_branch, discover_git_head, discover_git_root
 from validation_common import ValidationResult, path_from_cwd
-from validate_active_implementation import parse_marker, validate_marker
-
-
 REQUIRED_PLAN_ARTIFACTS = ("spec.md", "plan.md", "tasks.md")
 EVIDENCE_ARTIFACT = "evidence.md"
 EXPLICIT_HEAD_RE = re.compile(
@@ -38,8 +35,9 @@ SddContextValidationResult = ValidationResult
 def validate_sdd_context(
     *,
     root: Path | str,
-    marker: Mapping[str, str],
+    marker: Mapping[str, str] | None = None,
     current_branch: str | None = None,
+    implementation: str | None = None,
     require_plan_artifacts: bool = True,
     require_evidence: bool = False,
     current_head: str | None = None,
@@ -47,10 +45,19 @@ def validate_sdd_context(
     errors: list[str] = []
     root_path = Path(root)
 
-    marker_result = validate_marker(marker, current_root=root_path, current_branch=current_branch)
-    errors.extend(f"Active implementation marker: {error}" for error in marker_result.errors)
+    if marker is not None:
+        from validate_active_implementation import validate_marker
 
-    implementation = marker.get("implementation", "")
+        marker_result = validate_marker(marker, current_root=root_path, current_branch=current_branch)
+        errors.extend(f"Active implementation marker: {error}" for error in marker_result.errors)
+        implementation = marker.get("implementation", implementation or "")
+
+    if not implementation and current_branch and current_branch.startswith("codex/"):
+        implementation = current_branch.split("/", 1)[1]
+
+    if not implementation:
+        errors.append("Unable to determine implementation from --implementation, marker, or codex/<implementation> branch.")
+
     specs_dir = root_path / "specs" / implementation if implementation else root_path / "specs" / "<implementation>"
 
     if require_plan_artifacts:
@@ -69,12 +76,17 @@ def validate_sdd_context(
                 f"but current HEAD is {current_head}."
             )
 
-    return SddContextValidationResult({"implementation": implementation}, tuple(errors))
+    return SddContextValidationResult({"implementation": implementation or ""}, tuple(errors))
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Validate specs/<implementation>/ durable SDD context.")
-    parser.add_argument("--marker", default=".codex/tmp/active-implementation")
+    parser.add_argument(
+        "--marker",
+        default=None,
+        help="Optional old workflow marker. If omitted, infer implementation from codex/<implementation> branch.",
+    )
+    parser.add_argument("--implementation", help="Implementation slug. Defaults to codex/<implementation> branch suffix.")
     parser.add_argument("--root", help="Current repository root. Defaults to git rev-parse --show-toplevel.")
     parser.add_argument("--branch", help="Current branch. Defaults to git branch --show-current.")
     parser.add_argument(
@@ -98,22 +110,25 @@ def main(argv: Sequence[str] | None = None) -> int:
     root = Path(args.root) if args.root is not None else discover_git_root(Path.cwd())
     branch = args.branch if args.branch is not None else discover_git_branch(Path.cwd())
     head = args.head if args.head is not None else discover_git_head(Path.cwd())
-    marker_path = path_from_cwd(args.marker)
+    marker = None
+    if args.marker is not None:
+        marker_path = path_from_cwd(args.marker)
+        if not marker_path.is_file():
+            print(f"Active implementation marker not found: {marker_path}", file=sys.stderr)
+            return 1
+        try:
+            from validate_active_implementation import parse_marker
 
-    if not marker_path.is_file():
-        print(f"Active implementation marker not found: {marker_path}", file=sys.stderr)
-        return 1
-
-    try:
-        marker = parse_marker(marker_path)
-    except (OSError, ValueError) as exc:
-        print(f"Active implementation marker is invalid: {exc}", file=sys.stderr)
-        return 1
+            marker = parse_marker(marker_path)
+        except (OSError, ValueError) as exc:
+            print(f"Active implementation marker is invalid: {exc}", file=sys.stderr)
+            return 1
 
     result = validate_sdd_context(
         root=root,
         marker=marker,
         current_branch=branch,
+        implementation=args.implementation,
         require_plan_artifacts=args.require_plan_artifacts,
         require_evidence=args.require_evidence,
         current_head=head,

@@ -11,8 +11,8 @@ last_verified: 2026-07-03
 
 # Spec-Driven Development
 
-Use this runbook to plan Homelab changes with Spec Kit while preserving the
-mandatory implementation workflow and binding ADRs.
+Use this runbook to plan Homelab changes with Spec Kit while preserving binding
+ADRs and local branch/artifact guards.
 
 ## Authority
 
@@ -67,44 +67,32 @@ Each implementation owns:
 - `specs/<implementation>/tasks.md`
 - `specs/<implementation>/evidence.md`
 
-The implementation owner also owns local runtime files under `.codex/tmp/` in
-the sibling clone. These files are ignored and are not durable documentation.
-
-Verifier files under `.codex/tmp/` are owned by a separate verifier and are not
-created by the implementation owner.
+Runtime files under `.codex/tmp/` are ignored and are not durable
+documentation. Durable implementation context belongs in `specs/<implementation>/`.
 
 ## Enforced Guard Behavior
 
 The harness treats `specs/<implementation>/` as durable implementation context.
-After the initial SDD artifact bootstrap, non-bootstrap tracked edits require a
-valid implementation marker, implementation plan, owner attestation, delegation
-token, and non-empty:
+After the initial SDD artifact bootstrap, non-bootstrap tracked edits require
+branch `codex/<implementation>` and non-empty:
 
 - `specs/<implementation>/spec.md`
 - `specs/<implementation>/plan.md`
 - `specs/<implementation>/tasks.md`
 
-`specs/<implementation>/evidence.md` is required before verifier approval,
-automatic PR creation, final handoff, and non-smoke pushes. If evidence records
-an explicit final, verified, approved, branch, or current `HEAD`, the recorded
-SHA must match the current branch `HEAD`.
+`specs/<implementation>/evidence.md` is required before push and automatic PR
+creation. If evidence records an explicit final, verified, approved, branch, or
+current `HEAD`, the recorded SHA must match the current branch `HEAD`.
 
 Automatic PR creation runs these gates itself through
 `.codex/scripts/create_implementation_pr.sh --auto`; Stop-hook ordering is not
 the enforcement boundary.
 
-Development smoke validation may push the active implementation branch to
-`origin codex/<implementation>` before verifier approval only from a valid
-implementation clone with non-empty `spec.md`, `plan.md`, and `tasks.md`.
-Verifier approval for the exact `HEAD` remains mandatory for PR creation, final
-handoff, and non-smoke pushes.
-
 ## Spec Persistence
 
 Keep useful decisions, assumptions, acceptance criteria, test outcomes, smoke
 evidence, and exceptions in `specs/<implementation>/`. Use `.codex/tmp/` only
-for active workflow state such as markers, attestations, delegation tokens,
-verifier approval, and draft PR summaries.
+for local scratch state such as prompt-intent markers and draft PR summaries.
 
 If future operators need the information after the branch is merged, it belongs
 in a committed spec, runbook, ADR, or generated documentation.
@@ -112,7 +100,7 @@ in a committed spec, runbook, ADR, or generated documentation.
 ## Tiered Workflow
 
 Use the SDD tier in the spec and plan, and map it to the implementation workflow
-risk tier when writing `.codex/tmp/implementation-plan.yaml`.
+risk tier in `plan.md` when needed.
 
 | SDD tier | Use for | Expected evidence |
 | -------- | ------- | ----------------- |
@@ -126,26 +114,21 @@ risk tier when writing `.codex/tmp/implementation-plan.yaml`.
 
 ## Procedure
 
-1. Create a named implementation and branch plan in the main checkout.
-2. Create or reuse the sibling clone required by
-   `docs/runbooks/implementation-workflow.md`.
-3. Before tracked edits, create and validate `.codex/tmp/active-implementation`,
-   `.codex/tmp/implementation-plan.yaml`,
-   `.codex/tmp/implementation-owner-attestation.yaml`, and delegation token
-   evidence.
-4. Create `specs/<implementation>/spec.md` from
+1. Create a named implementation.
+2. Create or reuse the default worktree:
+   `/workspaces/homelab-worktrees/<implementation>` on branch
+   `codex/<implementation>`.
+3. Create `specs/<implementation>/spec.md` from
    `.specify/templates/spec-template.md`.
-5. Create `specs/<implementation>/plan.md` from
+4. Create `specs/<implementation>/plan.md` from
    `.specify/templates/plan-template.md`.
-6. Create `specs/<implementation>/tasks.md` from
+5. Create `specs/<implementation>/tasks.md` from
    `.specify/templates/tasks-template.md`.
-7. Create `specs/<implementation>/evidence.md` from
+6. Create `specs/<implementation>/evidence.md` from
    `.specify/templates/evidence-template.md`.
-8. Implement the change in the sibling clone only.
-9. Record command outcomes, development validation, exceptions, final `HEAD`,
+7. Implement the change in the worktree or explicitly selected checkout.
+8. Record command outcomes, development validation, exceptions, final `HEAD`,
    and documentation impact in `evidence.md`.
-10. Write `.codex/tmp/pr-summary.md` from the plan and evidence before verifier
-    handoff.
 
 ## Development Validation
 
@@ -155,7 +138,7 @@ Development-cluster validation follows
 
 Use `smoke_profile: none` only for docs-only/local-only work or when required
 development infrastructure or credentials are unavailable. Record the reason and
-substitute checks in both `evidence.md` and `.codex/tmp/pr-summary.md`.
+substitute checks in `evidence.md`.
 
 Use `--include-cluster-base` when shared development base resources must
 reconcile before app acceptance.
@@ -167,5 +150,5 @@ reconcile before app acceptance.
   expectations, docs impact, and risks.
 - Tasks are concrete enough for an implementation owner to execute.
 - Evidence includes exact command outcomes and exceptions.
-- `.codex/tmp` files are consistent with the implementation identity and branch.
-- The implementation owner did not create verifier approval.
+- The branch is `codex/<implementation>` and artifacts live under matching
+  `specs/<implementation>/`.

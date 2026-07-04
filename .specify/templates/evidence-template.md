@@ -3,7 +3,6 @@
 **Branch**: `codex/[IMPLEMENTATION]`
 **Risk Tier**: [tiny|low|medium|high]
 **Started**: [DATE]
-**Owner**: implementation-agent-[IMPLEMENTATION]
 
 ## Spec Kit Initialization
 
@@ -17,9 +16,7 @@
 
 | Command | Result | Notes |
 | ------- | ------ | ----- |
-| `python3 tools/codex-harness/validate_active_implementation.py ...` | [PASS/FAIL/SKIP] | [notes] |
-| `python3 tools/codex-harness/validate_implementation_plan.py ...` | [PASS/FAIL/SKIP] | [notes] |
-| `python3 tools/codex-harness/validate_workflow_attestations.py --kind owner ...` | [PASS/FAIL/SKIP] | [notes] |
+| `python3 tools/codex-harness/validate_sdd_context.py --root "$(pwd)" --branch "$(git branch --show-current)" --require-plan-artifacts` | [PASS/FAIL/SKIP] | [notes] |
 
 ## Local Checks
 
@@ -51,4 +48,3 @@
 - Final branch:
 - Final HEAD:
 - Commit:
-- Verifier approval: not created by implementation owner

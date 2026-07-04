@@ -11,7 +11,7 @@ Follow the canonical repository workflow instead of this prompt:
 - docs/decisions/*
 - tools/codex-harness/
 
-Use the assigned sibling clone and implementation identity from the user request.
-Keep changes narrow, preserve unrelated work, record SDD artifacts and evidence,
-and do not create verifier approval for your own implementation.
+Use the assigned worktree, clone, or checkout and implementation identity from
+the user request. Keep changes narrow, preserve unrelated work, and record SDD
+artifacts and evidence.
 """
