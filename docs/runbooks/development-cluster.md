@@ -25,7 +25,7 @@ Use this runbook to create, bootstrap, test, and clean up the dedicated developm
 - Gateway IPs: internal `192.168.30.225`, passthrough `192.168.30.226`, external `192.168.40.225`, external passthrough `192.168.40.226`
 - ACME: trusted Let's Encrypt production issuance through the shared Cloudflare issuer
 
-The development base intentionally includes CRDs, Cilium, cert-manager/certs, Gateway API, NFS CSI, and whoami. Authentik, games/media apps, Cloudflare tunnels, Renovate, VPN, and the full monitoring stack are omitted to keep the single-node cluster resource-conscious and to avoid production-only secrets or traffic paths unless a test explicitly needs them.
+The development base intentionally includes CRDs, Cilium, cert-manager/certs, Gateway API, NFS CSI, whoami, and the development Homepage deployment at `homepage.${cluster_domain}`. In the live development cluster, that resolves to `https://homepage.dev.lab.petebeegle.com`. Authentik, games/media apps, Cloudflare tunnels, Renovate, VPN, and the full monitoring stack are omitted to keep the single-node cluster resource-conscious and to avoid production-only secrets or traffic paths unless a test explicitly needs them.
 
 ## Local Tfvars
 
@@ -128,9 +128,9 @@ Branch environments are for app-scoped validation on the development cluster. Us
 <app>-${branch_slug}.dev.lab.petebeegle.com
 ```
 
-Use `tools/development/verify_branch_deploy.py` as the canonical path for future branch validation. The tool loads JSON smoke profiles from `tools/development/smoke-profiles/`, renders the matching activation template, applies it directly to the development cluster, forces Flux reconciliation, checks the branch namespace and active pods, runs profile resource checks, and then removes the temporary branch Flux resources unless `--keep` is set. Automated profiles currently cover `whoami`, `jellyfin`, and `home-assistant`.
+Use `tools/development/verify_branch_deploy.py` as the canonical path for future branch validation. The tool loads JSON smoke profiles from `tools/development/smoke-profiles/`, renders the matching activation template, applies it directly to the development cluster, forces Flux reconciliation, checks the branch namespace and active pods, runs profile resource checks, and then removes the temporary branch Flux resources unless `--keep` is set. Automated profiles currently cover `whoami`, `jellyfin`, `home-assistant`, and `homepage`.
 
-The `whoami` profile checks the branch namespace, branch Flux Kustomization readiness, active pods, Service, and HTTPRoute. The `jellyfin` profile checks the branch namespace, branch Flux Kustomization readiness, HelmRelease readiness, active pods, config PVC binding on `nfs-csi-storage`, Service, HTTPRoute, and an in-cluster HTTP probe for the Jellyfin web shell. The `home-assistant` profile checks the branch namespace, branch Flux Kustomization readiness, active pods, config PVC binding on `nfs-csi-storage`, Service, HTTPRoute, and an in-cluster HTTP probe for the Home Assistant web shell.
+The `whoami` profile checks the branch namespace, branch Flux Kustomization readiness, active pods, Service, and HTTPRoute. The `jellyfin` profile checks the branch namespace, branch Flux Kustomization readiness, HelmRelease readiness, active pods, config PVC binding on `nfs-csi-storage`, Service, HTTPRoute, and an in-cluster HTTP probe for the Jellyfin web shell. The `home-assistant` profile checks the branch namespace, branch Flux Kustomization readiness, active pods, config PVC binding on `nfs-csi-storage`, Service, HTTPRoute, and an in-cluster HTTP probe for the Home Assistant web shell. The `homepage` profile checks the branch namespace, active pods, Service, HTTPRoute, and an in-cluster HTTP probe for the dashboard shell.
 
 Activation templates are in `kubernetes/clusters/development/branches/`, and branch-aware app payload overlays live under paths such as `kubernetes/apps/whoami/branch/` and `kubernetes/apps/jellyfin/branch/`. The cluster-layer template creates the Flux `GitRepository` and `Kustomization` that point at a branch; the app overlay is the rendered workload payload that Flux applies after substituting `${branch_slug}`. The templates are not referenced from the live development entrypoint and are suspended by default. The verification tool fills `branch_name` and `branch_slug`, sets both Flux objects to `suspend: false`, and applies the rendered activation temporarily.
 
@@ -166,6 +166,12 @@ Normal live verification for Jellyfin:
 
 ```sh
 python3 tools/development/verify_branch_deploy.py --app jellyfin --branch codex/jellyfin-change --slug jellyfin-change --push
+```
+
+Normal live verification for Homepage:
+
+```sh
+python3 tools/development/verify_branch_deploy.py --app homepage --branch codex/homepage-change --slug homepage-change --push
 ```
 
 Normal live verification for Home Assistant:

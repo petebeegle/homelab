@@ -2,7 +2,7 @@
 
 `verify_branch_deploy.py` runs app-scoped development branch smoke checks from
 profiles in `tools/development/smoke-profiles/`. It currently supports
-`whoami`, `jellyfin`, and `home-assistant`.
+`whoami`, `jellyfin`, `home-assistant`, and `homepage`.
 
 For prerequisites, cleanup expectations, and how development validation fits the
 implementation workflow, see
@@ -41,6 +41,12 @@ The Jellyfin profile verifies the branch namespace, Flux Kustomization and HelmR
 
 ```sh
 python3 tools/development/verify_branch_deploy.py --app jellyfin --branch codex/jellyfin-change --slug jellyfin-change --push
+```
+
+The Homepage profile verifies the branch namespace, active pod readiness, Service existence, HTTPRoute attachment, and an in-cluster HTTP probe against the dashboard shell:
+
+```sh
+python3 tools/development/verify_branch_deploy.py --app homepage --branch codex/homepage-change --slug homepage-change --push
 ```
 
 The Home Assistant profile verifies the branch namespace, Flux Kustomization readiness, active pod readiness, config PVC binding on `nfs-csi-storage`, Service existence, HTTPRoute attachment, and an in-cluster HTTP probe against the Home Assistant web shell:

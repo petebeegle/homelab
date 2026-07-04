@@ -1,0 +1,198 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homepage-public-config
+  namespace: homepage
+  labels:
+    app.kubernetes.io/name: homepage
+data:
+  settings.yaml: |
+    title: Home Lab
+    description: Homelab services and cluster status
+    target: _self
+    statusStyle: dot
+    hideVersion: true
+    showStats: true
+    layout:
+      Core:
+        style: row
+        columns: 4
+      Media:
+        style: row
+        columns: 4
+      Operations:
+        style: row
+        columns: 4
+      Platform:
+        style: row
+        columns: 4
+  services.yaml: |
+    - Core:
+        - Homepage:
+            icon: homepage.png
+            href: https://${homepage_target_domain}
+            description: Homelab dashboard
+            namespace: homepage
+            app: homepage
+        - Authentik:
+            icon: authentik.png
+            href: https://authentik.${homepage_target_domain}
+            description: Single sign-on
+            namespace: authentik
+            app: authentik
+        - Pi-hole:
+            icon: pi-hole.png
+            href: https://pihole.${homepage_target_domain}
+            description: DNS and ad blocking
+            namespace: pihole
+            app: pihole
+        - WireGuard:
+            icon: wireguard.png
+            href: https://vpn.${homepage_target_domain}
+            description: VPN administration
+            namespace: wireguard
+            app: wireguard
+        - Home Assistant:
+            icon: home-assistant.png
+            href: https://homeassistant.${homepage_target_domain}
+            description: Home automation
+            namespace: home-assistant
+            app: home-assistant
+        - Synology:
+            icon: synology.png
+            href: https://synology.petebeegle.com
+            description: NAS administration
+            namespace: external
+            app: synology-proxy
+    - Media:
+        - Jellyfin:
+            icon: jellyfin.png
+            href: https://jellyfin.${homepage_target_domain}
+            description: Media library
+            namespace: jellyfin
+            app: jellyfin
+        - Foundry VTT:
+            icon: foundry-vtt.png
+            href: https://foundry.${homepage_target_domain}
+            description: Virtual tabletop
+            namespace: foundryvtt
+            app: foundryvtt
+        - Valheim:
+            icon: mdi-gamepad-variant
+            description: Game server
+            namespace: valheim
+            app: valheim-server
+    - Operations:
+        - Grafana:
+            icon: grafana.png
+            href: https://monitoring.${homepage_target_domain}
+            description: Observability
+            namespace: grafana
+            app: grafana
+        - Whoami:
+            icon: mdi-test-tube
+            href: https://whoami.${homepage_target_domain}
+            description: Gateway routing canary
+            namespace: whoami
+            app: whoami
+        - Renovate:
+            icon: renovate.png
+            description: Dependency automation
+            namespace: renovate
+            app: renovate
+        - Synthetics:
+            icon: mdi-pulse
+            description: Route smoke checks
+            namespace: synthetics
+            app: synthetic-smoke
+    - Platform:
+        - Cloudflare Tunnel:
+            icon: cloudflare.png
+            description: Public tunnel connector
+            namespace: cloudflare
+            app: cloudflared
+        - Cilium:
+            icon: cilium.png
+            description: CNI and Gateway dataplane
+            namespace: kube-system
+            app: cilium
+        - cert-manager:
+            icon: cert-manager.png
+            description: Certificate automation
+            namespace: cert-manager
+            app: cert-manager
+        - NFS CSI:
+            icon: mdi-nas
+            description: Synology-backed storage
+            namespace: kube-system
+            app: csi-driver-nfs
+        - Metrics Server:
+            icon: kubernetes.png
+            description: Kubernetes resource metrics
+            namespace: kube-system
+            app: metrics-server
+        - Grafana Operator:
+            icon: grafana.png
+            description: Grafana CRD controller
+            namespace: grafana-operator
+            app: grafana-operator
+        - Loki:
+            icon: grafana-loki.png
+            description: Log storage
+            namespace: loki
+            app: loki
+        - Mimir:
+            icon: grafana-mimir.png
+            description: Metrics storage
+            namespace: mimir
+            app: mimir
+        - Alloy:
+            icon: grafana-alloy.png
+            description: Telemetry collector
+            namespace: alloy
+            app: alloy
+        - OpenTelemetry Collector:
+            icon: opentelemetry.png
+            description: OTLP ingest endpoint
+            namespace: otel-collector
+            app: otel-collector
+  bookmarks.yaml: |
+    - Repositories:
+        - Homelab:
+            - abbr: Git
+              href: https://github.com/petebeegle/homelab
+  widgets.yaml: |
+    - kubernetes:
+        cluster:
+          show: true
+          cpu: true
+          memory: true
+          showLabel: true
+          label: cluster
+        nodes:
+          show: true
+          cpu: true
+          memory: true
+          showLabel: true
+    - search:
+        provider: duckduckgo
+        target: _blank
+    - datetime:
+        text_size: xl
+        format:
+          dateStyle: long
+          timeStyle: short
+  kubernetes.yaml: |
+    mode: cluster
+    ingress: false
+    traefik: false
+    gateway: true
+  docker.yaml: |
+    {}
+  custom.css: |
+    :root {
+      --homepage-dashboard-note: "homelab-public-config";
+    }
+  custom.js: |
+    // Public Homepage custom JavaScript intentionally left minimal.

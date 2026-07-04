@@ -1,0 +1,22 @@
+{
+  "app": "homepage",
+  "gitRepository": "branch-homepage-${branch_slug}",
+  "activationTemplate": "kubernetes/clusters/development/branches/homepage-template.yaml",
+  "namespace": "homepage-${branch_slug}",
+  "checks": {
+    "services": [
+      "homepage-${branch_slug}"
+    ],
+    "httpRoutes": [
+      "homepage-${branch_slug}"
+    ],
+    "httpProbes": [
+      {
+        "service": "homepage-${branch_slug}",
+        "port": 80,
+        "path": "/",
+        "bodyRegex": "Home Lab|Branch|Homepage"
+      }
+    ]
+  }
+}

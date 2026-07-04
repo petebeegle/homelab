@@ -6,6 +6,7 @@ metadata:
   namespace: flux-system
 data:
   cluster_domain: "dev.lab.petebeegle.com"
+  homepage_target_domain: "lab.petebeegle.com"
   cluster_env: "development"
   gateway_internal_pool: "192.168.30.224/28"
   gateway_external_pool: "192.168.40.224/28"

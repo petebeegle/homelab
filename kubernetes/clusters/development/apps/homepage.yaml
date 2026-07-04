@@ -2,12 +2,12 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: app-synthetics
+  name: app-homepage
   namespace: flux-system
 spec:
   interval: 5m
   retryInterval: 2m
-  path: ./kubernetes/apps/synthetics
+  path: ./kubernetes/apps/homepage/development
   prune: true
   wait: true
   sourceRef:
@@ -15,14 +15,7 @@ spec:
     name: flux-system
   dependsOn:
     - name: gateway
-    - name: grafana
-    - name: authentik
-    - name: app-whoami
-    - name: app-homepage
-    - name: app-jellyfin
-    - name: app-home-assistant
-    - name: app-pihole
-    - name: app-foundryvtt
+    - name: metrics-server
   postBuild:
     substituteFrom:
       - kind: ConfigMap

@@ -1,0 +1,98 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../base
+patches:
+  - target:
+      version: v1
+      kind: ConfigMap
+      name: homepage-public-config
+      namespace: homepage
+    patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: homepage-public-config
+        namespace: homepage
+      data:
+        services.yaml: |
+          - Core:
+              - Homepage:
+                  icon: homepage.png
+                  href: https://lab.petebeegle.com
+                  description: Homelab dashboard
+              - Authentik:
+                  icon: authentik.png
+                  href: https://authentik.lab.petebeegle.com
+                  description: Single sign-on
+              - Pi-hole:
+                  icon: pi-hole.png
+                  href: https://pihole.lab.petebeegle.com
+                  description: DNS and ad blocking
+              - WireGuard:
+                  icon: wireguard.png
+                  href: https://vpn.lab.petebeegle.com
+                  description: VPN administration
+              - Home Assistant:
+                  icon: home-assistant.png
+                  href: https://homeassistant.lab.petebeegle.com
+                  description: Home automation
+              - Synology:
+                  icon: synology.png
+                  href: https://synology.petebeegle.com
+                  description: NAS administration
+          - Media:
+              - Jellyfin:
+                  icon: jellyfin.png
+                  href: https://jellyfin.lab.petebeegle.com
+                  description: Media library
+              - Foundry VTT:
+                  icon: foundry-vtt.png
+                  href: https://foundry.lab.petebeegle.com
+                  description: Virtual tabletop
+          - Operations:
+              - Grafana:
+                  icon: grafana.png
+                  href: https://monitoring.lab.petebeegle.com
+                  description: Observability
+              - Whoami:
+                  icon: mdi-test-tube
+                  href: https://whoami.lab.petebeegle.com
+                  description: Gateway routing canary
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: homepage
+      namespace: homepage
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: homepage
+        namespace: homepage
+      spec:
+        template:
+          spec:
+            containers:
+              - name: homepage
+                env:
+                  - name: HOMEPAGE_ALLOWED_HOSTS
+                    value: homepage.${cluster_domain}
+  - target:
+      group: gateway.networking.k8s.io
+      version: v1
+      kind: HTTPRoute
+      name: homepage
+      namespace: homepage
+    patch: |-
+      - op: replace
+        path: /spec/hostnames/0
+        value: homepage.${cluster_domain}
+      - op: replace
+        path: /spec/parentRefs/0/sectionName
+        value: https-gateway
+      - op: replace
+        path: /spec/parentRefs/1/sectionName
+        value: https-gateway
