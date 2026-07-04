@@ -11,6 +11,16 @@ last_verified: 2026-07-03
 
 Home Assistant runs as a declarative Kubernetes app from `ghcr.io/home-assistant/home-assistant:2026.7.0`. Its writable `/config` directory is backed by the `home-assistant-config` PVC on `nfs-csi-storage`; Git-owned YAML files are mounted over the runtime config files from ConfigMaps. Do not commit runtime `.storage` state.
 
+Home Information is GitOps-owned under the `homeassistant:` key in
+`configuration.yaml`, so the Home Assistant UI intentionally renders those
+fields read-only. Public regional defaults live directly in the ConfigMap:
+`country: US`, `time_zone: America/New_York`, `currency: USD`, and
+`unit_system: us_customary`. Exact home latitude, longitude, and elevation are
+loaded through `!secret` references from `/config/secrets.yaml`, which is
+mounted from the SOPS-encrypted `home-assistant-secrets` Kubernetes Secret.
+Update those location values through `kubernetes/apps/home-assistant/secret.yaml`
+and keep the manifest encrypted before staging.
+
 The production app uses Authentik OIDC through `christiaangoossens/hass-oidc-auth` pinned to `v1.1.1`, installed by the pod init container into `/config/custom_components/auth_oidc`. The Authentik blueprint creates `Home Assistant Users`, `Home Assistant Admins`, the public `home-assistant` OAuth2/OIDC provider, and the strict redirect URI `https://homeassistant.${cluster_domain}/auth/oidc/callback`.
 
 `auth_oidc` is configured in `configuration.yaml` with `default_redirect: true` and `force_https: true`. The native `homeassistant` auth provider stays enabled as a recovery login. To use that fallback while default redirect is enabled, open `https://homeassistant.${cluster_domain}/?skip_oidc_redirect=true`.
