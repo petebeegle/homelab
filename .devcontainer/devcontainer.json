@@ -6,7 +6,7 @@
   "features": {
     "ghcr.io/petebeegle/devcontainer-features/cilium:1": {},
     "ghcr.io/petebeegle/devcontainer-features/flux:1": {},
-    "ghcr.io/devcontainers/features/terraform:1.4.1": {
+    "ghcr.io/devcontainers/features/terraform:1.4.4": {
       "terragrunt": "none"
     },
     "ghcr.io/petebeegle/devcontainer-features/talosctl:1": {},
