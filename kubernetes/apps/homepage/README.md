@@ -1,6 +1,6 @@
 # Homepage
 
-Homepage serves the LAN and WireGuard dashboard at `https://${cluster_domain}`. It is not exposed through the public Cloudflare Gateway.
+Homepage serves the LAN and WireGuard dashboard at `https://homepage.${cluster_domain}`. It is not exposed through the public Cloudflare Gateway.
 
 ## Configuration
 
@@ -30,4 +30,4 @@ data:
 
 ## DNS
 
-The root `${cluster_domain}` hostname must resolve to the Cilium Gateway service plane being used by the client. LAN DNS should point it at `gateway/internal`; WireGuard DNS points both the root name and wildcard names at `gateway/external`.
+The `homepage.${cluster_domain}` hostname must resolve to the Cilium Gateway service plane being used by the client. LAN DNS should point it at `gateway/internal`; WireGuard DNS points wildcard names at `gateway/external`.
