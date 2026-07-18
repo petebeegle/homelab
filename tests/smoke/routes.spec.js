@@ -27,8 +27,8 @@ async function expectNotHomeAssistantOnboarding(page) {
 }
 
 test.describe("homelab routed services", () => {
-  test("homepage serves the dashboard at the root domain", async ({ page }) => {
-    await gotoOk(page, urlFor(""));
+  test("homepage serves the dashboard at the homepage subdomain", async ({ page }) => {
+    await gotoOk(page, urlFor("homepage"));
     await expect(page.locator("body")).toContainText(/Home Lab|Core|Operations|Homepage/i);
   });
 
