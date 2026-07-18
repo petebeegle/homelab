@@ -11,5 +11,6 @@ data:
   DISCORD_ADMIN_USER_IDS: "252951660027052033"
   AUTHENTIK_BASE_URL: "http://authentik-server.authentik.svc.cluster.local"
   WGEASY_BASE_URL: "http://wireguard-http.wireguard.svc.cluster.local:51821"
+  WGEASY_USERNAME: "admin"
   ACCESS_STORE_PATH: "/data/homelab-access.json"
   DOWNLOAD_TOKEN_TTL: "15m"
