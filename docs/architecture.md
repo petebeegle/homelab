@@ -78,7 +78,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `production` | `monitoring` | `./kubernetes/infra/monitoring` | (none) | `cluster-vars` | `sops` |
 | `production` | `nfs-csi` | `./kubernetes/infra/controllers/nfs-csi` | (none) | `cluster-vars` | `no` |
 | `production` | `otel-collector` | `./kubernetes/infra/monitoring/otel-collector` | `crds`, `gateway` | `cluster-vars` | `no` |
-| `production` | `vpn` | `./kubernetes/infra/network/vpn` | `cilium`, `nfs-csi`, `gateway` | `cluster-vars` | `sops` |
+| `production` | `vpn` | `./kubernetes/infra/network/vpn` | `cilium`, `nfs-csi`, `gateway`, `authentik` | `cluster-vars` | `sops` |
 | `development` | `cert-manager` | `./kubernetes/infra/controllers/cert-manager` | `crds` | `cluster-vars` | `sops` |
 | `development` | `certs` | `./kubernetes/infra/network/certs` | `cert-manager`, `cilium` | `cluster-vars` | `no` |
 | `development` | `cilium` | `./kubernetes/infra/network/cilium` | `crds` | `cluster-vars` | `no` |
@@ -107,7 +107,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `production` | `private-apps` | `./kubernetes/clusters/production/apps` | `private-source` | `cluster-vars` | `sops` |
 | `production` | `private-source` | `./kubernetes/clusters/production/apps/private/source` | (none) | `(none)` | `sops` |
 | `production` | `app-renovate` | `./kubernetes/apps/renovate` | `gateway` | `cluster-vars` | `sops` |
-| `production` | `app-synthetics` | `./kubernetes/apps/synthetics` | `gateway`, `grafana`, `authentik`, `app-whoami`, `app-homepage`, `app-jellyfin`, `app-immich`, `app-home-assistant`, `app-pihole`, `app-foundryvtt` | `cluster-vars` | `no` |
+| `production` | `app-synthetics` | `./kubernetes/apps/synthetics` | `gateway`, `grafana`, `authentik`, `vpn`, `app-whoami`, `app-homepage`, `app-jellyfin`, `app-immich`, `app-home-assistant`, `app-pihole`, `app-foundryvtt` | `cluster-vars` | `no` |
 | `production` | `app-valheim` | `./kubernetes/apps/valheim` | `gateway`, `nfs-csi` | `cluster-vars` | `sops` |
 | `production` | `app-whoami` | `./kubernetes/apps/whoami` | `gateway` | `cluster-vars` | `no` |
 | `development` | `app-foundry-bluegreen-fixture` | `./kubernetes/apps/foundry-bluegreen-fixture` | `gateway`, `nfs-csi` | `cluster-vars` | `no` |
@@ -118,7 +118,7 @@ This document is generated for agentic repo navigation. It records relationships
 
 | Component path | Listed resources |
 | --- | --- |
-| `kubernetes/infra/authentik` | `namespace.yaml`, `app.yaml`, `secret.yaml`, `httproute.yaml`, `blueprints` |
+| `kubernetes/infra/authentik` | `namespace.yaml`, `app.yaml`, `secret.yaml`, `httproute.yaml`, `referencegrant.yaml`, `blueprints` |
 | `kubernetes/infra/controllers/cert-manager` | `app.yaml`, `secret.yaml` |
 | `kubernetes/infra/controllers/cloudnative-pg` | `namespace.yaml`, `app.yaml` |
 | `kubernetes/infra/controllers/grafana-operator` | `namespace.yaml`, `app.yaml` |
@@ -194,7 +194,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `HTTPRoute` | `pihole/pihole-httproute` | `pihole.${cluster_domain}` | `gateway/internal/https-gateway` | `pihole-web:80` |
 | `HTTPRoute` | `whoami-${branch_slug}/whoami-${branch_slug}` | `whoami-${branch_slug}.${cluster_domain}` | `gateway/internal/https-gateway` | `whoami-${branch_slug}:80` |
 | `HTTPRoute` | `whoami/whoami` | `whoami.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `whoami:80` |
-| `HTTPRoute` | `wireguard/wireguard-ui` | `vpn.${cluster_domain}` | `gateway/internal/https-gateway` | `wireguard-http:51821` |
+| `HTTPRoute` | `wireguard/wireguard-ui` | `vpn.${cluster_domain}` | `gateway/internal/https-gateway` | `authentik-server:80` |
 | `TLSRoute` | `external/pve01-route` | `pve01.petebeegle.com` | `gateway/passthrough` | `pve01:8006` |
 | `TLSRoute` | `external/pve02-route` | `pve02.petebeegle.com` | `gateway/passthrough` | `pve02:8006` |
 | `TLSRoute` | `external/pve03-route` | `pve03.petebeegle.com` | `gateway/passthrough` | `pve03:8006` |

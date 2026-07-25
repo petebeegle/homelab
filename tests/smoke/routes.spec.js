@@ -42,6 +42,18 @@ test.describe("homelab routed services", () => {
     await expect(page.locator("body")).toContainText(/authentik|Sign in|Login|Username/i);
   });
 
+  test("wireguard reaches Authentik before the wg-easy UI", async ({ page }) => {
+    await gotoOk(page, urlFor("vpn"));
+    await expect(page).toHaveURL(/authentik\.|vpn\.[^/]+\/outpost\.goauthentik\.io\//i);
+    await expect(page.locator("body")).toContainText(/authentik|Sign in|Login|Username/i);
+  });
+
+  test("wireguard reaches Authentik before the wg-easy API", async ({ page }) => {
+    await gotoOk(page, urlFor("vpn", "/api/client"));
+    await expect(page).toHaveURL(/authentik\.|vpn\.[^/]+\/outpost\.goauthentik\.io\//i);
+    await expect(page.locator("body")).toContainText(/authentik|Sign in|Login|Username/i);
+  });
+
   test("grafana reaches the login or landing shell", async ({ page }) => {
     await gotoOk(page, urlFor("monitoring"));
     await expect(page.locator("body")).toContainText(/Grafana|Login|Sign in|Welcome/i);

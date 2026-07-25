@@ -20,3 +20,6 @@ configMapGenerator:
   - name: synology-oauth-blueprint
     files:
       - synology-oauth.yaml
+  - name: wireguard-proxy-blueprint
+    files:
+      - wireguard-proxy.yaml

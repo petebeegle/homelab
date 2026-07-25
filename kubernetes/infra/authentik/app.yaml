@@ -41,6 +41,7 @@ spec:
         - jellyfin-oauth-blueprint
         - immich-oauth-blueprint
         - synology-oauth-blueprint
+        - wireguard-proxy-blueprint
       secrets:
         - private-authentik-blueprints
   valuesFrom:

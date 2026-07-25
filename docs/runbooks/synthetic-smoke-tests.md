@@ -13,6 +13,8 @@ The checks are intentionally deeper than pod readiness and lighter than full aut
 - `whoami.${cluster_domain}` verifies the baseline Gateway TLS path.
 - `homepage.${cluster_domain}` verifies the Homepage dashboard route.
 - `authentik.${cluster_domain}` verifies the SSO start or login page.
+- `vpn.${cluster_domain}` verifies both the root and a representative wg-easy
+  API path reach Authentik before any wg-easy response.
 - `monitoring.${cluster_domain}` verifies the Grafana login or landing shell.
 - `jellyfin.${cluster_domain}` verifies the Jellyfin web shell.
 - `pihole.${cluster_domain}` verifies the root redirect reaches the Pi-hole admin/login shell.
@@ -98,6 +100,11 @@ sum by (failed_tests) (count_over_time({namespace="synthetics", app="synthetic-s
 7. Avoid raw `${...}` syntax in mirrored smoke files unless Flux should substitute it; Flux post-build substitution scans the generated ConfigMap data.
 8. Add the app Flux Kustomization to `app-synthetics` `dependsOn` when the probe requires that app to exist first.
 9. Run `python3 tools/policy/check_synthetic_smoke_mirroring.py` or `pre-commit run synthetic-smoke-mirroring --all-files`, run the suite locally when the route is reachable, then create a manual Job after Flux applies the change.
+
+For Authentik-proxied applications such as WireGuard, use a fresh unauthenticated
+browser context and assert the final URL and page shell belong to Authentik.
+Probe a representative non-mutating upstream path as well as `/` so a
+path-specific Gateway bypass cannot expose the application API.
 
 ## Dashboard And Alert
 

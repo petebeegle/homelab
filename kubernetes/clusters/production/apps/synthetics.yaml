@@ -17,6 +17,7 @@ spec:
     - name: gateway
     - name: grafana
     - name: authentik
+    - name: vpn
     - name: app-whoami
     - name: app-homepage
     - name: app-jellyfin

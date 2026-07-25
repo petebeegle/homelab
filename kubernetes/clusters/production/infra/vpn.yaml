@@ -17,6 +17,7 @@ spec:
     - name: cilium
     - name: nfs-csi
     - name: gateway
+    - name: authentik
   decryption:
     provider: sops
     secretRef:
