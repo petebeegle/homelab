@@ -26,6 +26,19 @@ async function expectNotHomeAssistantOnboarding(page) {
   ).toBe(false);
 }
 
+async function expectAuthentikGate(page, response) {
+  const headers = await response.allHeaders();
+  const body = page.locator("body");
+
+  expect(
+    /authentik/i.test(headers["x-powered-by"] || "") ||
+      /authentik\.|\/(?:if\/flow|flows\/-|outpost\.goauthentik\.io)\//i.test(page.url()),
+    "request should be handled by Authentik"
+  ).toBe(true);
+  await expect(body).toContainText(/authentik|Sign in|Login|Username/i);
+  await expect(body).not.toContainText(/wg-easy|WireGuard Easy|New Client/i);
+}
+
 test.describe("homelab routed services", () => {
   test("homepage serves the dashboard at the homepage subdomain", async ({ page }) => {
     await gotoOk(page, urlFor("homepage"));
@@ -43,15 +56,13 @@ test.describe("homelab routed services", () => {
   });
 
   test("wireguard reaches Authentik before the wg-easy UI", async ({ page }) => {
-    await gotoOk(page, urlFor("vpn"));
-    await expect(page).toHaveURL(/authentik\.|vpn\.[^/]+\/outpost\.goauthentik\.io\//i);
-    await expect(page.locator("body")).toContainText(/authentik|Sign in|Login|Username/i);
+    const response = await gotoOk(page, urlFor("vpn"));
+    await expectAuthentikGate(page, response);
   });
 
   test("wireguard reaches Authentik before the wg-easy API", async ({ page }) => {
-    await gotoOk(page, urlFor("vpn", "/api/client"));
-    await expect(page).toHaveURL(/authentik\.|vpn\.[^/]+\/outpost\.goauthentik\.io\//i);
-    await expect(page.locator("body")).toContainText(/authentik|Sign in|Login|Username/i);
+    const response = await gotoOk(page, urlFor("vpn", "/api/client"));
+    await expectAuthentikGate(page, response);
   });
 
   test("grafana reaches the login or landing shell", async ({ page }) => {
