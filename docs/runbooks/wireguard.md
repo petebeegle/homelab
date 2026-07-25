@@ -8,6 +8,8 @@ The human administration URL, `https://vpn.<cluster-domain>`, is LAN-only on
 `gateway/internal` and is protected by the Authentik embedded proxy outpost.
 The Authentik `wireguard-proxy` provider forwards authorized requests to
 `http://wireguard-http.wireguard.svc.cluster.local:51821`.
+See `docs/runbooks/authentik-proxy-apps.md` before adding or changing proxy
+providers; the embedded outpost provider list has a single authoritative owner.
 
 Access is allowed to either of these Authentik groups:
 

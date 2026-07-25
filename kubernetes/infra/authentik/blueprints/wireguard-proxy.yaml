@@ -54,10 +54,3 @@ entries:
       order: 1
     attrs:
       group: !Find [authentik_core.group, [name, authentik Admins]]
-
-  - model: authentik_outposts.outpost
-    identifiers:
-      managed: goauthentik.io/outposts/embedded
-    attrs:
-      providers:
-        - !Find [authentik_providers_proxy.proxyprovider, [name, wireguard-proxy]]
