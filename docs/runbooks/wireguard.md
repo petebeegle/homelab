@@ -2,6 +2,93 @@
 
 Use this runbook to check the `wg-easy` deployment that provides VPN access to the external `192.168.40.x` service plane.
 
+## Administration Authentication
+
+The human administration URL, `https://vpn.<cluster-domain>`, is LAN-only on
+`gateway/internal` and is protected by the Authentik embedded proxy outpost.
+The Authentik `wireguard-proxy` provider forwards authorized requests to
+`http://wireguard-http.wireguard.svc.cluster.local:51821`.
+
+Access is allowed to either of these Authentik groups:
+
+- `WireGuard Admins` for normal delegated administration.
+- Built-in `authentik Admins` for break-glass access and initial population of
+  `WireGuard Admins`.
+
+Users in neither group must receive an Authentik authorization denial. The
+provider does not configure unauthenticated paths or inject the wg-easy
+credential. After Authentik authorization, wg-easy's existing login remains as
+defense in depth.
+
+The Gateway route fails closed through Authentik. If Authentik or the embedded
+outpost is unavailable, do not add a durable direct-to-wg-easy backend as a
+workaround. Restore service through Git by fixing Authentik or reverting the
+change that introduced the proxy route.
+
+### Machine Access Boundary
+
+Trusted in-cluster automation, including access-broker, continues to use:
+
+```text
+http://wireguard-http.wireguard.svc.cluster.local:51821
+```
+
+That ClusterIP path uses the existing wg-easy username and SOPS-encrypted
+password. It does not traverse browser SSO. Do not expose the ClusterIP
+credential through Authentik headers or synthetic-test output.
+
+Authentik protects only the HTTP administration hostname. The WireGuard UDP
+Service, peer keys, tunnel routing, VPN DNS, and existing client configurations
+are unchanged.
+
+### Verify The Authentication Path
+
+First verify the reconciled resource chain:
+
+```bash
+. scripts/kube-aliases.sh
+fp get kustomizations authentik vpn app-synthetics
+kp -n authentik get helmrelease authentik
+kp -n authentik get referencegrant wireguard-routes-to-authentik-server -o yaml
+kp -n wireguard get httproute wireguard-ui -o yaml
+```
+
+The `wireguard-ui` route must report `Accepted=True` and
+`ResolvedRefs=True`, and its only backend must be
+`authentik/authentik-server:80`.
+
+Use separate browser contexts for the user-path checks:
+
+1. With no Authentik session, open both `/` and `/api/client` on the `vpn`
+   hostname. Both must reach Authentik before exposing wg-easy.
+2. With a user in neither authorized group, confirm Authentik denies access.
+3. With a `WireGuard Admins` or `authentik Admins` account, confirm Authentik
+   permits access and wg-easy presents its existing login/UI.
+
+After the blueprint first reconciles, use an existing `authentik Admins`
+account to populate `WireGuard Admins`. Keep at least one tested break-glass
+administrator.
+
+Then verify the unchanged non-browser paths:
+
+1. Connect one existing WireGuard peer and reach an already allowed
+   `192.168.40.0/24` service-plane destination.
+2. Run the existing credentialed access-broker/wg-easy API smoke through the
+   ClusterIP Service without logging the password or response secrets.
+3. Confirm neither check requires regenerating a peer or changing the wg-easy
+   database.
+
+Run the production synthetic suite after the user-path checks:
+
+```bash
+kp create job -n synthetics synthetic-smoke-manual-$(date +%Y%m%d%H%M%S) \
+  --from=cronjob/synthetic-smoke
+kp logs -n synthetics -l app.kubernetes.io/name=synthetic-smoke --tail=200
+```
+
+The WireGuard root and API-path tests must pass and the run must emit one
+`SMOKE_RUN_SUMMARY` line with `status=success`.
+
 ## Client Routing Defaults
 
 Global wg-easy client defaults are managed in `kubernetes/infra/network/vpn/global-config.yaml`.

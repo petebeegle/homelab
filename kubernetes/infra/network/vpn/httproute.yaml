@@ -18,6 +18,7 @@ spec:
             value: /
 
       backendRefs:
-        - name: wireguard-http
-          port: 51821
+        - name: authentik-server
+          namespace: authentik
+          port: 80
           weight: 1

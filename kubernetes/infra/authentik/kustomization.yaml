@@ -6,6 +6,7 @@ resources:
   - app.yaml
   - secret.yaml
   - httproute.yaml
+  - referencegrant.yaml
   - blueprints
 
 configMapGenerator:
