@@ -87,6 +87,15 @@
   require matching Spec Kit artifacts and evidence. This planning branch does
   not authorize implementation.
 
+## Active Implementations
+
+| Slice | Branch | Pull request | State |
+| ----- | ------ | ------------ | ----- |
+| Roadmap | `codex/access-broker-roadmap` | `petebeegle/homelab#370` | Checks passed; awaiting review |
+| S01 | `codex/access-broker-domain-foundation` | `petebeegle/homelab-access#15` | Published after independent blocker remediation and re-review |
+| S02A | `codex/access-broker-immutable-images` | `petebeegle/homelab-access#14` | Checks passed; awaiting review |
+| S02B | `codex/access-broker-release-hygiene` | Not opened | Spec Kit and checksum work prepared; blocked on S02A merge digest and external Discord credential rotation |
+
 ## Final State
 
 - Final branch: `codex/access-broker-roadmap`
