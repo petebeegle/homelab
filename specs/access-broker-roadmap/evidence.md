@@ -84,8 +84,8 @@
 ## Exceptions And Follow-Ups
 
 - Each roadmap slice must create its own branch and PR. Homelab slices also
-  require matching Spec Kit artifacts and evidence. This planning branch does
-  not authorize implementation.
+  require matching Spec Kit artifacts and evidence. This roadmap branch
+  coordinates those slices but does not combine their implementation changes.
 
 ## Active Implementations
 
