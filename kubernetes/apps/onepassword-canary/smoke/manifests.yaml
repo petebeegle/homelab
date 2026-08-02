@@ -1,0 +1,77 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: onepassword-canary-${branch_slug}
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+---
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: onepassword-canary
+  namespace: onepassword-canary-${branch_slug}
+spec:
+  itemPath: vaults/${onepassword_vault_id}/items/${onepassword_item_id}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: onepassword-canary
+  namespace: onepassword-canary-${branch_slug}
+  annotations:
+    operator.1password.io/auto-restart: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: onepassword-canary
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: onepassword-canary
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: canary
+          image: alpine:3.22
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -ec
+            - test -n "$$CANARY_VALUE"; exec sleep 3600
+          env:
+            - name: CANARY_VALUE
+              valueFrom:
+                secretKeyRef:
+                  name: onepassword-canary
+                  key: password
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -ec
+                - test -n "$$CANARY_VALUE"
+            initialDelaySeconds: 1
+            periodSeconds: 2
+          resources:
+            requests:
+              cpu: 5m
+              memory: 8Mi
+            limits:
+              cpu: 50m
+              memory: 32Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
