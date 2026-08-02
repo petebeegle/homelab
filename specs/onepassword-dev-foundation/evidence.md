@@ -95,5 +95,5 @@
 ## Final State
 
 - Final branch: `codex/onepassword-dev-foundation`
-- Final HEAD: Pending
-- Commit: Pending
+- Final HEAD: Deferred to the implementation-owner handoff after the evidence/PR-status commit.
+- Implementation commit: `8bffa4cdddc7c2dace3d0893fc8347e8599ce14c` (`feat: add 1password development foundation`)
