@@ -1,0 +1,19 @@
+connect:
+  create: false
+operator:
+  create: true
+  version: "1.12.0"
+  authMethod: service-account
+  serviceAccountToken:
+    name: onepassword-service-account-token
+  autoRestart: true
+  pollingInterval: 300
+  logLevel: info
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi

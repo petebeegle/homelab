@@ -18,6 +18,7 @@ DEFAULT_TIMEOUT = "10m"
 FLUX_NAMESPACE = "flux-system"
 DEVELOPMENT_BASE_KUSTOMIZATIONS = (
     "crds",
+    "onepassword-operator",
     "cert-manager",
     "local-path-provisioner",
     "nfs-csi",
