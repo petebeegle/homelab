@@ -91,6 +91,8 @@
 - Production phases remain intentionally unstarted until this phase has live development sync/rotation evidence.
 - The operator-unavailable and `OnePasswordItem`-unready ten-minute alerts remain assigned to `onepassword-prod-foundation`, as declared out of scope in this phase's approved specification because development does not reconcile the monitoring stack.
 - The ignored development tfvars and authenticated 1Password administration session must be staged/provided before live validation; no token value is requested in Git, Terraform, command arguments, or evidence.
+- Branch push: PASS; `codex/onepassword-dev-foundation` exists on `origin`.
+- Draft PR creation: BLOCKED; the GitHub publishing skill requires an authenticated `gh` session and `gh auth status` is currently unsuccessful. T021 remains open until `gh auth login` succeeds and the draft PR is created.
 
 ## Final State
 
