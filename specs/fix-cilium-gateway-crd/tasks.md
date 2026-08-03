@@ -64,7 +64,7 @@ Proxmox metric sample appears after recovery.
 - [x] T015 [FR-007] Run Spec Kit converge and incorporate any remaining work into `specs/fix-cilium-gateway-crd/tasks.md` before final evidence.
 - [ ] T016 [FR-007] Complete `specs/fix-cilium-gateway-crd/evidence.md` with commands, outcomes, exceptions, SHAs, user-path URLs, smoke cleanup, live recovery layers, and final HEAD.
 - [x] T017 [FR-002] Commit final pre-merge evidence with a conventional commit and push `codex/fix-cilium-gateway-crd`.
-- [ ] T018 [FR-002] Open a draft PR against `main` and report the review/merge requirement plus any temporary production recovery state.
+- [x] T018 [FR-002] Open a draft PR against `main` and report the review/merge requirement plus any temporary production recovery state.
 
 ## Dependencies
 

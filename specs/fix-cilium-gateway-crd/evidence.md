@@ -152,3 +152,5 @@
 - Final HEAD: supplied from the current branch by the PR workflow guard
 - Implementation commit: `d02f2cf41b1127b65c64268b8ba50ef726bcc0b7`
 - Evidence/handoff commit: this final pre-merge evidence update
+- Draft PR: `https://github.com/petebeegle/homelab/pull/374`
+- Merge status: PENDING human review; production remains unchanged by this branch
