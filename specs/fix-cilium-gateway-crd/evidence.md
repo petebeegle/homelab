@@ -24,7 +24,7 @@
 | Plan approval | PASS | The plan matches the previously presented CRD, reconcile, operator restart, and layered verification sequence. |
 | Checklist | PASS | `checklists/requirements.md` passed 16/16; `checklists/recovery.md` passed 15/15. |
 | Tasks/analyze approval | PASS | 7/7 functional requirements and 5/5 buildable success criteria mapped to tasks; no critical/high findings or constitution conflicts. |
-| Converge | PENDING | Run after implementation and live verification. |
+| Converge | PASS | No implementation gaps found across 7 functional requirements, 5 success criteria/acceptance outcomes, planned touchpoints, and 7 constitution principles. Existing post-merge tasks cover production outcomes. |
 
 ## Baseline Failure Evidence
 
@@ -47,7 +47,7 @@
 
 | Command | Result | Notes |
 | ------- | ------ | ----- |
-| `python3 tools/codex-harness/validate_sdd_context.py --root "$(pwd)" --branch "$(git branch --show-current)" --require-plan-artifacts` | PENDING | Run after source and evidence artifacts are complete. |
+| `python3 tools/codex-harness/validate_sdd_context.py --root "$(pwd)" --branch "$(git branch --show-current)" --require-plan-artifacts` | PASS | Branch and required SDD artifacts satisfy the workflow guard. |
 
 ## Local Checks
 
@@ -68,26 +68,53 @@
 
 | Target | Method | Result | Notes |
 | ------ | ------ | ------ | ----- |
-| `https://whoami.dev.lab.petebeegle.com` | Development verifier with `--include-cluster-base` | PENDING | |
+| `https://whoami.dev.lab.petebeegle.com` | Development verifier plus targeted shared-base recovery | PASS | The committed CRD reconciled from the branch, Cilium 1.20 started its Gateway controllers after an operator restart, the route reported `Accepted=True` and `ResolvedRefs=True`, and curl returned the whoami response with `X-Forwarded-Proto: https`. |
 | `https://whoami.lab.petebeegle.com` | Direct HTTPS probe and synthetic smoke | PENDING | |
 | `https://otel.lab.petebeegle.com` | Direct TLS/HTTP probe plus Mimir sample freshness | PENDING | |
 
 ## Deployment State
 
-- Source fetched SHA: PENDING
-- Target applied SHA: PENDING
-- Live resource spec checked: PENDING
-- Gateway/listener/DNS/certificate checked: PENDING
-- Exact user-facing URL result: PENDING
+- Development source fetched SHA: `d02f2cf41b1127b65c64268b8ba50ef726bcc0b7`
+- Development target CRD SHA: the `crds` Kustomization successfully applied the
+  branch SHA before verifier cleanup restored the source to `main`
+- Development live resource: BackendTLSPolicy CRD present; temporarily applied
+  outside Flux inventory and annotated
+  `codex.openai.com/temporary-development-validation=fix-cilium-gateway-crd`
+  until the reviewed change merges
+- Development Gateway/listener/route: all Flux Kustomizations restored Ready;
+  whoami parents reported `Accepted=True` and `ResolvedRefs=True`
+- Development exact user-facing URL: PASS; HTTPS returned whoami and
+  `X-Forwarded-Proto: https`
+- Production source, target, and user path: PENDING reviewed merge
 
 ## Development Validation
 
 - Profile: whoami with `--include-cluster-base`
 - Branch slug: `fix-cilium-gateway-crd`
-- HEAD: PENDING
-- Report path: PENDING
-- Cleanup: PENDING
-- Result or exception: PENDING
+- Validated implementation SHA: `d02f2cf41b1127b65c64268b8ba50ef726bcc0b7`
+- Report path: N/A; the verifier emits command output and performs cleanup rather
+  than writing a report artifact
+- Cleanup: PASS; branch-scoped Flux objects and namespace were deleted, the
+  shared GitRepository was restored to `main`, and every development Flux
+  Kustomization was restored Ready
+- Result: PASS with a documented verifier limitation. The first run reconciled
+  the shared base from `main`, so its branch-scoped route lacked an accepted
+  parent. After the CRD was applied and the Cilium Operator restarted, the exact
+  development HTTPS path passed. A second run proved the branch `crds`
+  Kustomization applied `d02f2cf`, but the root Kustomization then restored the
+  shared source to `main`; dependent Kustomizations correctly rejected the mixed
+  revision. The redundant wait was interrupted and cleanup completed.
+- Substitute checks: server-side apply of the exact committed Gateway API v1.5.1
+  CRD to development, operator rollout, required-GVK discovery log, Gateway
+  reconciliation, route conditions, exact HTTPS curl, and final all-Ready Flux
+  audit
+- Restart behavior: REQUIRED. Cilium discovers the required Gateway API set at
+  operator startup; restarting only `deployment/cilium-operator` enabled the
+  Gateway controllers.
+- Terraform preflight: init and validate passed with existing provider
+  deprecation warnings. Plan reported 12 creates because development Terraform
+  state was unavailable to this checkout; no Terraform apply was requested or
+  performed.
 
 ## Documentation Impact
 
@@ -106,15 +133,22 @@
 - Upstream Spec Kit sources checked: N/A; no Spec Kit behavior changes
 - Human-gated Spec Kit alignment: Intent, spec, plan, checklist, and task/analyze
   approvals are recorded above
-- Artifact updates after implementation: PENDING converge
+- Artifact updates after implementation: PASS; converge found no unrepresented
+  implementation work and left `tasks.md` unchanged
 
 ## Exceptions And Follow-Ups
 
-- No implementation exception. The worktree location fallback and missing
-  optional agent-context update script are recorded above.
+- The worktree location fallback and missing optional agent-context update script
+  are recorded above.
+- The development verifier cannot keep the shared GitRepository on a branch
+  revision while reconciling root-managed Flux objects; the exact limitation and
+  substitute validation are recorded above. This did not relax the exact routed
+  HTTPS acceptance criterion.
+- Production recovery remains gated on reviewed PR merge per the approved plan.
 
 ## Final State
 
 - Final branch: `codex/fix-cilium-gateway-crd`
-- Final HEAD: PENDING until final evidence commit
-- Commit: PENDING
+- Final HEAD: supplied from the current branch by the PR workflow guard
+- Implementation commit: `d02f2cf41b1127b65c64268b8ba50ef726bcc0b7`
+- Evidence/handoff commit: this final pre-merge evidence update

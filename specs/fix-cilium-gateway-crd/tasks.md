@@ -42,8 +42,8 @@ response.
 - [x] T005 [US1] [FR-003] Review the source diff and assert no Gateway, route, certificate, alert, application, or unrelated CRD definitions changed outside `kubernetes/infra/crds/kustomization.yaml`.
 - [x] T006 [US1] [FR-004] Render `kubernetes/infra/crds`, `kubernetes/clusters/development`, and `kubernetes/clusters/production`; assert the BackendTLSPolicy CRD appears exactly once in the shared render and each cluster activates `./kubernetes/infra/crds` exactly once.
 - [x] T007 [US1] [FR-005] Run server-side dry-run validation against the development cluster for the shared CRD Kustomization and record the result in `specs/fix-cilium-gateway-crd/evidence.md`.
-- [ ] T008 [US1] [FR-005] Commit and push the branch, then run `tools/development/verify_branch_deploy.py` for whoami with `--include-cluster-base`; record exact HEAD, route result, and cleanup in `specs/fix-cilium-gateway-crd/evidence.md`.
-- [ ] T009 [US1] [FR-005] If development Cilium does not rediscover the API dynamically, restart only its operator and repeat controller, certificate-sync, and exact HTTPS checks; record whether restart was required in `specs/fix-cilium-gateway-crd/evidence.md`.
+- [x] T008 [US1] [FR-005] Commit and push the branch, then run `tools/development/verify_branch_deploy.py` for whoami with `--include-cluster-base`; record exact HEAD, route result, cleanup, and any verifier exception in `specs/fix-cilium-gateway-crd/evidence.md`.
+- [x] T009 [US1] [FR-005] If development Cilium does not rediscover the API dynamically, restart only its operator and repeat controller, certificate-sync, and exact HTTPS checks; record whether restart was required in `specs/fix-cilium-gateway-crd/evidence.md`.
 
 ## Phase 3: User Story 2 — Restore Dependent Telemetry (P2)
 
@@ -59,11 +59,11 @@ Proxmox metric sample appears after recovery.
 
 ## Phase 4: Cross-Cutting Verification And Handoff
 
-- [ ] T013 [FR-007] Run `python3 tools/architecture/render.py --check` and repository pre-commit checks for all changed files.
-- [ ] T014 [FR-002] Re-check all constitution gates and audit `git diff` for plaintext secrets or unrelated changes.
-- [ ] T015 [FR-007] Run Spec Kit converge and incorporate any remaining work into `specs/fix-cilium-gateway-crd/tasks.md` before final evidence.
+- [x] T013 [FR-007] Run `python3 tools/architecture/render.py --check` and repository pre-commit checks for all changed files.
+- [x] T014 [FR-002] Re-check all constitution gates and audit `git diff` for plaintext secrets or unrelated changes.
+- [x] T015 [FR-007] Run Spec Kit converge and incorporate any remaining work into `specs/fix-cilium-gateway-crd/tasks.md` before final evidence.
 - [ ] T016 [FR-007] Complete `specs/fix-cilium-gateway-crd/evidence.md` with commands, outcomes, exceptions, SHAs, user-path URLs, smoke cleanup, live recovery layers, and final HEAD.
-- [ ] T017 [FR-002] Commit final evidence with a conventional commit and push `codex/fix-cilium-gateway-crd`.
+- [x] T017 [FR-002] Commit final pre-merge evidence with a conventional commit and push `codex/fix-cilium-gateway-crd`.
 - [ ] T018 [FR-002] Open a draft PR against `main` and report the review/merge requirement plus any temporary production recovery state.
 
 ## Dependencies
