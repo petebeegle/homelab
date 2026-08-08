@@ -11,3 +11,19 @@ spec:
   resources:
     requests:
       storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jellyfin-config-local-v1
+  namespace: jellyfin
+  labels:
+    app.kubernetes.io/name: jellyfin
+    app.kubernetes.io/component: config
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 10Gi

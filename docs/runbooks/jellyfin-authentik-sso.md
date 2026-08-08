@@ -4,7 +4,7 @@ scope:
   - jellyfin
   - authentik
   - sso
-last_verified: 2026-05-23
+last_verified: 2026-08-08
 ---
 
 # Jellyfin Authentik SSO
@@ -32,3 +32,46 @@ After reconcile, acceptance should confirm:
 3. The Jellyfin login page shows the SSO button and starts at `/sso/OID/start/authentik`.
 4. A `Jellyfin Users` member can sign in.
 5. A `Jellyfin Admins` member receives Jellyfin administrator access.
+
+## Local Config Storage Migration
+
+Jellyfin's live `/config` volume is migrated from the retained
+`jellyfin-config-v2` NFS PVC to `jellyfin-config-local-v1` on `local-path`.
+Media remains on Synology NFS. The storage decision and its availability
+tradeoffs are documented in
+`docs/decisions/jellyfin-local-config-storage.md`.
+
+The Deployment uses `Recreate`. The `migrate-config` init container runs before
+`install-sso-auth`, copies the complete config tree from the read-only NFS source,
+validates the copied databases and authentication artifacts, and only then
+creates `.homelab-config-migration-v1`. A target without that marker is treated
+as incomplete and replaced from the source. Either init-container failure blocks
+the Jellyfin container from starting.
+
+Before merge or manual reconciliation:
+
+1. Confirm `jellyfin-config-v2` is `Bound`.
+2. Confirm both iGPU workers have `MemoryPressure=False`.
+3. Confirm the intended worker and its Proxmox host have safe memory headroom.
+4. Confirm a native local administrator credential is available.
+5. Confirm the encrypted `JELLYFIN_OAUTH_CLIENT_SECRET` and Authentik blueprint
+   are unchanged in the diff.
+6. Confirm the old NFS PVC will remain declared after cutover.
+
+Authentication is a release-blocking acceptance gate. Do not consider the
+migration complete from pod readiness or the login page alone. Verify:
+
+1. `/sso/OID/start/authentik` redirects to the Authentik authorization endpoint
+   without `Provider does not exist`.
+2. The callback remains
+   `https://jellyfin.${cluster_domain}/sso/OID/redirect/authentik`.
+3. An existing `Jellyfin Users` member reaches the same existing Jellyfin user.
+4. An existing `Jellyfin Admins` member retains Jellyfin administrator access.
+5. A native local administrator can still sign in without Authentik.
+6. The old NFS PVC remains present for immediate rollback.
+
+For immediate rollback, point `persistence.config.existingClaim` back to
+`jellyfin-config-v2`, remove or disable the migration init container, and
+reconcile through Flux. The retained source is a point-in-time copy; after the
+local volume has been in service, rollback can lose changes made since the
+migration.

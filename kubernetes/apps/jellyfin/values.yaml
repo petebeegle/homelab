@@ -1,10 +1,12 @@
 persistence:
   config:
     enabled: true
-    existingClaim: jellyfin-config-v2
-    storageClass: nfs-csi-storage
+    existingClaim: jellyfin-config-local-v1
+    storageClass: local-path
   media:
     enabled: false
+deploymentStrategy:
+  type: Recreate
 nodeSelector:
   homelab.petebeegle.com/jellyfin-igpu: "true"
 resources:
@@ -46,6 +48,28 @@ readinessProbe:
   periodSeconds: 10
   timeoutSeconds: 5
 extraInitContainers:
+  - name: migrate-config
+    image: alpine:3.22
+    imagePullPolicy: IfNotPresent
+    command:
+      - /bin/sh
+      - /opt/jellyfin-config-migration/migrate.sh
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    volumeMounts:
+      - name: config-source
+        mountPath: /config-source
+        readOnly: true
+      - name: config
+        mountPath: /config-target
+      - name: jellyfin-config-migration
+        mountPath: /opt/jellyfin-config-migration
+        readOnly: true
   - name: install-sso-auth
     image: python:3.14-alpine
     imagePullPolicy: IfNotPresent
@@ -62,6 +86,13 @@ extraInitContainers:
     command:
       - python3
       - /opt/jellyfin-sso/bootstrap-sso.py
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
     volumeMounts:
       - name: config
         mountPath: /config
@@ -69,6 +100,13 @@ extraInitContainers:
         mountPath: /opt/jellyfin-sso
         readOnly: true
 volumes:
+  - name: config-source
+    persistentVolumeClaim:
+      claimName: jellyfin-config-v2
+      readOnly: true
+  - name: jellyfin-config-migration
+    configMap:
+      name: jellyfin-config-migration
   - name: custom-media
     nfs:
       server: ${nfs_server}
