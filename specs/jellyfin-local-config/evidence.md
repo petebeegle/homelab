@@ -93,11 +93,25 @@
 
 - Profile: `jellyfin`.
 - Branch slug: `jellyfin-local-config`.
-- Exact command and tested HEAD: pending final branch publication and verifier
-  run.
-- Expected coverage: Flux branch fetch/reconcile, namespace and pod readiness,
-  HelmRelease readiness, fresh branch config PVC, Service, HTTPRoute, and
-  in-cluster Jellyfin web-shell response.
+- Command:
+  `python3 tools/development/verify_branch_deploy.py --app jellyfin --branch codex/jellyfin-local-config --slug jellyfin-local-config --push --timeout 20m`.
+- Tested HEAD: `3122efc3304db0414c7f4784507c205d2e4053b9`.
+- Initial attempt: PRECHECK BLOCKED because the isolated worktree did not contain
+  ignored `terraform/development/terraform.tfvars`. The repository staging
+  script installed it without logging contents, and the same command was rerun.
+- Rerun result: DEVELOPMENT INFRASTRUCTURE EXCEPTION. Flux fetched the exact
+  tested SHA; the branch PVC bound, and the Deployment, Service, and HTTPRoute
+  rendered. The pod remained Pending because the only development node has
+  neither `homelab.petebeegle.com/jellyfin-igpu=true` nor allocatable
+  `gpu.intel.com/i915`. No Jellyfin container started, so workload readiness and
+  the web-shell response were not verified.
+- Resolution: intentionally deferred. Applying Terraform would create the
+  missing Proxmox mapping and development VM state and is outside this PR's
+  authorized scope; the user confirmed the GPU-pinning limitation should not be
+  resolved here.
+- Cleanup: PASS after interrupting the wait. The branch Kustomization,
+  namespace, GitRepository, PVC, and retained test PV
+  `pvc-366dd362-3891-4ca7-a450-e3ba1c5a48da` were confirmed deleted.
 - Deliberate limitation: the branch fixture uses a fresh NFS config PVC and a
   placeholder OAuth secret. It is app-regression evidence, not migration or
   production-equivalent OIDC evidence.
@@ -141,5 +155,7 @@ readiness, route status, or the development placeholder identity provider.
 
 - Branch: `codex/jellyfin-local-config`.
 - Draft PR: `#380` (`https://github.com/petebeegle/homelab/pull/380`).
-- Final published HEAD and GitHub Actions result: pending publication.
+- Audit-fix commit tested in development:
+  `3122efc3304db0414c7f4784507c205d2e4053b9`.
+- Final evidence commit and GitHub Actions result: pending publication/handoff.
 - Production authentication acceptance: pending and release-blocking.

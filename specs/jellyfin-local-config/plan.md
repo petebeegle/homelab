@@ -39,6 +39,9 @@ shell, but its fresh NFS-backed config does not exercise the production
 migration. A one-off isolated development Job therefore runs the exact migration
 script against an NFS source PVC and a `local-path` target PVC, verifies copied
 database, hidden, and authentication state, and removes all test resources.
+If the development node lacks the fixture's required iGPU label/resource, record
+that routed-profile infrastructure exception without weakening the production or
+branch GPU pinning; do not apply Terraform merely to satisfy this PR's smoke.
 **Post-Implementation SDD Conformance**: Local repository sources only; this
 change does not alter Spec Kit behavior or standards.
 

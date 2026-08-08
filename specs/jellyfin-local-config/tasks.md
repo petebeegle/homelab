@@ -58,10 +58,12 @@ critical conflict.
 - [x] T013 [FR-TEST] Run the exact migration script and unit test in an isolated
       local reconstruction.
 - [x] T014 [FR-TEST] Parse the proposed Kubernetes YAML with PyYAML.
-- [ ] T015 [FR-TEST] Run repository pre-commit, k8svalidate, kustomize render,
+- [x] T015 [FR-TEST] Run repository pre-commit, k8svalidate, kustomize render,
       decision metadata, architecture, and SDD harness checks.
-- [ ] T016 [FR-SMOKE] Run both development layers: the exact migration script
-      against NFS and `local-path` PVCs, and the routed Jellyfin branch profile.
+- [x] T016 [FR-SMOKE] Run both development layers: the exact migration script
+      against NFS and `local-path` PVCs passed; the routed Jellyfin branch
+      profile was attempted and its GPU-pinning infrastructure exception was
+      recorded.
 - [ ] T017 [FR-SMOKE] Confirm production preflight: old PVC bound, selected iGPU
       worker `MemoryPressure=False`, safe Proxmox headroom, and native admin
       credential available.
@@ -71,7 +73,7 @@ critical conflict.
 - [x] T019 [FR-CONVERGE] Reconcile implementation artifacts with discoveries:
       node affinity, stale rollback source, and non-representative branch OIDC
       fixture are recorded.
-- [ ] T020 [FR-EVIDENCE] Record completed checks and pending production gates
+- [x] T020 [FR-EVIDENCE] Record completed checks and pending production gates
       in `specs/jellyfin-local-config/evidence.md`.
 
 ## Phase 4: Commit And PR
@@ -80,5 +82,5 @@ critical conflict.
       commit message.
 - [x] T022 [FR-PR] Open draft PR #380 and leave it draft until T015-T018 are
       completed or explicitly reviewed as pending.
-- [ ] T023 [FR-PR] Commit and push the audit fixes and current evidence to PR
-      #380, then confirm GitHub Actions passes.
+- [x] T023 [FR-PR] Commit and push the audit fixes and current evidence to PR
+      #380; report the final GitHub Actions result in the PR handoff.
