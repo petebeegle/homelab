@@ -64,7 +64,7 @@
 ## Phase 7: Commit And PR
 
 - [x] T020 Commit the complete phase with a conventional commit and record the exact commit/HEAD in `specs/onepassword-dev-foundation/evidence.md`.
-- [ ] T021 Push `codex/onepassword-dev-foundation` and open a draft PR only when required non-empty artifacts/evidence pass the repository guard; keep phase 2 gated on live development acceptance.
+- [x] T021 Push `codex/onepassword-dev-foundation` and open a draft PR only when required non-empty artifacts/evidence pass the repository guard; keep phase 2 gated on live development acceptance.
 
 ## Dependencies
 
