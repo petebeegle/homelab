@@ -76,5 +76,5 @@ critical conflict.
 
 - [x] T021 [FR-PR] Commit on `codex/jellyfin-local-config` with a conventional
       commit message.
-- [ ] T022 [FR-PR] Open a draft PR and leave it draft until T015-T018 are
+- [x] T022 [FR-PR] Open draft PR #380 and leave it draft until T015-T018 are
       completed or explicitly reviewed as pending.

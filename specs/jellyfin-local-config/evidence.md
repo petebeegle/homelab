@@ -68,7 +68,7 @@
 
 - Profile: existing `jellyfin` profile plus manual storage/init inspection
 - Branch slug: Pending
-- HEAD: Pending PR head
+- HEAD: `9a8ccf75133aad2013fcaa82383ed4de69d13d56` at draft PR creation
 - Report path: Pending
 - Cleanup: Pending
 - Result or exception: Not run because this connector session has no development
@@ -111,6 +111,8 @@
 
 - Final branch: `codex/jellyfin-local-config`
 - Implementation commit: `59726adf68f23d5cd7b70c2767acb8db575690fc`
-- Final HEAD: Use the draft PR head; it is intentionally not embedded because an
-  evidence update itself creates a new HEAD.
+- Draft PR: `#380` (`https://github.com/petebeegle/homelab/pull/380`)
+- PR creation HEAD: `9a8ccf75133aad2013fcaa82383ed4de69d13d56`
+- Final HEAD: Use the current draft PR head; it is intentionally not embedded
+  because an evidence update itself creates a new HEAD.
 - Commit: `feat(jellyfin): move config to local storage`
