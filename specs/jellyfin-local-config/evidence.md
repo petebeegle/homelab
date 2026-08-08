@@ -4,115 +4,142 @@
 **Risk Tier**: medium
 **Started**: 2026-08-08
 
-## Spec Kit Initialization
+## Spec Kit And Workflow
 
-- Command: Repo-local Spec Kit templates and workflow guidance reviewed through
-  the connected GitHub repository.
-- Outcome: PASS for artifact creation; no Spec Kit scaffolding changes.
-- Spec Kit version: Existing repository version; not changed by this
-  implementation.
-- Integration: `codex`
-- Fallback: The execution environment had no mounted repository checkout,
-  kubeconfig, authenticated `gh`, `kubectl`, or `kustomize`. Connector-backed
-  branch and commit operations were used. Repository-local and cluster checks
-  remain explicit draft-PR gates rather than being represented as passed.
+- Repository-local Spec Kit artifacts and workflow guidance were reused; no
+  scaffolding or integration change was required.
+- Integration: `codex`.
+- The preferred `/workspaces/homelab-worktrees/jellyfin-local-config` path was
+  not writable. Work continued in the allowed fallback
+  `/home/vscode/homelab-worktrees/jellyfin-local-config`.
+- The main checkout's unrelated modified
+  `.devcontainer/devcontainer-lock.json` was not touched.
+- `.specify/feature.json` points at another active implementation in the shared
+  checkout. Prerequisite resolution used the explicit
+  `SPECIFY_FEATURE_DIRECTORY=specs/jellyfin-local-config` override; the tracked
+  selector file was restored unchanged.
+- The PR branch was merged with current `origin/main` before validation.
 
 ## Human Gates
 
 | Gate | Result | Notes |
 | ---- | ------ | ----- |
-| Intent brief | PASS | User reported severe ingest degradation and approved moving config I/O off NFS. |
-| Spec approval | PASS | User reviewed the proposed artifacts and added critical authentication and memory constraints. |
-| Clarify | PASS | Authentication preservation, native fallback, migration ordering, rollback, and low-memory behavior were clarified in conversation. |
-| Plan approval | PASS | User instructed "Ok let's open the PR" after reviewing the bounded plan. |
-| Checklist | PASS | Requirements and authentication checklists completed; live cutover items remain intentionally unchecked. |
-| Tasks/analyze approval | PASS | All functional requirements map to implementation or explicit acceptance tasks; no unresolved critical conflict. |
-| Converge | PASS | ADR, runbook, spec, plan, tasks, tests, and manifests agree on node affinity, stale rollback source, authentication, and memory gates. |
+| Intent brief | PASS | User requested an engineering audit, fixes, and development validation for draft PR #380. |
+| Spec approval | PASS | Existing approved spec preserves authentication and bounds the storage migration. |
+| Clarify | PASS | The prior conversation resolved authentication, rollback, node affinity, and memory constraints. |
+| Plan approval | PASS | Existing plan was approved when the draft PR was opened; this audit corrects its validation assumptions. |
+| Checklist | PARTIAL | Requirements are 21/21 complete. Authentication desired-state and migration-integrity checks are complete; seven live cutover checks remain intentionally open. |
+| Tasks/analyze approval | PASS | The user explicitly requested execution of the existing PR and development test work. |
+| Converge | PASS | Plan, tasks, tests, generated architecture, and evidence now distinguish migration validation, routed app smoke, and production-only acceptance. |
 
-## Workflow Validation
+## Audit Findings And Fixes
 
-| Command | Result | Notes |
-| ------- | ------ | ----- |
-| `python3 tools/codex-harness/validate_sdd_context.py --root "$(pwd)" --branch "$(git branch --show-current)" --require-plan-artifacts --require-evidence` | PENDING | Requires a repository checkout; draft PR CI/local owner check must run it. |
+1. GitHub Actions run `31278257350` failed only in `Pre-commit`; the architecture
+   hook reported that `docs/architecture.md` omitted Jellyfin's new
+   `local-path-provisioner` dependency and local PVC. The generated document was
+   regenerated.
+2. The draft evidence pinned obsolete commit
+   `9a8ccf75133aad2013fcaa82383ed4de69d13d56`, causing the SDD harness to reject
+   every later commit. The obsolete self-referential final-HEAD claim was
+   removed; exact tested SHAs are recorded only for smoke runs.
+3. The proposed existing Jellyfin branch profile still uses a fresh
+   `nfs-csi-storage` config PVC. A pass cannot prove the production NFS-to-local
+   migration. Development validation was split into an exact-script migration
+   Job and the routed app profile.
+4. Current `main` includes the `immich` smoke profile, while the verifier's
+   profile-discovery unit test still expected four apps. The one-line inherited
+   expectation was corrected to include `immich` so the current suite passes.
+5. The migration suite lacked a restart case for lost critical authentication
+   state. A fourth test now proves that an already-marked target fails closed if
+   `SSO-Auth.xml` disappears.
 
 ## Local Checks
 
 | Command | Result | Notes |
 | ------- | ------ | ----- |
-| `python3 -m unittest tools/development/tests/test_jellyfin_config_migration.py` | PASS (isolated) | The exact proposed shell script and test were executed in a reconstructed repository path; 3 tests passed for copy/integrity, completed restart, and missing SSO fail-closed behavior. Repository-environment rerun is pending. |
-| PyYAML parse of proposed `pvc.yaml`, `values.yaml`, `kustomization.yaml`, and production Flux Kustomization | PASS | All proposed YAML documents parsed successfully. |
-| `pre-commit run yamllint ...` | PENDING | No mounted checkout/pre-commit environment. |
-| `pre-commit run k8svalidate ...` | PENDING | No mounted checkout/pre-commit environment. |
-| `kubectl kustomize kubernetes/apps/jellyfin` | PENDING | `kubectl`/`kustomize` unavailable in the connector execution environment. |
-| `python3 tools/policy/check_decision_metadata.py` | REVIEWED/PENDING | ADR metadata follows the required schema and uses the next unused ID `ADR-0015`; repository execution pending. |
-| `python3 tools/architecture/render.py --check` | PENDING | Generated architecture must not be edited manually; repository execution pending. |
-
-## Automated Smoke And Live Verification
-
-| Target | Method | Result | Notes |
-| ------ | ------ | ------ | ----- |
-| Jellyfin development branch environment | Existing `jellyfin` smoke profile | PENDING | Requires development kubeconfig. The fixture proves routed startup but not production-equivalent existing-user OIDC. |
-| `https://jellyfin.${cluster_domain}/sso/OID/start/authentik` | Controlled cutover request | PENDING | Must redirect to Authentik without provider errors. |
-| Existing SSO user/admin and native administrator | Interactive acceptance | PENDING | Release-blocking; pod readiness alone is insufficient. |
-
-## Deployment State
-
-- Source fetched SHA: Pending merge.
-- Target applied SHA: Pending merge.
-- Live resource spec checked: Pending.
-- Gateway/listener/DNS/certificate checked: Existing route is unchanged; live
-  callback behavior pending.
-- Exact user-facing URL result: Pending.
+| `python3 -m unittest tools/development/tests/test_jellyfin_config_migration.py` | PASS | 4 tests cover complete copy/integrity, completed restart without stale-source comparison, completed-target authentication loss, and missing-source SSO fail-closed behavior. |
+| `python3 -m unittest tools/development/tests/test_verify_branch_deploy.py` | PASS | 32 tests passed after correcting the inherited `immich` profile expectation. |
+| `python3 -m unittest discover -s tools/codex-harness/tests` | PASS | 73 tests passed. |
+| `kubectl kustomize kubernetes/apps/jellyfin` | PASS | Rendered 664 lines before later evidence-only edits. |
+| `helm template jellyfin jellyfin/jellyfin --version 3.2.0 -f kubernetes/apps/jellyfin/values.yaml` | PASS | Rendered `Recreate`, ordered `migrate-config` then `install-sso-auth`, target claim `jellyfin-config-local-v1`, and read-only source claim `jellyfin-config-v2`. |
+| Production and development cluster renders plus kubeconform `0.7.0` | PASS | 119 resources; 44 valid, 0 invalid, 0 errors, 75 skipped for unavailable schemas. |
+| `python3 tools/policy/check_decision_metadata.py` | PASS | ADR metadata accepted. |
+| `python3 tools/architecture/render.py --check` | PASS after regeneration | Initial failure reproduced CI and required the generated-document update. |
+| `pre-commit run --all-files` | PASS | All configured hooks pass after regeneration. |
+| `python3 tools/codex-harness/validate_sdd_context.py ... --require-plan-artifacts --require-evidence` | PASS | Matching branch and complete SDD artifacts accepted after stale SHA removal. |
 
 ## Development Validation
 
-- Profile: existing `jellyfin` profile plus manual storage/init inspection
-- Branch slug: Pending
-- HEAD: `9a8ccf75133aad2013fcaa82383ed4de69d13d56` at draft PR creation
-- Report path: Pending
-- Cleanup: Pending
-- Result or exception: Not run because this connector session has no development
-  kubeconfig. This is an unavailable-infrastructure exception for opening the
-  draft PR only, not approval to merge.
+### Exact Migration Job
+
+- Timestamp: `2026-08-08T22:13:00Z` (UTC).
+- Kubeconfig: `/home/vscode/.kube/homelab-development.config`.
+- Namespace: `jellyfin-migration-pr380` (ephemeral).
+- Script blob: `07acf46c970cc1b5d54eff0e28169199b1b74474` from
+  `kubernetes/apps/jellyfin/migrate-config.sh`.
+- Source PVC: `config-source`, `nfs-csi-storage`, `Bound`.
+- Target PVC: `config-target`, `local-path`, `Bound` on
+  `k8s-premium-martin`.
+- Workload: Alpine `3.22` with the production migration command, read-only source
+  mount, writable target, and production request/limit bounds.
+- Result: PASS. `seed-source=0`, `migrate-config=0`, `verify=0`; marker,
+  databases, hidden state, and authentication files copied and byte-matched.
+- Cleanup: PASS. The namespace was deleted, both exact test PV reclaim policies
+  were changed to `Delete`, and PVs
+  `pvc-e647dd86-81d1-47f5-b941-80cd96defdcf` and
+  `pvc-da6669cf-8edd-404b-a4e9-7dbf90c0df23` were confirmed deleted.
+
+### Routed Jellyfin Branch Profile
+
+- Profile: `jellyfin`.
+- Branch slug: `jellyfin-local-config`.
+- Exact command and tested HEAD: pending final branch publication and verifier
+  run.
+- Expected coverage: Flux branch fetch/reconcile, namespace and pod readiness,
+  HelmRelease readiness, fresh branch config PVC, Service, HTTPRoute, and
+  in-cluster Jellyfin web-shell response.
+- Deliberate limitation: the branch fixture uses a fresh NFS config PVC and a
+  placeholder OAuth secret. It is app-regression evidence, not migration or
+  production-equivalent OIDC evidence.
+
+## Read-Only Production Preflight
+
+- `jellyfin-config-v2` is `Bound`, `5Gi`, `RWO`, and
+  `nfs-csi-storage`.
+- Both iGPU workers were `Ready` with `MemoryPressure=False` at inspection time.
+  This does not replace the time-sensitive cutover check.
+- The running source config was approximately `794376 KiB`, below the proposed
+  `10Gi` target size.
+- The source contains non-empty `system.xml`, `branding.xml`, `SSO-Auth.xml`, all
+  four pinned SSO plugin files, and non-empty `data/jellyfin.db`. Only paths and
+  byte sizes were read; no secret contents were printed.
+- Safe Proxmox host headroom and possession of a working native administrator
+  credential remain unverified and release-blocking.
+
+## Production Acceptance Still Required
+
+- Confirm the selected iGPU worker still has `MemoryPressure=False` and its
+  Proxmox host has safe headroom immediately before cutover.
+- Confirm `/sso/OID/start/authentik` redirects with the exact HTTPS callback.
+- Confirm an existing `Jellyfin Users` member reaches the same account.
+- Confirm an existing `Jellyfin Admins` member retains administrator access.
+- Confirm a known native local administrator can sign in.
+- Confirm the retained NFS PVC remains available after cutover.
+
+These are intentionally not inferred from unit tests, PVC binding, pod
+readiness, route status, or the development placeholder identity provider.
 
 ## Documentation Impact
 
-- Updated:
-  `docs/runbooks/jellyfin-authentik-sso.md`
-- Added:
-  `docs/decisions/jellyfin-local-config-storage.md`
-- Generated docs:
-  `docs/architecture.md` check pending; no manual edit made.
-- No-docs rationale: N/A.
-
-## SDD Conformance
-
-- Local sources checked: `AGENTS.md`, SDD and implementation runbooks, storage
-  ADR, TDD/development evidence ADR, templates, existing Jellyfin SSO runbook.
-- Upstream Spec Kit sources checked: N/A; no Spec Kit behavior changed.
-- Human-gated Spec Kit alignment: Intent, spec, plan, and task/analyze approvals
-  are recorded from the conversation.
-- Artifact updates after implementation: Node affinity, stale rollback source,
-  memory preflight, and non-representative development OIDC fixture were
-  reconciled into all artifacts.
-
-## Exceptions And Follow-Ups
-
-- Repository-local validators and development smoke are pending because the
-  connector environment has no checkout or kubeconfig.
-- Production authentication acceptance is intentionally pending and
-  release-blocking.
-- The local PVC needs an explicit long-term backup/recovery follow-up after
-  successful cutover.
-- The retained NFS PVC is immediate rollback state, not a continuously updated
-  backup.
+- Added binding ADR `docs/decisions/jellyfin-local-config-storage.md`.
+- Updated `docs/runbooks/jellyfin-authentik-sso.md`.
+- Regenerated `docs/architecture.md`; it was not edited by hand.
+- No Spec Kit behavior or standards changed, so an upstream conformance audit is
+  not required.
 
 ## Final State
 
-- Final branch: `codex/jellyfin-local-config`
-- Implementation commit: `59726adf68f23d5cd7b70c2767acb8db575690fc`
-- Draft PR: `#380` (`https://github.com/petebeegle/homelab/pull/380`)
-- PR creation HEAD: `9a8ccf75133aad2013fcaa82383ed4de69d13d56`
-- Final HEAD: Use the current draft PR head; it is intentionally not embedded
-  because an evidence update itself creates a new HEAD.
-- Commit: `feat(jellyfin): move config to local storage`
+- Branch: `codex/jellyfin-local-config`.
+- Draft PR: `#380` (`https://github.com/petebeegle/homelab/pull/380`).
+- Final published HEAD and GitHub Actions result: pending publication.
+- Production authentication acceptance: pending and release-blocking.

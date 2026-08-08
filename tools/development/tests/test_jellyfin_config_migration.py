@@ -99,6 +99,23 @@ class JellyfinConfigMigrationTest(unittest.TestCase):
             self.assertEqual(second.returncode, 0, second.stderr)
             self.assertIn("already completed", second.stdout)
 
+    def test_completed_migration_fails_closed_when_authentication_state_is_lost(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source = root / "source"
+            target = root / "target"
+            create_config(source)
+            target.mkdir()
+
+            first = self.run_migration(source, target)
+            self.assertEqual(first.returncode, 0, first.stderr)
+            (target / "plugins" / "configurations" / "SSO-Auth.xml").unlink()
+
+            second = self.run_migration(source, target)
+
+            self.assertNotEqual(second.returncode, 0)
+            self.assertIn("SSO-Auth.xml", second.stderr)
+
     def test_fails_closed_when_sso_configuration_is_missing(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

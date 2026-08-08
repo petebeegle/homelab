@@ -27,15 +27,18 @@ Synology NFS CSI, Intel GPU device plugin, Python `unittest`, POSIX shell tools
 retained for media and migration source
 **Ingress**: Existing Cilium Gateway API route unchanged
 **Secrets**: Existing SOPS-encrypted `jellyfin-secrets` reference unchanged
-**Smoke Strategy**: Focused migration unit test and manifest render checks;
-existing routed Jellyfin smoke plus manual authentication acceptance before
-promotion
+**Smoke Strategy**: Focused migration unit tests and manifest render checks; an
+ephemeral development Job that runs the exact migration script from an NFS PVC
+to a `local-path` PVC; the existing routed Jellyfin branch smoke for application
+regression; manual authentication acceptance before promotion
 **Fanout Targets**: Read-only manifest/ADR validation and migration unit test can
 run independently; all results consolidate in `evidence.md`
-**Development Validation**: Existing Jellyfin development profile where
-available, supplemented by manual inspection of init ordering and local PVC
-binding. The current connector execution environment has no kubeconfig, so the
-draft PR records this as pending rather than waiving a real failure.
+**Development Validation**: Use two complementary layers. The existing Jellyfin
+profile proves the branch fixture reconciles, starts, routes, and serves its web
+shell, but its fresh NFS-backed config does not exercise the production
+migration. A one-off isolated development Job therefore runs the exact migration
+script against an NFS source PVC and a `local-path` target PVC, verifies copied
+database, hidden, and authentication state, and removes all test resources.
 **Post-Implementation SDD Conformance**: Local repository sources only; this
 change does not alter Spec Kit behavior or standards.
 
@@ -44,8 +47,9 @@ change does not alter Spec Kit behavior or standards.
 **Spec Gate**: Approved by Pete after reviewing the proposed spec and explicitly
 adding authentication and memory constraints.
 
-**Checklist Status**: PASS; requirements and authentication checklists in
-`specs/jellyfin-local-config/checklists/`.
+**Checklist Status**: Requirements checklist PASS. Authentication desired-state
+and migration-integrity sections PASS; seven time-sensitive cutover acceptance
+items remain intentionally open until production rollout.
 
 **Plan Gate**: Approved by Pete's "Ok let's open the PR" after the proposed
 architecture, authentication safeguards, and memory preflight were presented.
@@ -66,9 +70,9 @@ remain.
 - [x] NFS default considered; the app-specific local storage exception is
       recorded in binding ADR-0015.
 - [x] Talos boundary preserved; no SSH-based node operations introduced.
-- [x] Branch is `codex/jellyfin-local-config`; connector-backed editing is used
-      because this execution environment has no mounted checkout or authenticated
-      `gh` CLI.
+- [x] Branch is `codex/jellyfin-local-config`; tracked edits use the allowed
+      `/home/vscode/homelab-worktrees/jellyfin-local-config` fallback because the
+      preferred `/workspaces/homelab-worktrees/` path is not writable here.
 - [x] Documentation impact identified; SSO runbook and binding ADR are updated.
 - [x] PR review/status checks remain the review gate.
 
@@ -117,11 +121,14 @@ copy, retry, and fail-closed paths, and run before relying on rendered manifests
 - `python3 tools/architecture/render.py --check`
 - `python3 tools/codex-harness/validate_sdd_context.py --root "$(pwd)" --branch "$(git branch --show-current)" --require-plan-artifacts --require-evidence`
 
-**Development smoke**: Run the existing Jellyfin branch verifier when cluster
-access is available, then manually confirm init order, PVC class, and workload
-mounts. A production-equivalent existing-user OIDC login cannot be represented
-by the current branch fixture because it uses a placeholder secret and
-branch-specific callback.
+**Development smoke**: Run the existing Jellyfin branch verifier, then run an
+isolated migration Job using the exact production script, source/target storage
+classes, image, mounts, and resource bounds. Confirm both PVCs bind, all
+containers exit zero, copied state byte-matches, the routed Jellyfin web shell is
+reachable, and cleanup removes the namespace and retained test PVs. A
+production-equivalent existing-user OIDC login cannot be represented by the
+current branch fixture because it uses a placeholder secret and branch-specific
+callback.
 
 **Automated smoke preference**: The routed development profile remains the first
 user-path check. Production cutover adds explicit SSO start, existing-user,
@@ -156,8 +163,9 @@ validation, and read-only diff review are independent. Results consolidate in
 4. Add `local-path-provisioner` to the production Flux dependencies.
 5. Add migration unit tests.
 6. Add ADR, runbook, SDD artifacts, and checklists.
-7. Run local checks available in the execution environment and record
-   unavailable development/live validation as pending.
+7. Run the full local check set, the isolated development migration Job, and the
+   routed Jellyfin branch smoke; keep production-only authentication acceptance
+   pending.
 8. Open a draft PR; do not mark it ready until cluster smoke and cutover
    preflight are completed.
 
