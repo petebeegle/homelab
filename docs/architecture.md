@@ -102,7 +102,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `production` | `app-home-assistant` | `./kubernetes/apps/home-assistant` | `gateway`, `nfs-csi`, `authentik` | `cluster-vars` | `sops` |
 | `production` | `app-homepage` | `./kubernetes/apps/homepage` | `gateway`, `metrics-server` | `cluster-vars` | `no` |
 | `production` | `app-immich` | `./kubernetes/apps/immich` | `gateway`, `nfs-csi`, `local-path-provisioner`, `cloudnative-pg`, `authentik` | `cluster-vars` | `sops` |
-| `production` | `app-jellyfin` | `./kubernetes/apps/jellyfin` | `gateway`, `nfs-csi`, `intel-gpu-device-plugin` | `cluster-vars` | `no` |
+| `production` | `app-jellyfin` | `./kubernetes/apps/jellyfin` | `gateway`, `nfs-csi`, `local-path-provisioner`, `intel-gpu-device-plugin` | `cluster-vars` | `no` |
 | `production` | `app-pihole` | `./kubernetes/apps/pihole` | `gateway` | `cluster-vars` | `sops` |
 | `production` | `private-apps` | `./kubernetes/clusters/production/apps` | `private-source` | `cluster-vars` | `sops` |
 | `production` | `private-source` | `./kubernetes/clusters/production/apps/private/source` | (none) | `(none)` | `sops` |
@@ -215,11 +215,11 @@ This document is generated for agentic repo navigation. It records relationships
 | PVC | `home-assistant/home-assistant-config` | `nfs-csi-storage` | `kubernetes/apps/home-assistant/pvc.yaml` |
 | PVC | `immich/immich-library` | `nfs-csi-media-storage` | `kubernetes/apps/immich/base/pvc.yaml` |
 | PVC | `jellyfin-${branch_slug}/jellyfin-config-${branch_slug}` | `nfs-csi-storage` | `kubernetes/apps/jellyfin/branch/jellyfin.yaml` |
+| PVC | `jellyfin/jellyfin-config-local-v1` | `local-path` | `kubernetes/apps/jellyfin/pvc.yaml` |
 | PVC | `jellyfin/jellyfin-config-v2` | `nfs-csi-storage` | `kubernetes/apps/jellyfin/pvc.yaml` |
 | PVC | `wireguard/wireguard-pvc` | `nfs-csi-storage` | `kubernetes/infra/network/vpn/pvc.yaml` |
 | Values file | `authentik` | `nfs-csi-storage` | `kubernetes/infra/authentik/values.yaml` |
 | Values file | `immich` | `nfs-csi-storage` | `kubernetes/apps/immich/base/values.yaml` |
-| Values file | `jellyfin` | `nfs-csi-storage` | `kubernetes/apps/jellyfin/values.yaml` |
 
 ## Secret Manifests
 

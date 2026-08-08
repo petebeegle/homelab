@@ -213,7 +213,7 @@ class VerifyBranchDeployTest(unittest.TestCase):
     def test_profile_loading_discovers_current_supported_apps(self) -> None:
         profiles = verify.load_smoke_profiles()
 
-        self.assertEqual(set(profiles), {"home-assistant", "homepage", "jellyfin", "whoami"})
+        self.assertEqual(set(profiles), {"home-assistant", "homepage", "immich", "jellyfin", "whoami"})
         self.assertEqual(profiles["homepage"].activation_template, "kubernetes/clusters/development/branches/homepage-template.yaml")
         self.assertEqual(profiles["homepage"].git_repository, "branch-homepage-${branch_slug}")
         self.assertEqual(profiles["whoami"].activation_template, "kubernetes/clusters/development/branches/whoami-template.yaml")
