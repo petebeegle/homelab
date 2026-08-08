@@ -18,5 +18,7 @@ configMapGenerator:
       - migrate.sh=migrate-config.sh
     options:
       disableNameSuffixHash: true
+      annotations:
+        kustomize.toolkit.fluxcd.io/substitute: disabled
 configurations:
   - kustomizeconfig.yaml
