@@ -57,13 +57,14 @@
 - Resolved `.github/workflows/ci.yml` by preserving upstream Helm v5, Jellyfin repository, Flux CLI, and Jellyfin migration checks while retaining `tools/policy/check_onepassword_operator_chart.sh`.
 - Resolved `.specify/feature.json` to `specs/onepassword-dev-foundation` for the active branch.
 - Post-rebase implementation commit: `4702a9b6b7b6ed6a501c74e2dad1d6282453aef0`.
-- Force-with-lease push and GitHub Actions verification: Pending.
+- Force-with-lease push: PASS at `0ad40d41903a96d6360fb80ee2a3fa2ae854324c`.
+- GitHub Actions on the rebased source: PASS; Pre-commit, Python, Terraform, Kubernetes, Secrets, Agnix, and GitGuardian completed successfully.
 
 ## Automated Smoke And Live Verification
 
 | Target | Method | Result | Notes |
 | ------ | ------ | ------ | ----- |
-| Development 1Password operator and canary | Dedicated canary verifier plus development base reconciliation | BLOCKED | Development kubeconfig exists and the API is reachable, but `op whoami` is unauthenticated, ignored development tfvars are absent in this worktree, and the development vault, read-only service account, bootstrap token item, and disposable Login canary item cannot be confirmed or created here. No branch reconcile was attempted without its trust root. |
+| Development 1Password operator and canary | Dedicated canary verifier plus development base reconciliation | BLOCKED | Development kubeconfig exists, the API is reachable, the Age bootstrap Secret exists, ignored development tfvars are securely staged, and pinned `op` 2.35.0 is available. `op whoami` remains unauthenticated, so the development vault, read-only service account, bootstrap token item, and disposable Login canary item cannot yet be confirmed or created. No branch reconcile was attempted without its trust root. |
 
 ## Deployment State
 

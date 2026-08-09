@@ -70,7 +70,7 @@
 
 - [x] T022 Rebase onto current `origin/main`, preserve upstream CI changes, retain the 1Password chart-render gate, and resolve the active-feature pointer.
 - [x] T023 Rerun focused unit tests, Terraform validation, strict renders, kubeconform, architecture, production-render parity, and all pre-commit hooks after the rebase.
-- [ ] T024 Force-update PR #381 with lease protection and require the full GitHub Actions suite to pass on the rebased commit.
+- [x] T024 Force-update PR #381 with lease protection and require the full GitHub Actions suite to pass on the rebased commit.
 - [ ] T025 Verify the `development` cluster context and authenticated 1Password prerequisites, install dual bootstrap secrets, run the exact-HEAD development base/whoami smoke, and run the live rotation canary.
 - [ ] T026 Record fetched/applied revisions, metadata-only rotation evidence, cleanup, final CI state, and any remaining external blocker in `specs/onepassword-dev-foundation/evidence.md`.
 
