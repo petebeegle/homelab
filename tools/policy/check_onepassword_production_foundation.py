@@ -57,7 +57,8 @@ def check_repository(root: Path) -> list[str]:
     errors += check_item_metric_safety(root)
     errors += require(alert_kustomization, r"alert-rules-onepassword\.yaml", "1Password alert rules are not activated")
     errors += require(alerts, r"uid: onepassword-operator-unavailable", "operator-unavailable alert is missing")
-    errors += require(alerts, r"absent\(kube_deployment_spec_replicas", "operator alert must detect a missing Deployment")
+    errors += require(alerts, r'kube_deployment_spec_replicas\{namespace="onepassword-system",deployment="onepassword-connect-operator"\}', "operator alert must target the live Helm Deployment")
+    errors += require(alerts, r'absent\(kube_deployment_spec_replicas\{namespace="onepassword-system",deployment="onepassword-connect-operator"\}\)', "operator alert must detect a missing live Deployment")
     errors += require(alerts, r"uid: onepassword-item-unready", "item-unready alert is missing")
     errors += require(alerts, r'onepassword_item_info\{ready!="True"\}', "item alert must detect every non-True Ready state")
     if alerts.count("for: 10m") != 2:
