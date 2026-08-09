@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -29,6 +30,19 @@ class OnePasswordProductionFoundationPolicyTest(unittest.TestCase):
         ).read_text(encoding="utf-8")
         self.assertIn('deployment="onepassword-connect-operator"', alerts)
         self.assertNotIn('deployment="onepassword-operator"', alerts)
+
+    def test_operator_alert_uses_exported_resource_namespace(self) -> None:
+        alerts = (
+            REPO_ROOT
+            / "kubernetes/infra/monitoring/grafana/alerting/alert-rules-onepassword.yaml"
+        ).read_text(encoding="utf-8")
+        operator_expression = next(
+            line for line in alerts.splitlines() if "kube_deployment_spec_replicas" in line
+        )
+        self.assertIn('exported_namespace="onepassword-system"', operator_expression)
+        self.assertIsNone(
+            re.search(r'(?<!exported_)namespace="onepassword-system"', operator_expression)
+        )
 
     def test_checker_rejects_secret_data_in_item_metric(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
