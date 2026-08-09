@@ -48,6 +48,15 @@
 | `pre-commit run --all-files` | PASS | All repository hooks passed. |
 | Download Flux `2.9.3`, validate release checksum, and inspect archive | PASS | The exact CI download URLs, checksum entry, and `flux` archive member are valid. |
 
+## GitHub Review Gate
+
+- Draft PR: `https://github.com/petebeegle/homelab/pull/382`
+- Initial head: `71f3f12`
+- Checks: PASS, 7/7 (`Agnix`, `GitGuardian Security Checks`, `Kubernetes`,
+  `Pre-commit`, `Python`, `Secrets`, and `Terraform`).
+- The Kubernetes job passed with the newly added strict Flux build and six-case
+  migration regression in a clean GitHub runner.
+
 ## Automated Smoke And Live Verification
 
 Pending repaired merge. Baseline anonymous probes returned Jellyfin web/public

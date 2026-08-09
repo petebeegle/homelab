@@ -42,7 +42,7 @@ existing behavioral test currently bypasses that boundary.
   secret, storage, GPU, authentication, and route changes.
 - [X] T011 Create `specs/jellyfin-migration-envsubst/evidence.md` with the
   consolidated results from all fanout lanes and local validation.
-- [ ] T012 Push the branch, open the focused PR, and require all GitHub status
+- [X] T012 Push the branch, open the focused PR, and require all GitHub status
   checks to pass before merge.
 
 ## Phase 4: Post-merge production acceptance
