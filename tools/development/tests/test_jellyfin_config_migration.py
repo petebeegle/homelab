@@ -9,6 +9,10 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 MIGRATION_SCRIPT = REPO_ROOT / "kubernetes" / "apps" / "jellyfin" / "migrate-config.sh"
+JELLYFIN_MANIFESTS = REPO_ROOT / "kubernetes" / "apps" / "jellyfin"
+FLUX_KUSTOMIZATION = (
+    REPO_ROOT / "kubernetes" / "clusters" / "production" / "apps" / "jellyfin.yaml"
+)
 PLUGIN_FILES = (
     "SSO-Auth.dll",
     "Duende.IdentityModel.dll",
@@ -40,12 +44,89 @@ def create_config(root: Path) -> None:
     write_file(root / ".hidden-state", b"hidden")
 
 
+def extract_migration_script(manifests: str) -> str:
+    for document in manifests.split("\n---\n"):
+        if (
+            "\nkind: ConfigMap\n" not in document
+            or "name: jellyfin-config-migration\n" not in document
+            or "  migrate.sh: |\n" not in document
+        ):
+            continue
+
+        lines = document.splitlines(keepends=True)
+        start = lines.index("  migrate.sh: |\n") + 1
+        script_lines: list[str] = []
+        for line in lines[start:]:
+            if line.strip() and not line.startswith("    "):
+                break
+            script_lines.append(line[4:] if line.startswith("    ") else line)
+        return "".join(script_lines)
+
+    raise AssertionError("rendered jellyfin-config-migration ConfigMap was not found")
+
+
 class JellyfinConfigMigrationTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.runtime_script_dir = tempfile.TemporaryDirectory()
+        cls.addClassCleanup(cls.runtime_script_dir.cleanup)
+
+        local_kustomization = Path(cls.runtime_script_dir.name) / "jellyfin.yaml"
+        local_kustomization.write_text(
+            FLUX_KUSTOMIZATION.read_text(encoding="utf-8").replace(
+                "  postBuild:\n",
+                "  postBuild:\n"
+                "    substitute:\n"
+                '      cluster_domain: "lab.petebeegle.com"\n'
+                '      nfs_server: "192.0.2.10"\n',
+            ),
+            encoding="utf-8",
+        )
+
+        rendered = subprocess.run(
+            [
+                "flux",
+                "build",
+                "kustomization",
+                "app-jellyfin",
+                "--path",
+                str(JELLYFIN_MANIFESTS),
+                "--kustomization-file",
+                str(local_kustomization),
+                "--dry-run",
+                "--strict-substitute",
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+            cwd=REPO_ROOT,
+        )
+        if rendered.returncode != 0:
+            raise AssertionError(rendered.stderr)
+
+        cls.rendered_manifests = rendered.stdout
+        cls.runtime_script = Path(cls.runtime_script_dir.name) / "migrate.sh"
+        cls.runtime_script.write_text(
+            extract_migration_script(rendered.stdout), encoding="utf-8"
+        )
+
+    def test_flux_preserves_migration_script(self) -> None:
+        self.assertEqual(
+            self.runtime_script.read_bytes(),
+            MIGRATION_SCRIPT.read_bytes(),
+        )
+
+    def test_flux_still_substitutes_neighboring_application_values(self) -> None:
+        self.assertNotIn("${cluster_domain}", self.rendered_manifests)
+        self.assertNotIn("${nfs_server}", self.rendered_manifests)
+        self.assertIn("https://jellyfin.lab.petebeegle.com", self.rendered_manifests)
+        self.assertIn("server: 192.0.2.10", self.rendered_manifests)
+
     def run_migration(self, source: Path, target: Path) -> subprocess.CompletedProcess[str]:
         env = os.environ.copy()
         env.update({"SOURCE_ROOT": str(source), "TARGET_ROOT": str(target)})
         return subprocess.run(
-            ["/bin/sh", str(MIGRATION_SCRIPT)],
+            ["/bin/sh", str(self.runtime_script)],
             check=False,
             capture_output=True,
             text=True,

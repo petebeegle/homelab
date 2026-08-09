@@ -135,6 +135,21 @@ jobs:
       - name: Set up kubectl
         uses: azure/setup-kubectl@v5
 
+      - name: Install Flux CLI
+        env:
+          FLUX_VERSION: "2.9.3"
+        run: |
+          set -euo pipefail
+          archive="flux_${FLUX_VERSION}_linux_amd64.tar.gz"
+          release="https://github.com/fluxcd/flux2/releases/download/v${FLUX_VERSION}"
+          curl --fail --location --retry 5 --retry-delay 5 --retry-all-errors \
+            -sSLO "${release}/${archive}"
+          curl --fail --location --retry 5 --retry-delay 5 --retry-all-errors \
+            -sSLO "${release}/flux_${FLUX_VERSION}_checksums.txt"
+          grep " ${archive}$" "flux_${FLUX_VERSION}_checksums.txt" | sha256sum -c -
+          tar -xzf "${archive}" flux
+          sudo install -m 0755 flux /usr/local/bin/flux
+
       - name: Install kubeconform
         env:
           KUBECONFORM_VERSION: "0.7.0"
@@ -156,6 +171,11 @@ jobs:
         run: >-
           kubectl kustomize kubernetes/clusters/development >
           /tmp/homelab-development.yaml
+
+      - name: Test Jellyfin config migration
+        run: >-
+          python3 -m unittest
+          tools.development.tests.test_jellyfin_config_migration
 
       - name: Validate rendered manifests
         run: >-
