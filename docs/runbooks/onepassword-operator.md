@@ -56,7 +56,7 @@ flux --kubeconfig /home/vscode/.kube/homelab-production.config \
 kubectl --kubeconfig /home/vscode/.kube/homelab-production.config \
   -n onepassword-system get helmrelease onepassword-operator
 kubectl --kubeconfig /home/vscode/.kube/homelab-production.config \
-  -n onepassword-system rollout status deployment/onepassword-operator \
+  -n onepassword-system rollout status deployment/onepassword-connect-operator \
   --timeout=10m
 ```
 
@@ -80,7 +80,7 @@ Grafana alerts after ten minutes when the operator Deployment is absent/unavaila
 ```bash
 kubectl get onepassworditems.onepassword.com -A
 kubectl -n onepassword-system get helmrelease,deployment,pods
-kubectl -n onepassword-system logs deployment/onepassword-operator --since=30m
+kubectl -n onepassword-system logs deployment/onepassword-connect-operator --since=30m
 ```
 
 A 1Password outage prevents refresh but does not remove an existing generated Secret. Confirm existing workloads remain running while investigating. Do not delete a durable `OnePasswordItem` as a diagnostic step: deletion also deletes its generated Kubernetes Secret.

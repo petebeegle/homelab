@@ -22,6 +22,14 @@ class OnePasswordProductionFoundationPolicyTest(unittest.TestCase):
     def test_repository_satisfies_production_foundation_policy(self) -> None:
         self.assertEqual([], self.module.check_repository(REPO_ROOT))
 
+    def test_operator_alert_targets_live_helm_deployment_name(self) -> None:
+        alerts = (
+            REPO_ROOT
+            / "kubernetes/infra/monitoring/grafana/alerting/alert-rules-onepassword.yaml"
+        ).read_text(encoding="utf-8")
+        self.assertIn('deployment="onepassword-connect-operator"', alerts)
+        self.assertNotIn('deployment="onepassword-operator"', alerts)
+
     def test_checker_rejects_secret_data_in_item_metric(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
