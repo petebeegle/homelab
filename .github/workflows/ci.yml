@@ -159,6 +159,9 @@ jobs:
       - name: Validate direct-auth 1Password chart render
         run: tools/policy/check_onepassword_operator_chart.sh
 
+      - name: Validate 1Password production foundation policy
+        run: python3 tools/policy/check_onepassword_production_foundation.py
+
       - name: Install kubeconform
         env:
           KUBECONFORM_VERSION: "0.7.0"

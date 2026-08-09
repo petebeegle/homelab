@@ -37,11 +37,32 @@ rbac:
         - httproutes
         - tlsroutes
       verbs: ["list", "watch", "get"]
+    - apiGroups:
+        - onepassword.com
+      resources:
+        - onepassworditems
+      verbs: ["list", "watch", "get"]
 customResourceState:
   enabled: true
   config:
     spec:
       resources:
+        - groupVersionKind:
+            group: onepassword.com
+            version: v1
+            kind: OnePasswordItem
+          metricNamePrefix: onepassword
+          metrics:
+            - name: "item_info"
+              help: "The readiness state of a 1Password item resource."
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    name: [metadata, name]
+              labelsFromPath:
+                exported_namespace: [metadata, namespace]
+                ready: [status, conditions, "[type=Ready]", status]
         - groupVersionKind:
             group: kustomize.toolkit.fluxcd.io
             version: v1

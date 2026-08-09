@@ -105,3 +105,14 @@ variable "flux_bootstrap_path" {
   type        = string
   default     = "./kubernetes/clusters/production"
 }
+
+variable "onepassword_service_account_token_ref" {
+  description = "Non-secret op:// reference used to bootstrap the production operator service-account token"
+  type        = string
+  default     = "op://cluster bootstrap/onepassword-production-operator/credential"
+
+  validation {
+    condition     = startswith(var.onepassword_service_account_token_ref, "op://")
+    error_message = "The 1Password service-account token reference must use the op:// scheme."
+  }
+}

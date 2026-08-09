@@ -55,6 +55,12 @@ repos:
         stages: [pre-commit]
         pass_filenames: false
         always_run: true
+      - id: onepassword-production-foundation
+        name: Check 1Password production foundation policy
+        entry: python3 tools/policy/check_onepassword_production_foundation.py
+        language: system
+        files: ^(terraform/production/(main|variables)\.tf|kubernetes/clusters/production/infra/(kustomization|onepassword-operator)\.yaml|kubernetes/infra/monitoring/(kube-state-metrics/config/metrics|grafana/alerting/(kustomization|alert-rules-onepassword))\.yaml|tools/policy/check_onepassword_production_foundation\.py|\.pre-commit-config\.yaml)$
+        pass_filenames: false
       - id: synology-oauth-redirect
         name: Check Synology OAuth redirect path
         entry: python3 tools/policy/check_synology_oauth_redirect.py

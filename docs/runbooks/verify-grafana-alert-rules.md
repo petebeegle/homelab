@@ -24,4 +24,4 @@ curl -fsS -u "$GRAFANA_USER:$GRAFANA_PASSWORD" \
   http://127.0.0.1:3000/api/ruler/grafana/api/v1/rules | jq .
 ```
 
-Expected result: the `proxmox`, `flux`, `valheim`, and `mimir` rule groups appear in the ruler output, and the `GrafanaAlertRuleGroup` resources report successful reconciliation.
+Expected result: the `proxmox`, `flux`, `onepassword`, `valheim`, and `mimir` rule groups appear in the ruler output, and the `GrafanaAlertRuleGroup` resources report successful reconciliation.
