@@ -32,7 +32,17 @@ The phase adds only the production operator activation plus monitoring configura
 
 ## Live Production Validation
 
-Pending authenticated production bootstrap, exact-revision Flux reconciliation, and canary.
+### Bootstrap trust roots
+
+PASS on 2026-08-09 using the production kubeconfig and authenticated user `op` session:
+
+- `flux-system/sops-age` remained present with its original creation timestamp `2026-03-21T03:49:13Z`.
+- `onepassword-system` was created and reports `Active`.
+- `onepassword-system/onepassword-service-account-token` was created as an `Opaque` Secret at `2026-08-09T23:08:46Z`.
+- The helper reported provider `dual`; no token or Age-key value was printed or inspected.
+- Production operator resources were not reconciled before the Git change, so existing workloads remained on SOPS.
+
+Pending merge/exact-main Flux reconciliation and production-vault canary.
 
 ## Secret Safety
 

@@ -21,7 +21,7 @@
 
 - [x] T010 Run focused and existing unit tests, Terraform checks, strict dual-cluster renders/substitution, kubeconform, chart policy, architecture, harness, and affected repository checks.
 - [x] T011 Prove the diff changes no existing SOPS manifest, decryption block, or consumer Secret reference.
-- [ ] T012 Bootstrap the separate production token through authenticated `op read`, verify both trust-root object identities, and record metadata-only evidence.
+- [x] T012 Bootstrap the separate production token through authenticated `op read`, verify both trust-root object identities, and record metadata-only evidence.
 - [ ] T013 Reconcile the exact production branch revision and record Flux/operator readiness.
 - [ ] T014 Run the production-vault canary through rotation and confirm default namespace cleanup.
 - [ ] T015 Run Spec Kit converge, complete appended tasks, update evidence, commit, push, and open the gated PR.
