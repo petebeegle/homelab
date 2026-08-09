@@ -67,6 +67,7 @@
 | ------ | ------ | ------ | ----- |
 | Development bootstrap trust roots | Metadata-only Kubernetes inspection | PASS | `flux-system/sops-age` remained unchanged and `onepassword-system/onepassword-service-account-token` was created through an authenticated `op read` using `op://cluster bootstrap/onepassword-development-operator/credential`; no value was printed or recorded. |
 | First exact-HEAD branch-base attempt | `verify_branch_deploy.py --app whoami --include-cluster-base` | FAIL, FIXED | Flux fetched `codex/onepassword-dev-foundation@sha1:96b9c47faf589621f9428740062c21e670eb615e`, but the root reconciled its self-managed source back to `main` before creating `onepassword-operator`. Cleanup restored `main`; no branch app resources were activated. T027 adds the regression fix and coverage before retry. |
+| Second exact-HEAD branch-base attempt | Same verifier at `50dd2ad07373968130ead12c7d4d0a689cb3abf4` | FAIL, FIXED | The exact branch declarations created `onepassword-operator`, but the active self-managing root reacted to the source update and pruned it from `main`. Cleanup restored `main`. The verifier now suspends only the root during ordered child validation and always restores the source and resumes the root. |
 | Development 1Password operator and canary | Dedicated canary verifier plus development base reconciliation | PENDING | Trust roots are installed. The corrected exact-HEAD base/whoami smoke and authenticated live rotation canary remain required before phase completion. |
 
 ## Deployment State

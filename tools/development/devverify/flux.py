@@ -75,11 +75,10 @@ def verify_cluster_base(config: AppConfig, *, runner: Runner, repo_root=REPO_ROO
     from .checks import wait_for_active_pods_ready
 
     failure: BaseException | None = None
+    root_suspended = False
     try:
-        pin_flux_system_source(config, branch=config.branch, runner=runner)
-        reconcile_flux_system_source(config, runner=runner)
-        reconcile_flux_kustomization(config, "flux-system", runner=runner)
-
+        suspend_flux_kustomization(config, "flux-system", runner=runner)
+        root_suspended = True
         apply_development_base_definitions(config, runner=runner, repo_root=repo_root)
         pin_flux_system_source(config, branch=config.branch, runner=runner)
         reconcile_flux_system_source(config, runner=runner)
@@ -97,7 +96,7 @@ def verify_cluster_base(config: AppConfig, *, runner: Runner, repo_root=REPO_ROO
         failure = exc
     finally:
         try:
-            restore_flux_system_source(config, runner=runner)
+            restore_flux_system_source(config, runner=runner, resume_root=root_suspended)
         except BaseException as restore_exc:
             if failure is None:
                 failure = restore_exc
@@ -174,9 +173,27 @@ def reconcile_flux_system_source(config: AppConfig, *, runner: Runner) -> None:
     )
 
 
-def restore_flux_system_source(config: AppConfig, *, runner: Runner) -> None:
+def suspend_flux_kustomization(config: AppConfig, name: str, *, runner: Runner) -> None:
+    run_command(
+        flux(config, "suspend", "kustomization", name, "--namespace", FLUX_NAMESPACE),
+        runner=runner,
+        timeout=config.timeout,
+    )
+
+
+def resume_flux_kustomization(config: AppConfig, name: str, *, runner: Runner) -> None:
+    run_command(
+        flux(config, "resume", "kustomization", name, "--namespace", FLUX_NAMESPACE),
+        runner=runner,
+        timeout=config.timeout,
+    )
+
+
+def restore_flux_system_source(config: AppConfig, *, runner: Runner, resume_root: bool = False) -> None:
     pin_flux_system_source(config, branch="main", runner=runner)
     reconcile_flux_system_source(config, runner=runner)
+    if resume_root:
+        resume_flux_kustomization(config, "flux-system", runner=runner)
     reconcile_flux_kustomization(config, "flux-system", runner=runner)
 
 

@@ -617,20 +617,21 @@ class VerifyBranchDeployTest(unittest.TestCase):
             for index, command in enumerate(commands)
             if "patch gitrepository.source.toolkit.fluxcd.io/flux-system" in command and '"branch": "codex/example-change"' in command
         ]
-        self.assertEqual(len(branch_patch_indices), 2)
-        root_index = self._index_containing(commands, "reconcile kustomization flux-system")
+        self.assertEqual(len(branch_patch_indices), 1)
+        suspend_index = self._index_containing(commands, "suspend kustomization flux-system")
+        resume_index = self._index_containing(commands, "resume kustomization flux-system")
         child_indices = [
             self._index_containing(commands, f"reconcile kustomization {name}")
             for name in verify.DEVELOPMENT_BASE_KUSTOMIZATIONS
         ]
-        self.assertLess(branch_patch_indices[0], root_index)
-        self.assertLess(root_index, infra_apply_index)
+        self.assertLess(suspend_index, infra_apply_index)
         self.assertLess(infra_apply_index, apps_apply_index)
-        self.assertLess(apps_apply_index, branch_patch_indices[1])
+        self.assertLess(apps_apply_index, branch_patch_indices[0])
         self.assertEqual(child_indices, sorted(child_indices))
         self.assertTrue(any("get pods --all-namespaces -o json" in command for command in commands))
         self.assertTrue(any("wait pod/whoami-example-change-7d9c4 --for=condition=Ready" in command for command in commands))
         self.assertTrue(any('"branch": "main"' in command for command in commands))
+        self.assertLess(child_indices[-1], resume_index)
         self.assertGreater(commands[-2].find("reconcile kustomization flux-system"), -1)
 
     def test_cluster_base_restores_main_on_failure(self) -> None:
@@ -641,6 +642,7 @@ class VerifyBranchDeployTest(unittest.TestCase):
 
         commands = [" ".join(command) for command in runner.commands]
         self.assertTrue(any('"branch": "main"' in command for command in commands))
+        self.assertTrue(any("resume kustomization flux-system" in command for command in commands[-4:]))
         self.assertTrue(any("reconcile kustomization flux-system" in command for command in commands[-2:]))
 
     def test_cleanup_is_attempted_after_activation_failure_unless_keep_is_set(self) -> None:
