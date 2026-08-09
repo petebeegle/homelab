@@ -7,6 +7,7 @@ persistence:
     enabled: false
 deploymentStrategy:
   type: Recreate
+  rollingUpdate: null
 nodeSelector:
   homelab.petebeegle.com/jellyfin-igpu: "true"
 resources:

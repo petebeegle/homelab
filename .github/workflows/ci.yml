@@ -135,6 +135,12 @@ jobs:
       - name: Set up kubectl
         uses: azure/setup-kubectl@v5
 
+      - name: Set up Helm
+        uses: azure/setup-helm@v5.0.1
+
+      - name: Add Jellyfin Helm repository
+        run: helm repo add jellyfin https://jellyfin.github.io/jellyfin-helm
+
       - name: Install Flux CLI
         env:
           FLUX_VERSION: "2.9.3"

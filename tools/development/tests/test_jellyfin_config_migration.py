@@ -10,6 +10,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[3]
 MIGRATION_SCRIPT = REPO_ROOT / "kubernetes" / "apps" / "jellyfin" / "migrate-config.sh"
 JELLYFIN_MANIFESTS = REPO_ROOT / "kubernetes" / "apps" / "jellyfin"
+JELLYFIN_VALUES = JELLYFIN_MANIFESTS / "values.yaml"
 FLUX_KUSTOMIZATION = (
     REPO_ROOT / "kubernetes" / "clusters" / "production" / "apps" / "jellyfin.yaml"
 )
@@ -104,7 +105,27 @@ class JellyfinConfigMigrationTest(unittest.TestCase):
         if rendered.returncode != 0:
             raise AssertionError(rendered.stderr)
 
+        helm_rendered = subprocess.run(
+            [
+                "helm",
+                "template",
+                "jellyfin",
+                "jellyfin/jellyfin",
+                "--version",
+                "3.2.0",
+                "--values",
+                str(JELLYFIN_VALUES),
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+            cwd=REPO_ROOT,
+        )
+        if helm_rendered.returncode != 0:
+            raise AssertionError(helm_rendered.stderr)
+
         cls.rendered_manifests = rendered.stdout
+        cls.helm_manifests = helm_rendered.stdout
         cls.runtime_script = Path(cls.runtime_script_dir.name) / "migrate.sh"
         cls.runtime_script.write_text(
             extract_migration_script(rendered.stdout), encoding="utf-8"
@@ -121,6 +142,22 @@ class JellyfinConfigMigrationTest(unittest.TestCase):
         self.assertNotIn("${nfs_server}", self.rendered_manifests)
         self.assertIn("https://jellyfin.lab.petebeegle.com", self.rendered_manifests)
         self.assertIn("server: 192.0.2.10", self.rendered_manifests)
+
+    def test_recreate_strategy_explicitly_clears_rolling_update(self) -> None:
+        self.assertIn(
+            "  strategy:\n    rollingUpdate: null\n    type: Recreate\n",
+            self.helm_manifests,
+        )
+
+    def test_helm_render_preserves_migration_invariants(self) -> None:
+        self.assertLess(
+            self.helm_manifests.index("name: migrate-config"),
+            self.helm_manifests.index("name: install-sso-auth"),
+        )
+        self.assertIn("claimName: jellyfin-config-local-v1", self.helm_manifests)
+        self.assertIn("claimName: jellyfin-config-v2", self.helm_manifests)
+        self.assertIn("readOnly: true", self.helm_manifests)
+        self.assertIn("gpu.intel.com/i915: 1", self.helm_manifests)
 
     def run_migration(self, source: Path, target: Path) -> subprocess.CompletedProcess[str]:
         env = os.environ.copy()
