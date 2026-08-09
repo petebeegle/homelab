@@ -120,7 +120,7 @@ variable "flux_bootstrap_path" {
 variable "onepassword_service_account_token_ref" {
   description = "Non-secret op:// reference used to bootstrap the development operator service-account token"
   type        = string
-  default     = "op://Homelab Bootstrap/onepassword-development-operator/token"
+  default     = "op://cluster bootstrap/onepassword-development-operator/credential"
 
   validation {
     condition     = startswith(var.onepassword_service_account_token_ref, "op://")

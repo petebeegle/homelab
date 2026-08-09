@@ -606,6 +606,12 @@ class VerifyBranchDeployTest(unittest.TestCase):
         verify.verify_cluster_base(self._config(include_cluster_base=True), runner=runner)
 
         commands = [" ".join(command) for command in runner.commands]
+        infra_apply_index = self._index_containing(
+            commands, "apply -k " + str(REPO_ROOT / "kubernetes/clusters/development/infra")
+        )
+        apps_apply_index = self._index_containing(
+            commands, "apply -k " + str(REPO_ROOT / "kubernetes/clusters/development/apps")
+        )
         branch_patch_indices = [
             index
             for index, command in enumerate(commands)
@@ -618,7 +624,9 @@ class VerifyBranchDeployTest(unittest.TestCase):
             for name in verify.DEVELOPMENT_BASE_KUSTOMIZATIONS
         ]
         self.assertLess(branch_patch_indices[0], root_index)
-        self.assertLess(root_index, branch_patch_indices[1])
+        self.assertLess(root_index, infra_apply_index)
+        self.assertLess(infra_apply_index, apps_apply_index)
+        self.assertLess(apps_apply_index, branch_patch_indices[1])
         self.assertEqual(child_indices, sorted(child_indices))
         self.assertTrue(any("get pods --all-namespaces -o json" in command for command in commands))
         self.assertTrue(any("wait pod/whoami-example-change-7d9c4 --for=condition=Ready" in command for command in commands))

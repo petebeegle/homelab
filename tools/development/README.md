@@ -74,7 +74,7 @@ the development vault, then run:
 
 ```sh
 python3 tools/development/verify_onepassword_operator.py \
-  --vault "Homelab Development" \
+  --vault "cluster development" \
   --item k8s--onepassword-system--canary \
   --slug onepassword-dev-foundation
 ```

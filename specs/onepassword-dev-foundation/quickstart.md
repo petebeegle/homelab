@@ -4,7 +4,7 @@
 
 1. Rebuild the devcontainer so pinned `op` is available.
 2. Authenticate `op` to the administrator account.
-3. Create the `Homelab Development` vault, a read-only development operator service account, and an admin-only bootstrap item containing its token.
+3. Use the `cluster development` vault, create a read-only development operator service account, and save its generated `credential` field in the admin-only `cluster bootstrap` vault.
 4. Create a disposable Login canary item in the development vault with a non-empty built-in `password` field; the validating human identity must be allowed to edit it.
 5. Ensure `~/.kube/homelab-development.config` and the existing Age key are available.
 

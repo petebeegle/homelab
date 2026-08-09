@@ -49,6 +49,7 @@
 | `python3 tools/architecture/render.py --check` | PASS | Generated architecture is current after adding the development-only operator relationship. |
 | `pre-commit run --all-files` | PASS | All YAML, Kubernetes, Terraform, generated-doc, and repository policy hooks passed. Terraform docs added the new non-secret development input to `terraform/development/README.md`. |
 | `python3 tools/development/tests/test_verify_branch_deploy.py` | PASS | Post-rebase: all 32 tests passed; the prior baseline Immich discovery mismatch was fixed upstream. |
+| Live-discovered branch-base regression | PASS | The first exact-HEAD attempt showed the self-managed root GitRepository resetting to `main` before branch-only child Kustomizations were created. The verifier now applies the exact checkout's development `infra` and `apps` Flux declarations before the second source pin; all 32 branch-verifier tests pass with ordering coverage. |
 | `python3 -m unittest tools.development.tests.test_jellyfin_config_migration` | PASS | All 9 upstream Jellyfin migration tests passed after conflict resolution. |
 
 ## Rebase Evidence
@@ -64,7 +65,9 @@
 
 | Target | Method | Result | Notes |
 | ------ | ------ | ------ | ----- |
-| Development 1Password operator and canary | Dedicated canary verifier plus development base reconciliation | BLOCKED | Development kubeconfig exists, the API is reachable, the Age bootstrap Secret exists, ignored development tfvars are securely staged, and pinned `op` 2.35.0 is available. `op whoami` remains unauthenticated, so the development vault, read-only service account, bootstrap token item, and disposable Login canary item cannot yet be confirmed or created. No branch reconcile was attempted without its trust root. |
+| Development bootstrap trust roots | Metadata-only Kubernetes inspection | PASS | `flux-system/sops-age` remained unchanged and `onepassword-system/onepassword-service-account-token` was created through an authenticated `op read` using `op://cluster bootstrap/onepassword-development-operator/credential`; no value was printed or recorded. |
+| First exact-HEAD branch-base attempt | `verify_branch_deploy.py --app whoami --include-cluster-base` | FAIL, FIXED | Flux fetched `codex/onepassword-dev-foundation@sha1:96b9c47faf589621f9428740062c21e670eb615e`, but the root reconciled its self-managed source back to `main` before creating `onepassword-operator`. Cleanup restored `main`; no branch app resources were activated. T027 adds the regression fix and coverage before retry. |
+| Development 1Password operator and canary | Dedicated canary verifier plus development base reconciliation | PENDING | Trust roots are installed. The corrected exact-HEAD base/whoami smoke and authenticated live rotation canary remain required before phase completion. |
 
 ## Deployment State
 

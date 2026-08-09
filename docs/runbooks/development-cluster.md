@@ -105,7 +105,7 @@ Before applying development Terraform:
   only that vault.
 - Store the service-account token in an administrator-accessible bootstrap item.
   The default non-secret reference is
-  `op://Homelab Bootstrap/onepassword-development-operator/token`; override
+  `op://cluster bootstrap/onepassword-development-operator/credential`; override
   `onepassword_service_account_token_ref` in ignored development tfvars if the
   item has a different path.
 - Authenticate the `op` CLI as a human who can read the bootstrap item. Do not
@@ -121,7 +121,7 @@ roots before pointing Flux at the development entrypoint:
 ```sh
 export KUBECONFIG="$HOME/.kube/homelab-development.config"
 export FLUX_BOOTSTRAP_SECRET_PROVIDER=dual
-export OP_SERVICE_ACCOUNT_TOKEN_REF='op://Homelab Bootstrap/onepassword-development-operator/token'
+export OP_SERVICE_ACCOUNT_TOKEN_REF='op://cluster bootstrap/onepassword-development-operator/credential'
 terraform/scripts/install-flux-bootstrap-secrets.sh
 
 flux bootstrap github \
@@ -159,7 +159,7 @@ Run the canary only after the development branch/base has reconciled:
 
 ```sh
 python3 tools/development/verify_onepassword_operator.py \
-  --vault "Homelab Development" \
+  --vault "cluster development" \
   --item k8s--onepassword-system--canary \
   --slug onepassword-dev-foundation \
   --kubeconfig "$HOME/.kube/homelab-development.config" \
