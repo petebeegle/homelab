@@ -40,7 +40,7 @@ strategy transition while all existing migration cases pass.
 
 ## Phase 4: Review and production acceptance
 
-- [ ] T009 Push the implementation, open a draft PR, and require all GitHub
+- [X] T009 Push the implementation, open a draft PR, and require all GitHub
   status checks before merge; record the PR in
   `specs/jellyfin-recreate-strategy/evidence.md`.
 - [ ] T010 [P] Verify the merged/fetched/applied revision and Helm conditions in

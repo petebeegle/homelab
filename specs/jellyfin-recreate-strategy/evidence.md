@@ -45,6 +45,15 @@
 | `git diff --check` | PASS | No whitespace errors. |
 | `pre-commit run --all-files` | PASS | All repository hooks passed. |
 
+## GitHub Review Gate
+
+- Draft PR: `https://github.com/petebeegle/homelab/pull/385`
+- Initial head: `121e31e`
+- Checks: PASS, 7/7 (`Agnix`, `GitGuardian Security Checks`, `Kubernetes`,
+  `Pre-commit`, `Python`, `Secrets`, and `Terraform`).
+- The Kubernetes job passed with Helm setup, the pinned chart render, and all
+  eight focused Jellyfin tests in a clean runner.
+
 ## Development Validation
 
 Exact chart rendering and focused migration execution substitute for routed
