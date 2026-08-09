@@ -27,9 +27,12 @@ spec:
       retries: 3
   upgrade:
     crds: CreateReplace
+    serverSideApply: disabled
     remediation:
       retries: 3
       remediateLastFailure: true
+  rollback:
+    serverSideApply: disabled
   chart:
     spec:
       chart: jellyfin

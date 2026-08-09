@@ -143,6 +143,13 @@ class JellyfinConfigMigrationTest(unittest.TestCase):
         self.assertIn("https://jellyfin.lab.petebeegle.com", self.rendered_manifests)
         self.assertIn("server: 192.0.2.10", self.rendered_manifests)
 
+    def test_helm_actions_use_client_side_apply_without_force(self) -> None:
+        self.assertEqual(
+            self.rendered_manifests.count("serverSideApply: disabled"),
+            2,
+        )
+        self.assertNotIn("force: true", self.rendered_manifests)
+
     def test_recreate_strategy_explicitly_clears_rolling_update(self) -> None:
         self.assertIn(
             "  strategy:\n    rollingUpdate: null\n    type: Recreate\n",
