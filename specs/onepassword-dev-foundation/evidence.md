@@ -3,11 +3,12 @@
 **Branch**: `codex/onepassword-dev-foundation`
 **Risk Tier**: high
 **Started**: 2026-08-01
+**Live acceptance completed**: 2026-08-09
 
 ## Spec Kit Initialization
 
 - Command: Spec Kit specify/clarify/plan/checklist/tasks/analyze/implement/converge workflow
-- Outcome: Local implementation complete; live development acceptance blocked on external 1Password prerequisites
+- Outcome: Local implementation and live development acceptance complete
 - Spec Kit version: `0.12.5.dev0`
 - Integration: `codex`
 - Fallback: Worktree at `/home/vscode/homelab-worktrees/onepassword-dev-foundation`; `/workspaces/homelab-worktrees/` was not writable.
@@ -22,7 +23,7 @@
 | Plan approval | PASS | Direct operator/service-account design and development-first rollout were explicitly approved by the user. |
 | Checklist | PASS | Requirements and security checklists complete before implementation. |
 | Tasks/analyze approval | PASS | Read-only analysis covered 11 requirements and 21 tasks with full coverage and no critical/high gaps; user implementation approval authorizes execution. |
-| Converge | PASS | Rechecked all 11 functional requirements against implementation and tests; no unbuilt repository work remains in phase 1. Live acceptance remains explicitly gated. |
+| Converge | PASS | Rechecked all 11 functional requirements against implementation and tests; repository work and live development acceptance are complete for phase 1. |
 
 ## Workflow Validation
 
@@ -68,24 +69,27 @@
 | Development bootstrap trust roots | Metadata-only Kubernetes inspection | PASS | `flux-system/sops-age` remained unchanged and `onepassword-system/onepassword-service-account-token` was created through an authenticated `op read` using `op://cluster bootstrap/onepassword-development-operator/credential`; no value was printed or recorded. |
 | First exact-HEAD branch-base attempt | `verify_branch_deploy.py --app whoami --include-cluster-base` | FAIL, FIXED | Flux fetched `codex/onepassword-dev-foundation@sha1:96b9c47faf589621f9428740062c21e670eb615e`, but the root reconciled its self-managed source back to `main` before creating `onepassword-operator`. Cleanup restored `main`; no branch app resources were activated. T027 adds the regression fix and coverage before retry. |
 | Second exact-HEAD branch-base attempt | Same verifier at `50dd2ad07373968130ead12c7d4d0a689cb3abf4` | FAIL, FIXED | The exact branch declarations created `onepassword-operator`, but the active self-managing root reacted to the source update and pruned it from `main`. Cleanup restored `main`. The verifier now suspends only the root during ordered child validation and always restores the source and resumes the root. |
-| Development 1Password operator and canary | Dedicated canary verifier plus development base reconciliation | PENDING | Trust roots are installed. The corrected exact-HEAD base/whoami smoke and authenticated live rotation canary remain required before phase completion. |
+| Corrected exact-HEAD development base and whoami smoke | `verify_branch_deploy.py --app whoami --include-cluster-base` | PASS | Flux fetched and applied `codex/onepassword-dev-foundation@sha1:9f69d60ac7c558acb1c9615c18a670e624e2c392`; ordered base Kustomizations, all active cluster pods, the temporary whoami Deployment, Service, and accepted HTTPRoute passed. The branch environment was removed automatically. |
+| Initial 1Password canary sync | `verify_onepassword_operator.py --skip-rotation --keep` | PASS | `OnePasswordItem Ready=True`; generated Secret resource version `51596478`; consuming pod UID `810fa831-46a4-43f8-8a5a-f892865f0eef` was Ready. A prior status-update conflict was transient and the retained diagnostic rerun completed in 22 seconds. |
+| 1Password rotation and automatic restart | Full canary verifier | PASS | Secret resource version changed `51596478 -> 51597279`; consuming pod UID changed `810fa831-46a4-43f8-8a5a-f892865f0eef -> 7979058d-b10d-4928-afa4-9850e2eb09d8`. No Secret value was requested or printed. |
+| Canary cleanup and Flux restoration | Verifier cleanup plus metadata-only cluster inspection | PASS | Canary namespace was removed. Canonical `flux-system` source was restored to `main@sha1:0d5e55a60696d4f49c0202dcfe74d1967235e1dd`, root reconciliation resumed and reported Ready. The temporary branch-only Kustomization was deleted with `deletionPolicy: Orphan`; the bootstrap token, HelmRelease, and validated Operator Deployment remain intact for adoption after merge. |
 
 ## Deployment State
 
-- Source fetched SHA: Not available; live reconcile not attempted without the 1Password trust root
-- Target applied SHA: Not available
-- Live resource spec checked: Not available; local Helm/Kustomize renders passed
+- Source fetched SHA: `9f69d60ac7c558acb1c9615c18a670e624e2c392`
+- Target applied SHA: `9f69d60ac7c558acb1c9615c18a670e624e2c392`
+- Live resource spec checked: chart `2.4.1`, operator image `1password/onepassword-operator:1.12.0`, HelmRelease Ready, Deployment `1/1`, and no Connect workload
 - Gateway/listener/DNS/certificate checked: Not applicable to this foundation
 - Exact user-facing URL result: Not applicable; canary has no route
 
 ## Development Validation
 
-- Profile: none
+- Profile: `whoami` with development cluster base
 - Branch slug: onepassword-dev-foundation
-- HEAD: Not applicable; branch was not activated
+- HEAD: `9f69d60ac7c558acb1c9615c18a670e624e2c392`
 - Report path: This evidence file
-- Cleanup: No canary or branch resources were created
-- Result or exception: External credential prerequisite unavailable. Phase 2 MUST NOT start until `verify_branch_deploy.py --app whoami --include-cluster-base` and the live canary both pass on a pushed phase-1 commit.
+- Cleanup: Branch whoami resources and canary namespace removed; canonical Flux source restored to `main` and root reconciliation resumed
+- Result or exception: PASS. Initial sync, rotation, automatic Deployment restart, and cleanup were proven without exposing values. Phase 1's live gate is satisfied.
 
 ## Documentation Impact
 
@@ -104,12 +108,12 @@
 
 - Production phases remain intentionally unstarted until this phase has live development sync/rotation evidence.
 - The operator-unavailable and `OnePasswordItem`-unready ten-minute alerts remain assigned to `onepassword-prod-foundation`, as declared out of scope in this phase's approved specification because development does not reconcile the monitoring stack.
-- The ignored development tfvars and authenticated 1Password administration session must be staged/provided before live validation; no token value is requested in Git, Terraform, command arguments, or evidence.
+- The development vault is `cluster development`; the read-only operator token is stored as the immutable `credential` field at the non-secret reference `op://cluster bootstrap/onepassword-development-operator/credential`.
 - Branch push: PASS; `codex/onepassword-dev-foundation` exists on `origin`.
 - Draft PR creation: PASS; [PR #381](https://github.com/petebeegle/homelab/pull/381) targets `main` and remains gated on live development acceptance.
 
 ## Final State
 
 - Final branch: `codex/onepassword-dev-foundation`
-- Final HEAD: Deferred to the implementation-owner handoff after the evidence/PR-status commit.
+- Final tested implementation HEAD: `9f69d60ac7c558acb1c9615c18a670e624e2c392`; the subsequent evidence-only commit records these results.
 - Implementation commit: `4702a9b6b7b6ed6a501c74e2dad1d6282453aef0` (`feat: add 1password development foundation`, rebased)
