@@ -47,7 +47,7 @@ def run_acceptance(
         run_terraform(config, runner=runner, repo_root=repo_root)
 
         if config.include_cluster_base:
-            verify_cluster_base(config, runner=runner)
+            verify_cluster_base(config, runner=runner, repo_root=repo_root)
 
         rendered = render_activation_template(
             template_text

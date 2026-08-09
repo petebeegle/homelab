@@ -17,7 +17,7 @@ This document is generated for agentic repo navigation. It records relationships
 
 - Root Kustomization: `kubernetes/clusters/development/kustomization.yaml`.
 - Root resources: `flux-system`, `cluster-vars.yaml`, `infra`, `apps`.
-- Infra activation list: `crds.yaml`, `cert-manager.yaml`, `local-path-provisioner.yaml`, `cloudnative-pg.yaml`, `intel-device-plugins-operator.yaml`, `intel-gpu-device-plugin.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `metrics-server.yaml`, `certs.yaml`, `gateway.yaml`.
+- Infra activation list: `crds.yaml`, `onepassword-operator.yaml`, `cert-manager.yaml`, `local-path-provisioner.yaml`, `cloudnative-pg.yaml`, `intel-device-plugins-operator.yaml`, `intel-gpu-device-plugin.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `metrics-server.yaml`, `certs.yaml`, `gateway.yaml`.
 - App activation list: `whoami.yaml`, `homepage.yaml`, `foundry-bluegreen-fixture.yaml`.
 
 - Branch environment templates: `whoami-template.yaml`, `jellyfin-template.yaml`, `homepage-template.yaml`, `home-assistant-template.yaml`, `immich-template.yaml`.
@@ -90,6 +90,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `development` | `local-path-provisioner` | `./kubernetes/infra/controllers/local-path-provisioner` | (none) | `(none)` | `no` |
 | `development` | `metrics-server` | `./kubernetes/infra/controllers/metrics-server` | `crds`, `cilium` | `cluster-vars` | `no` |
 | `development` | `nfs-csi` | `./kubernetes/infra/controllers/nfs-csi` | (none) | `cluster-vars` | `no` |
+| `development` | `onepassword-operator` | `./kubernetes/infra/controllers/onepassword-operator` | `crds` | `(none)` | `no` |
 
 ### Applications
 
@@ -129,6 +130,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/infra/controllers/local-path-provisioner` | `github.com/rancher/local-path-provisioner/deploy?ref=v0.0.36` |
 | `kubernetes/infra/controllers/metrics-server` | `app.yaml` |
 | `kubernetes/infra/controllers/nfs-csi` | `app.yaml`, `media-storageclass.yaml`, `storageclass.yaml`, `volumesnapshotclass.yaml` |
+| `kubernetes/infra/controllers/onepassword-operator` | `namespace.yaml`, `app.yaml` |
 | `kubernetes/infra/crds/grafana` | `https://github.com/grafana/grafana-operator//config/crd?ref=v5.23.0` |
 | `kubernetes/infra/crds` | `https://github.com/kubernetes-csi/external-snapshotter//client/config/crd?ref=v8.6.0`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/standard/gateway.networking.k8s.io_gatewayclasses.yaml`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/experimental/gateway.networking.k8s.io_gateways.yaml`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/standard/gateway.networking.k8s.io_httproutes.yaml`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/standard/gateway.networking.k8s.io_referencegrants.yaml`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/standard/gateway.networking.k8s.io_grpcroutes.yaml`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/standard/gateway.networking.k8s.io_backendtlspolicies.yaml`, `https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/experimental/gateway.networking.k8s.io_tlsroutes.yaml`, `prometheus`, `grafana` |
 | `kubernetes/infra/crds/prometheus` | `app.yaml` |
@@ -164,6 +166,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/apps/immich` | `base` |
 | `kubernetes/apps/jellyfin/branch` | `jellyfin.yaml` |
 | `kubernetes/apps/jellyfin` | `./app.yaml`, `./pvc.yaml`, `./httproute.yaml`, `./secret.yaml`, `./sso-bootstrap.yaml` |
+| `kubernetes/apps/onepassword-canary/smoke` | `manifests.yaml` |
 | `kubernetes/apps/pihole` | `app.yaml`, `secret.yaml`, `httproute.yaml` |
 | `kubernetes/apps/renovate` | `app.yaml`, `secret.yaml` |
 | `kubernetes/apps/synthetics` | `namespace.yaml`, `cronjob.yaml` |

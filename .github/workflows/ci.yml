@@ -156,6 +156,9 @@ jobs:
           tar -xzf "${archive}" flux
           sudo install -m 0755 flux /usr/local/bin/flux
 
+      - name: Validate direct-auth 1Password chart render
+        run: tools/policy/check_onepassword_operator_chart.sh
+
       - name: Install kubeconform
         env:
           KUBECONFORM_VERSION: "0.7.0"

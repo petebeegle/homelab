@@ -131,14 +131,22 @@ output "talosconfig" {
 resource "terraform_data" "bootstrap_script" {
   depends_on = [module.talos_bootstrap]
 
+  triggers_replace = [
+    filesha256("${path.module}/../scripts/flux-install.sh"),
+    filesha256("${path.module}/../scripts/install-flux-bootstrap-secrets.sh"),
+    var.onepassword_service_account_token_ref,
+  ]
+
   provisioner "local-exec" {
     interpreter = ["/usr/bin/env", "bash", "-c"]
 
     environment = {
-      FLUX_BOOTSTRAP_PATH = var.flux_bootstrap_path
-      GITHUB_TOKEN        = var.github_token
-      GITHUB_USER         = var.github_user
-      KUBECONFIG          = pathexpand(var.kubeconfig_output_path)
+      FLUX_BOOTSTRAP_PATH            = var.flux_bootstrap_path
+      FLUX_BOOTSTRAP_SECRET_PROVIDER = "dual"
+      GITHUB_TOKEN                   = var.github_token
+      GITHUB_USER                    = var.github_user
+      KUBECONFIG                     = pathexpand(var.kubeconfig_output_path)
+      OP_SERVICE_ACCOUNT_TOKEN_REF   = var.onepassword_service_account_token_ref
     }
 
     command = file("${path.module}/../scripts/flux-install.sh")

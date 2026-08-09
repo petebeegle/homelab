@@ -6,7 +6,7 @@ scope:
   - flux
 authority: operational
 created: 2026-05-14
-last_verified: 2026-05-16
+last_verified: 2026-08-01
 ---
 
 # Development Cluster
@@ -25,7 +25,7 @@ Use this runbook to create, bootstrap, test, and clean up the dedicated developm
 - Gateway IPs: internal `192.168.30.225`, passthrough `192.168.30.226`, external `192.168.40.225`, external passthrough `192.168.40.226`
 - ACME: trusted Let's Encrypt production issuance through the shared Cloudflare issuer
 
-The development base intentionally includes CRDs, Cilium, cert-manager/certs, Gateway API, NFS CSI, whoami, and the development Homepage deployment at `homepage.${cluster_domain}`. In the live development cluster, that resolves to `https://homepage.dev.lab.petebeegle.com`. Authentik, games/media apps, Cloudflare tunnels, Renovate, VPN, and the full monitoring stack are omitted to keep the single-node cluster resource-conscious and to avoid production-only secrets or traffic paths unless a test explicitly needs them.
+The development base intentionally includes CRDs, Cilium, cert-manager/certs, Gateway API, NFS CSI, the direct-auth 1Password Operator, whoami, and the development Homepage deployment at `homepage.${cluster_domain}`. In the live development cluster, that resolves to `https://homepage.dev.lab.petebeegle.com`. 1Password Connect is not deployed. Authentik, games/media apps, Cloudflare tunnels, Renovate, VPN, and the full monitoring stack are omitted to keep the single-node cluster resource-conscious and to avoid production-only secrets or traffic paths unless a test explicitly needs them.
 
 ## Local Tfvars
 
@@ -93,15 +93,36 @@ fd get kustomizations
 
 ## Flux Bootstrap
 
-The development Terraform root runs the shared bootstrap script with `FLUX_BOOTSTRAP_PATH=./kubernetes/clusters/development`.
+The development Terraform root runs the shared bootstrap script with
+`FLUX_BOOTSTRAP_PATH=./kubernetes/clusters/development` and
+`FLUX_BOOTSTRAP_SECRET_PROVIDER=dual`. Dual mode retains `flux-system/sops-age`
+and installs `onepassword-system/onepassword-service-account-token`. Production
+does not set this mode, so the shared helper defaults to `sops`.
 
-For a manual bootstrap, create the Flux SOPS age Secret first, then point Flux at the development entrypoint:
+Before applying development Terraform:
+
+- Create a development-only vault and a read-only service account that can read
+  only that vault.
+- Store the service-account token in an administrator-accessible bootstrap item.
+  The default non-secret reference is
+  `op://cluster bootstrap/onepassword-development-operator/credential`; override
+  `onepassword_service_account_token_ref` in ignored development tfvars if the
+  item has a different path.
+- Authenticate the `op` CLI as a human who can read the bootstrap item. Do not
+  put the token itself in tfvars or an environment variable.
+
+The helper runs `op read` into a mode-0600 temporary file, applies the token with
+`kubectl --from-file`, and removes the file on exit. It does not pass the token
+through Terraform state, Git, command arguments, or output.
+
+For a manual bootstrap or an existing development cluster, install both trust
+roots before pointing Flux at the development entrypoint:
 
 ```sh
-kubectl create secret generic sops-age \
-  --namespace=flux-system \
-  --from-file=keys.agekey="$HOME/.config/sops/age/keys.agekey" \
-  --dry-run=client -o yaml | kubectl apply -f -
+export KUBECONFIG="$HOME/.kube/homelab-development.config"
+export FLUX_BOOTSTRAP_SECRET_PROVIDER=dual
+export OP_SERVICE_ACCOUNT_TOKEN_REF='op://cluster bootstrap/onepassword-development-operator/credential'
+terraform/scripts/install-flux-bootstrap-secrets.sh
 
 flux bootstrap github \
   --owner="$GITHUB_USER" \
@@ -115,10 +136,60 @@ After bootstrap, check the base:
 
 ```sh
 fd get kustomizations
+kd -n onepassword-system get helmrelease onepassword-operator
+kd -n onepassword-system get deployment onepassword-connect-operator
 kd get nodes -o wide
 kd get gateway -n gateway
 kd get httproute -A
 ```
+
+The official Helm chart is named `connect`, but this repository pins chart
+`2.4.1` with `connect.create=false`, `operator.create=true`, and
+`operator.authMethod=service-account`. A rendered Connect API or Sync workload
+is a validation failure.
+
+## 1Password Development Canary
+
+Create a disposable Login item named `k8s--onepassword-system--canary` in the
+development vault with a non-empty built-in `password` field. Do not reuse an
+application credential: the verifier intentionally rotates this field with the
+CLI's password generator, so no replacement value appears in command arguments.
+
+Run the canary only after the development branch/base has reconciled:
+
+```sh
+python3 tools/development/verify_onepassword_operator.py \
+  --vault "cluster development" \
+  --item k8s--onepassword-system--canary \
+  --slug onepassword-dev-foundation \
+  --kubeconfig "$HOME/.kube/homelab-development.config" \
+  --timeout 10m
+```
+
+The verifier resolves vault and item IDs, substitutes them into a manifest sent
+to `kubectl` on standard input without writing it to Git or disk, applies a
+temporary `OnePasswordItem` and Deployment, and waits for:
+
+- the development operator Flux Kustomization and HelmRelease to be Ready;
+- `OnePasswordItem/onepassword-canary` to report `Ready=True`;
+- the generated Secret and consuming pod to have metadata;
+- the Secret `resourceVersion` and pod UID to change after rotation.
+
+Only resource versions and pod UIDs are printed. The verifier never requests or
+prints Kubernetes Secret data. It deletes
+`onepassword-canary-<slug>` in a `finally` path; use `--keep` only for debugging,
+then remove the namespace explicitly:
+
+```sh
+kubectl --kubeconfig "$HOME/.kube/homelab-development.config" \
+  delete namespace onepassword-canary-onepassword-dev-foundation
+```
+
+Deleting a `OnePasswordItem` deletes its generated Kubernetes Secret, so treat
+that operation as destructive outside this disposable namespace. Do not remove
+the operator service-account token during an outage test. If 1Password is
+unavailable, an existing generated Secret should remain while refreshes stop;
+the controlled outage proof is part of the later development cutover phase.
 
 ## Branch Environments
 
@@ -192,7 +263,7 @@ Include a sequential development base reconcile from the target branch when vali
 python3 tools/development/verify_branch_deploy.py --app whoami --branch codex/example-change --slug example-change --push --include-cluster-base
 ```
 
-With `--include-cluster-base`, the tool temporarily points the development `flux-system` GitRepository at `--branch`, reconciles the root `flux-system` Kustomization, re-pins the source to the branch, reconciles `crds`, `cert-manager`, `nfs-csi`, `cilium`, `certs`, `gateway`, and `app-whoami` in order, waits for active pods across the cluster to report Ready, and restores the `flux-system` GitRepository to `main` even when validation fails.
+With `--include-cluster-base`, the tool temporarily points the development `flux-system` GitRepository at `--branch`, reconciles the root `flux-system` Kustomization, re-pins the source to the branch, reconciles `crds`, `onepassword-operator`, `cert-manager`, `nfs-csi`, `cilium`, `certs`, `gateway`, and `app-whoami` in order, waits for active pods across the cluster to report Ready, and restores the `flux-system` GitRepository to `main` even when validation fails.
 
 Use a custom kubeconfig:
 

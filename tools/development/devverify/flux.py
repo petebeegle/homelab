@@ -4,7 +4,15 @@ from __future__ import annotations
 
 import json
 
-from .config import DEVELOPMENT_BASE_KUSTOMIZATIONS, FLUX_NAMESPACE, AppConfig, Runner, SmokeProfile, VerificationError
+from .config import (
+    DEVELOPMENT_BASE_KUSTOMIZATIONS,
+    FLUX_NAMESPACE,
+    REPO_ROOT,
+    AppConfig,
+    Runner,
+    SmokeProfile,
+    VerificationError,
+)
 from .kube import kubectl, run_command
 from .profiles import render_profile_value
 
@@ -63,15 +71,15 @@ def reconcile_flux(config: AppConfig, profile: SmokeProfile, *, runner: Runner) 
     )
 
 
-def verify_cluster_base(config: AppConfig, *, runner: Runner) -> None:
+def verify_cluster_base(config: AppConfig, *, runner: Runner, repo_root=REPO_ROOT) -> None:
     from .checks import wait_for_active_pods_ready
 
     failure: BaseException | None = None
+    root_suspended = False
     try:
-        pin_flux_system_source(config, branch=config.branch, runner=runner)
-        reconcile_flux_system_source(config, runner=runner)
-        reconcile_flux_kustomization(config, "flux-system", runner=runner)
-
+        suspend_flux_kustomization(config, "flux-system", runner=runner)
+        root_suspended = True
+        apply_development_base_definitions(config, runner=runner, repo_root=repo_root)
         pin_flux_system_source(config, branch=config.branch, runner=runner)
         reconcile_flux_system_source(config, runner=runner)
         for kustomization in DEVELOPMENT_BASE_KUSTOMIZATIONS:
@@ -88,7 +96,7 @@ def verify_cluster_base(config: AppConfig, *, runner: Runner) -> None:
         failure = exc
     finally:
         try:
-            restore_flux_system_source(config, runner=runner)
+            restore_flux_system_source(config, runner=runner, resume_root=root_suspended)
         except BaseException as restore_exc:
             if failure is None:
                 failure = restore_exc
@@ -97,6 +105,23 @@ def verify_cluster_base(config: AppConfig, *, runner: Runner) -> None:
 
     if failure is not None:
         raise failure
+
+
+def apply_development_base_definitions(config: AppConfig, *, runner: Runner, repo_root=REPO_ROOT) -> None:
+    """Apply branch Flux declarations before their source is pinned.
+
+    The root Flux Kustomization manages its own GitRepository and therefore
+    resets that source to main while it reconciles. Applying only the child
+    declarations from the exact checked-out branch makes branch-only children
+    available for the subsequent source pin and ordered reconciliation.
+    """
+    cluster_dir = repo_root / "kubernetes" / "clusters" / "development"
+    for component in ("infra", "apps"):
+        run_command(
+            kubectl(config, "apply", "-k", str(cluster_dir / component)),
+            runner=runner,
+            timeout=config.timeout,
+        )
 
 
 def pin_flux_system_source(config: AppConfig, *, branch: str, runner: Runner) -> None:
@@ -148,9 +173,27 @@ def reconcile_flux_system_source(config: AppConfig, *, runner: Runner) -> None:
     )
 
 
-def restore_flux_system_source(config: AppConfig, *, runner: Runner) -> None:
+def suspend_flux_kustomization(config: AppConfig, name: str, *, runner: Runner) -> None:
+    run_command(
+        flux(config, "suspend", "kustomization", name, "--namespace", FLUX_NAMESPACE),
+        runner=runner,
+        timeout=config.timeout,
+    )
+
+
+def resume_flux_kustomization(config: AppConfig, name: str, *, runner: Runner) -> None:
+    run_command(
+        flux(config, "resume", "kustomization", name, "--namespace", FLUX_NAMESPACE),
+        runner=runner,
+        timeout=config.timeout,
+    )
+
+
+def restore_flux_system_source(config: AppConfig, *, runner: Runner, resume_root: bool = False) -> None:
     pin_flux_system_source(config, branch="main", runner=runner)
     reconcile_flux_system_source(config, runner=runner)
+    if resume_root:
+        resume_flux_kustomization(config, "flux-system", runner=runner)
     reconcile_flux_kustomization(config, "flux-system", runner=runner)
 
 

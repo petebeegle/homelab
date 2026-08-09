@@ -60,3 +60,26 @@ Use `--include-cluster-base` to first reconcile the development base from `--bra
 ```sh
 python3 tools/development/verify_branch_deploy.py --app whoami --branch codex/example-change --slug example-change --push --include-cluster-base
 ```
+
+## 1Password Operator Canary
+
+`verify_onepassword_operator.py` proves the development operator can synchronize
+a disposable item and automatically restart a consuming Deployment. It resolves
+vault and item IDs with an authenticated `op` CLI, waits for the Flux
+Kustomization, HelmRelease, and `OnePasswordItem`, and reports only Kubernetes
+metadata transitions. It never requests Kubernetes Secret data.
+
+Create a disposable Login item with a non-empty built-in `password` field in
+the development vault, then run:
+
+```sh
+python3 tools/development/verify_onepassword_operator.py \
+  --vault "cluster development" \
+  --item k8s--onepassword-system--canary \
+  --slug onepassword-dev-foundation
+```
+
+The verifier rotates the disposable field and deletes its temporary namespace
+even when validation fails. `--keep` retains that namespace for debugging;
+delete it before reusing the slug. Do not use the verifier with a real
+application item because rotation intentionally replaces the `password` field.
