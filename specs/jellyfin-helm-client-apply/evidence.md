@@ -39,6 +39,12 @@
 | `git diff --check` | PASS | No whitespace errors. |
 | `pre-commit run --all-files` | PASS | All hooks passed. |
 
+## GitHub Review Gate
+
+- Draft PR: `https://github.com/petebeegle/homelab/pull/386`
+- Initial head: `f73e5c7`
+- Checks: PASS, 7/7, including the Kubernetes job with all nine focused tests.
+
 ## Development Validation
 
 Focused full render and migration execution substitute for routed dev because

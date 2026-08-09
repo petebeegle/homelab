@@ -25,7 +25,7 @@
 
 ## Phase 4: Review and production acceptance
 
-- [ ] T008 Push, open a draft PR, and require all GitHub checks; record PR data
+- [X] T008 Push, open a draft PR, and require all GitHub checks; record PR data
   in `specs/jellyfin-helm-client-apply/evidence.md`.
 - [ ] T009 [P] Verify merged/fetched/applied revision and Helm conditions in
   `specs/jellyfin-helm-client-apply/evidence.md`.
