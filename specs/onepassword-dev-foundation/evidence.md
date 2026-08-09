@@ -44,11 +44,20 @@
 | `terraform -chdir=terraform/development init -backend=false -input=false -no-color` | PASS | Providers initialized from the lock file. |
 | `terraform -chdir=terraform/development validate -no-color` | PASS | Configuration valid; existing Proxmox datastore deprecation warnings remain. |
 | Strict development, production, operator, and canary renders | PASS | Both cluster entrypoints and the parameterized canary rendered and passed `flux envsubst --strict`; `var=placeholder` was supplied only for a literal shell-expansion example embedded in an upstream CRD description. |
-| `kubeconform -summary -ignore-missing-schemas` over four renders | PASS | 126 resources found; 47 valid, 0 invalid, 0 errors, 79 skipped because schemas were intentionally unavailable. |
+| `kubeconform -summary -ignore-missing-schemas` over four renders | PASS | Post-rebase: 127 resources found; 48 valid, 0 invalid, 0 errors, 79 skipped because schemas were intentionally unavailable. |
 | Production render comparison against `origin/main` | PASS | Byte-identical production cluster render; no production path or `.sops.yaml` change. |
 | `python3 tools/architecture/render.py --check` | PASS | Generated architecture is current after adding the development-only operator relationship. |
 | `pre-commit run --all-files` | PASS | All YAML, Kubernetes, Terraform, generated-doc, and repository policy hooks passed. Terraform docs added the new non-secret development input to `terraform/development/README.md`. |
-| `python3 tools/development/tests/test_verify_branch_deploy.py` | BASELINE FAIL | 31 tests passed and one unrelated discovery test failed because the existing Immich profile is not in its hard-coded expected set. The same failure reproduces from an untouched `origin/main` archive; no unrelated fix was made. |
+| `python3 tools/development/tests/test_verify_branch_deploy.py` | PASS | Post-rebase: all 32 tests passed; the prior baseline Immich discovery mismatch was fixed upstream. |
+| `python3 -m unittest tools.development.tests.test_jellyfin_config_migration` | PASS | All 9 upstream Jellyfin migration tests passed after conflict resolution. |
+
+## Rebase Evidence
+
+- Rebased onto `origin/main` at `0d5e55a60696d4f49c0202dcfe74d1967235e1dd`.
+- Resolved `.github/workflows/ci.yml` by preserving upstream Helm v5, Jellyfin repository, Flux CLI, and Jellyfin migration checks while retaining `tools/policy/check_onepassword_operator_chart.sh`.
+- Resolved `.specify/feature.json` to `specs/onepassword-dev-foundation` for the active branch.
+- Post-rebase implementation commit: `4702a9b6b7b6ed6a501c74e2dad1d6282453aef0`.
+- Force-with-lease push and GitHub Actions verification: Pending.
 
 ## Automated Smoke And Live Verification
 
@@ -98,4 +107,4 @@
 
 - Final branch: `codex/onepassword-dev-foundation`
 - Final HEAD: Deferred to the implementation-owner handoff after the evidence/PR-status commit.
-- Implementation commit: `8bffa4cdddc7c2dace3d0893fc8347e8599ce14c` (`feat: add 1password development foundation`)
+- Implementation commit: `4702a9b6b7b6ed6a501c74e2dad1d6282453aef0` (`feat: add 1password development foundation`, rebased)

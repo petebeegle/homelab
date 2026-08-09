@@ -66,6 +66,14 @@
 - [x] T020 Commit the complete phase with a conventional commit and record the exact commit/HEAD in `specs/onepassword-dev-foundation/evidence.md`.
 - [x] T021 Push `codex/onepassword-dev-foundation` and open a draft PR only when required non-empty artifacts/evidence pass the repository guard; keep phase 2 gated on live development acceptance.
 
+## Phase 8: Rebase And Live Acceptance
+
+- [x] T022 Rebase onto current `origin/main`, preserve upstream CI changes, retain the 1Password chart-render gate, and resolve the active-feature pointer.
+- [x] T023 Rerun focused unit tests, Terraform validation, strict renders, kubeconform, architecture, production-render parity, and all pre-commit hooks after the rebase.
+- [ ] T024 Force-update PR #381 with lease protection and require the full GitHub Actions suite to pass on the rebased commit.
+- [ ] T025 Verify the `development` cluster context and authenticated 1Password prerequisites, install dual bootstrap secrets, run the exact-HEAD development base/whoami smoke, and run the live rotation canary.
+- [ ] T026 Record fetched/applied revisions, metadata-only rotation evidence, cleanup, final CI state, and any remaining external blocker in `specs/onepassword-dev-foundation/evidence.md`.
+
 ## Dependencies
 
 - T001-T002 precede all implementation.
@@ -75,6 +83,8 @@
 - T014-T016 document the final interfaces after implementation stabilizes.
 - T017 precedes live T018; T019 follows both or a recorded live blocker.
 - T020-T021 occur only after evidence and convergence are current.
+- T022-T023 precede the rewritten branch push in T024.
+- T024 precedes exact-HEAD live validation in T025; T026 closes the phase only after both CI and live evidence are current.
 
 ## Implementation Strategy
 
