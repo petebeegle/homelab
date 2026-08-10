@@ -9,7 +9,7 @@ This document is generated for agentic repo navigation. It records relationships
 ### Production
 
 - Root Kustomization: `kubernetes/clusters/production/kustomization.yaml`.
-- Root resources: `flux-system`, `cluster-vars.yaml`, `infra`, `apps`.
+- Root resources: `flux-system`, `cluster-vars.yaml`, `infra`, `apps`, `onepassword-items.yaml`.
 - Infra activation list: `crds.yaml`, `onepassword-operator.yaml`, `cert-manager.yaml`, `local-path-provisioner.yaml`, `cloudnative-pg.yaml`, `grafana-operator.yaml`, `intel-device-plugins-operator.yaml`, `intel-gpu-device-plugin.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `metrics-server.yaml`, `certs.yaml`, `gateway.yaml`, `vpn.yaml`, `monitoring.yaml`, `loki.yaml`, `mimir.yaml`, `alloy.yaml`, `grafana.yaml`, `otel-collector.yaml`, `authentik.yaml`.
 - App activation list: `external.yaml`, `homepage.yaml`, `pihole.yaml`, `whoami.yaml`, `renovate.yaml`, `cloudflare-tunnels.yaml`, `jellyfin.yaml`, `immich.yaml`, `home-assistant.yaml`, `foundryvtt.yaml`, `valheim.yaml`, `synthetics.yaml`, `access-broker.yaml`, `private`.
 

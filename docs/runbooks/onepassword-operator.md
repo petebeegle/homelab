@@ -85,6 +85,44 @@ kubectl -n onepassword-system logs deployment/onepassword-connect-operator --sin
 
 A 1Password outage prevents refresh but does not remove an existing generated Secret. Confirm existing workloads remain running while investigating. Do not delete a durable `OnePasswordItem` as a diagnostic step: deletion also deletes its generated Kubernetes Secret.
 
+## Prepare dual-publish items
+
+The repository contains 16 encrypted Secret files but 17 Secret objects because the Immich file contains both `immich-secrets` and `immich-postgres-user`. Create all 17 items in `cluster production`; use the inventory as the field-label contract:
+
+```bash
+jq -r '.items[] | [.item_title, (.keys | join(","))] | @tsv' \
+  tools/onepassword/production_items.json
+```
+
+For each entry:
+
+1. Create a Secure Note with the exact inventory title.
+2. Leave the note body empty and add exactly the listed custom fields.
+3. Populate every field with the current legacy Secret bytes. Preserve multiline content and trailing newlines exactly.
+4. Do not add a URL, file attachment, or any other populated field.
+
+Use the live `grafana/grafana-credentials` Secret as the source for that item because its committed SOPS document fails MAC validation. Handle recovered values only in a trusted local session or secure clipboard; do not paste values into chat, shell arguments, Git, logs, or evidence. The remaining live Secrets are also acceptable migration sources and align directly with byte-parity acceptance.
+
+After all items exist, resolve and validate their metadata from an authenticated user session:
+
+```bash
+unset OP_SERVICE_ACCOUNT_TOKEN
+python3 tools/onepassword/render_production_items.py \
+  --vault 'cluster production' \
+  --check-only
+```
+
+The command captures item JSON without displaying it. It fails on duplicate, missing, empty, or extra fields and on URLs/files. Once check-only passes, omit `--check-only` to write ID-only `OnePasswordItem` manifests. Review every generated `itemPath` to confirm it contains only vault/item IDs.
+
+After GitOps reconciliation, prove all pairs without displaying values:
+
+```bash
+python3 tools/onepassword/validate_secret_parity.py \
+  --kubeconfig /home/vscode/.kube/homelab-production.config
+```
+
+Do not delete a durable `OnePasswordItem` to retry generation. Its generated Secret is owned by the resource and is deleted with it.
+
 ## Rollback during foundation
 
 All application consumers still use SOPS during the foundation phases. If the production operator cannot meet acceptance, leave `sops-age` and consumers untouched, suspend the `onepassword-operator` Flux Kustomization if needed for diagnosis, and revert the new foundation Git change. Remove only a disposable canary namespace whose ownership is certain.

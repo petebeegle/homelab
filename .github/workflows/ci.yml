@@ -65,6 +65,9 @@ jobs:
       - name: Run Codex harness tests
         run: python3 -m unittest discover -s tools/codex-harness/tests
 
+      - name: Run 1Password migration safety tests
+        run: python3 -m unittest discover -s tools/onepassword/tests
+
       - name: Install uv
         uses: astral-sh/setup-uv@v8.3.2
 

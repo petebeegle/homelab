@@ -1,0 +1,21 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - access-broker--access-broker-secret-onepassword.yaml
+  - authentik--authentik-secrets-onepassword.yaml
+  - cert-manager--cloudflare-api-token-onepassword.yaml
+  - cloudflare--tunnel-credentials-onepassword.yaml
+  - flux-system--homelab-private-deploy-key-onepassword.yaml
+  - foundryvtt--foundryvtt-secret-onepassword.yaml
+  - grafana--grafana-credentials-onepassword.yaml
+  - grafana--grafana-env-onepassword.yaml
+  - home-assistant--home-assistant-secrets-onepassword.yaml
+  - immich--immich-postgres-user-onepassword.yaml
+  - immich--immich-secrets-onepassword.yaml
+  - jellyfin--jellyfin-secrets-onepassword.yaml
+  - monitoring--grafana-env-onepassword.yaml
+  - pihole--pihole-admin-password-onepassword.yaml
+  - renovate--renovate-secret-onepassword.yaml
+  - valheim--valheim-secret-onepassword.yaml
+  - wireguard--wireguard-env-onepassword.yaml
