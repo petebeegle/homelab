@@ -104,7 +104,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `production` | `app-home-assistant` | `./kubernetes/apps/home-assistant` | `gateway`, `nfs-csi`, `authentik` | `cluster-vars` | `sops` |
 | `production` | `app-homepage` | `./kubernetes/apps/homepage` | `gateway`, `metrics-server` | `cluster-vars` | `no` |
 | `production` | `app-immich` | `./kubernetes/apps/immich` | `gateway`, `nfs-csi`, `local-path-provisioner`, `cloudnative-pg`, `authentik` | `cluster-vars` | `sops` |
-| `production` | `app-jellyfin` | `./kubernetes/apps/jellyfin` | `gateway`, `nfs-csi`, `local-path-provisioner`, `intel-gpu-device-plugin` | `cluster-vars` | `no` |
+| `production` | `app-jellyfin` | `./kubernetes/apps/jellyfin` | `gateway`, `nfs-csi`, `local-path-provisioner`, `intel-gpu-device-plugin` | `cluster-vars` | `sops` |
 | `production` | `app-pihole` | `./kubernetes/apps/pihole` | `gateway` | `cluster-vars` | `sops` |
 | `production` | `private-apps` | `./kubernetes/clusters/production/apps` | `private-source` | `cluster-vars` | `sops` |
 | `production` | `private-source` | `./kubernetes/clusters/production/apps/private/source` | (none) | `(none)` | `sops` |
