@@ -6,3 +6,4 @@ resources:
   - cluster-vars.yaml
   - infra
   - apps
+  - onepassword-items.yaml

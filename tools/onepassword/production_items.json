@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "vault": "cluster production",
+  "items": [
+    {"namespace":"access-broker","legacy_name":"access-broker-secret","generated_name":"access-broker-secret-onepassword","item_title":"k8s--access-broker--access-broker-secret","type":"Opaque","keys":["AUTHENTIK_TOKEN","DISCORD_APP_ID","DISCORD_CLIENT_SECRET","DISCORD_PUBLIC_KEY","WGEASY_PASSWORD"]},
+    {"namespace":"cloudflare","legacy_name":"tunnel-credentials","generated_name":"tunnel-credentials-onepassword","item_title":"k8s--cloudflare--tunnel-credentials","type":"Opaque","keys":["credentials.json"]},
+    {"namespace":"foundryvtt","legacy_name":"foundryvtt-secret","generated_name":"foundryvtt-secret-onepassword","item_title":"k8s--foundryvtt--foundryvtt-secret","type":"Opaque","keys":["FOUNDRY_ADMIN_KEY","FOUNDRY_LICENSE_KEY","FOUNDRY_PASSWORD","FOUNDRY_USERNAME"]},
+    {"namespace":"home-assistant","legacy_name":"home-assistant-secrets","generated_name":"home-assistant-secrets-onepassword","item_title":"k8s--home-assistant--home-assistant-secrets","type":"Opaque","keys":["secrets.yaml"]},
+    {"namespace":"immich","legacy_name":"immich-secrets","generated_name":"immich-secrets-onepassword","item_title":"k8s--immich--immich-secrets","type":"Opaque","keys":["immich-config.yaml"]},
+    {"namespace":"immich","legacy_name":"immich-postgres-user","generated_name":"immich-postgres-user-onepassword","item_title":"k8s--immich--immich-postgres-user","type":"kubernetes.io/basic-auth","keys":["password","username"]},
+    {"namespace":"jellyfin","legacy_name":"jellyfin-secrets","generated_name":"jellyfin-secrets-onepassword","item_title":"k8s--jellyfin--jellyfin-secrets","type":"Opaque","keys":["JELLYFIN_OAUTH_CLIENT_SECRET"]},
+    {"namespace":"pihole","legacy_name":"pihole-admin-password","generated_name":"pihole-admin-password-onepassword","item_title":"k8s--pihole--pihole-admin-password","type":"Opaque","keys":["password"]},
+    {"namespace":"renovate","legacy_name":"renovate-secret","generated_name":"renovate-secret-onepassword","item_title":"k8s--renovate--renovate-secret","type":"Opaque","keys":["GITHUB_COM_TOKEN","RENOVATE_TOKEN"]},
+    {"namespace":"valheim","legacy_name":"valheim-secret","generated_name":"valheim-secret-onepassword","item_title":"k8s--valheim--valheim-secret","type":"Opaque","keys":["password"]},
+    {"namespace":"flux-system","legacy_name":"homelab-private-deploy-key","generated_name":"homelab-private-deploy-key-onepassword","item_title":"k8s--flux-system--homelab-private-deploy-key","type":"Opaque","keys":["identity","known_hosts"]},
+    {"namespace":"authentik","legacy_name":"authentik-secrets","generated_name":"authentik-secrets-onepassword","item_title":"k8s--authentik--authentik-secrets","type":"Opaque","keys":["AUTHENTIK_BOOTSTRAP_EMAIL","AUTHENTIK_BOOTSTRAP_PASSWORD","AUTHENTIK_BOOTSTRAP_TOKEN","AUTHENTIK_POSTGRESQL__PASSWORD","AUTHENTIK_SECRET_KEY","GRAFANA_OAUTH_CLIENT_SECRET","IMMICH_OAUTH_CLIENT_SECRET","JELLYFIN_OAUTH_CLIENT_SECRET","SYNOLOGY_OAUTH_CLIENT_SECRET","password"]},
+    {"namespace":"cert-manager","legacy_name":"cloudflare-api-token","generated_name":"cloudflare-api-token-onepassword","item_title":"k8s--cert-manager--cloudflare-api-token","type":"Opaque","keys":["token"]},
+    {"namespace":"grafana","legacy_name":"grafana-env","generated_name":"grafana-env-onepassword","item_title":"k8s--grafana--grafana-env","type":"Opaque","keys":["DISCORD_WEBHOOK_URL"]},
+    {"namespace":"grafana","legacy_name":"grafana-credentials","generated_name":"grafana-credentials-onepassword","item_title":"k8s--grafana--grafana-credentials","type":"Opaque","keys":["admin-password","admin-user","oauth-client-secret"]},
+    {"namespace":"monitoring","legacy_name":"grafana-env","generated_name":"grafana-env-onepassword","item_title":"k8s--monitoring--grafana-env","type":"Opaque","keys":["DISCORD_WEBHOOK_URL"]},
+    {"namespace":"wireguard","legacy_name":"wireguard-env","generated_name":"wireguard-env-onepassword","item_title":"k8s--wireguard--wireguard-env","type":"Opaque","keys":["WG_HOST","WG_PORT"]}
+  ]
+}
