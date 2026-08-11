@@ -32,11 +32,11 @@
 - [x] T011 [FR-003] Run the direct-auth chart validator.
 - [x] T012 [FR-003] Strictly render/substitute both entrypoints and run schema/policy checks.
 - [x] T013 [FR-006] Run architecture and harness/SDD checks.
-- [ ] T014 [FR-001] Push exact HEAD and validate the development base/operator plus annotation-triggered refresh.
-- [ ] T015 [FR-CONVERGE] Reconcile discoveries into the artifacts.
-- [ ] T016 [FR-006] Complete `evidence.md` without secret material.
+- [x] T014 [FR-001] Push exact HEAD and validate the development base/operator plus annotation-triggered refresh.
+- [x] T015 [FR-CONVERGE] Reconcile discoveries into the artifacts.
+- [x] T016 [FR-006] Complete `evidence.md` without secret material.
 
 ## Phase 4: Commit and PR
 
-- [ ] T017 [FR-PR] Commit with a conventional commit message.
+- [x] T017 [FR-PR] Commit with a conventional commit message.
 - [ ] T018 [FR-PR] Push and open the pull request.

@@ -14,7 +14,7 @@
 | Plan approval | PASS | Narrow quota-safe correction reported during execution. |
 | Checklist | PASS | `checklists/requirements.md`. |
 | Tasks/analyze approval | PASS | Manual cross-artifact review found no conflicts. |
-| Converge | PENDING | Complete after validation. |
+| Converge | PASS | The development manual-refresh refinement is reflected consistently across artifacts, implementation, tests, and runbook. |
 
 ## Incident Evidence
 
@@ -50,22 +50,24 @@
 
 - Profile: shared development base/operator
 - Branch slug: onepassword-rate-limit-fix
-- HEAD: PENDING
-- Cleanup: PENDING
-- Result or exception: PENDING
+- HEAD: `87d8cc6916bc9e443c7edb0080becb60b83c758e`
+- Cleanup: Branch whoami resources were removed; the base source returned to `main@sha1:0986a461d21e02d4adc973729648bae98c1d56eb` and Ready.
+- Result: PASS. Development fetched and applied the exact branch revision for CRDs, the operator, and dependent base resources. ReplicaSet `onepassword-connect-operator-86545f4ff8` rendered `POLLING_INTERVAL=31536000`, and its pod reached Ready. The exact-branch whoami workload, Service, and HTTPRoute reconciled and its pod reached Ready.
+- Explicit refresh: Unit coverage proves the verifier issues a unique annotation update after item rotation. Live item refresh was skipped because the provider account quota is exhausted; it cannot succeed before reset and would add avoidable requests.
 
 ## Documentation Impact
 
 - Updated: `docs/runbooks/onepassword-operator.md`
-- Generated docs: check pending; no topology change expected.
+- Generated docs: architecture check passed; no topology change.
 
 ## Exceptions And Follow-Ups
 
 - Preferred worktree location was not writable; the established `/home/vscode/homelab-worktrees/` fallback is used.
 - Provider quota must reset before production items return Ready; no repository change can clear that external lockout early.
+- The first development smoke attempt stopped before Flux mutation because the isolated worktree lacked ignored `terraform.tfvars`. The repository no-output staging helper installed the existing ignored file; the rerun passed. The file remains ignored and uncommitted.
 
 ## Final State
 
 - Final branch: `codex/onepassword-rate-limit-fix`
-- Final HEAD: PENDING
-- Commit: PENDING
+- Final HEAD: pending evidence commit
+- Commit: `87d8cc6916bc9e443c7edb0080becb60b83c758e` plus final evidence follow-up

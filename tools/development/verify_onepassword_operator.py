@@ -166,6 +166,7 @@ def verify(
     runner: Runner = subprocess.run,
     sleep: Callable[[float], None] = time.sleep,
     monotonic: Callable[[], float] = time.monotonic,
+    refresh_token: Callable[[], str] = lambda: str(time.time_ns()),
 ) -> None:
     if not SLUG_PATTERN.fullmatch(config.slug):
         raise VerificationError("slug must be a lowercase DNS label of at most 40 characters")
@@ -262,7 +263,7 @@ def verify(
                 config.namespace,
                 "annotate",
                 "onepassworditem/onepassword-canary",
-                f"homelab.petebeegle.com/refresh-request={initial_secret_version}",
+                f"homelab.petebeegle.com/refresh-request={refresh_token()}",
                 "--overwrite",
             ),
         )
