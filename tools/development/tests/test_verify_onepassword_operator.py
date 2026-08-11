@@ -79,6 +79,13 @@ class OnePasswordOperatorVerifierTest(unittest.TestCase):
         self.assertTrue(any(command.startswith("op vault get") for command in commands))
         self.assertTrue(any(command.startswith("op item get") for command in commands))
         self.assertTrue(any(command.startswith("op item edit item-id") for command in commands))
+        self.assertTrue(
+            any(
+                "annotate onepassworditem/onepassword-canary "
+                "homelab.petebeegle.com/refresh-request=11 --overwrite" in command
+                for command in commands
+            )
+        )
         self.assertTrue(any("wait kustomization/onepassword-operator" in command for command in commands))
         self.assertTrue(any("wait helmrelease/onepassword-operator" in command for command in commands))
         self.assertTrue(any("apply -f -" in command for command in commands))

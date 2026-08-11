@@ -251,6 +251,21 @@ def verify(
                 "--generate-password=letters,digits,40",
             ],
         )
+        # Updating the custom resource is an explicit, item-scoped reconcile
+        # trigger. This keeps development verification independent of the
+        # periodic polling interval.
+        _run(
+            runner,
+            _kubectl(
+                config,
+                "-n",
+                config.namespace,
+                "annotate",
+                "onepassworditem/onepassword-canary",
+                f"homelab.petebeegle.com/refresh-request={initial_secret_version}",
+                "--overwrite",
+            ),
+        )
         new_secret_version, new_pod_uid = _wait_for_change(
             config,
             runner,
