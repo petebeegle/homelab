@@ -24,6 +24,7 @@
 - A token-authenticated metadata-only query reported token reads `0/1000` used but account reads/writes `1000/1000` used, with about 18.6 hours until reset. No token or item value was displayed.
 - At 300 seconds, 17 items require about 4,896 baseline reads/day. Production at 3600 seconds requires about 408 reads/day; development at 31536000 seconds is effectively manual-only.
 - Upstream operator 1.12.0 constructs `time.NewTicker` directly from `POLLING_INTERVAL`; zero is not a valid disable value. Updating a `OnePasswordItem` is watched by its controller and provides an explicit refresh trigger.
+- On 2026-08-14, before this branch had a PR or merge, both live Deployments still rendered the main-branch value `300`. Production again reached the account-wide `1000/1000` limit, with all 17 items `Ready=False` and a latest transition near `05:32Z`. Development had zero items. This recurrence confirms the five-minute main-branch interval as the active cause; it is not a failure of the undeployed cluster-specific intervals.
 
 ## Workflow Validation
 
@@ -64,6 +65,7 @@
 
 - Preferred worktree location was not writable; the established `/home/vscode/homelab-worktrees/` fallback is used.
 - Provider quota must reset before production items return Ready; no repository change can clear that external lockout early.
+- The 2026-08-14 recurrence query reported about 1.6 hours until the next provider reset. Post-merge verification must wait for available quota and confirm all 17 items recover.
 - The first development smoke attempt stopped before Flux mutation because the isolated worktree lacked ignored `terraform.tfvars`. The repository no-output staging helper installed the existing ignored file; the rerun passed. The file remains ignored and uncommitted.
 
 ## Final State
