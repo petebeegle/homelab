@@ -71,5 +71,6 @@
 ## Final State
 
 - Final branch: `codex/onepassword-rate-limit-fix`
-- Final HEAD: pending evidence commit
-- Commit: `87d8cc6916bc9e443c7edb0080becb60b83c758e` plus final evidence follow-up
+- Final HEAD: represented by pull request #396 after the evidence commit; an exact self-referential SHA is intentionally not embedded.
+- Commits: implementation `87d8cc6916bc9e443c7edb0080becb60b83c758e`; validation `305ec14ad40d06e6d6072440d494d1f4ae1a8981`; recurrence evidence `f8a7fbbf026d1a7ed575e030a5f0be05642b7a29`.
+- Pull request: `https://github.com/petebeegle/homelab/pull/396`

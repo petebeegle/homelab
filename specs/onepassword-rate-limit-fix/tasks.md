@@ -39,4 +39,4 @@
 ## Phase 4: Commit and PR
 
 - [x] T017 [FR-PR] Commit with a conventional commit message.
-- [ ] T018 [FR-PR] Push and open the pull request.
+- [x] T018 [FR-PR] Push and open pull request #396.
