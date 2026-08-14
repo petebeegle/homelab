@@ -7,7 +7,7 @@ operator:
   serviceAccountToken:
     name: onepassword-service-account-token
   autoRestart: true
-  pollingInterval: 300
+  pollingInterval: "${ONEPASSWORD_POLLING_INTERVAL}"
   logLevel: info
   replicas: 1
   resources:

@@ -73,12 +73,24 @@ class OnePasswordOperatorVerifierTest(unittest.TestCase):
         )
 
         with contextlib.redirect_stdout(output):
-            self.verify.verify(config, runner=runner, sleep=lambda _: None)
+            self.verify.verify(
+                config,
+                runner=runner,
+                sleep=lambda _: None,
+                refresh_token=lambda: "test-refresh",
+            )
 
         commands = [" ".join(args) for args, _ in runner.calls]
         self.assertTrue(any(command.startswith("op vault get") for command in commands))
         self.assertTrue(any(command.startswith("op item get") for command in commands))
         self.assertTrue(any(command.startswith("op item edit item-id") for command in commands))
+        self.assertTrue(
+            any(
+                "annotate onepassworditem/onepassword-canary "
+                "homelab.petebeegle.com/refresh-request=test-refresh --overwrite" in command
+                for command in commands
+            )
+        )
         self.assertTrue(any("wait kustomization/onepassword-operator" in command for command in commands))
         self.assertTrue(any("wait helmrelease/onepassword-operator" in command for command in commands))
         self.assertTrue(any("apply -f -" in command for command in commands))

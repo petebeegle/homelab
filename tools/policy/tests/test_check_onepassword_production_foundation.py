@@ -44,6 +44,25 @@ class OnePasswordProductionFoundationPolicyTest(unittest.TestCase):
             re.search(r'(?<!exported_)namespace="onepassword-system"', operator_expression)
         )
 
+    def test_checker_rejects_rate_limit_exhausting_poll_interval(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            values = root / "kubernetes/infra/controllers/onepassword-operator/values.yaml"
+            values.parent.mkdir(parents=True)
+            values.write_text(
+                "operator:\n  pollingInterval: 300\n",
+                encoding="utf-8",
+            )
+            errors = self.module.check_operator_polling_interval(root)
+        self.assertTrue(any("3600" in error for error in errors))
+
+    def test_repository_uses_manual_refresh_interval_in_development(self) -> None:
+        development = (
+            REPO_ROOT
+            / "kubernetes/clusters/development/infra/onepassword-operator.yaml"
+        ).read_text(encoding="utf-8")
+        self.assertIn('ONEPASSWORD_POLLING_INTERVAL: "31536000"', development)
+
     def test_checker_rejects_secret_data_in_item_metric(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

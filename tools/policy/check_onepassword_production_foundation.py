@@ -36,6 +36,30 @@ def check_item_metric_safety(root: Path) -> list[str]:
     return []
 
 
+def check_operator_polling_interval(root: Path) -> list[str]:
+    errors: list[str] = []
+    values = read(root, "kubernetes/infra/controllers/onepassword-operator/values.yaml")
+    development = read(root, "kubernetes/clusters/development/infra/onepassword-operator.yaml")
+    production = read(root, "kubernetes/clusters/production/infra/onepassword-operator.yaml")
+
+    errors += require(
+        values,
+        r'(?m)^  pollingInterval: "\$\{ONEPASSWORD_POLLING_INTERVAL\}"$',
+        "operator polling interval must be cluster-specific",
+    )
+    errors += require(
+        production,
+        r'(?m)^      ONEPASSWORD_POLLING_INTERVAL: "3600"$',
+        "production operator polling interval must be 3600 seconds",
+    )
+    errors += require(
+        development,
+        r'(?m)^      ONEPASSWORD_POLLING_INTERVAL: "31536000"$',
+        "development operator polling interval must use the manual-refresh 31536000-second value",
+    )
+    return errors
+
+
 def check_repository(root: Path) -> list[str]:
     errors: list[str] = []
     prod_kustomization = read(root, "kubernetes/clusters/production/infra/kustomization.yaml")
@@ -55,6 +79,7 @@ def check_repository(root: Path) -> list[str]:
     errors += require(metrics, r"(?s)group: onepassword\.com.*kind: OnePasswordItem.*name: \"item_info\"", "OnePasswordItem readiness metric is missing")
     errors += require(metrics, r"(?s)apiGroups:.*- onepassword\.com.*resources:.*- onepassworditems.*verbs: \[\"list\", \"watch\", \"get\"\]", "OnePasswordItem least-privilege RBAC is missing")
     errors += check_item_metric_safety(root)
+    errors += check_operator_polling_interval(root)
     errors += require(alert_kustomization, r"alert-rules-onepassword\.yaml", "1Password alert rules are not activated")
     errors += require(alerts, r"uid: onepassword-operator-unavailable", "operator-unavailable alert is missing")
     errors += require(alerts, r'kube_deployment_spec_replicas\{exported_namespace="onepassword-system",deployment="onepassword-connect-operator"\}', "operator alert must target the live Helm Deployment and exported resource namespace")

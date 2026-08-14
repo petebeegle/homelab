@@ -166,6 +166,7 @@ def verify(
     runner: Runner = subprocess.run,
     sleep: Callable[[float], None] = time.sleep,
     monotonic: Callable[[], float] = time.monotonic,
+    refresh_token: Callable[[], str] = lambda: str(time.time_ns()),
 ) -> None:
     if not SLUG_PATTERN.fullmatch(config.slug):
         raise VerificationError("slug must be a lowercase DNS label of at most 40 characters")
@@ -250,6 +251,21 @@ def verify(
                 vault_id,
                 "--generate-password=letters,digits,40",
             ],
+        )
+        # Updating the custom resource is an explicit, item-scoped reconcile
+        # trigger. This keeps development verification independent of the
+        # periodic polling interval.
+        _run(
+            runner,
+            _kubectl(
+                config,
+                "-n",
+                config.namespace,
+                "annotate",
+                "onepassworditem/onepassword-canary",
+                f"homelab.petebeegle.com/refresh-request={refresh_token()}",
+                "--overwrite",
+            ),
         )
         new_secret_version, new_pod_uid = _wait_for_change(
             config,

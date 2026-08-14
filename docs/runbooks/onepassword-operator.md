@@ -1,6 +1,6 @@
 # Operate the 1Password Kubernetes Operator
 
-The homelab uses the official Helm chart named `connect`, but 1Password Connect is disabled. Each cluster runs the first-party operator with direct service-account authentication and a cluster-isolated, read-only 1Password service account.
+The homelab uses the official Helm chart named `connect`, but 1Password Connect is disabled. Each cluster runs the first-party operator with direct service-account authentication and a cluster-isolated, read-only 1Password service account. Production checks for item changes hourly. Development uses a one-year ticker as an effective manual-refresh mode because operator 1.12.0 cannot disable its `time.NewTicker` with zero.
 
 ## Credential boundaries
 
@@ -73,6 +73,20 @@ python3 tools/development/verify_onepassword_operator.py \
 
 Success reports only the generated Secret resource-version transition, consuming pod UID transition, and namespace cleanup. Do not use `--keep` outside active debugging.
 
+The verifier explicitly annotates its canary `OnePasswordItem` after editing the item, which triggers the watched resource to reconcile without waiting for periodic polling. To request the same item-scoped refresh during development diagnosis, update a non-secret annotation:
+
+```bash
+kubectl --kubeconfig /home/vscode/.kube/homelab-development.config \
+  -n <namespace> annotate onepassworditem/<name> \
+  homelab.petebeegle.com/refresh-request="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  --overwrite
+kubectl --kubeconfig /home/vscode/.kube/homelab-development.config \
+  -n <namespace> wait onepassworditem/<name> \
+  --for=condition=Ready=True --timeout=10m
+```
+
+Do not delete and recreate a `OnePasswordItem` to force refresh; deletion also deletes its owned Secret.
+
 ## Monitoring and diagnosis
 
 Grafana alerts after ten minutes when the operator Deployment is absent/unavailable or a `OnePasswordItem` is not Ready. Start diagnosis with:
@@ -84,6 +98,17 @@ kubectl -n onepassword-system logs deployment/onepassword-connect-operator --sin
 ```
 
 A 1Password outage prevents refresh but does not remove an existing generated Secret. Confirm existing workloads remain running while investigating. Do not delete a durable `OnePasswordItem` as a diagnostic step: deletion also deletes its generated Kubernetes Secret.
+
+If many or all items fail together, inspect service-account rate limits before changing item IDs or rotating tokens. Resolve the production token through the authenticated bootstrap reference and inject it only into the subprocess:
+
+```bash
+OP_SERVICE_ACCOUNT_TOKEN='op://cluster bootstrap/onepassword-production-operator/credential' \
+  op run -- op service-account ratelimit
+```
+
+The `account` read/write row is shared across service accounts. This account currently permits 1000 requests/day. Seventeen production items polled every five minutes would require about 4896 baseline reads/day; hourly production polling requires about 408. Development periodic polling is effectively disabled and refreshes are requested explicitly. If the account row reaches zero remaining, existing generated Secrets stay available, but item readiness cannot recover until the provider-reported reset time. A new service-account token does not bypass an exhausted account-wide limit.
+
+Automatic production rotation can take up to one hour. For a planned urgent rotation, annotate only the affected `OnePasswordItem` as shown above, using the production kubeconfig, and verify its Ready condition, generated Secret resource version, and consumer rollout without printing values.
 
 ## Prepare dual-publish items
 
