@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "expected_count": 3,
+  "vault": "cluster development",
+  "items": [
+    {
+      "namespace": "cert-manager",
+      "legacy_name": "cloudflare-api-token",
+      "generated_name": "cloudflare-api-token-onepassword",
+      "item_title": "k8s--cert-manager--cloudflare-api-token",
+      "type": "Opaque",
+      "keys": ["token"],
+      "output_path": "kubernetes/infra/controllers/cert-manager-development/onepassword-item.yaml"
+    },
+    {
+      "namespace": "immich",
+      "legacy_name": "immich-postgres-user",
+      "generated_name": "immich-postgres-user-onepassword",
+      "item_title": "k8s--immich--immich-postgres-user",
+      "type": "kubernetes.io/basic-auth",
+      "keys": ["password", "username"],
+      "output_path": "kubernetes/apps/immich/branch/onepassword-items/postgres-user.yaml"
+    },
+    {
+      "namespace": "immich",
+      "legacy_name": "immich-secrets",
+      "generated_name": "immich-secrets-onepassword",
+      "item_title": "k8s--immich--immich-secrets",
+      "type": "Opaque",
+      "keys": ["immich-config.yaml"],
+      "output_path": "kubernetes/apps/immich/branch/onepassword-items/configuration.yaml"
+    }
+  ]
+}

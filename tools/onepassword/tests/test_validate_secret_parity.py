@@ -6,6 +6,7 @@ import importlib.util
 import io
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -61,6 +62,44 @@ class ValidateSecretParityTest(unittest.TestCase):
             )
         self.assertNotIn("legacy-key", str(raised.exception))
         self.assertNotIn("generated-key", str(raised.exception))
+
+    def test_namespace_overrides_are_strict_and_repeatable(self) -> None:
+        self.assertEqual(
+            {"immich": "immich-feature", "cert-manager": "cert-manager"},
+            self.module.parse_namespace_overrides(
+                ["immich=immich-feature", "cert-manager=cert-manager"]
+            ),
+        )
+        for invalid in ["immich", "=target", "source=", "UPPER=target"]:
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                self.module.parse_namespace_overrides([invalid])
+
+    def test_live_validation_uses_target_namespace_without_printing_values(self) -> None:
+        inventory = {
+            "items": [
+                {
+                    "namespace": "immich",
+                    "legacy_name": "legacy",
+                    "generated_name": "generated",
+                    "keys": ["password"],
+                    "type": "Opaque",
+                }
+            ]
+        }
+        secret = self.secret({"password": b"secret-sentinel"})
+        ready = {"status": {"conditions": [{"type": "Ready", "status": "True"}]}}
+        output = io.StringIO()
+        with mock.patch.object(
+            self.module, "run_json", side_effect=[ready, secret, secret]
+        ) as run_json, contextlib.redirect_stdout(output):
+            self.module.validate_live(
+                Path("/tmp/dev.config"), inventory, {"immich": "immich-feature"}
+            )
+        self.assertTrue(
+            all("immich-feature" in call.args[0] for call in run_json.call_args_list)
+        )
+        self.assertNotIn("secret-sentinel", output.getvalue())
+        self.assertIn("Secret parity passed: 1/1", output.getvalue())
 
 
 if __name__ == "__main__":
