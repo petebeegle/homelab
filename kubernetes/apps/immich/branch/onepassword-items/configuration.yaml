@@ -1,0 +1,12 @@
+---
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: immich-secrets-onepassword
+  namespace: immich
+  labels:
+    app.kubernetes.io/managed-by: onepassword-operator
+    homelab.petebeegle.com/legacy-secret: immich-secrets
+type: Opaque
+spec:
+  itemPath: "vaults/dic43ai4wt5e7vezs454whfrpu/items/dltmzprhcpzd6dwsq5gn56mnt4"
