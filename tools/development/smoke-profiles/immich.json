@@ -14,8 +14,8 @@
       "immich"
     ],
     "secretRefs": [
-      "immich-secrets",
-      "immich-postgres-user"
+      "immich-secrets-onepassword",
+      "immich-postgres-user-onepassword"
     ],
     "pvcs": [
       {
