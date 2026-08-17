@@ -7,6 +7,6 @@
     "test:unit": "node --test smoke-summary-reporter.test.js run-smoke.test.js"
   },
   "devDependencies": {
-    "@playwright/test": "1.60.0"
+    "@playwright/test": "1.62.1"
   }
 }
