@@ -13,7 +13,7 @@
       {
         "datasource": {
           "type": "loki",
-          "uid": "${DS_LOKI}"
+          "uid": "$${DS_LOKI}"
         },
         "enable": false,
         "expr": "{namespace=\"flux-system\"} |~ \"error|Error|ERROR\"",
@@ -49,7 +49,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "$${DS_PROMETHEUS}"
       },
       "description": "Resources that are currently suspended and will NOT reconcile automatically",
       "fieldConfig": {
@@ -100,7 +100,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "$${DS_PROMETHEUS}"
           },
           "expr": "count(gotk_resource_info{exported_namespace=~\"$namespace\",suspended=\"true\",job=\"prometheus.scrape.service\"}) OR vector(0)",
           "refId": "A"
@@ -112,7 +112,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "$${DS_PROMETHEUS}"
       },
       "description": "Resources currently failing reconciliation",
       "fieldConfig": {
@@ -163,7 +163,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "$${DS_PROMETHEUS}"
           },
           "expr": "count(gotk_resource_info{exported_namespace=~\"$namespace\",ready=\"False\",job=\"prometheus.scrape.service\"}) OR vector(0)",
           "refId": "A"
@@ -175,7 +175,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "$${DS_PROMETHEUS}"
       },
       "description": "Resources whose p95 reconcile duration over 30 minutes exceeds 60 seconds, using gotk_reconcile_duration_seconds buckets.",
       "fieldConfig": {
@@ -230,7 +230,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "$${DS_PROMETHEUS}"
           },
           "expr": "count(histogram_quantile(0.95, sum(rate(gotk_reconcile_duration_seconds_bucket{exported_namespace=~\"$namespace\",job=\"prometheus.scrape.pods\"}[30m])) by (le, exported_namespace, name, kind)) > 60) OR vector(0)",
           "refId": "A"
@@ -242,7 +242,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "$${DS_PROMETHEUS}"
       },
       "description": "Resources waiting on dependencies (Unknown state)",
       "fieldConfig": {
@@ -293,7 +293,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "$${DS_PROMETHEUS}"
           },
           "expr": "count(gotk_resource_info{exported_namespace=~\"$namespace\",ready=\"Unknown\",job=\"prometheus.scrape.service\"}) OR vector(0)",
           "refId": "A"
@@ -305,7 +305,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "$${DS_PROMETHEUS}"
       },
       "description": "Reconciliation rate (reconciliations per second, last 5 minutes)",
       "fieldConfig": {
@@ -360,7 +360,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "$${DS_PROMETHEUS}"
           },
           "expr": "sum(rate(gotk_reconcile_duration_seconds_count{job=\"prometheus.scrape.pods\"}[5m])) OR on() vector(0)",
           "refId": "A"
@@ -372,7 +372,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "$${DS_PROMETHEUS}"
       },
       "description": "Total managed Flux resources",
       "fieldConfig": {
@@ -419,7 +419,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "$${DS_PROMETHEUS}"
           },
           "expr": "count(gotk_resource_info{exported_namespace=~\"$namespace\",customresource_kind=~\"Kustomization|HelmRelease\",job=\"prometheus.scrape.service\"})",
           "refId": "A"
@@ -444,7 +444,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "$${DS_PROMETHEUS}"
       },
       "description": "Resource health status over time (ready vs failing resources)",
       "fieldConfig": {
@@ -569,7 +569,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "$${DS_PROMETHEUS}"
           },
           "expr": "count(gotk_resource_info{exported_namespace=~\"$namespace\",ready=\"True\",job=\"prometheus.scrape.service\"}) OR vector(0)",
           "legendFormat": "Ready",
@@ -578,7 +578,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "$${DS_PROMETHEUS}"
           },
           "expr": "count(gotk_resource_info{exported_namespace=~\"$namespace\",ready=\"False\",job=\"prometheus.scrape.service\"}) OR vector(0)",
           "legendFormat": "Failing",
@@ -587,7 +587,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "$${DS_PROMETHEUS}"
           },
           "expr": "count(gotk_resource_info{exported_namespace=~\"$namespace\",ready=\"Unknown\",job=\"prometheus.scrape.service\"}) OR vector(0)",
           "legendFormat": "Unknown",
@@ -600,7 +600,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "$${DS_PROMETHEUS}"
       },
       "description": "Reconciliation duration percentiles",
       "fieldConfig": {
@@ -680,7 +680,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "$${DS_PROMETHEUS}"
           },
           "expr": "histogram_quantile(0.50, sum(rate(gotk_reconcile_duration_seconds_bucket{exported_namespace=~\"$namespace\",job=\"prometheus.scrape.pods\"}[5m])) by (le)) OR on() vector(0)",
           "legendFormat": "p50",
@@ -689,7 +689,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "$${DS_PROMETHEUS}"
           },
           "expr": "histogram_quantile(0.90, sum(rate(gotk_reconcile_duration_seconds_bucket{exported_namespace=~\"$namespace\",job=\"prometheus.scrape.pods\"}[5m])) by (le)) OR on() vector(0)",
           "legendFormat": "p90",
@@ -698,7 +698,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "$${DS_PROMETHEUS}"
           },
           "expr": "histogram_quantile(0.95, sum(rate(gotk_reconcile_duration_seconds_bucket{exported_namespace=~\"$namespace\",job=\"prometheus.scrape.pods\"}[5m])) by (le)) OR on() vector(0)",
           "legendFormat": "p95",
@@ -707,7 +707,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "$${DS_PROMETHEUS}"
           },
           "expr": "histogram_quantile(0.99, sum(rate(gotk_reconcile_duration_seconds_bucket{exported_namespace=~\"$namespace\",job=\"prometheus.scrape.pods\"}[5m])) by (le)) OR on() vector(0)",
           "legendFormat": "p99",
@@ -733,7 +733,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "$${DS_PROMETHEUS}"
       },
       "description": "Detailed list of all resources with their current status",
       "fieldConfig": {
@@ -903,7 +903,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "$${DS_PROMETHEUS}"
           },
           "expr": "gotk_resource_info{exported_namespace=~\"$namespace\", customresource_kind=~\"$resource_type\"}",
           "format": "table",
@@ -955,7 +955,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "$${DS_PROMETHEUS}"
       },
       "description": "Resource count by type",
       "fieldConfig": {
@@ -1012,7 +1012,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "$${DS_PROMETHEUS}"
           },
           "expr": "count by (customresource_kind) (gotk_resource_info{exported_namespace=~\"$namespace\",job=\"prometheus.scrape.service\"})",
           "format": "time_series",
@@ -1026,7 +1026,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "$${DS_PROMETHEUS}"
       },
       "description": "Resource count by namespace",
       "fieldConfig": {
@@ -1104,7 +1104,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "$${DS_PROMETHEUS}"
           },
           "expr": "count by (exported_namespace) (gotk_resource_info{exported_namespace=~\"$namespace\",customresource_kind=~\"$resource_type\",job=\"prometheus.scrape.service\"})",
           "legendFormat": "{{exported_namespace}}",
@@ -1117,7 +1117,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "$${DS_PROMETHEUS}"
       },
       "description": "Reconciliation duration by resource",
       "fieldConfig": {
@@ -1196,7 +1196,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "$${DS_PROMETHEUS}"
           },
           "expr": "histogram_quantile(0.95, sum(rate(gotk_reconcile_duration_seconds_bucket{exported_namespace=~\"$namespace\",name=~\"$resource_name\",job=\"prometheus.scrape.pods\"}[5m])) by (le, name, exported_namespace)) OR on() vector(0)",
           "legendFormat": "{{exported_namespace}}/{{name}}",
@@ -1222,7 +1222,7 @@
     {
       "datasource": {
         "type": "loki",
-        "uid": "${DS_LOKI}"
+        "uid": "$${DS_LOKI}"
       },
       "description": "Recent logs from Flux controllers (errors highlighted)",
       "gridPos": {
@@ -1247,7 +1247,7 @@
         {
           "datasource": {
             "type": "loki",
-            "uid": "${DS_LOKI}"
+            "uid": "$${DS_LOKI}"
           },
           "expr": "{namespace=\"flux-system\", app=~\"source-controller|kustomize-controller|helm-controller|notification-controller\"} |~ \"$log_filter\"",
           "refId": "A"
@@ -1311,7 +1311,7 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
+          "uid": "$${DS_PROMETHEUS}"
         },
         "definition": "label_values(gotk_resource_info{job=\"prometheus.scrape.service\"}, exported_namespace)",
         "hide": 0,
@@ -1339,7 +1339,7 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
+          "uid": "$${DS_PROMETHEUS}"
         },
         "definition": "label_values(gotk_resource_info{exported_namespace=~\"$namespace\",job=\"prometheus.scrape.service\"}, customresource_kind)",
         "hide": 0,
@@ -1367,7 +1367,7 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
+          "uid": "$${DS_PROMETHEUS}"
         },
         "definition": "label_values(gotk_resource_info{exported_namespace=~\"$namespace\",customresource_kind=~\"$resource_type\",job=\"prometheus.scrape.service\"}, name)",
         "hide": 0,
