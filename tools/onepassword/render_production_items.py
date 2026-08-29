@@ -24,8 +24,13 @@ def load_inventory(path: Path) -> dict[str, Any]:
     items = inventory.get("items")
     if inventory.get("schema_version") != 1 or not isinstance(items, list):
         raise ValueError("inventory schema is invalid")
-    if len(items) != 17:
-        raise ValueError(f"inventory must contain 17 items, found {len(items)}")
+    expected_count = inventory.get("expected_count", 17)
+    if not isinstance(expected_count, int) or expected_count <= 0:
+        raise ValueError("inventory expected_count is invalid")
+    if len(items) != expected_count:
+        raise ValueError(
+            f"inventory must contain {expected_count} items, found {len(items)}"
+        )
 
     pairs: set[tuple[str, str]] = set()
     generated: set[tuple[str, str]] = set()

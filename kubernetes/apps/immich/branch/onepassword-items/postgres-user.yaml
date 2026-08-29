@@ -1,0 +1,12 @@
+---
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: immich-postgres-user-onepassword
+  namespace: immich
+  labels:
+    app.kubernetes.io/managed-by: onepassword-operator
+    homelab.petebeegle.com/legacy-secret: immich-postgres-user
+type: kubernetes.io/basic-auth
+spec:
+  itemPath: "vaults/dic43ai4wt5e7vezs454whfrpu/items/gxsz67f6h2wkqzwcld6nvwug3i"

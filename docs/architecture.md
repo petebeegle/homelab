@@ -80,8 +80,8 @@ This document is generated for agentic repo navigation. It records relationships
 | `production` | `onepassword-operator` | `./kubernetes/infra/controllers/onepassword-operator` | `crds` | `(none)` | `no` |
 | `production` | `otel-collector` | `./kubernetes/infra/monitoring/otel-collector` | `crds`, `gateway` | `cluster-vars` | `no` |
 | `production` | `vpn` | `./kubernetes/infra/network/vpn` | `cilium`, `nfs-csi`, `gateway`, `authentik` | `cluster-vars` | `sops` |
-| `development` | `cert-manager` | `./kubernetes/infra/controllers/cert-manager` | `crds` | `cluster-vars` | `sops` |
-| `development` | `certs` | `./kubernetes/infra/network/certs` | `cert-manager`, `cilium` | `cluster-vars` | `no` |
+| `development` | `cert-manager` | `./kubernetes/infra/controllers/cert-manager-development` | `crds` | `cluster-vars` | `sops` |
+| `development` | `certs` | `./kubernetes/infra/network/certs-development` | `cert-manager`, `cilium` | `cluster-vars` | `no` |
 | `development` | `cilium` | `./kubernetes/infra/network/cilium` | `crds` | `cluster-vars` | `no` |
 | `development` | `cloudnative-pg` | `./kubernetes/infra/controllers/cloudnative-pg` | `local-path-provisioner` | `(none)` | `no` |
 | `development` | `crds` | `./kubernetes/infra/crds` | (none) | `cluster-vars` | `no` |
@@ -122,6 +122,7 @@ This document is generated for agentic repo navigation. It records relationships
 | --- | --- |
 | `kubernetes/infra/authentik` | `namespace.yaml`, `app.yaml`, `secret.yaml`, `httproute.yaml`, `referencegrant.yaml`, `blueprints` |
 | `kubernetes/infra/controllers/cert-manager` | `app.yaml`, `secret.yaml` |
+| `kubernetes/infra/controllers/cert-manager-development` | `../cert-manager`, `onepassword-item.yaml` |
 | `kubernetes/infra/controllers/cloudnative-pg` | `namespace.yaml`, `app.yaml` |
 | `kubernetes/infra/controllers/grafana-operator` | `namespace.yaml`, `app.yaml` |
 | `kubernetes/infra/controllers/intel-device-plugins/gpu` | `app.yaml` |
@@ -147,6 +148,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/infra/monitoring/pretty-discord-alerts` | `grafana-env.yaml`, `deployment.yaml`, `service.yaml` |
 | `kubernetes/infra/monitoring/snmp-exporter` | `repositories.yaml`, `deployment.yaml`, `service.yaml`, `servicemonitor.yaml` |
 | `kubernetes/infra/network/certs` | `./issuer.yaml` |
+| `kubernetes/infra/network/certs-development` | `../certs` |
 | `kubernetes/infra/network/cilium` | `app.yaml`, `announcement.yaml`, `ip-pool.yaml` |
 | `kubernetes/infra/network/gateway` | `./namespace.yaml`, `./certificate.yaml`, `./gateway-internal.yaml`, `./gateway-passthrough.yaml`, `./gateway-external.yaml`, `./gateway-external-passthrough.yaml`, `./https-redirect.yaml`, `./referencegrant.yaml` |
 | `kubernetes/infra/network` | `./cilium`, `./certs`, `./vpn`, `./gateway` |
@@ -163,7 +165,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/apps/homepage/development` | `../base` |
 | `kubernetes/apps/homepage` | `base` |
 | `kubernetes/apps/immich/base` | `namespace.yaml`, `pvc.yaml`, `postgres.yaml`, `app.yaml`, `metrics-service.yaml`, `httproute.yaml`, `secret.yaml` |
-| `kubernetes/apps/immich/branch` | `../base` |
+| `kubernetes/apps/immich/branch` | `../base`, `onepassword-items/configuration.yaml`, `onepassword-items/postgres-user.yaml` |
 | `kubernetes/apps/immich` | `base` |
 | `kubernetes/apps/jellyfin/branch` | `jellyfin.yaml` |
 | `kubernetes/apps/jellyfin` | `./app.yaml`, `./pvc.yaml`, `./httproute.yaml`, `./secret.yaml`, `./sso-bootstrap.yaml` |
