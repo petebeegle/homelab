@@ -66,7 +66,7 @@ remain intact.
 - [x] T014 Run Spec Kit converge, incorporate any newly discovered work into `specs/onepassword-prod-grafana-cutover/tasks.md`, and finalize pre-merge evidence in `specs/onepassword-prod-grafana-cutover/evidence.md`.
 - [x] T015 Re-check constitution gates and confirm every completed task is marked in `specs/onepassword-prod-grafana-cutover/tasks.md`.
 - [x] T016 Commit the atomic implementation with a conventional commit message and record the commit SHA in `specs/onepassword-prod-grafana-cutover/evidence.md`.
-- [ ] T017 Push `codex/onepassword-prod-grafana-cutover` and open a gated PR containing the completed `specs/onepassword-prod-grafana-cutover/evidence.md`.
+- [x] T017 Push `codex/onepassword-prod-grafana-cutover` and open a gated PR containing the completed `specs/onepassword-prod-grafana-cutover/evidence.md`.
 
 ---
 

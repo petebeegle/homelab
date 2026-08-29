@@ -2,7 +2,7 @@
 
 **Feature Branch**: `codex/onepassword-prod-grafana-cutover`
 **Created**: 2026-08-29
-**Status**: Spec approved; planning
+**Status**: Implementation complete; awaiting merge gate
 **Risk Tier**: high
 **Input**: User description: "Cut over one production consumer that can be manually smoke tested without bringing everything down."
 

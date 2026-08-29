@@ -119,7 +119,7 @@ and the implementation remains branch/worktree/PR scoped.
   credentials to 1password`).
 - Final branch head is represented by the pull request after the evidence-only
   follow-up commit to avoid a self-referential SHA.
-- Pull request: pending push.
+- Pull request: `https://github.com/petebeegle/homelab/pull/403`.
 
 ## Post-Merge Reconciliation And Automated Smoke
 
