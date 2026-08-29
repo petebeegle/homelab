@@ -114,7 +114,12 @@ and the implementation remains branch/worktree/PR scoped.
 
 ## Commit And Pull Request
 
-Pending.
+- Atomic implementation commit:
+  `329a7b42f23cae2ac7156e613aa097212b550886` (`feat: cut over grafana
+  credentials to 1password`).
+- Final branch head is represented by the pull request after the evidence-only
+  follow-up commit to avoid a self-referential SHA.
+- Pull request: pending push.
 
 ## Post-Merge Reconciliation And Automated Smoke
 

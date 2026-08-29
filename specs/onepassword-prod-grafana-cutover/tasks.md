@@ -65,7 +65,7 @@ remain intact.
 - [x] T013 Repeat the production read-only generated-item readiness, no-output parity, current Grafana health, operator-resource health, and synthetic route checks immediately before PR handoff; record timestamped results in `specs/onepassword-prod-grafana-cutover/evidence.md`.
 - [x] T014 Run Spec Kit converge, incorporate any newly discovered work into `specs/onepassword-prod-grafana-cutover/tasks.md`, and finalize pre-merge evidence in `specs/onepassword-prod-grafana-cutover/evidence.md`.
 - [x] T015 Re-check constitution gates and confirm every completed task is marked in `specs/onepassword-prod-grafana-cutover/tasks.md`.
-- [ ] T016 Commit the atomic implementation with a conventional commit message and record the commit SHA in `specs/onepassword-prod-grafana-cutover/evidence.md`.
+- [x] T016 Commit the atomic implementation with a conventional commit message and record the commit SHA in `specs/onepassword-prod-grafana-cutover/evidence.md`.
 - [ ] T017 Push `codex/onepassword-prod-grafana-cutover` and open a gated PR containing the completed `specs/onepassword-prod-grafana-cutover/evidence.md`.
 
 ---
