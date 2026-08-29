@@ -60,6 +60,50 @@ def check_operator_polling_interval(root: Path) -> list[str]:
     return errors
 
 
+def check_grafana_cutover_boundary(root: Path) -> list[str]:
+    errors: list[str] = []
+    app = read(root, "kubernetes/infra/monitoring/grafana/app.yaml")
+    instance = read(root, "kubernetes/infra/monitoring/grafana/grafana-instance.yaml")
+    kustomization = read(root, "kubernetes/infra/monitoring/grafana/kustomization.yaml")
+    monitoring = read(root, "kubernetes/clusters/production/infra/monitoring.yaml")
+
+    if len(re.findall(r"(?m)^\s+(?:existingSecret|secretName): grafana-credentials-onepassword$", app)) != 2:
+        errors.append(
+            "Grafana Helm values must contain exactly two generated credential references"
+        )
+    if re.search(r"(?m)^\s+(?:existingSecret|secretName): grafana-credentials$", app):
+        errors.append("Grafana Helm admin and OAuth references must not use the legacy credential")
+    errors += require(
+        app,
+        r"(?m)^\s+envFromSecret: grafana-env$",
+        "Grafana notification environment must retain the legacy grafana-env source",
+    )
+
+    if len(re.findall(r"(?m)^\s+name: grafana-credentials-onepassword$", instance)) != 2:
+        errors.append(
+            "Grafana external credential references must both use the generated Secret"
+        )
+    if re.search(r"(?m)^\s+name: grafana-credentials$", instance):
+        errors.append("Grafana external credential references must not use the legacy Secret")
+
+    errors += require(
+        kustomization,
+        r"(?m)^\s+- secret\.yaml$",
+        "Grafana must retain the encrypted legacy credential manifest",
+    )
+    errors += require(
+        kustomization,
+        r"(?m)^\s+- grafana-env\.yaml$",
+        "Grafana must retain the encrypted notification credential manifest",
+    )
+    errors += require(
+        monitoring,
+        r"(?ms)^\s+decryption:\n\s+provider: sops\n\s+secretRef:\n\s+name: sops-age$",
+        "production monitoring must retain SOPS decryption with sops-age",
+    )
+    return errors
+
+
 def check_repository(root: Path) -> list[str]:
     errors: list[str] = []
     prod_kustomization = read(root, "kubernetes/clusters/production/infra/kustomization.yaml")
@@ -80,6 +124,7 @@ def check_repository(root: Path) -> list[str]:
     errors += require(metrics, r"(?s)apiGroups:.*- onepassword\.com.*resources:.*- onepassworditems.*verbs: \[\"list\", \"watch\", \"get\"\]", "OnePasswordItem least-privilege RBAC is missing")
     errors += check_item_metric_safety(root)
     errors += check_operator_polling_interval(root)
+    errors += check_grafana_cutover_boundary(root)
     errors += require(alert_kustomization, r"alert-rules-onepassword\.yaml", "1Password alert rules are not activated")
     errors += require(alerts, r"uid: onepassword-operator-unavailable", "operator-unavailable alert is missing")
     errors += require(alerts, r'kube_deployment_spec_replicas\{exported_namespace="onepassword-system",deployment="onepassword-connect-operator"\}', "operator alert must target the live Helm Deployment and exported resource namespace")

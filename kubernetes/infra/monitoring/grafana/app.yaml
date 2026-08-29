@@ -26,7 +26,7 @@ spec:
   values:
     envFromSecret: grafana-env
     admin:
-      existingSecret: grafana-credentials
+      existingSecret: grafana-credentials-onepassword
     resources:
       requests:
         cpu: 100m
@@ -59,7 +59,7 @@ spec:
         allow_sign_up: true
     extraSecretMounts:
       - name: oauth-client-secret
-        secretName: grafana-credentials
+        secretName: grafana-credentials-onepassword
         defaultMode: 0440
         mountPath: /etc/secrets
         readOnly: true

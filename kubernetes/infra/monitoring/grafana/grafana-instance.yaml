@@ -11,8 +11,8 @@ spec:
   external:
     url: http://grafana.grafana.svc.cluster.local:80
     adminUser:
-      name: grafana-credentials
+      name: grafana-credentials-onepassword
       key: admin-user
     adminPassword:
-      name: grafana-credentials
+      name: grafana-credentials-onepassword
       key: admin-password
