@@ -5,4 +5,4 @@
 3. Push and reconcile the development base from the branch.
 4. Require 3/3 Ready/parity and issue a disposable staging certificate.
 5. Run the Immich branch profile with base reconciliation.
-6. Run the reversible outage-retention test with explicit fail/recover refresh triggers and verify cleanup.
+6. Run the reversible Cilium outage-retention test, require operator unavailability with Secret/consumer retention, restore egress, and require operator/item recovery and cleanup.

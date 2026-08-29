@@ -17,7 +17,7 @@
 2. Add a development cert-manager overlay containing its `OnePasswordItem`; add a development certs overlay that patches both ClusterIssuers to the generated Secret.
 3. Add two `OnePasswordItem` resources to the Immich branch overlay and patch every configuration/database reference to generated names.
 4. Extend no-output parity tooling to accept the three-item development inventory.
-5. Add automated disposable Certificate and outage-retention validators with guaranteed cleanup and explicit annotation-triggered refresh.
+5. Add automated disposable Certificate and outage-retention validators with guaranteed cleanup. The outage validator uses a temporary `CiliumNetworkPolicy` that permits only the `kube-apiserver` entity and restarts the stateless operator pod to force reconciliation while development polling is disabled.
 6. Push the branch and run Immich smoke with sequential development-base reconciliation.
 
 ## Constitution Check
@@ -33,10 +33,10 @@
 
 - Unit tests for inventory/rendering, reference completeness, redaction, outage cleanup, and continuity assertions.
 - Render/substitute both cluster roots and Immich branch overlay; kubeconform, policy, architecture, harness, pre-commit.
-- Live 3/3 Ready/parity, disposable certificate, Immich API smoke, and fail/recover explicit refreshes around the simulated outage.
+- Live 3/3 Ready/parity, disposable certificate, Immich API smoke, operator unavailability during the simulated vault outage, and operator/item recovery after egress restoration.
 
 ## Risks
 
 - A dynamic Immich namespace could retain a legacy reference; render-level reference enumeration and live smoke fail closed.
-- Deny-egress cleanup failure could leave refresh disabled; validator uses a finally cleanup and verifies operator recovery.
+- Cilium policy or cleanup failure could leave the operator unavailable; the validator uses guaranteed cleanup and verifies both operator and item recovery.
 - UI entry may alter multiline/trailing bytes; parity blocks cutover.

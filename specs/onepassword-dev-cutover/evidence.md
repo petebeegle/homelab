@@ -77,3 +77,14 @@
 - The shared development Flux source and root Kustomization were restored to `main@sha1:9d2d762bc7d49605d00764494b800a6e31e52b67`.
 - The retained `branch-immich-onepassword-dev-cutover` Kustomization, GitRepository, and namespace were deleted normally. The older, unrelated `onepassword-dev-seed` branch environment was left untouched.
 - Development Immich OIDC remains untested and unavailable because development has no Authentik deployment; the exact API smoke, route, workloads, database, and storage checks passed.
+
+## Rebase and Acceptance Refresh — 2026-08-29
+
+- Rebased onto `main@sha1:a0f92c819b8208103174d894f853615328625556`; the only conflict was the branch-scoped `.specify/feature.json` marker. The upstream Grafana dashboard fix was preserved.
+- Exact tested code revision: `codex/onepassword-dev-cutover@sha1:7f87701446c70f5890db47c8d557d16eaf7996f5`.
+- Local validation passed: 13 1Password tests, 12 development verifier tests, 81 Codex harness tests, architecture check, SDD context validation, diff check, and full pre-commit.
+- Development Flux fetched the exact branch revision. Shared base reconciliation passed and was restored to `main@sha1:a0f92c819b8208103174d894f853615328625556` after testing.
+- Immich branch reconciliation passed with both generated Secrets, Helm and workload readiness, bound storage, Service/HTTPRoute checks, and the exact `/api/server/ping` probe.
+- No-output parity passed 3/3; the disposable Let's Encrypt staging Certificate became Ready and its namespace was removed.
+- Simulated vault outage made the operator unavailable while the generated Secret remained byte-identical and the consumer retained the same ready Pod. Operator and item recovery passed after egress restoration.
+- The temporary outage policy/consumer and the `branch-immich-onepassword-dev-cutover` Kustomization, GitRepository, and namespace were removed normally. The unrelated `onepassword-dev-seed` environment remained untouched.
