@@ -1,0 +1,178 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nexus-${branch_slug}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexus
+  namespace: nexus-${branch_slug}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nexus
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: nexus
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 200
+        runAsGroup: 200
+        fsGroup: 200
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: nexus
+          # Production reports 3.87.1-01. Pin the matching amd64 release.
+          image: sonatype/nexus3:3.87.1@sha256:ad6debd7a1441ed8b1fd8a51fefc4902ca23167b16bfe6f677e261678162dade
+          env:
+            - name: INSTALL4J_ADD_VM_PARAMS
+              value: "-Xms512m -Xmx1024m -XX:MaxDirectMemorySize=512m -Djava.util.prefs.userRoot=/nexus-data/javaprefs"
+          ports:
+            - name: api
+              containerPort: 8081
+            - name: group
+              containerPort: 8082
+            - name: hosted
+              containerPort: 8083
+          resources:
+            requests:
+              cpu: 250m
+              memory: 1536Mi
+            limits:
+              memory: 2Gi
+          startupProbe:
+            httpGet:
+              path: /service/rest/v1/status
+              port: api
+            periodSeconds: 10
+            failureThreshold: 120
+          readinessProbe:
+            httpGet:
+              path: /service/rest/v1/status
+              port: api
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: data
+              mountPath: /nexus-data
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexus-api
+  namespace: nexus-${branch_slug}
+spec:
+  selector:
+    app.kubernetes.io/name: nexus
+  ports:
+    - name: http
+      port: 8081
+      targetPort: 8081
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexus-group
+  namespace: nexus-${branch_slug}
+spec:
+  selector:
+    app.kubernetes.io/name: nexus
+  ports:
+    - name: http
+      port: 8082
+      targetPort: 8082
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexus-hosted
+  namespace: nexus-${branch_slug}
+spec:
+  selector:
+    app.kubernetes.io/name: nexus
+  ports:
+    - name: http
+      port: 8083
+      targetPort: 8083
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: nexus-hosted
+  namespace: nexus-${branch_slug}
+spec:
+  parentRefs:
+    - name: internal
+      namespace: gateway
+      sectionName: https-gateway
+  hostnames:
+    - docker-push-${branch_slug}.${cluster_domain}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      filters:
+        - type: RequestHeaderModifier
+          requestHeaderModifier:
+            set:
+              - name: X-Forwarded-Proto
+                value: https
+              - name: X-Forwarded-Host
+                value: docker-push-${branch_slug}.${cluster_domain}
+              - name: X-Forwarded-Port
+                value: "443"
+      timeouts:
+        request: 300s
+        backendRequest: 300s
+      backendRefs:
+        - name: nexus-hosted
+          port: 8083
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: nexus-group
+  namespace: nexus-${branch_slug}
+spec:
+  parentRefs:
+    - name: internal
+      namespace: gateway
+      sectionName: https-gateway
+  hostnames:
+    - docker-group-${branch_slug}.${cluster_domain}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      filters:
+        - type: RequestHeaderModifier
+          requestHeaderModifier:
+            set:
+              - name: X-Forwarded-Proto
+                value: https
+              - name: X-Forwarded-Host
+                value: docker-group-${branch_slug}.${cluster_domain}
+              - name: X-Forwarded-Port
+                value: "443"
+      timeouts:
+        request: 300s
+        backendRequest: 300s
+      backendRefs:
+        - name: nexus-group
+          port: 8082

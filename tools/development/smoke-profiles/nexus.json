@@ -1,0 +1,32 @@
+{
+  "app": "nexus",
+  "gitRepository": "branch-nexus-${branch_slug}",
+  "activationTemplate": "kubernetes/clusters/development/branches/nexus-template.yaml",
+  "namespace": "nexus-${branch_slug}",
+  "routeUrls": [
+    "https://docker-push-${branch_slug}.dev.lab.petebeegle.com",
+    "https://docker-group-${branch_slug}.dev.lab.petebeegle.com"
+  ],
+  "checks": {
+    "kustomizations": [
+      "branch-nexus-${branch_slug}"
+    ],
+    "services": [
+      "nexus-api",
+      "nexus-hosted",
+      "nexus-group"
+    ],
+    "httpRoutes": [
+      "nexus-hosted",
+      "nexus-group"
+    ],
+    "httpProbes": [
+      {
+        "service": "nexus-api",
+        "port": 8081,
+        "path": "/",
+        "bodyRegex": "Nexus"
+      }
+    ]
+  }
+}

@@ -1,0 +1,209 @@
+# Evidence: Nexus Hosted Docker Registry
+
+**Branch**: `codex/nexus-hosted-registry`
+**Risk Tier**: high
+**Started**: 2026-10-03
+
+## Human Gates
+
+| Gate | Result | Notes |
+| ---- | ------ | ----- |
+| Intent brief | PASS | User: “lets add all of that then,” referring to the hosted repository, push permissions, and HTTPS endpoint managed through the repo. |
+| Spec approval | PASS | User approved the linked spec on 2026-10-03: “yep go for it.” |
+| Clarify | SKIP | Approved spec assumptions resolve the original intent. A new implementation prerequisite about consumer credentials was surfaced during planning through an asynchronous question. |
+| Plan approval | PASS | User approved the linked plan with “go” on 2026-10-03; task generation and analysis follow. |
+| Checklist | PASS | `checklists/requirements.md` records the specification quality review; implementation checklist follows during planning. |
+| Tasks/analyze approval | PASS | User approved with “ok”; all 17 FR/SC items covered. |
+| Converge | PENDING | Not yet reached. |
+
+## Discovery
+
+- Existing Terraform defines `docker-proxy` and `docker-group` only; the group uses HTTP connector 8082 and includes only the proxy.
+- Prior authenticated live inventory in this conversation also returned zero hosted Docker repositories.
+- Synology's existing `docker-registry.petebeegle.com` reverse proxy targets connector 8082.
+- The tracked Nexus Compose configuration publishes only UI 8081 and group 8082, so adding a repository alone will not establish a new reachable connector.
+- The existing Docker account is scoped to group privileges; a separate publisher avoids granting write access to existing cluster consumers.
+- The group endpoint certificate was renewed in the prior operational task. Its continued availability is a regression requirement, not a new certificate task in this implementation.
+- New ingress must follow Gateway API decisions; proposed `docker-push.lab.petebeegle.com` fits the existing `${cluster_domain}` wildcard listener and certificate model.
+
+## Workspace And Baseline
+
+- Main checkout contained unrelated changes on `codex/upgrade-talos-oom-fix`; it was left untouched.
+- `git fetch origin`: PASS.
+- Preferred worktree creation at `/workspaces/homelab-worktrees/nexus-hosted-registry`: FAILED because the parent location was not writable. Git created the branch before that failure.
+- Reused that branch in `/home/vscode/homelab-worktrees/nexus-hosted-registry`: PASS. This writable sibling location is the documented worktree fallback.
+- Base revision: `d914946` (`origin/main` at creation).
+- New worktree started clean. Nexus definitions and Compose match the inspected main checkout; Synology provider versions differ between branches, so planning must use this branch's pinned versions.
+- No ignored credentials or Terraform state were required or copied for the specification draft. Stage and install them through the prescribed main-checkout secret staging directory before authenticated commands in the worktree.
+
+## Local Checks
+
+- Specification reviewed against `checklists/requirements.md`.
+- `git diff --check`: PASS. A direct scan of all draft Markdown files also passed, covering the untracked artifacts.
+- Required-section, non-empty-artifact, and unresolved-clarification-marker checks: PASS.
+- Runtime tests, Terraform initialization, plans, and deployment smoke have not run: no implementation changes exist yet.
+
+## Deployment State
+
+No Nexus, Synology, DNS, or cluster configuration was changed by this specification task. The proposed push endpoint is not provisioned.
+
+## SDD Conformance
+
+- Applied `speckit-specify` using the repository's spec template and constitution.
+- Implementation naming follows the binding branch/directory convention rather than upstream numeric prefixes.
+- No `.specify/extensions.yml` hooks were present.
+- `.specify/feature.json` in the unrelated checkout is preserved. The worktree pointer was updated by the required setup-plan script using the explicit feature directory.
+- The brainstorming skill's generic artifact location is superseded by the repository's `specs/nexus-hosted-registry/` location.
+- Spec, plan, and task/analysis human gates are not waived by authorization to add the feature.
+
+## Exceptions And Follow-Ups
+
+- Worktree location fallback is recorded above.
+- Separate clarification interview was skipped with the rationale above. Planning checklist is complete; tasks, analysis, and converge remain future stages.
+- Determine development validation availability and any external-service exception in `plan.md` before implementation.
+
+## Planning Research And Checks
+
+- Used `writing-plans`, `speckit-plan`, and `speckit-checklist`; generated plan, research, model, contract, quickstart, and a 14-item plan quality checklist.
+- `SPECIFY_FEATURE_DIRECTORY=specs/nexus-hosted-registry SPECIFY_FEATURE=codex/nexus-hosted-registry .specify/scripts/bash/setup-plan.sh --json`: PASS; correct worktree paths returned.
+- Read-only explorer `registry_dev_research` confirmed branch profile discovery, naming/cleanup constraints, mandatory development Terraform plan, probe limitations, and Retain-PV cleanup implications. Findings are incorporated in research and plan.
+- Development node Ready at `192.168.30.170`; internal Gateway Programmed at `192.168.30.225`. Production and development candidate DNS names resolved to their expected LAN Gateways.
+- NAS TCP 8083 refused connections; allocation still requires Container Manager inspection before use.
+- Nexus provider 2.8.0 hosted schema, role schema, security realm import and random provider 3.9.0 import behavior checked against pinned upstream sources linked in research.
+- Nexus local state and backend metadata are absent; production consumer credentials in both tfvars and saved Talos machine configuration returned HTTP 401. Live `docker` account/role and DockerToken realm exist. No credentials were printed, rotated or copied into tracked artifacts.
+- The user was asked for the current secret-store location or a coordinated reset preference. No reset is authorized by the original approved spec. Production apply is gated on resolution.
+- `update-agent-context.sh` is absent from this repository's bundled scripts; skipped rather than modifying AGENTS.md or introducing unrelated tooling.
+- All planning work is repository documentation plus read-only live checks. No registry, NAS or cluster configuration was changed.
+
+- Planning artifact completeness, required-section, and Markdown whitespace checks: PASS. Spec Kit prerequisite discovery found the research/model/contracts/quickstart in the correct feature directory. Production credential recovery is explicitly an unresolved runtime prerequisite, not a completed check.
+
+## Task Generation
+
+- Applied `speckit-tasks` using `setup-tasks.sh --json` with the explicit feature directory; the expected repository template and all design artifacts were found.
+- Generated 25 unchecked tasks, grouped into setup/foundation, US1 hosted publication, US2 cache compatibility, US3 operation/recovery, and review/rollout. No implementation task is claimed complete.
+- Production credential recovery (T018) explicitly does not block independent development work, but does block production apply and final completion.
+- Source changes and runtime mutations have not started. No extension hooks are configured.
+
+## Task/Analysis Handoff
+
+- Task generation format validation identified missing user-story labels; corrected the generated list without changing scope or task substance.
+- Read-only semantic review: all 12 functional requirements and 5 success criteria have coverage; no constitution conflicts or critical design issues.
+- Operational finding R1: missing Nexus state and rejected consumer credentials remain a high-severity production rollout prerequisite, addressed by T018/T020/T023 gating. Independent development work remains available after the task gate.
+- Full SDD context validator (including non-empty spec, plan, tasks, evidence): PASS. Whitespace and final task-label checks are run at handoff.
+- No production changes or implementation source edits were made during task generation/analysis.
+
+## Implementation gate and setup
+
+User approved tasks/analysis with “ok” on 2026-10-03. Baseline is f00d038, clean dedicated worktree. Required staged configs installed privately; development kube API verified as https://192.168.30.170:6443. Docker daemon 29.6.2 is reachable. Both checklists remain complete. Production credentials/state remain a separate gate.
+
+## Local implementation validation
+
+- T003 RED: missing smoke module; then seven credential/URL/state/status tests passed. T011/T013 RED: three missing content/cleanup/collision helpers; all ten tests then passed. These unit checks are not a substitute for pending runtime acceptance.
+- T004 RED: profile discovery lacked nexus; the complete 32-test branch verifier suite passes with the new profile.
+- Terraform init/validate and fmt check: PASS (Nexus 2.8.0). Compose config validation: PASS. Kustomize renders for external and branch fixture: PASS. Architecture regenerated and check: PASS.
+- Native Skopeo 1.13.3 installed locally for downloads into fresh OCI directories; Docker 29.6.2 builds/pushes. No Docker daemon cache is used as pull evidence.
+- Development image pins the published amd64 digest for 3.87.1, matching live Nexus's reported 3.87.1-01 version. Runtime NAS image identity remains a production inspection gate.
+- Interface refinement: smoke adds required `--admin-url` for a verified loopback API tunnel; registry origins cannot perform REST administration probes. No externally routed administrative API was added.
+- Execution bookkeeping follows repository Spec Kit tasks/evidence, with private ledger under `.codex/tmp/nexus-hosted-registry/`; this supersedes the generic skill-specific plan parser and scratch location.
+- Development and production acceptance remain pending at this commit. No production Terraform apply or NAS recreation has occurred.
+
+## Read-only NAS image inspection
+
+Container Manager reports project `nexus`, path `/volume2/Nexus`, Compose `/volume2/Nexus/compose.yaml`, container `nexus-nexus-1`. Running version label is 3.87.1-01. Its image config digest `sha256:3bf69e5aab61f11153f33791078b38d4dad29fb830b759287cc51f6ef9964617` exactly matches the config digest of the development-pinned manifest `sha256:ad6debd7a1441ed8b1fd8a51fefc4902ca23167b16bfe6f677e261678162dade` (verified with Skopeo). Production recreation has not occurred.
+
+## State/credential recovery result
+
+The local Docker credential helper contained a valid existing `docker` credential.
+An authenticated group Bearer-token request returned HTTP 200. Saved privately,
+staged through the implementation-secret helper; no credential value was logged.
+Six live Nexus resources imported successfully into a private recovery root built
+from the pre-feature source. Random-password declarative import initially exposed
+the expected replacement risk. After the documented narrow lifecycle compatibility
+refinement, all seven resource actions were no-op with only the password state
+import pending. Applied that import-only plan (exit 0); no live password or resource
+was changed. The recovered state remains private in the recovery root pending
+integration. Full proposed production plan and runtime dev validation still pending.
+
+The generic development verifier initially failed because staged legacy tfvars omit
+required `talos_version`. Retried with `TF_VAR_talos_version=v1.12.1`, matching the
+running development node; no development Terraform apply is requested. Flux fetched
+source revision dc00c29 and started the isolated fixture.
+
+## Independent implementation review
+
+Read-only reviewer covered d914946..f1eb5cd and the six approved review focus areas.
+Two Important findings were reproduced with failing tests and fixed: cleanup now
+claims exact previously absent repository/name/tag targets instead of all BusyBox
+tags, refuses overwriting existing local collision tags, and leaves unrelated
+components alone; chunked upload acceptance now sends 12 MiB across three PATCHes,
+validating every returned Location before use and cancelling failed uploads.
+The missing-token finding was promoted from Minor because a false denial pass
+weakens the authorization criterion; HTTP 200 without a token now fails explicitly.
+Five orchestration regression tests plus ten existing tests pass. Historical gate
+summary corrected during evidence maintenance. No minor findings deferred.
+Reviewer explicitly left live runtime acceptance and the subsequent UID correction
+to integration validation; neither is inferred from unit/render checks.
+
+## NAS runtime compatibility amendment
+
+Read-only container inspection confirms `/volume2/Nexus/nexus-data:/nexus-data:rw`,
+1 GiB limit, 8081/8082 bindings, and actual UID/GID **1026:100**. The old tracked
+Compose's 1027 was stale. Corrected desired Compose to 1026:100 alongside the 8083
+port addition to preserve the existing runtime identity and access. No chown,
+volume replacement or runtime mutation has occurred. Saved proposed production
+plan: five creates, group membership update, every existing consumer/password,
+proxy/blob store/role/realms resource no-op. Runtime dev acceptance still pending.
+
+## Development acceptance and cleanup
+
+- Generic Nexus branch verifier: PASS against source dc00c29 (later source refresh
+  f8b9032 has identical fixture manifests). Namespace `nexus-nexus-hosted-registry`,
+  pod UID `26ff5d77-e0e2-4b49-a1ef-e177d630711a`; development API verified before
+  mutation. Expected internal Gateway parent and current generation 1 have both
+  Accepted=True and ResolvedRefs=True on both routes.
+- Fixture initial admin retrieved privately and rotated; isolated loopback provider
+  at 127.0.0.1:18081, independent scratch state. Same Terraform source created all
+  12 fixture resources. Follow-up fixture plan: no changes.
+- First push correctly failed because fresh Community Edition onboarding/EULA had
+  not been completed. Completed same-version fixture onboarding via documented
+  `/service/rest/v1/system/eula` API; production was not changed.
+- Second run passed push, clean OCI pull, three-chunk 12 MiB transfer and all write
+  denials. Admin-check assumption was wrong: repository list is visibility-filtered
+  and returns 200. Read-only diagnosis confirmed security users/roles/tasks APIs
+  return 403; smoke now tests the protected user-management listing.
+- Third run: **all 13 checks PASS**, `development-report.json` contains exact digests
+  and HTTP evidence. Includes two-layer 12 MiB random image, chunk URLs, trusted TLS,
+  anonymous/invalid/consumer denial, publisher admin/delete denial, tag replacement,
+  old digest retrieval, consumer group content, upstream BusyBox and hosted-first
+  collision. Owned components removed; client credentials erased.
+- Deleted only branch Flux Kustomization, waited for namespace deletion, then deleted
+  matching GitRepository. Pod and emptyDir data are gone. Removed private fixture
+  Terraform state and generated credentials. Production recovery state and NAS data
+  retained untouched. Development Terraform was never applied.
+
+## Pre-rollout convergence and procedure
+
+Source review maps all 12 FR and 5 SC to implemented paths and observed development
+checks; no additional buildable source gaps. Final production behavior remains
+explicitly T023–T025, not inferred from development. No extension hooks configured.
+Read-only effective NAS Compose differs from reviewed desired state only by added
+8083 publication (and CRLF normalization); UID correction makes source match actual
+1026:100. Prepared a one-shot recreation procedure guarded by original Compose hash,
+container image ID, local image tag ID and UID; validate Compose first, privately
+back up configuration, atomically install, then `up -d --no-deps --pull never nexus`.
+No down/volume removal/pull is used. Existing image and mount remain mandatory.
+The production saved feature plan is five creates plus hosted-first membership;
+all imported consumer/password/existing resources are no-op. Integration and exact
+production smoke remain pending.
+
+## PR and final integration checks
+
+PR: https://github.com/petebeegle/homelab/pull/420. Independent review findings are
+fixed and development acceptance is complete. GitGuardian initially flagged a
+synthetic redaction-test credential; changed the fixture to construct the value
+entirely at runtime and amended only this implementation branch's commits using
+force-with-lease. GitGuardian now passes. No real credential was present in any
+tracked source or removed by this test-only change. Earlier recorded SHAs identify
+the actual historical test runs; source behavior is unchanged by fixture generation.
+Other CI checks are awaited before integration. Exact production acceptance follows
+integration and remains unchecked in T023–T025.

@@ -13,6 +13,12 @@ resource "random_password" "docker_password" {
   length           = 16
   special          = true
   override_special = "_%@"
+
+  # Import cannot recover the generator's alphabet. Preserve the verified
+  # existing password instead of replacing it due to import-only metadata.
+  lifecycle {
+    ignore_changes = [override_special]
+  }
 }
 
 resource "nexus_security_realms" "docker" {
@@ -29,6 +35,12 @@ resource "nexus_security_user" "docker" {
   password  = random_password.docker_password.result
   roles     = ["docker-group-view"]
   email     = "docker@example.com"
+
+  # Nexus never returns passwords on read/import. Existing consumers must not
+  # receive a password write merely because their state was recovered.
+  lifecycle {
+    ignore_changes = [password]
+  }
 }
 
 resource "nexus_blobstore_file" "file" {
@@ -91,6 +103,7 @@ resource "nexus_repository_docker_group" "group" {
 
   group {
     member_names = [
+      nexus_repository_docker_hosted.hosted.name,
       nexus_repository_docker_proxy.proxy.name
     ]
   }
