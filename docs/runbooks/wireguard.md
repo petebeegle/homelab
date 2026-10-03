@@ -91,6 +91,38 @@ kp logs -n synthetics -l app.kubernetes.io/name=synthetic-smoke --tail=200
 The WireGuard root and API-path tests must pass and the run must emit one
 `SMOKE_RUN_SUMMARY` line with `status=success`.
 
+## Public Endpoint Changes
+
+The public endpoint host is managed as `stringData.WG_HOST` in the
+SOPS-encrypted `kubernetes/infra/network/vpn/secret.yaml`. If the home public IP
+changes, update this value with SOPS, preserving the UDP port `30000`.
+Verify the new address from the home network before committing it.
+
+wg-easy v15 stores the host used for profile downloads in
+`user_configs_table.host`. The existing `wg-easy-defaults` initContainer reads
+`WG_EASY_HOST` from that Secret and reconciles the `wg0` row on startup. Changing
+only the legacy `WG_HOST` environment variable does not correct an existing
+database. A fresh installation still requires normal wg-easy setup with the
+current host and port; subsequent restarts reconcile the stored host.
+
+Merge and let Flux apply the desired state before restarting the deployment.
+The initial reconciler wiring change updates the pod template and triggers a
+rollout. Later Secret-only endpoint edits require a restart after Flux has
+applied the new Secret:
+
+```bash
+. scripts/kube-aliases.sh
+kp -n wireguard rollout restart deployment/wireguard
+kp -n wireguard rollout status deployment/wireguard
+```
+
+Existing downloaded profiles must have their peer endpoint edited or be
+downloaded again; restarting the server cannot update a phone's local profile.
+Preserve peer keys. Check for a fresh handshake and successful browsing with
+Wi-Fi disabled before declaring VPN access restored. Use `wg show wg0` (which
+hides private keys), not `wg show wg0 dump`, for shareable diagnostic output.
+This static-address correction does not provide dynamic DNS.
+
 ## Client Routing Defaults
 
 Global wg-easy client defaults are managed in `kubernetes/infra/network/vpn/global-config.yaml`.

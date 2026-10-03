@@ -14,6 +14,10 @@ data:
 
     const dbPath = process.env.WG_EASY_DB_PATH || "/etc/wireguard/wg-easy.db";
     const configId = process.env.WG_EASY_CONFIG_ID || "wg0";
+    const host = process.env.WG_EASY_HOST?.trim();
+    if (!host) {
+      throw new Error("WG_EASY_HOST must be set");
+    }
     const allowedIps = parseCsvEnv("WG_EASY_DEFAULT_ALLOWED_IPS");
     const dns = parseCsvEnv("WG_EASY_DEFAULT_DNS");
 
@@ -35,7 +39,7 @@ data:
 
       try {
         const current = await db.execute({
-          sql: "SELECT default_allowed_ips, default_dns FROM user_configs_table WHERE id = ?",
+          sql: "SELECT host, default_allowed_ips, default_dns FROM user_configs_table WHERE id = ?",
           args: [configId],
         });
         const row = current.rows[0];
@@ -49,6 +53,11 @@ data:
         const desiredDns = JSON.stringify(dns);
         const assignments = [];
         const args = [];
+
+        if (row.host !== host) {
+          assignments.push("host = ?");
+          args.push(host);
+        }
 
         if (!sameJsonArray(row.default_allowed_ips, allowedIps)) {
           assignments.push("default_allowed_ips = ?");
