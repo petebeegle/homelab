@@ -63,6 +63,37 @@ class OnePasswordProductionFoundationPolicyTest(unittest.TestCase):
         ).read_text(encoding="utf-8")
         self.assertIn('ONEPASSWORD_POLLING_INTERVAL: "31536000"', development)
 
+    def test_checker_rejects_partial_grafana_credential_cutover(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            app = root / "kubernetes/infra/monitoring/grafana/app.yaml"
+            instance = root / "kubernetes/infra/monitoring/grafana/grafana-instance.yaml"
+            kustomization = root / "kubernetes/infra/monitoring/grafana/kustomization.yaml"
+            monitoring = root / "kubernetes/clusters/production/infra/monitoring.yaml"
+            for path in (app, instance, kustomization, monitoring):
+                path.parent.mkdir(parents=True, exist_ok=True)
+            app.write_text(
+                "envFromSecret: grafana-env\n"
+                "existingSecret: grafana-credentials-onepassword\n"
+                "secretName: grafana-credentials\n",
+                encoding="utf-8",
+            )
+            instance.write_text(
+                "adminUser:\n  name: grafana-credentials-onepassword\n"
+                "adminPassword:\n  name: grafana-credentials\n",
+                encoding="utf-8",
+            )
+            kustomization.write_text("resources:\n  - secret.yaml\n  - grafana-env.yaml\n", encoding="utf-8")
+            monitoring.write_text(
+                "decryption:\n  provider: sops\n  secretRef:\n    name: sops-age\n",
+                encoding="utf-8",
+            )
+
+            errors = self.module.check_grafana_cutover_boundary(root)
+
+        self.assertTrue(any("exactly two" in error for error in errors))
+        self.assertTrue(any("external credential" in error for error in errors))
+
     def test_checker_rejects_secret_data_in_item_metric(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
