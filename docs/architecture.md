@@ -126,7 +126,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/infra/controllers/intel-device-plugins` | `./operator`, `./gpu` |
 | `kubernetes/infra/controllers/intel-device-plugins/operator` | `namespace.yaml`, `app.yaml` |
 | `kubernetes/infra/controllers` | `./local-path-provisioner`, `./nfs-csi`, `./cloudnative-pg`, `./cert-manager`, `./grafana-operator`, `./metrics-server`, `./intel-device-plugins` |
-| `kubernetes/infra/controllers/local-path-provisioner` | `github.com/rancher/local-path-provisioner/deploy?ref=v0.0.36` |
+| `kubernetes/infra/controllers/local-path-provisioner` | `github.com/rancher/local-path-provisioner/deploy?ref=v0.0.37` |
 | `kubernetes/infra/controllers/metrics-server` | `app.yaml` |
 | `kubernetes/infra/controllers/nfs-csi` | `app.yaml`, `media-storageclass.yaml`, `storageclass.yaml`, `volumesnapshotclass.yaml` |
 | `kubernetes/infra/crds/grafana` | `https://github.com/grafana/grafana-operator//config/crd?ref=v5.23.0` |
