@@ -44,3 +44,7 @@ docker push docker-push.lab.petebeegle.com/homelab/YOUR_IMAGE:YOUR_TAG
 ```
 
 Use the existing pull-only identity to consume `docker-registry.petebeegle.com/homelab/YOUR_IMAGE:YOUR_TAG`. Deployment consumers can pin the verified digest. Never put the password in a command argument or commit Docker's auth file.
+
+## Implemented operator interface
+
+See `scripts/NEXUS.md` for exact publisher login, state recovery, ordered deployment, rollback and smoke commands. The smoke additionally requires `--admin-url` pointing to a verified loopback API tunnel for administrative-denial checks and owned-component cleanup. Native Skopeo independently downloads OCI content. Production is not yet deployed.

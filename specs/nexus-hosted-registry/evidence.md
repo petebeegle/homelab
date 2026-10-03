@@ -106,3 +106,25 @@ User approved tasks/analysis with “ok” on 2026-10-03. Baseline is f00d038, c
 - Interface refinement: smoke adds required `--admin-url` for a verified loopback API tunnel; registry origins cannot perform REST administration probes. No externally routed administrative API was added.
 - Execution bookkeeping follows repository Spec Kit tasks/evidence, with private ledger under `.codex/tmp/nexus-hosted-registry/`; this supersedes the generic skill-specific plan parser and scratch location.
 - Development and production acceptance remain pending at this commit. No production Terraform apply or NAS recreation has occurred.
+
+## Read-only NAS image inspection
+
+Container Manager reports project `nexus`, path `/volume2/Nexus`, Compose `/volume2/Nexus/compose.yaml`, container `nexus-nexus-1`. Running version label is 3.87.1-01. Its image config digest `sha256:3bf69e5aab61f11153f33791078b38d4dad29fb830b759287cc51f6ef9964617` exactly matches the config digest of the development-pinned manifest `sha256:ad6debd7a1441ed8b1fd8a51fefc4902ca23167b16bfe6f677e261678162dade` (verified with Skopeo). Production recreation has not occurred.
+
+## State/credential recovery result
+
+The local Docker credential helper contained a valid existing `docker` credential.
+An authenticated group Bearer-token request returned HTTP 200. Saved privately,
+staged through the implementation-secret helper; no credential value was logged.
+Six live Nexus resources imported successfully into a private recovery root built
+from the pre-feature source. Random-password declarative import initially exposed
+the expected replacement risk. After the documented narrow lifecycle compatibility
+refinement, all seven resource actions were no-op with only the password state
+import pending. Applied that import-only plan (exit 0); no live password or resource
+was changed. The recovered state remains private in the recovery root pending
+integration. Full proposed production plan and runtime dev validation still pending.
+
+The generic development verifier initially failed because staged legacy tfvars omit
+required `talos_version`. Retried with `TF_VAR_talos_version=v1.12.1`, matching the
+running development node; no development Terraform apply is requested. Flux fetched
+source revision dc00c29 and started the isolated fixture.

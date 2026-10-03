@@ -27,8 +27,8 @@
 **Spec Gate**: Approved on 2026-10-03: “yep go for it.”
 **Checklist Status**: `checklists/registry-plan.md` reviews requirement coverage, rollout boundaries, and credential/state recovery.
 **Plan Gate**: Approved on 2026-10-03: “go,” in response to the linked plan and request to generate/analyze tasks. This approval does not authorize a consumer-password reset.
-**Expected Task/Analyze Gate**: Generate dependency-ordered `tasks.md`, run analysis, and obtain the required task/analysis approval before implementation.
-**Credential Recovery Decision**: A question is pending about the current working consumer-password location versus a coordinated reset. Default remains recovery without rotation, consistent with the approved spec. A reset would require an explicit scope amendment and coordinated consumer updates; it is not silently included in this plan.
+**Task/Analyze Gate**: Approved by the user on 2026-10-03: “ok”.
+**Credential Recovery Decision**: Recovered and verified the existing consumer credential from the local Docker credential helper. No reset is needed or authorized. Existing Nexus resources were imported into protected scratch state; only state was saved, with zero live resource changes.
 
 ## Global Constraints
 
@@ -163,3 +163,17 @@ These are plan work packages, not approval to implement. Detailed task dependenc
 ## Documentation Impact And Exceptions
 
 Update `scripts/NEXUS.md`, generated architecture, and implementation evidence. Do not rewrite the unrelated Synology certificate runbook. The worktree is `/home/vscode/homelab-worktrees/nexus-hosted-registry` because the preferred location was unwritable. The bundled `update-agent-context.sh` does not exist; do not synthesize it or modify AGENTS.md for this feature. No development-infrastructure exception is claimed.
+
+## Import compatibility refinement
+
+Read-only imports reproduced the documented failure: `random_password` import lacks
+`override_special`, proposing replacement; Nexus user read/import cannot recover
+its write-only password. Preserve both values with lifecycle ignores scoped to
+`random_password.docker_password.override_special` and
+`nexus_security_user.docker.password`. Creation still sets the configured password;
+subsequent consumer rotation requires deliberate removal of the password ignore
+and coordinated consumer updates. This is the explicit import-compatibility
+adjustment allowed above, with no password write or rotation. The resulting
+baseline plan was all no-op plus one random-password import; saving that plan made
+zero live changes. Keep recovered state private until integration, so another
+checkout cannot accidentally apply without these compatibility safeguards.
