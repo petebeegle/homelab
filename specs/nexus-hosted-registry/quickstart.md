@@ -47,4 +47,4 @@ Use the existing pull-only identity to consume `docker-registry.petebeegle.com/h
 
 ## Implemented operator interface
 
-See `scripts/NEXUS.md` for exact publisher login, state recovery, ordered deployment, rollback and smoke commands. The smoke additionally requires `--admin-url` pointing to a verified loopback API tunnel for administrative-denial checks and owned-component cleanup. Native Skopeo independently downloads OCI content. Production is not yet deployed.
+See `scripts/NEXUS.md` for exact publisher login, state recovery, ordered deployment, rollback and smoke commands. The smoke additionally requires `--admin-url` pointing to a verified loopback API tunnel for administrative-denial checks and owned-component cleanup. Native Skopeo independently downloads OCI content. Production is deployed and verified; see `production-report.json` and the PR #420 deploy handoff.

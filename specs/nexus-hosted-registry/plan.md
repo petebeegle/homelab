@@ -183,3 +183,7 @@ checkout cannot accidentally apply without these compatibility safeguards.
 The inspected container runs as 1026:100, not the old tracked 1027:100. Preserve
 runtime ownership by correcting Compose to 1026:100; do not chown data or deploy
 the stale UID. Image, data mount, memory and existing ports remain identical.
+
+## Delivery status
+
+Deployed and verified on 2026-10-03 through merged PR #420 (23b09eadf79bf9ba9b86639c8e0cff79fb22e0c0). All 25 tasks complete. Development13/13 and production12/12 acceptance checks passed; final Terraform plan has no changes. See evidence.md and the redacted reports.

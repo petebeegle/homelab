@@ -1,0 +1,75 @@
+{
+  "environment": "production",
+  "image": "homelab/registry-smoke-10c045c9360e4778",
+  "checks": [
+    {
+      "name": "multi-layer push over HTTPS",
+      "passed": true,
+      "digest": "sha256:1b8c5dbcd5f43fefc22d5e6aab1daabb9e439521527bd49593253fb1a9e82020",
+      "large_layer_bytes": 12582912
+    },
+    {
+      "name": "clean-hosted-pull",
+      "passed": true,
+      "digest": "sha256:1b8c5dbcd5f43fefc22d5e6aab1daabb9e439521527bd49593253fb1a9e82020",
+      "layers": 2
+    },
+    {
+      "name": "external HTTPS realm and all chunked upload locations",
+      "passed": true,
+      "bytes": 12582912,
+      "chunks": 3
+    },
+    {
+      "name": "anonymous push denied",
+      "passed": true,
+      "status": 403
+    },
+    {
+      "name": "invalid push denied",
+      "passed": true,
+      "status": 401
+    },
+    {
+      "name": "consumer push denied",
+      "passed": true,
+      "status": 403
+    },
+    {
+      "name": "publisher administration denied",
+      "passed": true,
+      "status": 403
+    },
+    {
+      "name": "publisher deletion denied and image retained",
+      "passed": true,
+      "status": 403
+    },
+    {
+      "name": "replacement-tag-pull",
+      "passed": true,
+      "digest": "sha256:367529bf0c71081ee1c3030ab8a3d6447c03c5af8e93b4574a19c2bc60e596c4",
+      "layers": 2
+    },
+    {
+      "name": "old-digest-retained",
+      "passed": true,
+      "digest": "sha256:1b8c5dbcd5f43fefc22d5e6aab1daabb9e439521527bd49593253fb1a9e82020",
+      "layers": 2
+    },
+    {
+      "name": "consumer-group-pull",
+      "passed": true,
+      "digest": "sha256:367529bf0c71081ee1c3030ab8a3d6447c03c5af8e93b4574a19c2bc60e596c4",
+      "layers": 2
+    },
+    {
+      "name": "upstream Docker Hub regression",
+      "passed": true,
+      "index_digest": "sha256:bdf57e528e45e4433820e045b29b4597825a1c9e38353532d90a01445013f82e",
+      "selected_digest": "sha256:66a6306db78bf2dbf3487f293aa8d6990d8e506fdffab9cc43fe422becf886e4"
+    }
+  ],
+  "cleanup": "owned components removed",
+  "passed": true
+}

@@ -14,7 +14,7 @@
 | Plan approval | PASS | User approved the linked plan with “go” on 2026-10-03; task generation and analysis follow. |
 | Checklist | PASS | `checklists/requirements.md` records the specification quality review; implementation checklist follows during planning. |
 | Tasks/analyze approval | PASS | User approved with “ok”; all 17 FR/SC items covered. |
-| Converge | PENDING | Not yet reached. |
+| Converge | PASS | All 12 FR and 5 SC implemented and verified; all 25 tasks complete. |
 
 ## Discovery
 
@@ -207,3 +207,60 @@ tracked source or removed by this test-only change. Earlier recorded SHAs identi
 the actual historical test runs; source behavior is unchanged by fixture generation.
 Other CI checks are awaited before integration. Exact production acceptance follows
 integration and remains unchecked in T023–T025.
+
+## Production integration and rollout
+
+All seven GitHub checks passed (Agnix, GitGuardian, Kubernetes, Pre-commit, Python,
+Secrets, Terraform). PR #420 merged as `23b09eadf79bf9ba9b86639c8e0cff79fb22e0c0`.
+Applied the reviewed saved production plan: **5 added, 1 changed, 0 destroyed**.
+Installed authoritative state privately in this worktree's Nexus Terraform root,
+with a second protected backup under the main checkout's implementation scratch.
+Immediate follow-up production Terraform plan: no changes.
+
+Production Flux source fetched the merge SHA; `gateway` and `app-external` applied
+that exact SHA. Temporary dependency-not-ready states cleared through ordinary Flux
+reconciliation. Live HTTPRoute matches `docker-push.lab.petebeegle.com` and the
+expected internal HTTPS parent, with current-generation Accepted/ResolvedRefs=True.
+EndpointSlice targets 192.168.30.99:8083; DNS resolves to 192.168.30.241.
+
+A disabled one-shot DSM root task (ID 5, distinct from renewal task 4) executed the
+guarded Compose update. Result: existing image config digest unchanged, UID/GID
+1026:100, same bind-mounted NAS data, ports 8081/8082 retained and 8083 added.
+`ROLLOUT_COMMAND_COMPLETE` confirmed successful recreation. No image pull or data
+removal occurred. Backup is `/volume2/docker/nexus-hosted-registry/compose.before-hosted.yaml`
+with restricted permissions. Nexus readiness and exact-endpoint acceptance follow.
+
+## Final production acceptance and handoff
+
+**2026-10-03: production verified from the publishing LAN.** All twelve production
+checks passed; exact statuses/digests are in `production-report.json`. The matrix
+covers a two-layer image with a 12 MiB random layer, independent OCI downloads
+and full blob hashing, three PATCH chunks with external HTTPS Locations, anonymous
+403/invalid 401/consumer 403 write denials, publisher administration/deletion 403,
+replacement tag, retrieval of the old digest, matching consumer group pull and
+upstream BusyBox regression. No upstream-name collision was attempted in production.
+Owned smoke components and isolated client auth were removed. Final post-restart
+Terraform plan reports **No changes**.
+
+The UI is healthy; existing group pulls remain functional. Certificate
+`gateway/wildcard-lab-petebeegle-com` is Ready, issued through ClusterIssuer
+`cloudflare`, currently expires 2026-12-01; cert-manager owns its renewal. Trusted
+TLS was verified by the actual clients, with no bypass. DSM one-shot task 5 was
+deleted; daily legacy certificate-renewal task 4 remains enabled. NAS container
+running, OOMKilled=False and restart count 0 after controlled recreation.
+
+Push endpoint: `docker-push.lab.petebeegle.com`; publisher: `docker-publisher`.
+Existing pull endpoint: `docker-registry.petebeegle.com`. Publisher login was saved
+using `--password-stdin` in the preexisting Docker credential helper; the other
+publishing agent can retag/push without copying a secret through chat. Existing
+consumer credentials were recovered, never reset. Terraform sensitive output is
+available in the retained implementation worktree's `terraform/external/nexus/`.
+Retain that ignored state and its protected backup; do not remove the worktree
+until state custody is transferred deliberately.
+
+Final converge: twelve FR, five SC and all 25 tasks satisfied, with exact development
+and production paths proved. No new source tasks or deferred review findings.
+No configured extension hooks. Final verification artifacts are committed on the
+same implementation branch and linked from the merged PR deploy handoff, as allowed
+by the repository post-merge verification workflow. Runtime configuration itself
+was merged and applied at 23b09eadf79bf9ba9b86639c8e0cff79fb22e0c0.

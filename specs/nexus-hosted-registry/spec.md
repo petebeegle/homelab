@@ -141,3 +141,7 @@ Final acceptance requires a real push and matching-digest pull on the production
 ## Open Questions
 
 None blocking the spec draft. The stated assumptions are subject to the human spec gate; provider capabilities, connector allocation, runtime deployment mechanism, and development validation topology are planning work.
+
+## Delivery status
+
+Deployed and verified on 2026-10-03 through merged PR #420 (23b09eadf79bf9ba9b86639c8e0cff79fb22e0c0). All 25 tasks complete. Development13/13 and production12/12 acceptance checks passed; final Terraform plan has no changes. See evidence.md and the redacted reports.
