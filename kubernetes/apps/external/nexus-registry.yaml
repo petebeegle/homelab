@@ -1,0 +1,65 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexus-docker-hosted
+  namespace: external
+spec:
+  ports:
+    - name: registry
+      port: 8083
+      targetPort: 8083
+      protocol: TCP
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: nexus-docker-hosted
+  namespace: external
+  labels:
+    kubernetes.io/service-name: nexus-docker-hosted
+    endpointslice.kubernetes.io/managed-by: homelab
+addressType: IPv4
+ports:
+  - name: registry
+    protocol: TCP
+    port: 8083
+endpoints:
+  - addresses:
+      - ${nfs_server}
+    conditions:
+      ready: true
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: nexus-docker-hosted
+  namespace: external
+spec:
+  parentRefs:
+    - name: internal
+      namespace: gateway
+      sectionName: https-gateway
+  hostnames:
+    - docker-push.${cluster_domain}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      filters:
+        - type: RequestHeaderModifier
+          requestHeaderModifier:
+            set:
+              - name: X-Forwarded-Proto
+                value: https
+              - name: X-Forwarded-Host
+                value: docker-push.${cluster_domain}
+              - name: X-Forwarded-Port
+                value: "443"
+      timeouts:
+        request: 300s
+        backendRequest: 300s
+      backendRefs:
+        - name: nexus-docker-hosted
+          port: 8083

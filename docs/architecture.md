@@ -20,7 +20,7 @@ This document is generated for agentic repo navigation. It records relationships
 - Infra activation list: `crds.yaml`, `onepassword-operator.yaml`, `cert-manager.yaml`, `local-path-provisioner.yaml`, `cloudnative-pg.yaml`, `intel-device-plugins-operator.yaml`, `intel-gpu-device-plugin.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `metrics-server.yaml`, `certs.yaml`, `gateway.yaml`.
 - App activation list: `whoami.yaml`, `homepage.yaml`, `foundry-bluegreen-fixture.yaml`.
 
-- Branch environment templates: `whoami-template.yaml`, `jellyfin-template.yaml`, `homepage-template.yaml`, `home-assistant-template.yaml`, `immich-template.yaml`.
+- Branch environment templates: `whoami-template.yaml`, `jellyfin-template.yaml`, `homepage-template.yaml`, `home-assistant-template.yaml`, `immich-template.yaml`, `nexus-template.yaml`.
 
 ### Flux Substitution Variables
 
@@ -155,7 +155,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/infra/network/vpn` | `./namespace.yaml`, `./global-config.yaml`, `./secret.yaml`, `./pvc.yaml`, `./deployment.yaml`, `./service.yaml`, `./vpn-dns.yaml`, `./httproute.yaml` |
 | `kubernetes/apps/access-broker` | `namespace.yaml`, `configmap.yaml`, `secret.yaml`, `pvc.yaml`, `deployment.yaml`, `service.yaml`, `httproute.yaml` |
 | `kubernetes/apps/cloudflare-tunnels` | `namespace.yaml`, `secret.yaml`, `deployment.yaml`, `podmonitor.yaml` |
-| `kubernetes/apps/external` | `namespace.yaml`, `synology.yaml` |
+| `kubernetes/apps/external` | `namespace.yaml`, `synology.yaml`, `nexus-registry.yaml` |
 | `kubernetes/apps/foundry-bluegreen-fixture` | `namespace.yaml`, `pvc-blue.yaml`, `pvc-green.yaml`, `deployment-blue.yaml`, `deployment-green.yaml`, `service-blue.yaml`, `service-green.yaml`, `httproute-green-preview.yaml` |
 | `kubernetes/apps/foundryvtt` | `namespace.yaml`, `pvc.yaml`, `secret.yaml`, `deployment.yaml`, `service.yaml`, `httproute.yaml`, `httproute-public.yaml` |
 | `kubernetes/apps/home-assistant/branch` | `home-assistant.yaml` |
@@ -169,6 +169,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/apps/immich` | `base` |
 | `kubernetes/apps/jellyfin/branch` | `jellyfin.yaml` |
 | `kubernetes/apps/jellyfin` | `./app.yaml`, `./pvc.yaml`, `./httproute.yaml`, `./secret.yaml`, `./sso-bootstrap.yaml` |
+| `kubernetes/apps/nexus/branch` | `nexus.yaml` |
 | `kubernetes/apps/onepassword-canary/smoke` | `manifests.yaml` |
 | `kubernetes/apps/pihole` | `app.yaml`, `secret.yaml`, `httproute.yaml` |
 | `kubernetes/apps/renovate` | `app.yaml`, `secret.yaml` |
@@ -183,6 +184,7 @@ This document is generated for agentic repo navigation. It records relationships
 | --- | --- | --- | --- | --- |
 | `HTTPRoute` | `access-broker/access-broker-public` | `onboard.petebeegle.com` | `gateway/public/http-gateway` | `access-broker:80` |
 | `HTTPRoute` | `authentik/authentik` | `authentik.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `authentik-server:80` |
+| `HTTPRoute` | `external/nexus-docker-hosted` | `docker-push.${cluster_domain}` | `gateway/internal/https-gateway` | `nexus-docker-hosted:8083` |
 | `HTTPRoute` | `external/synology-route` | `synology.petebeegle.com` | `gateway/internal/synology-https-gateway` | `synology-proxy:8080` |
 | `HTTPRoute` | `foundry-bluegreen-fixture/foundry-fixture-green-preview` | `foundry-green-preview.dev.lab.petebeegle.com` | `gateway/internal/https-gateway` | `foundry-fixture-green:80` |
 | `HTTPRoute` | `foundryvtt/foundryvtt-public` | `foundry.petebeegle.com` | `gateway/public/http-gateway` | `foundryvtt:80` |
@@ -196,6 +198,8 @@ This document is generated for agentic repo navigation. It records relationships
 | `HTTPRoute` | `immich/immich` | `immich.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `immich-server:2283` |
 | `HTTPRoute` | `jellyfin-${branch_slug}/jellyfin-${branch_slug}` | `jellyfin-${branch_slug}.${cluster_domain}` | `gateway/internal/https-gateway` | `jellyfin-${branch_slug}-metrics-deny:8096` |
 | `HTTPRoute` | `jellyfin/jellyfin` | `jellyfin.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `jellyfin-metrics-deny:8096` |
+| `HTTPRoute` | `nexus-${branch_slug}/nexus-group` | `docker-group-${branch_slug}.${cluster_domain}` | `gateway/internal/https-gateway` | `nexus-group:8082` |
+| `HTTPRoute` | `nexus-${branch_slug}/nexus-hosted` | `docker-push-${branch_slug}.${cluster_domain}` | `gateway/internal/https-gateway` | `nexus-hosted:8083` |
 | `HTTPRoute` | `otel-collector/otel-collector` | `otel.${cluster_domain}` | `gateway/internal/https-gateway` | `otel-collector-opentelemetry-collector:4318` |
 | `HTTPRoute` | `pihole/pihole-httproute` | `pihole.${cluster_domain}` | `gateway/internal/https-gateway` | `pihole-web:80` |
 | `HTTPRoute` | `whoami-${branch_slug}/whoami-${branch_slug}` | `whoami-${branch_slug}.${cluster_domain}` | `gateway/internal/https-gateway` | `whoami-${branch_slug}:80` |

@@ -7,3 +7,4 @@ resources:
   - homepage-template.yaml
   - home-assistant-template.yaml
   - immich-template.yaml
+  - nexus-template.yaml

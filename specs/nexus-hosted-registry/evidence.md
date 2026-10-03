@@ -91,3 +91,18 @@ No Nexus, Synology, DNS, or cluster configuration was changed by this specificat
 - Operational finding R1: missing Nexus state and rejected consumer credentials remain a high-severity production rollout prerequisite, addressed by T018/T020/T023 gating. Independent development work remains available after the task gate.
 - Full SDD context validator (including non-empty spec, plan, tasks, evidence): PASS. Whitespace and final task-label checks are run at handoff.
 - No production changes or implementation source edits were made during task generation/analysis.
+
+## Implementation gate and setup
+
+User approved tasks/analysis with “ok” on 2026-10-03. Baseline is f00d038, clean dedicated worktree. Required staged configs installed privately; development kube API verified as https://192.168.30.170:6443. Docker daemon 29.6.2 is reachable. Both checklists remain complete. Production credentials/state remain a separate gate.
+
+## Local implementation validation
+
+- T003 RED: missing smoke module; then seven credential/URL/state/status tests passed. T011/T013 RED: three missing content/cleanup/collision helpers; all ten tests then passed. These unit checks are not a substitute for pending runtime acceptance.
+- T004 RED: profile discovery lacked nexus; the complete 32-test branch verifier suite passes with the new profile.
+- Terraform init/validate and fmt check: PASS (Nexus 2.8.0). Compose config validation: PASS. Kustomize renders for external and branch fixture: PASS. Architecture regenerated and check: PASS.
+- Native Skopeo 1.13.3 installed locally for downloads into fresh OCI directories; Docker 29.6.2 builds/pushes. No Docker daemon cache is used as pull evidence.
+- Development image pins the published amd64 digest for 3.87.1, matching live Nexus's reported 3.87.1-01 version. Runtime NAS image identity remains a production inspection gate.
+- Interface refinement: smoke adds required `--admin-url` for a verified loopback API tunnel; registry origins cannot perform REST administration probes. No externally routed administrative API was added.
+- Execution bookkeeping follows repository Spec Kit tasks/evidence, with private ledger under `.codex/tmp/nexus-hosted-registry/`; this supersedes the generic skill-specific plan parser and scratch location.
+- Development and production acceptance remain pending at this commit. No production Terraform apply or NAS recreation has occurred.
