@@ -195,3 +195,15 @@ No down/volume removal/pull is used. Existing image and mount remain mandatory.
 The production saved feature plan is five creates plus hosted-first membership;
 all imported consumer/password/existing resources are no-op. Integration and exact
 production smoke remain pending.
+
+## PR and final integration checks
+
+PR: https://github.com/petebeegle/homelab/pull/420. Independent review findings are
+fixed and development acceptance is complete. GitGuardian initially flagged a
+synthetic redaction-test credential; changed the fixture to construct the value
+entirely at runtime and amended only this implementation branch's commits using
+force-with-lease. GitGuardian now passes. No real credential was present in any
+tracked source or removed by this test-only change. Earlier recorded SHAs identify
+the actual historical test runs; source behavior is unchanged by fixture generation.
+Other CI checks are awaited before integration. Exact production acceptance follows
+integration and remains unchecked in T023–T025.
