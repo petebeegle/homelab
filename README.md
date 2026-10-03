@@ -40,6 +40,36 @@ terraform apply
 ```
 This creates an `agent-service-account` Viewer service account in Grafana and outputs a token. The devcontainer's `poststart.sh` exports it automatically as `GRAFANA_SERVICE_ACCOUNT_TOKEN`.
 
+#### UniFi DNS
+UniFi local DNS records are managed from `terraform/external/unifi`. Create the ignored local credentials file at `terraform/external/unifi/terraform.tfvars`:
+
+```tf
+unifi = {
+  api_url        = "https://192.168.1.1"
+  username       = "terraform"
+  password       = "replace-me"
+  site           = "default"
+  allow_insecure = true
+}
+```
+
+The UniFi provider also supports API-key authentication through its standard environment variables. Export `UNIFI_API` and `UNIFI_API_KEY` instead of setting `username` and `password` when using that path.
+
+Before the first apply, import any existing DNS records so Terraform adopts them instead of trying to recreate them:
+
+```sh
+cd terraform/external/unifi
+terraform init
+
+terraform import 'unifi_dns_record.gateway_wildcards["lab"]' 'default:<record-id-for-*.lab.petebeegle.com>'
+terraform import 'unifi_dns_record.gateway_wildcards["development"]' 'default:<record-id-for-*.development.lab.petebeegle.com>'
+
+terraform plan
+terraform apply
+```
+
+If the records live outside the default site, replace the `default:` prefix with the target site name. Do not commit `terraform.tfvars`, state files, credentials, or `.terraform/`.
+
 ### 3. Create the cluster
 Create and bootstrap production via terraform!
 ```sh
