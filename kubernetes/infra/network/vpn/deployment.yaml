@@ -27,6 +27,11 @@ spec:
             - node
             - /opt/wg-easy-defaults/reconcile-wg-easy-defaults.mjs
           env:
+            - name: WG_EASY_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: wireguard-env
+                  key: WG_HOST
             - name: WG_EASY_DEFAULT_ALLOWED_IPS
               valueFrom:
                 configMapKeyRef:
