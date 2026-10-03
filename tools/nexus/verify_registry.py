@@ -88,8 +88,8 @@ def verify_oci(directory, expected):
     return len(manifest['layers'])
 
 
-def owned_component(component, names):
-    if component.get('repository') != 'docker-hosted' or component.get('name') not in names:
+def owned_component(component, refs):
+    if component.get('repository') != 'docker-hosted' or (component.get('name'), component.get('version')) not in refs:
         raise ValueError('Refusing to delete a component outside this smoke run')
 
 
@@ -143,6 +143,37 @@ def bearer(origin, credentials, name, actions):
     return status, result.get('token') or result.get('access_token')
 
 
+def require_token(status, token):
+    if status == 200 and not token:
+        raise AssertionError('Token endpoint returned HTTP 200 without a token')
+
+
+def upload_probe(origin, name, token, payload, chunk_size=4 * 1024 * 1024, transport=request):
+    """Exercise chunked transfer and validate every Location before following it."""
+    import hashlib
+    location, completed = None, False
+    try:
+        status, headers, _ = transport(f'{origin}/v2/{name}/blobs/uploads/', method='POST', token=token, data=b'')
+        if status != 202:
+            raise AssertionError(f'Upload initiation failed: HTTP {status}')
+        location = external_url(origin, headers['Location'])
+        for offset in range(0, len(payload), chunk_size):
+            chunk = payload[offset:offset + chunk_size]
+            status, headers, _ = transport(location, method='PATCH', token=token, data=chunk, headers={'Content-Type':'application/octet-stream', 'Content-Range':f'{offset}-{offset + len(chunk) - 1}'})
+            if status != 202:
+                raise AssertionError(f'Upload chunk failed: HTTP {status}')
+            location = external_url(origin, headers['Location'])
+        finish = location + ('&' if '?' in location else '?') + 'digest=sha256:' + hashlib.sha256(payload).hexdigest()
+        status, headers, _ = transport(finish, method='PUT', token=token, data=b'', headers={'Content-Type':'application/octet-stream'})
+        if status != 201:
+            raise AssertionError(f'Upload completion failed: HTTP {status}')
+        external_url(origin, headers['Location'])
+        completed = True
+    finally:
+        if location and not completed:
+            transport(location, method='DELETE', token=token)
+
+
 def write_auth(directory, origin, credentials):
     directory.mkdir(mode=0o700)
     encoded = base64.b64encode(f"{credentials['username']}:{credentials['password']}".encode()).decode()
@@ -162,7 +193,7 @@ class Acceptance:
         # A preexisting work directory could contain reused client/image state.
         self.root.mkdir(mode=0o700, parents=True, exist_ok=False)
         self.name = 'homelab/registry-smoke-' + uuid.uuid4().hex[:16]
-        self.names = {self.name}
+        self.owned_refs = set()
         self.report = {'environment': args.environment, 'image': self.name, 'checks': [], 'cleanup': 'pending'}
         self.auths = []
         self.local_images = []
@@ -206,7 +237,7 @@ class Acceptance:
         layers = verify_oci(destination, digest)
         self.check(label, digest=digest, layers=layers)
 
-    def components(self):
+    def all_components(self):
         from urllib.parse import urlencode
         items, continuation = [], None
         while True:
@@ -217,10 +248,18 @@ class Acceptance:
             if status != 200:
                 raise AssertionError(f'Admin component listing failed: HTTP {status}')
             page = json.loads(body)
-            items.extend(c for c in page['items'] if c.get('name') in self.names)
+            items.extend(page['items'])
             continuation = page.get('continuationToken')
             if not continuation:
                 return items
+
+    def components(self):
+        return [c for c in self.all_components() if (c.get('name'), c.get('version')) in self.owned_refs]
+
+    def claim(self, name, version):
+        if any(c.get('name') == name and c.get('version') == version for c in self.all_components()):
+            raise ValueError('Refusing to overwrite an existing hosted smoke target')
+        self.owned_refs.add((name, version))
 
     def run(self):
         import os
@@ -231,6 +270,7 @@ class Acceptance:
         (context / 'version').write_text('version-one')
         (context / 'Dockerfile').write_text('FROM scratch\nCOPY large /large\nCOPY version /version\n')
         reference = urlsplit(args.hosted_url).netloc + '/' + self.name + ':current'
+        self.claim(self.name, 'current')
         self.local_images.append(reference)
         self.command(['docker', 'build', '--provenance=false', '-t', reference, str(context)])
         self.push(reference)
@@ -240,19 +280,11 @@ class Acceptance:
         status, token = bearer(args.hosted_url, self.publisher, self.name, 'pull,push')
         if status != 200 or not token:
             raise AssertionError('Publisher token missing')
-        status, headers, _ = request(f'{args.hosted_url}/v2/{self.name}/blobs/uploads/', method='POST', token=token, data=b'')
-        if status != 202:
-            raise AssertionError(f'Upload initiation failed: HTTP {status}')
-        location = external_url(args.hosted_url, headers['Location'])
-        # Complete our protocol probe as an empty blob instead of abandoning it.
-        location += ('&' if '?' in location else '?') + 'digest=sha256:' + hashlib.sha256(b'').hexdigest()
-        status, headers, _ = request(location, method='PUT', token=token, data=b'', headers={'Content-Type':'application/octet-stream'})
-        if status != 201:
-            raise AssertionError(f'Upload completion failed: HTTP {status}')
-        external_url(args.hosted_url, headers['Location'])
-        self.check('external HTTPS realm and upload locations')
+        upload_probe(args.hosted_url, self.name, token, (context / 'large').read_bytes())
+        self.check('external HTTPS realm and all chunked upload locations', bytes=12 * 1024 * 1024, chunks=3)
         for label, credential in [('anonymous', None), ('invalid', {'username':'invalid-smoke', 'password':'invalid-smoke'}), ('consumer', self.consumer)]:
             status, denied_token = bearer(args.hosted_url, credential, self.name, 'pull,push')
+            require_token(status, denied_token)
             if status == 200:
                 status, _, _ = request(f'{args.hosted_url}/v2/{self.name}/blobs/uploads/', method='POST', token=denied_token, data=b'')
             require_denial(status)
@@ -263,7 +295,7 @@ class Acceptance:
         components = self.components()
         if not components:
             raise AssertionError('Could not find test-owned component for deletion denial')
-        component = components[0]; owned_component(component, self.names)
+        component = components[0]; owned_component(component, self.owned_refs)
         status, _, _ = request(args.admin_url + '/service/rest/v1/components/' + quote(component['id'], safe=''), method='DELETE', credentials=self.publisher)
         require_denial(status)
         require_digest(old, self.digest(args.hosted_url, self.name, 'current', self.publisher))
@@ -288,8 +320,11 @@ class Acceptance:
         self.check('upstream Docker Hub regression', index_digest=upstream, selected_digest=selected)
         if collision_enabled(args.environment):
             # The fixture is disposable; production never shadows upstream names.
-            self.names.add('library/busybox')
+            self.claim('library/busybox', '1.37.0')
             collision = urlsplit(args.hosted_url).netloc + '/library/busybox:1.37.0'
+            import subprocess
+            if subprocess.run(['docker', 'image', 'inspect', collision], capture_output=True).returncode == 0:
+                raise ValueError('Refusing to overwrite an existing local collision tag')
             self.local_images.append(collision)
             self.command(['docker', 'tag', reference, collision]); self.push(collision)
             require_digest(new, self.digest(args.group_url, 'library/busybox', '1.37.0', self.consumer))
@@ -299,7 +334,7 @@ class Acceptance:
         import shutil
         try:
             for component in self.components():
-                owned_component(component, self.names)
+                owned_component(component, self.owned_refs)
                 status, _, _ = request(self.args.admin_url + '/service/rest/v1/components/' + quote(component['id'], safe=''), method='DELETE', credentials=self.admin)
                 if status not in (204, 404):
                     raise AssertionError(f'Owned smoke cleanup failed: HTTP {status}')

@@ -177,3 +177,9 @@ adjustment allowed above, with no password write or rotation. The resulting
 baseline plan was all no-op plus one random-password import; saving that plan made
 zero live changes. Keep recovered state private until integration, so another
 checkout cannot accidentally apply without these compatibility safeguards.
+
+## Observed NAS identity correction
+
+The inspected container runs as 1026:100, not the old tracked 1027:100. Preserve
+runtime ownership by correcting Compose to 1026:100; do not chown data or deploy
+the stale UID. Image, data mount, memory and existing ports remain identical.

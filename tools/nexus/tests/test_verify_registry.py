@@ -6,6 +6,8 @@ from pathlib import Path
 import tempfile
 import secrets
 import unittest
+from unittest.mock import Mock, patch
+from types import SimpleNamespace
 from urllib.parse import quote
 
 spec = importlib.util.spec_from_file_location('verify_registry', Path(__file__).parents[1] / 'verify_registry.py')
@@ -77,11 +79,54 @@ class ContentTests(unittest.TestCase):
     def test_cleanup_refuses_other_repositories_and_names(self):
         own = 'homelab/registry-smoke-123'
         for component in [{'repository':'docker-proxy','name':own}, {'repository':'docker-hosted','name':'someone/important'}, {'repository':'docker-hosted','name':own+'-other'}]:
-            with self.assertRaises(ValueError): verify.owned_component(component, {own})
-        verify.owned_component({'repository':'docker-hosted','name':own}, {own})
+            with self.assertRaises(ValueError): verify.owned_component(component, {(own, 'current')})
+        verify.owned_component({'repository':'docker-hosted','name':own,'version':'current'}, {(own, 'current')})
 
     def test_collision_is_development_only(self):
         self.assertTrue(verify.collision_enabled('development'))
         self.assertFalse(verify.collision_enabled('production'))
+
+class OrchestrationTests(unittest.TestCase):
+    def test_cleanup_does_not_delete_an_unowned_tag(self):
+        smoke = verify.Acceptance.__new__(verify.Acceptance)
+        smoke.args = SimpleNamespace(admin_url='http://127.0.0.1:18081')
+        smoke.names = {'library/busybox'}  # old broad ownership must not win
+        smoke.owned_refs = {('library/busybox', '1.37.0')}
+        smoke.admin = {}; smoke.auths = []; smoke.local_images = []; smoke.report = {}
+        components = [{'id':'unowned','repository':'docker-hosted','name':'library/busybox','version':'old'}, {'id':'owned','repository':'docker-hosted','name':'library/busybox','version':'1.37.0'}]
+        calls=[]
+        def transport(url, **kwargs):
+            calls.append((url, kwargs.get('method','GET')))
+            if kwargs.get('method')=='DELETE': return 204,{},b''
+            return 200,{},json.dumps({'items':components,'continuationToken':None}).encode()
+        with patch.object(verify,'request',side_effect=transport): smoke.cleanup()
+        self.assertEqual([url.rsplit('/',1)[-1] for url,method in calls if method=='DELETE'], ['owned'])
+
+    def test_reused_collision_target_is_rejected_before_push(self):
+        smoke = verify.Acceptance.__new__(verify.Acceptance)
+        smoke.owned_refs = set()
+        smoke.all_components = Mock(return_value=[{'name':'library/busybox','version':'1.37.0'}])
+        with self.assertRaises(ValueError): smoke.claim('library/busybox','1.37.0')
+        self.assertEqual(smoke.owned_refs,set())
+
+    def test_chunked_probe_validates_intermediate_locations(self):
+        origin='https://docker-push-test.dev.lab.petebeegle.com'
+        replies=[(202,{'Location':'/v2/test/blobs/uploads/id'},b''), (202,{'Location':'http://nexus:8083/v2/test/blobs/uploads/id'},b'')]
+        transport=Mock(side_effect=replies+[(204,{},b'')])
+        with self.assertRaises(ValueError): verify.upload_probe(origin,'test','token',b'abcd',chunk_size=2,transport=transport)
+        self.assertEqual([c.kwargs['method'] for c in transport.call_args_list],['POST','PATCH','DELETE'])
+        self.assertTrue(all(c.args[0].startswith(origin) for c in transport.call_args_list))
+
+    def test_chunked_probe_transfers_all_bytes_in_multiple_patches(self):
+        origin='https://docker-push-test.dev.lab.petebeegle.com'
+        transport=Mock(side_effect=[(202,{'Location':'/upload'},b''), (202,{'Location':'/upload?part=1'},b''), (202,{'Location':'/upload?part=2'},b''), (201,{'Location':'/blob'},b'')])
+        verify.upload_probe(origin,'test','token',b'abcd',chunk_size=2,transport=transport)
+        patches=[c.kwargs['data'] for c in transport.call_args_list if c.kwargs['method']=='PATCH']
+        self.assertEqual(patches,[b'ab',b'cd'])
+
+    def test_success_without_token_cannot_pass_a_denial_check(self):
+        with self.assertRaises(AssertionError): verify.require_token(200,None)
+        verify.require_token(401,None)
+        verify.require_token(200,'token')
 
 if __name__ == '__main__': unittest.main()

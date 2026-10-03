@@ -13,7 +13,7 @@
 | Clarify | SKIP | Approved spec assumptions resolve the original intent. A new implementation prerequisite about consumer credentials was surfaced during planning through an asynchronous question. |
 | Plan approval | PASS | User approved the linked plan with “go” on 2026-10-03; task generation and analysis follow. |
 | Checklist | PASS | `checklists/requirements.md` records the specification quality review; implementation checklist follows during planning. |
-| Tasks/analyze approval | PENDING | 25 tasks generated; cross-artifact review covers all 17 FR/SC items. Known production credential/state prerequisite remains explicit. |
+| Tasks/analyze approval | PASS | User approved with “ok”; all 17 FR/SC items covered. |
 | Converge | PENDING | Not yet reached. |
 
 ## Discovery
@@ -128,3 +128,28 @@ The generic development verifier initially failed because staged legacy tfvars o
 required `talos_version`. Retried with `TF_VAR_talos_version=v1.12.1`, matching the
 running development node; no development Terraform apply is requested. Flux fetched
 source revision dc00c29 and started the isolated fixture.
+
+## Independent implementation review
+
+Read-only reviewer covered d914946..f1eb5cd and the six approved review focus areas.
+Two Important findings were reproduced with failing tests and fixed: cleanup now
+claims exact previously absent repository/name/tag targets instead of all BusyBox
+tags, refuses overwriting existing local collision tags, and leaves unrelated
+components alone; chunked upload acceptance now sends 12 MiB across three PATCHes,
+validating every returned Location before use and cancelling failed uploads.
+The missing-token finding was promoted from Minor because a false denial pass
+weakens the authorization criterion; HTTP 200 without a token now fails explicitly.
+Five orchestration regression tests plus ten existing tests pass. Historical gate
+summary corrected during evidence maintenance. No minor findings deferred.
+Reviewer explicitly left live runtime acceptance and the subsequent UID correction
+to integration validation; neither is inferred from unit/render checks.
+
+## NAS runtime compatibility amendment
+
+Read-only container inspection confirms `/volume2/Nexus/nexus-data:/nexus-data:rw`,
+1 GiB limit, 8081/8082 bindings, and actual UID/GID **1026:100**. The old tracked
+Compose's 1027 was stale. Corrected desired Compose to 1026:100 alongside the 8083
+port addition to preserve the existing runtime identity and access. No chown,
+volume replacement or runtime mutation has occurred. Saved proposed production
+plan: five creates, group membership update, every existing consumer/password,
+proxy/blob store/role/realms resource no-op. Runtime dev acceptance still pending.
