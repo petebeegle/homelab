@@ -153,3 +153,45 @@ port addition to preserve the existing runtime identity and access. No chown,
 volume replacement or runtime mutation has occurred. Saved proposed production
 plan: five creates, group membership update, every existing consumer/password,
 proxy/blob store/role/realms resource no-op. Runtime dev acceptance still pending.
+
+## Development acceptance and cleanup
+
+- Generic Nexus branch verifier: PASS against source dc00c29 (later source refresh
+  f8b9032 has identical fixture manifests). Namespace `nexus-nexus-hosted-registry`,
+  pod UID `26ff5d77-e0e2-4b49-a1ef-e177d630711a`; development API verified before
+  mutation. Expected internal Gateway parent and current generation 1 have both
+  Accepted=True and ResolvedRefs=True on both routes.
+- Fixture initial admin retrieved privately and rotated; isolated loopback provider
+  at 127.0.0.1:18081, independent scratch state. Same Terraform source created all
+  12 fixture resources. Follow-up fixture plan: no changes.
+- First push correctly failed because fresh Community Edition onboarding/EULA had
+  not been completed. Completed same-version fixture onboarding via documented
+  `/service/rest/v1/system/eula` API; production was not changed.
+- Second run passed push, clean OCI pull, three-chunk 12 MiB transfer and all write
+  denials. Admin-check assumption was wrong: repository list is visibility-filtered
+  and returns 200. Read-only diagnosis confirmed security users/roles/tasks APIs
+  return 403; smoke now tests the protected user-management listing.
+- Third run: **all 13 checks PASS**, `development-report.json` contains exact digests
+  and HTTP evidence. Includes two-layer 12 MiB random image, chunk URLs, trusted TLS,
+  anonymous/invalid/consumer denial, publisher admin/delete denial, tag replacement,
+  old digest retrieval, consumer group content, upstream BusyBox and hosted-first
+  collision. Owned components removed; client credentials erased.
+- Deleted only branch Flux Kustomization, waited for namespace deletion, then deleted
+  matching GitRepository. Pod and emptyDir data are gone. Removed private fixture
+  Terraform state and generated credentials. Production recovery state and NAS data
+  retained untouched. Development Terraform was never applied.
+
+## Pre-rollout convergence and procedure
+
+Source review maps all 12 FR and 5 SC to implemented paths and observed development
+checks; no additional buildable source gaps. Final production behavior remains
+explicitly T023–T025, not inferred from development. No extension hooks configured.
+Read-only effective NAS Compose differs from reviewed desired state only by added
+8083 publication (and CRLF normalization); UID correction makes source match actual
+1026:100. Prepared a one-shot recreation procedure guarded by original Compose hash,
+container image ID, local image tag ID and UID; validate Compose first, privately
+back up configuration, atomically install, then `up -d --no-deps --pull never nexus`.
+No down/volume removal/pull is used. Existing image and mount remain mandatory.
+The production saved feature plan is five creates plus hosted-first membership;
+all imported consumer/password/existing resources are no-op. Integration and exact
+production smoke remain pending.

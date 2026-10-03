@@ -106,7 +106,9 @@ python3 tools/development/verify_branch_deploy.py \
 ```
 
 Never pass `--terraform-apply` for this fixture. Bootstrap its generated admin
-password privately, rotate only the disposable admin and port-forward Service
+password privately, rotate only the disposable admin and complete the same-version
+Community Edition onboarding/EULA via its documented API. Fresh fixtures otherwise
+return HTTP 403 for every upload. Port-forward Service
 `nexus-api` to `127.0.0.1:18081`. Copy the Nexus root `.tf` sources to a fresh private
 scratch subdirectory, with a development-only provider URL and state. Call
 `validate_dev_state` from the smoke module before every fixture apply; also verify

@@ -289,7 +289,7 @@ class Acceptance:
                 status, _, _ = request(f'{args.hosted_url}/v2/{self.name}/blobs/uploads/', method='POST', token=denied_token, data=b'')
             require_denial(status)
             self.check(label + ' push denied', status=status)
-        status, _, _ = request(args.admin_url + '/service/rest/v1/repositories', credentials=self.publisher)
+        status, _, _ = request(args.admin_url + '/service/rest/v1/security/users', credentials=self.publisher)
         require_denial(status)
         self.check('publisher administration denied', status=status)
         components = self.components()

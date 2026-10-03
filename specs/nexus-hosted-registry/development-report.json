@@ -1,0 +1,81 @@
+{
+  "environment": "development",
+  "image": "homelab/registry-smoke-2f889d4b348c40cb",
+  "checks": [
+    {
+      "name": "multi-layer push over HTTPS",
+      "passed": true,
+      "digest": "sha256:dd5be4deebd17d93332dbdc53a064a95247faa417309dee75700d85b4d8aa301",
+      "large_layer_bytes": 12582912
+    },
+    {
+      "name": "clean-hosted-pull",
+      "passed": true,
+      "digest": "sha256:dd5be4deebd17d93332dbdc53a064a95247faa417309dee75700d85b4d8aa301",
+      "layers": 2
+    },
+    {
+      "name": "external HTTPS realm and all chunked upload locations",
+      "passed": true,
+      "bytes": 12582912,
+      "chunks": 3
+    },
+    {
+      "name": "anonymous push denied",
+      "passed": true,
+      "status": 403
+    },
+    {
+      "name": "invalid push denied",
+      "passed": true,
+      "status": 401
+    },
+    {
+      "name": "consumer push denied",
+      "passed": true,
+      "status": 403
+    },
+    {
+      "name": "publisher administration denied",
+      "passed": true,
+      "status": 403
+    },
+    {
+      "name": "publisher deletion denied and image retained",
+      "passed": true,
+      "status": 403
+    },
+    {
+      "name": "replacement-tag-pull",
+      "passed": true,
+      "digest": "sha256:aa9019722502cb3d0b9ec41a0bcc0abc9d95ffc15dd92049ee49324b45347ce8",
+      "layers": 2
+    },
+    {
+      "name": "old-digest-retained",
+      "passed": true,
+      "digest": "sha256:dd5be4deebd17d93332dbdc53a064a95247faa417309dee75700d85b4d8aa301",
+      "layers": 2
+    },
+    {
+      "name": "consumer-group-pull",
+      "passed": true,
+      "digest": "sha256:aa9019722502cb3d0b9ec41a0bcc0abc9d95ffc15dd92049ee49324b45347ce8",
+      "layers": 2
+    },
+    {
+      "name": "upstream Docker Hub regression",
+      "passed": true,
+      "index_digest": "sha256:bdf57e528e45e4433820e045b29b4597825a1c9e38353532d90a01445013f82e",
+      "selected_digest": "sha256:66a6306db78bf2dbf3487f293aa8d6990d8e506fdffab9cc43fe422becf886e4"
+    },
+    {
+      "name": "hosted-first-collision",
+      "passed": true,
+      "digest": "sha256:aa9019722502cb3d0b9ec41a0bcc0abc9d95ffc15dd92049ee49324b45347ce8",
+      "layers": 2
+    }
+  ],
+  "cleanup": "owned components removed",
+  "passed": true
+}
