@@ -37,7 +37,7 @@ spec:
         kind: HelmRepository
         name: jetstack
         namespace: flux-system
-      version: "v1.20.3"
+      version: "v1.21.2"
   valuesFrom:
     - kind: ConfigMap
       name: cert-manager-values
