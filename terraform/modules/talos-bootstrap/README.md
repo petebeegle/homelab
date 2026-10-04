@@ -5,7 +5,7 @@
 | ---- | ------- |
 | <a name="requirement_helm"></a> [helm](#requirement\_helm) | 3.2.0 |
 | <a name="requirement_local"></a> [local](#requirement\_local) | 2.9.0 |
-| <a name="requirement_talos"></a> [talos](#requirement\_talos) | 0.11.0 |
+| <a name="requirement_talos"></a> [talos](#requirement\_talos) | 0.12.0 |
 
 ## Providers
 
@@ -13,7 +13,7 @@
 | ---- | ------- |
 | <a name="provider_helm"></a> [helm](#provider\_helm) | 3.2.0 |
 | <a name="provider_local"></a> [local](#provider\_local) | 2.9.0 |
-| <a name="provider_talos"></a> [talos](#provider\_talos) | 0.11.0 |
+| <a name="provider_talos"></a> [talos](#provider\_talos) | 0.12.0 |
 
 ## Modules
 
@@ -25,16 +25,16 @@ No modules.
 | ---- | ---- |
 | [local_file.kube_config](https://registry.terraform.io/providers/hashicorp/local/2.9.0/docs/resources/file) | resource |
 | [local_file.talos_config](https://registry.terraform.io/providers/hashicorp/local/2.9.0/docs/resources/file) | resource |
-| [talos_cluster_kubeconfig.this](https://registry.terraform.io/providers/siderolabs/talos/0.11.0/docs/resources/cluster_kubeconfig) | resource |
-| [talos_machine_bootstrap.this](https://registry.terraform.io/providers/siderolabs/talos/0.11.0/docs/resources/machine_bootstrap) | resource |
-| [talos_machine_configuration_apply.control_plane_apply](https://registry.terraform.io/providers/siderolabs/talos/0.11.0/docs/resources/machine_configuration_apply) | resource |
-| [talos_machine_configuration_apply.worker_apply](https://registry.terraform.io/providers/siderolabs/talos/0.11.0/docs/resources/machine_configuration_apply) | resource |
-| [talos_machine_secrets.this](https://registry.terraform.io/providers/siderolabs/talos/0.11.0/docs/resources/machine_secrets) | resource |
+| [talos_cluster_kubeconfig.this](https://registry.terraform.io/providers/siderolabs/talos/0.12.0/docs/resources/cluster_kubeconfig) | resource |
+| [talos_machine_bootstrap.this](https://registry.terraform.io/providers/siderolabs/talos/0.12.0/docs/resources/machine_bootstrap) | resource |
+| [talos_machine_configuration_apply.control_plane_apply](https://registry.terraform.io/providers/siderolabs/talos/0.12.0/docs/resources/machine_configuration_apply) | resource |
+| [talos_machine_configuration_apply.worker_apply](https://registry.terraform.io/providers/siderolabs/talos/0.12.0/docs/resources/machine_configuration_apply) | resource |
+| [talos_machine_secrets.this](https://registry.terraform.io/providers/siderolabs/talos/0.12.0/docs/resources/machine_secrets) | resource |
 | [helm_template.cilium](https://registry.terraform.io/providers/hashicorp/helm/3.2.0/docs/data-sources/template) | data source |
-| [talos_client_configuration.this](https://registry.terraform.io/providers/siderolabs/talos/0.11.0/docs/data-sources/client_configuration) | data source |
-| [talos_cluster_health.this](https://registry.terraform.io/providers/siderolabs/talos/0.11.0/docs/data-sources/cluster_health) | data source |
-| [talos_machine_configuration.control_plane_configuration](https://registry.terraform.io/providers/siderolabs/talos/0.11.0/docs/data-sources/machine_configuration) | data source |
-| [talos_machine_configuration.workers](https://registry.terraform.io/providers/siderolabs/talos/0.11.0/docs/data-sources/machine_configuration) | data source |
+| [talos_client_configuration.this](https://registry.terraform.io/providers/siderolabs/talos/0.12.0/docs/data-sources/client_configuration) | data source |
+| [talos_cluster_health.this](https://registry.terraform.io/providers/siderolabs/talos/0.12.0/docs/data-sources/cluster_health) | data source |
+| [talos_machine_configuration.control_plane_configuration](https://registry.terraform.io/providers/siderolabs/talos/0.12.0/docs/data-sources/machine_configuration) | data source |
+| [talos_machine_configuration.workers](https://registry.terraform.io/providers/siderolabs/talos/0.12.0/docs/data-sources/machine_configuration) | data source |
 
 ## Inputs
 
