@@ -10,7 +10,7 @@ Keep local shared credentials in ignored `terraform/development/terraform.tfvars
 | Name | Version |
 | ---- | ------- |
 | <a name="requirement_helm"></a> [helm](#requirement\_helm) | 3.2.0 |
-| <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | 3.1.0 |
+| <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | 3.3.0 |
 | <a name="requirement_proxmox"></a> [proxmox](#requirement\_proxmox) | 0.111.1 |
 
 ## Providers
