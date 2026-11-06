@@ -1,0 +1,58 @@
+---
+name: Whoami development browser smoke
+
+"on":
+  workflow_dispatch:
+    inputs:
+      branch_slug:
+        description: "Existing development Whoami branch slug (lowercase DNS label)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    name: Browser / development Whoami
+    runs-on: [self-hosted, linux, x64, homelab-dev-browser]
+    timeout-minutes: 15
+    env:
+      BRANCH_SLUG: ${{ inputs.branch_slug }}
+    steps:
+      # Dedicated ephemeral runner on the development network; not a generic shared runner.
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24.21.0"
+      - name: Validate branch slug and construct URL
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$BRANCH_SLUG" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$ ]] || (( ${#BRANCH_SLUG} > 50 )); then
+            echo "::error::Invalid branch slug"
+            exit 1
+          fi
+          echo "WHOAMI_URL=https://whoami-${BRANCH_SLUG}.dev.lab.petebeegle.com" >> "$GITHUB_ENV"
+      - name: Install Playwright
+        working-directory: tests/browser
+        run: |
+          npm install --no-save --package-lock=false --ignore-scripts
+          npx playwright install --with-deps chromium
+      - name: Run browser smoke
+        working-directory: tests/browser
+        run: npx playwright test tests/whoami.spec.cjs --reporter=line,junit
+        env:
+          PLAYWRIGHT_JUNIT_OUTPUT_FILE: browser-results/junit.xml
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: whoami-browser-evidence
+          path: |
+            tests/browser/browser-results/
+            tests/browser/test-results/
+          if-no-files-found: warn
+          retention-days: 7
