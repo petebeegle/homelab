@@ -21,9 +21,8 @@ The existing branch deployment verifier proves Kubernetes/Flux resource behavior
 From a checkout on `codex/harness-golden-path`:
 
 ```bash
-npm --prefix tests/browser install --package-lock-only
-npm --prefix tests/browser ci
-npm --prefix tests/browser exec -- playwright install chromium
+npm --prefix tests/browser install --no-save --package-lock=false
+cd tests/browser && npx playwright install chromium && cd ../..
 npm --prefix tests/browser run test:unit
 ```
 
