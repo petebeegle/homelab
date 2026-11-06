@@ -7,6 +7,8 @@ set -euo pipefail
 test "$(id -u)" -eq 0 || { echo "Run as root on the disposable VM" >&2; exit 1; }
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl tar nodejs npm python3 libicu-dev libssl-dev
+# Browser OS libraries must be installed as root at image-build time, not in a CI job.
+# The workflow installs only Chromium as an unprivileged runner.
 install -d -m 0755 "$RUNNER_HOME"
 archive="$(mktemp)"
 trap 'rm -f "$archive"' EXIT
