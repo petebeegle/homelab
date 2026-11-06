@@ -28,3 +28,18 @@ The `Whoami development browser smoke` workflow in PR #447 targets `[self-hosted
 ## Current implementation boundary
 
 These scripts implement runner registration, pinned binary bootstrap, and single-job execution. They **do not** create a VM, issue a registration token, install network firewall rules, or automatically destroy the VM; those require Proxmox access and a scoped GitHub App credential. Until those pieces are wired, this is a prepared runner implementation, not a running autonomous runner.
+
+## Management orchestration
+
+From a trusted management machine with pinned SSH host keys, set `GITHUB_RUNNER_ADMIN_TOKEN` using a scoped secret manager and invoke:
+
+```sh
+python3 tools/development/runner/lifecycle.py \
+  --proxmox-ssh pve04 \
+  --template-vmid 900 \
+  --vmid 901 \
+  --name dev-runner-901 \
+  --guest-ssh runner@dev-runner-901
+```
+
+These VM IDs and guest hostname are **examples**, not discovered homelab resources. A hardened template must exist with the runner installation and `/opt/homelab-runner/run-once.sh`, DNS/SSH ready, and firewall isolation. This orchestrator obtains a short-lived GitHub registration token and destroys the cloned VM in a `finally` block. It cannot run without network/SSH access and a scoped GitHub credential. The orchestrator must not run on the GitHub-hosted runner or in a PR job. CI verifies lifecycle failure cleanup through mocked tests; it does not prove live Proxmox execution.
