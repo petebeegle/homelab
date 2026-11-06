@@ -1,0 +1,30 @@
+---
+name: Browser harness unit tests
+"on":
+  pull_request:
+    paths:
+      - "tests/browser/**"
+      - ".github/workflows/browser-harness.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "tests/browser/**"
+      - ".github/workflows/browser-harness.yml"
+permissions:
+  contents: read
+jobs:
+  url-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24.21.0"
+      - name: Run browser URL guard unit tests
+        run: node --test tests/browser/tests/url-guard.test.cjs
+      - name: Install Playwright test runner and list browser smoke
+        working-directory: tests/browser
+        run: |
+          npm install --no-save --package-lock=false --ignore-scripts
+          npx playwright test --list
