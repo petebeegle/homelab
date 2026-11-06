@@ -1,0 +1,12 @@
+{
+  "name": "homelab-browser-smoke",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "test": "playwright test",
+    "test:unit": "node --test tests/url-guard.test.cjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  }
+}
