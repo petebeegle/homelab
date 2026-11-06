@@ -12,6 +12,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.request
 import json
@@ -21,7 +22,7 @@ VM_NAME = re.compile(r"^[a-z0-9][a-z0-9-]{0,50}$")
 
 
 def run(argv, *, input=None, check=True):
-    return subprocess.run(argv, input=input, text=True, check=check)
+    return subprocess.run(argv, input=input, text=True, check=check, timeout=3600)
 
 
 def ssh(host, command, *, input=None):
@@ -67,12 +68,21 @@ def lifecycle(host, template, vmid, name, guest, token):
             f"export RUNNER_HOME=/opt/homelab-actions-runner RUNNER_NAME={name}; "
             "exec /opt/homelab-runner/run-once.sh"
         )
+        for attempt in range(30):
+            probe = subprocess.run(["ssh", "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=yes", "-o", "ConnectTimeout=5", guest, "true"], check=False, capture_output=True, timeout=10)
+            if probe.returncode == 0:
+                break
+            time.sleep(5)
+        else:
+            raise RuntimeError("Guest SSH never became ready")
         ssh(guest, "bash -c " + "'" + script.replace("'", "'\\''") + "'", input=token + "\n")
     finally:
         if created:
             # Attempt stop and deletion even if registration or browser job fails.
-            stopped = ssh(host, f"qm stop {vmid}", input=None)
-            ssh(host, f"qm destroy {vmid} --purge 1 --destroy-unreferenced-disks 1")
+            try:
+                ssh(host, f"qm stop {vmid}", input=None)
+            finally:
+                ssh(host, f"qm destroy {vmid} --purge 1 --destroy-unreferenced-disks 1")
 
 
 def main(argv=None):
