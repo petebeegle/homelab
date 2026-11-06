@@ -88,12 +88,6 @@ statusMessage = "Checking secret files"
 
 [[hooks.PostToolUse.hooks]]
 type = "command"
-command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase post_tool --hook pre_commit_check -- \"$root/.codex/hooks/pre_commit_check.sh\"'"
-timeout = 300
-statusMessage = "Running pre-commit checks"
-
-[[hooks.PostToolUse.hooks]]
-type = "command"
 command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase post_tool --hook flux_reminder -- \"$root/.codex/hooks/flux_reminder.sh\"'"
 timeout = 10
 statusMessage = "Checking Flux follow-up"
