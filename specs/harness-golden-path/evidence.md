@@ -7,8 +7,8 @@ Source reviewed: AGENTS.md; docs/runbooks/implementation-workflow.md; docs/runbo
 Verification:
 - Source-level review: performed.
 - Playwright dependency installation: not run.
-- URL guard unit tests: not run.
-- Playwright browser test: not run.
+- URL guard unit tests: PASS — Node 22.16.0, `node --test tests/browser/tests/url-guard.test.cjs`, 8/8 tests, executed in an isolated local copy of the committed test source (2026-11-06).
+- Playwright browser test: NOT RUN (no development cluster/browser environment).
 - Existing Whoami branch deployment smoke: not run.
 - Development cluster access: not available in this GitHub-only editing session.
 - Production mutations: none.
