@@ -15,11 +15,12 @@ permissions:
 jobs:
   browser:
     name: Browser / development Whoami
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, homelab-dev-browser]
     timeout-minutes: 15
     env:
       BRANCH_SLUG: ${{ inputs.branch_slug }}
     steps:
+      # Dedicated ephemeral runner on the development network; not a generic shared runner.
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
