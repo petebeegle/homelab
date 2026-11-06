@@ -66,12 +66,14 @@ def lifecycle(host, template, vmid, name, guest, token):
             "set -euo pipefail; "
             "IFS= read -r GITHUB_RUNNER_TOKEN; export GITHUB_RUNNER_TOKEN; "
             f"export RUNNER_HOME=/opt/homelab-actions-runner RUNNER_NAME={name}; "
-            "exec /opt/homelab-runner/run-once.sh"
+            "exec bash /opt/homelab-runner/run-once.sh"
         )
         for attempt in range(30):
-            probe = subprocess.run(["ssh", "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=yes", "-o", "ConnectTimeout=5", guest, "true"], check=False, capture_output=True, timeout=10)
-            if probe.returncode == 0:
+            try:
+                ssh(guest, "true")
                 break
+            except subprocess.CalledProcessError:
+                pass
             time.sleep(5)
         else:
             raise RuntimeError("Guest SSH never became ready")
