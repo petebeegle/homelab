@@ -15,11 +15,11 @@ jobs:
     name: Verification / harness
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@v6.1.0
+      - uses: actions/setup-python@v7.1.0
         with:
           python-version-file: tools/.python-version
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@v7.1.0
         with:
           node-version: "24.21.0"
       - name: Run shared verification contract
