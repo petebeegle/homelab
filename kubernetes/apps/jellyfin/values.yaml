@@ -72,7 +72,7 @@ extraInitContainers:
         mountPath: /opt/jellyfin-config-migration
         readOnly: true
   - name: install-sso-auth
-    image: python:3.14-alpine
+    image: python:3.15-alpine
     imagePullPolicy: IfNotPresent
     env:
       - name: JELLYFIN_OAUTH_CLIENT_SECRET
