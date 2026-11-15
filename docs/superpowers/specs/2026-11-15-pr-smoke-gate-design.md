@@ -73,7 +73,7 @@ Dropped from the earlier draft as disproportionate for a homelab: runner and bra
 
 ## Unverified, to check while building
 
-- ARC authenticates with a GitHub App or a classic PAT ([docs](https://docs.github.com/en/actions/how-tos/manage-runners/use-actions-runner-controller/authenticate-to-the-api)); the App's minimum permissions (tutorials say repository Administration, a powerful permission) and the chart's min/max runner values names are not confirmed from official pages.
+- ARC authenticates with a GitHub App or a classic PAT ([docs](https://docs.github.com/en/actions/how-tos/manage-runners/use-actions-runner-controller/authenticate-to-the-api)); the App's repository permissions are now confirmed from GitHub's page (Administration: Read and write, Metadata: Read-only; see Task 0 of the plan); the chart's min/max runner values names are still unconfirmed.
 - Renovate's platform auto-merge works with this self-hosted setup, and the merge triggers the push CI on `main`.
 - Chromium in the runner pod was tested with one page via `playwright-core`, not the test runner or a heavy app; `/dev/shm` may need enlarging.
 - The verifier works with a ServiceAccount-derived kubeconfig; the RBAC list is a starting point.

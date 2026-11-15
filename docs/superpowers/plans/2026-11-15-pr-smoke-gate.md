@@ -46,9 +46,18 @@ A (repo only): Tasks 1-4. B (needs owner): Task 0, then 5, 6. C: Task 7 (informa
 
 ### Task 0: Owner prerequisites (not code; blocks Task 6)
 
-- [ ] **Step 1:** Owner creates a GitHub App installed on `petebeegle/homelab` only, with the minimum repository permissions ARC needs (confirm against the current GitHub "authenticate ARC to the API" page; tutorials say Administration read/write, Metadata read; **verify and use the least that works**), and notes App ID, installation ID and the private key.
-- [ ] **Step 2:** Owner stores them as a 1Password item in the development vault and gives the item path.
-- [ ] **Step 3:** Owner (or the agent with the owner's yes) sets the Actions fork-PR approval policy to all outside contributors: `gh api -X PUT repos/petebeegle/homelab/actions/permissions/fork-pr-contributor-approval -f approval_policy=all_external_contributors`. Verify with a GET.
+Verified against GitHub's current "Authenticate to the API" page for ARC: for **repository-level** runners a GitHub App needs repository permission **Administration: Read and write** and **Metadata: Read-only**. The organization "Self-hosted runners" permission applies only to org-owned installs, not this user-owned repo.
+
+- [ ] **Step 1: Create the GitHub App** (GitHub, Settings, Developer settings, GitHub Apps, New GitHub App). GitHub App name `homelab-dev-arc`; Homepage URL `https://github.com/petebeegle/homelab`; **Webhook: Active unchecked**; no callback URL; Repository permissions: Administration = Read and write, Metadata = Read-only (automatic); no organization or account permissions; no event subscriptions; "Where can this GitHub App be installed": Only on this account.
+- [ ] **Step 2: Generate a private key** on the App's page (a `.pem` downloads); note the **App ID** shown on the App page.
+- [ ] **Step 3: Install the App** on `petebeegle/homelab` only (choose "Only select repositories"). The **installation ID** is the number at the end of the URL `https://github.com/settings/installations/<ID>` after installing.
+- [ ] **Step 4: Store in 1Password**, in the development vault (`cluster development`), one item with exactly these field labels (they become the Kubernetes secret keys ARC reads): `github_app_id`, `github_app_installation_id`, `github_app_private_key` (the full multi-line PEM). Find the path pieces with `op item list --vault "cluster development"` and `op item get <item> --format json`; the plan needs `vaults/<vault-uuid>/items/<item-uuid>`.
+- [ ] **Step 5:** Give the agent the App ID, installation ID and the 1Password item path (none is a secret). **Never paste the private key anywhere.**
+- [ ] **Step 6:** Set the fork-PR approval policy: `gh api -X PUT repos/petebeegle/homelab/actions/permissions/fork-pr-contributor-approval -f approval_policy=all_external_contributors`, then GET to confirm.
+
+Alternative (simpler, less safe): a fine-grained PAT with Administration: Read and write on this repo only, stored as one field `github_token`. It grants the same power as the App but is long-lived (expires within a year, tied to your account) where the App issues short-lived tokens. A classic PAT (`repo` scope) is broader still and not recommended.
+
+Blast radius to know: Administration lets the holder change this repo's settings, rulesets, collaborators and deploy keys. The key lives only in the dev vault and the `dev-runner` namespace's secret; it is read by the ARC controller and listener, **not** mounted into job pods.
 
 ### Task 1: Delete the superseded runner work
 
