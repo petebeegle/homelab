@@ -11,7 +11,7 @@ from .browser import preflight_browser, run_browser_smoke
 from .checks import assert_smoke_profile
 from .cleanup import cleanup_branch_environment
 from .config import REPO_ROOT, AppConfig, Runner, VerificationError, validate_branch, validate_slug
-from .flux import reconcile_flux, verify_cluster_base
+from .flux import assert_dev_base_ready, reconcile_flux, verify_cluster_base
 from .kube import apply_activation
 from .profiles import load_smoke_profile
 from .terraform import push_branch, run_terraform
@@ -45,10 +45,14 @@ def run_acceptance(
         if config.browser:
             preflight_browser(config, profile, repo_root=repo_root)
 
+        if config.ci:
+            assert_dev_base_ready(config, runner=runner)
+
         if config.push:
             push_branch(config, runner=runner, repo_root=repo_root)
 
-        run_terraform(config, runner=runner, repo_root=repo_root)
+        if not config.ci:
+            run_terraform(config, runner=runner, repo_root=repo_root)
 
         if config.include_cluster_base:
             verify_cluster_base(config, runner=runner, repo_root=repo_root)

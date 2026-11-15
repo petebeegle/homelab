@@ -128,6 +128,24 @@ NO_ACTIVE_PODS = json.dumps(
 )
 
 
+def _base_json(**ready: str) -> str:
+    names = {"flux-system": "True", "gateway": "True", **ready}
+    return json.dumps(
+        {
+            "items": [
+                {"metadata": {"name": name}, "status": {"conditions": [{"type": "Ready", "status": status}]}}
+                for name, status in names.items()
+            ]
+        }
+    )
+
+
+READY_BASE = _base_json()
+GATEWAY_NOT_READY = _base_json(gateway="False")
+GATEWAY_MISSING = json.dumps(
+    {"items": [{"metadata": {"name": "flux-system"}, "status": {"conditions": [{"type": "Ready", "status": "True"}]}}]}
+)
+
 TEMPLATE = """---
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: GitRepository
@@ -163,6 +181,7 @@ class FakeRunner:
         pods_json: str = READY_PODS,
         cluster_pods_json: str = READY_PODS,
         pvc_json: str = READY_PVC,
+        base_json: str = READY_BASE,
     ) -> None:
         self.plan_returncode = plan_returncode
         self.fail_on = fail_on
@@ -170,6 +189,7 @@ class FakeRunner:
         self.pods_json = pods_json
         self.cluster_pods_json = cluster_pods_json
         self.pvc_json = pvc_json
+        self.base_json = base_json
         self.calls: list[tuple[list[str], dict[str, object]]] = []
 
     def __call__(self, args: list[str], **kwargs: object) -> SimpleNamespace:
@@ -185,6 +205,8 @@ class FakeRunner:
             return SimpleNamespace(returncode=0, stdout=self.cluster_pods_json)
         if args[-4:] == ["get", "pods", "-o", "json"]:
             return SimpleNamespace(returncode=0, stdout=self.pods_json)
+        if "get" in args and "kustomization.kustomize.toolkit.fluxcd.io" in args and args[-2:] == ["-o", "json"]:
+            return SimpleNamespace(returncode=0, stdout=self.base_json)
         if "get" in args and "httproute" in args and args[-2:] == ["-o", "json"]:
             return SimpleNamespace(returncode=0, stdout=READY_HTTPROUTE)
         if "get" in args and "tlsroute" in args and args[-2:] == ["-o", "json"]:
@@ -773,6 +795,45 @@ class VerifyBranchDeployTest(unittest.TestCase):
             verify.run_acceptance(self._config(), runner=runner, repo_root=root, template_text=TEMPLATE)
         self.assertFalse(any("playwright" in " ".join(c) for c in runner.commands))
 
+    def test_ci_skips_terraform_and_checks_base_first(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            runner = FakeRunner()
+            verify.run_acceptance(self._config(ci=True), runner=runner, repo_root=Path(tmp), template_text=TEMPLATE)
+
+        commands = [" ".join(command) for command in runner.commands]
+        self.assertFalse(any("terraform" in command for command in commands))
+        base = self._index_containing(commands, "get kustomization.kustomize.toolkit.fluxcd.io flux-system gateway -o json")
+        self.assertLess(base, self._index_containing(commands, "apply -f -"))
+
+    def test_ci_unhealthy_base_fails_before_activation(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            runner = FakeRunner(base_json=GATEWAY_NOT_READY)
+            with self.assertRaises(verify.VerificationError) as ctx:
+                verify.run_acceptance(self._config(ci=True), runner=runner, repo_root=Path(tmp), template_text=TEMPLATE)
+
+        self.assertIn("development base is not healthy", str(ctx.exception))
+        self.assertIn("gateway", str(ctx.exception))
+        commands = [" ".join(command) for command in runner.commands]
+        self.assertFalse(any("apply -f -" in command for command in commands))
+        self.assertFalse(any(" delete " in command for command in commands))
+
+    def test_ci_missing_base_object_is_unhealthy(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            runner = FakeRunner(base_json=GATEWAY_MISSING)
+            with self.assertRaises(verify.VerificationError) as ctx:
+                verify.run_acceptance(self._config(ci=True), runner=runner, repo_root=Path(tmp), template_text=TEMPLATE)
+        self.assertIn("gateway", str(ctx.exception))
+
+    def test_ci_is_off_by_default_and_terraform_still_runs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "terraform" / "development").mkdir(parents=True)
+            runner = FakeRunner()
+            verify.run_acceptance(self._config(), runner=runner, repo_root=root, template_text=TEMPLATE)
+        commands = [" ".join(command) for command in runner.commands]
+        self.assertTrue(any("terraform" in command for command in commands))
+        self.assertFalse(any("flux-system gateway -o json" in command for command in commands))
+
     def test_readme_and_runbook_examples_reference_real_cli_flags(self) -> None:
         parser = verify.build_parser()
         option_strings = {
@@ -792,6 +853,7 @@ class VerifyBranchDeployTest(unittest.TestCase):
             "--terraform-apply",
             "--include-cluster-base",
             "--browser",
+            "--ci",
             "--print-route-urls",
             "--kubeconfig",
             "--timeout",
@@ -815,6 +877,7 @@ class VerifyBranchDeployTest(unittest.TestCase):
         include_cluster_base: bool = False,
         keep: bool = False,
         browser: bool = False,
+        ci: bool = False,
     ) -> verify.AppConfig:
         return verify.AppConfig(
             app=app,
@@ -827,6 +890,7 @@ class VerifyBranchDeployTest(unittest.TestCase):
             include_cluster_base=include_cluster_base,
             keep=keep,
             browser=browser,
+            ci=ci,
         )
 
 
