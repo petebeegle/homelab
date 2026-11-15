@@ -1,0 +1,61 @@
+---
+name: Runner image
+
+"on":
+  pull_request:
+    paths:
+      - tools/ci/runner-image/**
+      - .github/workflows/runner-image.yml
+  push:
+    branches:
+      - main
+    paths:
+      - tools/ci/runner-image/**
+      - .github/workflows/runner-image.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Runner image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build
+        uses: docker/build-push-action@v7
+        with:
+          context: tools/ci/runner-image
+          load: true
+          tags: homelab-dev-runner:ci
+
+      - name: Smoke the image
+        run: >-
+          docker run --rm homelab-dev-runner:ci bash -c
+          'kubectl version --client && flux --version && python3 --version && node --version && test -d /ms-playwright && test -x /home/runner/run.sh'
+
+      - name: Push
+        if: github.event_name != 'pull_request'
+        run: |
+          image=ghcr.io/${{ github.repository_owner }}/homelab-dev-runner
+          docker tag homelab-dev-runner:ci "$image:${{ github.sha }}"
+          docker tag homelab-dev-runner:ci "$image:latest"
+          docker push "$image:${{ github.sha }}"
+          docker push "$image:latest"
