@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[2]
 PROFILES = {
     "harness": (
         (sys.executable, "-m", "unittest", "discover", "-s", "tools/verification/tests"),
+        (sys.executable, "-m", "unittest", "discover", "-s", "tools/development/runner/tests"),
         ("node", "--test", "tests/browser/tests/url-guard.test.cjs"),
     ),
 }
