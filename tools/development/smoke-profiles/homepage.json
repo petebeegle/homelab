@@ -18,5 +18,6 @@
         "bodyRegex": "Home Lab|Branch|Homepage"
       }
     ]
-  }
+  },
+  "prSmoke": true
 }

@@ -37,7 +37,7 @@ Print route URLs without touching the cluster:
 python3 tools/development/verify_branch_deploy.py --app whoami --branch codex/example-change --slug example-change --print-route-urls
 ```
 
-Add `--browser` to also load the app's route in a real browser (Playwright) after the cluster-side checks and before cleanup. Only profiles with a `browser` block support it (currently Whoami); it fails closed if Playwright, its browser, or the spec is missing, and it checks that **before** activating anything:
+Add `--ci` for non-interactive CI runs: it first checks that the development base (`flux-system` and `gateway` Kustomizations) is healthy, failing before anything is activated, and skips the Terraform step (a CI runner has no tfvars or Terraform state). Add `--browser` to also load the app's route in a real browser (Playwright) after the cluster-side checks and before cleanup. Only profiles with a `browser` block support it (currently Whoami); it fails closed if Playwright, its browser, or the spec is missing, and it checks that **before** activating anything:
 
 ```sh
 python3 tools/development/verify_branch_deploy.py --app whoami --branch codex/example-change --slug example-change --browser

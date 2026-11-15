@@ -17,6 +17,40 @@ from .kube import kubectl, run_command
 from .profiles import render_profile_value
 
 
+CI_BASE_KUSTOMIZATIONS = ("flux-system", "gateway")
+
+
+def assert_dev_base_ready(config: AppConfig, *, runner: Runner) -> None:
+    """Fail before activating anything if the dev base the branch environment depends on is unhealthy."""
+    result = run_command(
+        kubectl(
+            config,
+            "-n",
+            FLUX_NAMESPACE,
+            "get",
+            "kustomization.kustomize.toolkit.fluxcd.io",
+            *CI_BASE_KUSTOMIZATIONS,
+            "-o",
+            "json",
+        ),
+        runner=runner,
+        timeout=config.timeout,
+        capture_output=True,
+    )
+    try:
+        items = json.loads(result.stdout)["items"]
+    except (ValueError, KeyError, TypeError) as exc:
+        raise VerificationError("development base is not healthy: could not read Flux Kustomizations") from exc
+    ready = {
+        item["metadata"]["name"]
+        for item in items
+        if any(c.get("type") == "Ready" and c.get("status") == "True" for c in item.get("status", {}).get("conditions", []))
+    }
+    unhealthy = [name for name in CI_BASE_KUSTOMIZATIONS if name not in ready]
+    if unhealthy:
+        raise VerificationError(f"development base is not healthy: {', '.join(unhealthy)}")
+
+
 def flux(config: AppConfig, *args: str) -> list[str]:
     return ["flux", "--kubeconfig", str(config.kubeconfig), *args]
 

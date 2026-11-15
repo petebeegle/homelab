@@ -54,6 +54,7 @@ def load_smoke_profile_file(path: Path) -> SmokeProfile:
         http_probes=tuple(_http_probes(checks.get("httpProbes", []), path)),
         route_urls=tuple(_string_list(raw.get("routeUrls", []), f"{path}:routeUrls")),
         browser=_browser_check(raw.get("browser"), path),
+        pr_smoke=_pr_smoke(raw.get("prSmoke", False), path),
     )
     return profile
 
@@ -151,3 +152,9 @@ def _browser_check(value: object, path: Path) -> BrowserCheck | None:
     if not isinstance(url_env, str) or not BROWSER_ENV_PATTERN.fullmatch(url_env):
         raise VerificationError(f"{path}:browser.urlEnv must be an upper-case environment variable name")
     return BrowserCheck(spec=spec, url_env=url_env)
+
+
+def _pr_smoke(value: object, path: Path) -> bool:
+    if not isinstance(value, bool):
+        raise VerificationError(f"{path}:prSmoke must be true or false")
+    return value

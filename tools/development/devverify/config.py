@@ -52,6 +52,7 @@ class AppConfig:
     include_cluster_base: bool
     keep: bool
     browser: bool = False
+    ci: bool = False
 
     @property
     def git_repository(self) -> str:
@@ -109,6 +110,7 @@ class SmokeProfile:
     http_probes: tuple[HttpProbe, ...]
     route_urls: tuple[str, ...]
     browser: BrowserCheck | None = None
+    pr_smoke: bool = False
 
 
 def parse_duration(value: str) -> Duration:
@@ -178,4 +180,5 @@ def config_from_args(args: argparse.Namespace) -> AppConfig:
         include_cluster_base=args.include_cluster_base,
         keep=args.keep,
         browser=getattr(args, "browser", False),
+        ci=getattr(args, "ci", False),
     )
