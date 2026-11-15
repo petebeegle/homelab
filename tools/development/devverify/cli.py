@@ -26,6 +26,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Temporarily reconcile the development base from --branch before branch app verification.",
     )
+    parser.add_argument(
+        "--browser",
+        action="store_true",
+        help="After the cluster-side checks, load the route in a real browser (Playwright) before cleanup. Fails closed.",
+    )
     parser.add_argument("--kubeconfig", type=Path, default=DEFAULT_KUBECONFIG)
     parser.add_argument("--timeout", type=parse_duration, default=parse_duration(DEFAULT_TIMEOUT))
     parser.add_argument("--keep", action="store_true", help="Keep branch Flux resources for debugging.")

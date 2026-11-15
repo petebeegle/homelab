@@ -51,6 +51,7 @@ class AppConfig:
     terraform_apply: bool
     include_cluster_base: bool
     keep: bool
+    browser: bool = False
 
     @property
     def git_repository(self) -> str:
@@ -87,6 +88,12 @@ class HttpProbe:
 
 
 @dataclass(frozen=True)
+class BrowserCheck:
+    spec: str
+    url_env: str
+
+
+@dataclass(frozen=True)
 class SmokeProfile:
     app: str
     git_repository: str
@@ -101,6 +108,7 @@ class SmokeProfile:
     pvcs: tuple[PvcCheck, ...]
     http_probes: tuple[HttpProbe, ...]
     route_urls: tuple[str, ...]
+    browser: BrowserCheck | None = None
 
 
 def parse_duration(value: str) -> Duration:
@@ -169,4 +177,5 @@ def config_from_args(args: argparse.Namespace) -> AppConfig:
         terraform_apply=args.terraform_apply,
         include_cluster_base=args.include_cluster_base,
         keep=args.keep,
+        browser=getattr(args, "browser", False),
     )

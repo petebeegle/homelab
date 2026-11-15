@@ -6,7 +6,12 @@ import json
 from pathlib import Path
 from typing import Mapping
 
-from .config import AppConfig, HttpProbe, PROFILE_DIR, PvcCheck, SmokeProfile, VerificationError
+import re
+
+from .config import AppConfig, BrowserCheck, HttpProbe, PROFILE_DIR, PvcCheck, SmokeProfile, VerificationError
+
+BROWSER_SPEC_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*\.spec\.cjs$")
+BROWSER_ENV_PATTERN = re.compile(r"^[A-Z][A-Z0-9_]*$")
 
 
 def load_smoke_profiles(profile_dir: Path = PROFILE_DIR) -> dict[str, SmokeProfile]:
@@ -48,6 +53,7 @@ def load_smoke_profile_file(path: Path) -> SmokeProfile:
         pvcs=tuple(_pvc_checks(checks.get("pvcs", []), path)),
         http_probes=tuple(_http_probes(checks.get("httpProbes", []), path)),
         route_urls=tuple(_string_list(raw.get("routeUrls", []), f"{path}:routeUrls")),
+        browser=_browser_check(raw.get("browser"), path),
     )
     return profile
 
@@ -132,3 +138,16 @@ def _http_probes(value: object, path: Path) -> list[HttpProbe]:
             )
         )
     return probes
+
+
+def _browser_check(value: object, path: Path) -> BrowserCheck | None:
+    if value is None:
+        return None
+    raw = _mapping(value, f"{path}:browser")
+    spec = raw.get("spec")
+    url_env = raw.get("urlEnv")
+    if not isinstance(spec, str) or not BROWSER_SPEC_PATTERN.fullmatch(spec):
+        raise VerificationError(f"{path}:browser.spec must be a plain *.spec.cjs file name under tests/browser/tests")
+    if not isinstance(url_env, str) or not BROWSER_ENV_PATTERN.fullmatch(url_env):
+        raise VerificationError(f"{path}:browser.urlEnv must be an upper-case environment variable name")
+    return BrowserCheck(spec=spec, url_env=url_env)
