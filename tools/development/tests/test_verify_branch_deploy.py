@@ -674,6 +674,105 @@ class VerifyBranchDeployTest(unittest.TestCase):
         commands = [" ".join(command) for command in runner.commands]
         self.assertFalse(any("delete kustomization.kustomize.toolkit.fluxcd.io" in command for command in commands))
 
+    def _browser_root(self, tmp: str, *, installed: bool = True) -> Path:
+        root = Path(tmp)
+        (root / "terraform" / "development").mkdir(parents=True)
+        (root / "tests" / "browser" / "tests").mkdir(parents=True)
+        (root / "tests" / "browser" / "tests" / "whoami.spec.cjs").write_text("// spec\n", encoding="utf-8")
+        if installed:
+            binary = root / "tests" / "browser" / "node_modules" / ".bin" / "playwright"
+            binary.parent.mkdir(parents=True)
+            binary.write_text("#!/bin/sh\n", encoding="utf-8")
+        return root
+
+    def test_whoami_profile_declares_browser_check_and_others_do_not(self) -> None:
+        profiles = verify.load_smoke_profiles()
+        self.assertEqual(profiles["whoami"].browser, verify.config.BrowserCheck(spec="whoami.spec.cjs", url_env="WHOAMI_URL"))
+        self.assertTrue(all(p.browser is None for app, p in profiles.items() if app != "whoami"))
+
+    def test_browser_profile_rejects_path_traversal_and_bad_env_names(self) -> None:
+        for browser in (
+            {"spec": "../evil.spec.cjs", "urlEnv": "WHOAMI_URL"},
+            {"spec": "sub/x.spec.cjs", "urlEnv": "WHOAMI_URL"},
+            {"spec": "x.js", "urlEnv": "WHOAMI_URL"},
+            {"spec": "whoami.spec.cjs", "urlEnv": "whoami_url"},
+            {"spec": "whoami.spec.cjs", "urlEnv": "A=B"},
+        ):
+            with tempfile.TemporaryDirectory() as tmp:
+                profile = json.loads((TOOLS_DEVELOPMENT / "smoke-profiles" / "whoami.json").read_text(encoding="utf-8"))
+                profile["browser"] = browser
+                path = Path(tmp) / "whoami.json"
+                path.write_text(json.dumps(profile), encoding="utf-8")
+                with self.assertRaises(verify.VerificationError, msg=str(browser)):
+                    verify.profiles.load_smoke_profile_file(path)
+
+    def test_browser_runs_after_cluster_assertions_and_before_cleanup(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self._browser_root(tmp)
+            runner = FakeRunner()
+            verify.run_acceptance(self._config(browser=True), runner=runner, repo_root=root, template_text=TEMPLATE)
+
+        commands = [" ".join(command) for command in runner.commands]
+        browser = self._index_containing(commands, "playwright test tests/whoami.spec.cjs")
+        self.assertIn("env WHOAMI_URL=https://whoami-example-change.dev.lab.petebeegle.com npx --no-install", commands[browser])
+        self.assertGreater(browser, self._index_containing(commands, "get httproute whoami-example-change -o json"))
+        self.assertLess(browser, self._index_containing(commands, "delete kustomization.kustomize.toolkit.fluxcd.io/branch-whoami-example-change"))
+        self.assertEqual(str(runner.calls[browser][1]["cwd"]), str(root / "tests" / "browser"))
+
+    def test_browser_failure_fails_acceptance_and_still_cleans_up(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self._browser_root(tmp)
+            runner = FakeRunner(fail_on="playwright test")
+            with self.assertRaises(verify.VerificationError):
+                verify.run_acceptance(self._config(browser=True), runner=runner, repo_root=root, template_text=TEMPLATE)
+
+        commands = [" ".join(command) for command in runner.commands]
+        self.assertTrue(any("delete kustomization.kustomize.toolkit.fluxcd.io/branch-whoami-example-change" in c for c in commands))
+        self.assertTrue(any("delete gitrepository.source.toolkit.fluxcd.io/branch-example-change" in c for c in commands))
+
+    def test_browser_timeout_fails_closed_and_still_cleans_up(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self._browser_root(tmp)
+            runner = FakeRunner(timeout_on="playwright test")
+            with self.assertRaises(verify.VerificationError):
+                verify.run_acceptance(self._config(browser=True), runner=runner, repo_root=root, template_text=TEMPLATE)
+        self.assertTrue(any("delete kustomization" in " ".join(c) for c in runner.commands))
+
+    def test_missing_playwright_fails_before_any_command_touches_the_cluster(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self._browser_root(tmp, installed=False)
+            runner = FakeRunner()
+            with self.assertRaises(verify.VerificationError) as ctx:
+                verify.run_acceptance(self._config(browser=True), runner=runner, repo_root=root, template_text=TEMPLATE)
+        self.assertIn("unverified", str(ctx.exception))
+        self.assertEqual(runner.commands, [])
+
+    def test_missing_spec_fails_before_any_command(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self._browser_root(tmp)
+            (root / "tests" / "browser" / "tests" / "whoami.spec.cjs").unlink()
+            runner = FakeRunner()
+            with self.assertRaises(verify.VerificationError):
+                verify.run_acceptance(self._config(browser=True), runner=runner, repo_root=root, template_text=TEMPLATE)
+        self.assertEqual(runner.commands, [])
+
+    def test_app_without_browser_check_is_refused_before_any_command(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self._browser_root(tmp)
+            runner = FakeRunner()
+            with self.assertRaises(verify.VerificationError) as ctx:
+                verify.run_acceptance(self._config(app="homepage", browser=True), runner=runner, repo_root=root, template_text=TEMPLATE)
+        self.assertIn("no browser smoke", str(ctx.exception))
+        self.assertEqual(runner.commands, [])
+
+    def test_browser_is_off_by_default(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "terraform" / "development").mkdir(parents=True)
+            runner = FakeRunner()
+            verify.run_acceptance(self._config(), runner=runner, repo_root=root, template_text=TEMPLATE)
+        self.assertFalse(any("playwright" in " ".join(c) for c in runner.commands))
+
     def test_readme_and_runbook_examples_reference_real_cli_flags(self) -> None:
         parser = verify.build_parser()
         option_strings = {
@@ -692,6 +791,7 @@ class VerifyBranchDeployTest(unittest.TestCase):
             "--push",
             "--terraform-apply",
             "--include-cluster-base",
+            "--browser",
             "--print-route-urls",
             "--kubeconfig",
             "--timeout",
@@ -714,6 +814,7 @@ class VerifyBranchDeployTest(unittest.TestCase):
         terraform_apply: bool = False,
         include_cluster_base: bool = False,
         keep: bool = False,
+        browser: bool = False,
     ) -> verify.AppConfig:
         return verify.AppConfig(
             app=app,
@@ -725,6 +826,7 @@ class VerifyBranchDeployTest(unittest.TestCase):
             terraform_apply=terraform_apply,
             include_cluster_base=include_cluster_base,
             keep=keep,
+            browser=browser,
         )
 
 

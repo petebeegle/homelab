@@ -309,6 +309,7 @@ Supported profile fields:
 | Field | Meaning |
 | --- | --- |
 | `routeUrls` | External branch URLs, usually under `dev.lab.petebeegle.com`, that can be printed for browser or Playwright smoke handoff. |
+| `browser` | Optional `{spec, urlEnv}`: the `tests/browser/tests/<spec>` Playwright file and the environment variable that receives the first rendered `routeUrls` entry. Used by `--browser`. |
 | `checks.kustomizations` | Flux `Kustomization` names in `flux-system` that must reach Ready. |
 | `checks.helmReleases` | HelmRelease names in the profile namespace that must reach Ready. |
 | `checks.services` | Service names in the profile namespace that must exist. |
@@ -324,7 +325,7 @@ Print the rendered route URLs without applying anything to the cluster:
 python3 tools/development/verify_branch_deploy.py --app whoami --branch codex/example-change --slug example-change --print-route-urls
 ```
 
-When a profile exposes `routeUrls`, browser smoke can use those rendered URLs as the Playwright target under `dev.lab.petebeegle.com`. The repository does not yet run a generic profile-driven Playwright command for branch URLs; record screenshots and traces only for failed browser smoke attempts and attach the failure artifact path in implementation evidence.
+When a profile exposes `routeUrls`, browser smoke can use those rendered URLs as the Playwright target under `dev.lab.petebeegle.com`. Profiles with a `browser` block can run it in the same command with `--browser`: it runs after the cluster-side assertions and before cleanup, and it fails closed (missing Playwright, browser, or spec is reported as unverified before anything is activated). Record screenshots and traces only for failed browser smoke attempts and attach the failure artifact path in implementation evidence.
 
 ### Current Profile Coverage And Gaps
 

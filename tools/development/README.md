@@ -37,6 +37,12 @@ Print route URLs without touching the cluster:
 python3 tools/development/verify_branch_deploy.py --app whoami --branch codex/example-change --slug example-change --print-route-urls
 ```
 
+Add `--browser` to also load the app's route in a real browser (Playwright) after the cluster-side checks and before cleanup. Only profiles with a `browser` block support it (currently Whoami); it fails closed if Playwright, its browser, or the spec is missing, and it checks that **before** activating anything:
+
+```sh
+python3 tools/development/verify_branch_deploy.py --app whoami --branch codex/example-change --slug example-change --browser
+```
+
 The Jellyfin profile verifies the branch namespace, Flux Kustomization and HelmRelease readiness, active pod readiness, config PVC binding on `nfs-csi-storage`, Service existence, HTTPRoute attachment, and an in-cluster HTTP probe against the Jellyfin web shell:
 
 ```sh

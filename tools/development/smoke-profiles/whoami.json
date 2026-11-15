@@ -16,5 +16,9 @@
     "httpRoutes": [
       "whoami-${branch_slug}"
     ]
+  },
+  "browser": {
+    "spec": "whoami.spec.cjs",
+    "urlEnv": "WHOAMI_URL"
   }
 }

@@ -7,6 +7,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from .browser import preflight_browser, run_browser_smoke
 from .checks import assert_smoke_profile
 from .cleanup import cleanup_branch_environment
 from .config import REPO_ROOT, AppConfig, Runner, VerificationError, validate_branch, validate_slug
@@ -41,6 +42,9 @@ def run_acceptance(
     profile = load_smoke_profile(config.app)
 
     try:
+        if config.browser:
+            preflight_browser(config, profile, repo_root=repo_root)
+
         if config.push:
             push_branch(config, runner=runner, repo_root=repo_root)
 
@@ -61,6 +65,9 @@ def run_acceptance(
 
         reconcile_flux(config, profile, runner=runner)
         assert_smoke_profile(config, profile, runner=runner)
+
+        if config.browser:
+            run_browser_smoke(config, profile, runner=runner, repo_root=repo_root)
     except BaseException as exc:
         failure = exc
     finally:

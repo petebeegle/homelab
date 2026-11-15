@@ -26,7 +26,13 @@ cd tests/browser && npx playwright install chromium && cd ../..
 npm --prefix tests/browser run test:unit
 ```
 
-Deploy a disposable Whoami branch environment using the existing `tools/development/verify_branch_deploy.py` with `--keep` (check its CLI help and the development-cluster runbook for exact flags). After reconciliation, run:
+**One command (preferred):** the verifier activates the branch environment, checks it, runs this browser test against the rendered route, and cleans up, even when the browser step fails:
+
+```bash
+python3 tools/development/verify_branch_deploy.py --app whoami --branch <branch> --slug <slug> --browser
+```
+
+**Manual alternative:** deploy with `--keep`, and after reconciliation run:
 
 ```bash
 WHOAMI_URL=https://whoami-<branch_slug>.dev.lab.petebeegle.com \
