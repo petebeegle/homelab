@@ -30,6 +30,7 @@ class VerificationContractTests(unittest.TestCase):
         self.assertTrue(any("-s tools/development/tests -p test_verify_branch_deploy.py" in c for c in flat))
         self.assertTrue(any("-p test_classify_pr.py" in c for c in flat))
         self.assertTrue(any("-p test_cleanup_pr_envs.py" in c for c in flat))
+        self.assertTrue(any("-p test_runner_image.py" in c for c in flat))
         self.assertFalse(any("tools/development/runner" in c for c in flat))
 
 
