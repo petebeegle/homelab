@@ -40,7 +40,7 @@ jobs:
         working-directory: tests/browser
         run: |
           npm install --no-save --package-lock=false --ignore-scripts
-          npx playwright install --with-deps chromium
+          npx playwright install chromium
       - name: Run browser smoke
         working-directory: tests/browser
         run: npx playwright test tests/whoami.spec.cjs --reporter=line,junit
