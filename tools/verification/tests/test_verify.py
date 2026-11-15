@@ -25,6 +25,11 @@ class VerificationContractTests(unittest.TestCase):
         runner = Mock(side_effect=FileNotFoundError("missing"))
         self.assertEqual(verify.run_commands([("missing",)], runner=runner), 127)
 
+    def test_harness_profile_gates_dev_verifier_tests_and_drops_removed_runner(self):
+        flat = [" ".join(command) for command in verify.PROFILES["harness"]]
+        self.assertTrue(any("-s tools/development/tests -p test_verify_branch_deploy.py" in c for c in flat))
+        self.assertFalse(any("tools/development/runner" in c for c in flat))
+
 
 if __name__ == "__main__":
     unittest.main()
