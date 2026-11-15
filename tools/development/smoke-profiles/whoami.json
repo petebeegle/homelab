@@ -20,5 +20,6 @@
   "browser": {
     "spec": "whoami.spec.cjs",
     "urlEnv": "WHOAMI_URL"
-  }
+  },
+  "prSmoke": true
 }

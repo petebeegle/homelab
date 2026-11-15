@@ -110,6 +110,7 @@ class SmokeProfile:
     http_probes: tuple[HttpProbe, ...]
     route_urls: tuple[str, ...]
     browser: BrowserCheck | None = None
+    pr_smoke: bool = False
 
 
 def parse_duration(value: str) -> Duration:
