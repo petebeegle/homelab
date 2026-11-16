@@ -229,8 +229,15 @@ Development uses `192.168.30.224/28` and `192.168.40.224/28` for its pools.
 
 ## Known gaps
 
-- No runbook for rebuilding a cluster or restoring from backup.
-- No decision record for the 1Password migration; production workloads still
-  read SOPS secrets while the operator runs alongside.
+Each has an issue with the plan:
+
+- Terraform state is only on one machine, and there is no rebuild or restore
+  runbook (#486).
+- Production runs SOPS and 1Password side by side; workloads still read SOPS
+  (#490).
+- The production smoke job has no outside watcher and skips some apps and the
+  public path (#492).
+- `dev-smoke` is informational, not yet required; Renovate auto-merge waits on
+  it (#477).
 - Development runs a fraction of production, so most production changes cannot
   be rehearsed there yet.

@@ -64,6 +64,32 @@ If the development cluster or its credentials are unavailable, say so and list
 the substitute checks. A real validation failure is not an exception: fix it and
 rerun.
 
+### When `dev-smoke` fails
+
+1. Open the failed run's `smoke` job. The verifier prints which step failed
+   (Flux reconcile, pods, Service, route, probe, browser). Playwright traces and
+   screenshots are attached to the run as artifacts.
+2. Decide whether the change or the development base is at fault. The job first
+   waits for the development base Kustomizations to be Ready; a failure there
+   means development itself is unhealthy, not your PR. Check with
+   `kubectl --kubeconfig ~/.kube/homelab-development.config -n flux-system get kustomization`.
+3. If the change is at fault, fix it and push. The next run replaces the
+   environment. A run removes its own environment when it ends; `dev-cleanup`
+   (every 30 minutes) removes any `pr-*` environment older than three hours
+   that a cancelled run left behind.
+4. If development is at fault, fix development first (it is changed through PRs
+   like production), then re-run the failed job.
+5. To see it yourself, deploy the same branch by hand with `--keep` (below),
+   inspect it, then delete it with
+   `python3 tools/development/cleanup_pr_envs.py --kubeconfig ~/.kube/homelab-development.config --slug <slug>`
+   (the slug must start with `pr-`; for other slugs delete the
+   `branch-<app>-<slug>` Kustomization and `branch-<slug>` GitRepository).
+
+`dev-heartbeat` runs hourly on a GitHub-hosted runner and fails when
+`dev-cleanup` has not succeeded recently, which means the in-cluster runner or
+the development cluster is down. A red heartbeat usually explains a burst of red
+or stuck smoke runs.
+
 ## Smoke-testing by hand
 
 ```sh

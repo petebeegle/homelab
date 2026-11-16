@@ -10,7 +10,7 @@ import unittest
 from pathlib import Path
 
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT_SOURCE = REPO_ROOT / "terraform" / "scripts" / "install-flux-bootstrap-secrets.sh"
 TOKEN_SENTINEL = "canary-service-account-token-value"
 

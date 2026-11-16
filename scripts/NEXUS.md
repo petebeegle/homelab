@@ -14,8 +14,7 @@ to the Kubernetes internal Gateway and cert-manager wildcard certificate. The
 existing group endpoint retains its Synology reverse proxy/certificate renewal.
 Group pushes require Nexus PRO; Community publishers must use the hosted endpoint.
 
-Deployment state and exact verification results are recorded in
-[NEXUS-deployment-evidence.md](./NEXUS-deployment-evidence.md) and the implementation PR/deploy handoff.
+The rollout history and verification results are in PR #420.
 Always recover existing state and verify the saved plan before applying changes.
 Do not run a fresh apply against an already configured Nexus instance.
 

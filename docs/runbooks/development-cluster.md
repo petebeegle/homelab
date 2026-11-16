@@ -97,7 +97,8 @@ The development Terraform root runs the shared bootstrap script with
 `FLUX_BOOTSTRAP_PATH=./kubernetes/clusters/development` and
 `FLUX_BOOTSTRAP_SECRET_PROVIDER=dual`. Dual mode retains `flux-system/sops-age`
 and installs `onepassword-system/onepassword-service-account-token`. Production
-does not set this mode, so the shared helper defaults to `sops`.
+sets the same mode (`terraform/production/main.tf`). The helper defaults to
+`sops` only when no mode is set.
 
 Before applying development Terraform:
 
