@@ -1,0 +1,49 @@
+---
+# What the development cluster runs for homepage (../../development), renamed for one
+# branch environment. Nothing here copies the app: change kubernetes/apps/homepage/ and
+# the PR smoke test exercises it.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../development
+namespace: homepage-${branch_slug}
+nameSuffix: -${branch_slug}
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: branch-environment
+      homelab.petebeegle.com/branch-slug: ${branch_slug}
+    includeSelectors: false
+patches:
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: homepage
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: homepage
+      spec:
+        template:
+          spec:
+            containers:
+              - name: homepage
+                env:
+                  - name: HOMEPAGE_ALLOWED_HOSTS
+                    value: homepage-${branch_slug}.${cluster_domain}
+  - target:
+      group: gateway.networking.k8s.io
+      version: v1
+      kind: HTTPRoute
+      name: homepage
+    patch: |-
+      - op: replace
+        path: /spec/hostnames/0
+        value: homepage-${branch_slug}.${cluster_domain}
+      - op: remove
+        path: /spec/parentRefs/1
+      # kustomize renames Services but does not follow names inside Gateway API routes.
+      - op: replace
+        path: /spec/rules/0/backendRefs/0/name
+        value: homepage-${branch_slug}

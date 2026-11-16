@@ -165,7 +165,8 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/apps/home-assistant/branch` | `home-assistant.yaml` |
 | `kubernetes/apps/home-assistant` | `namespace.yaml`, `pvc.yaml`, `secret.yaml`, `deployment.yaml`, `service.yaml`, `httproute.yaml` |
 | `kubernetes/apps/homepage/base` | `namespace.yaml`, `rbac.yaml`, `configmap.yaml`, `deployment.yaml`, `service.yaml`, `pdb.yaml`, `httproute.yaml` |
-| `kubernetes/apps/homepage/branch` | `homepage.yaml` |
+| `kubernetes/apps/homepage/branch/app` | `../../development` |
+| `kubernetes/apps/homepage/branch` | `app`, `referencegrant.yaml` |
 | `kubernetes/apps/homepage/development` | `../base` |
 | `kubernetes/apps/homepage` | `base` |
 | `kubernetes/apps/immich/base` | `namespace.yaml`, `pvc.yaml`, `postgres.yaml`, `app.yaml`, `metrics-service.yaml`, `httproute.yaml`, `secret.yaml` |
@@ -179,8 +180,10 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/apps/renovate` | `app.yaml`, `secret.yaml` |
 | `kubernetes/apps/synthetics` | `namespace.yaml`, `cronjob.yaml` |
 | `kubernetes/apps/valheim` | `./app.yaml`, `./secret.yaml` |
-| `kubernetes/apps/whoami/branch` | `whoami.yaml` |
-| `kubernetes/apps/whoami` | `namespace.yaml`, `whoami.yaml` |
+| `kubernetes/apps/whoami/base` | `namespace.yaml`, `whoami.yaml` |
+| `kubernetes/apps/whoami/branch/app` | `../../base` |
+| `kubernetes/apps/whoami/branch` | `app`, `referencegrant.yaml` |
+| `kubernetes/apps/whoami` | `base` |
 
 ## Gateway Routes
 
@@ -197,7 +200,6 @@ This document is generated for agentic repo navigation. It records relationships
 | `HTTPRoute` | `grafana/monitoring` | `monitoring.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `grafana:80` |
 | `HTTPRoute` | `home-assistant-${branch_slug}/home-assistant-${branch_slug}` | `homeassistant-${branch_slug}.${cluster_domain}` | `gateway/internal/https-gateway` | `home-assistant-${branch_slug}:80` |
 | `HTTPRoute` | `home-assistant/home-assistant` | `homeassistant.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `home-assistant:80` |
-| `HTTPRoute` | `homepage-${branch_slug}/homepage-${branch_slug}` | `homepage-${branch_slug}.${cluster_domain}` | `gateway/internal/https-gateway` | `homepage-${branch_slug}:80` |
 | `HTTPRoute` | `homepage/homepage` | `homepage.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `homepage:80` |
 | `HTTPRoute` | `immich/immich` | `immich.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `immich-server:2283` |
 | `HTTPRoute` | `jellyfin-${branch_slug}/jellyfin-${branch_slug}` | `jellyfin-${branch_slug}.${cluster_domain}` | `gateway/internal/https-gateway` | `jellyfin-${branch_slug}-metrics-deny:8096` |
@@ -206,7 +208,6 @@ This document is generated for agentic repo navigation. It records relationships
 | `HTTPRoute` | `nexus-${branch_slug}/nexus-hosted` | `docker-push-${branch_slug}.${cluster_domain}` | `gateway/internal/https-gateway` | `nexus-hosted:8083` |
 | `HTTPRoute` | `otel-collector/otel-collector` | `otel.${cluster_domain}` | `gateway/internal/https-gateway` | `otel-collector-opentelemetry-collector:4318` |
 | `HTTPRoute` | `pihole/pihole-httproute` | `pihole.${cluster_domain}` | `gateway/internal/https-gateway` | `pihole-web:80` |
-| `HTTPRoute` | `whoami-${branch_slug}/whoami-${branch_slug}` | `whoami-${branch_slug}.${cluster_domain}` | `gateway/internal/https-gateway` | `whoami-${branch_slug}:80` |
 | `HTTPRoute` | `whoami/whoami` | `whoami.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `whoami:80` |
 | `HTTPRoute` | `wireguard/wireguard-ui` | `vpn.${cluster_domain}` | `gateway/internal/https-gateway` | `authentik-server:80` |
 | `TLSRoute` | `external/pve01-route` | `pve01.petebeegle.com` | `gateway/passthrough` | `pve01:8006` |
