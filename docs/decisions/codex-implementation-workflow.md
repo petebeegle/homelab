@@ -1,6 +1,6 @@
 ---
 id: ADR-0012
-status: accepted
+status: superseded
 scope:
   - codex-harness
   - implementation-workflow
@@ -10,6 +10,7 @@ created: 2026-05-10
 last_verified: 2026-07-03
 supersedes: []
 superseded_by:
+  - ADR-0016
 ---
 
 # Codex Implementation Workflow

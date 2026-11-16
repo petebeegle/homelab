@@ -10,6 +10,11 @@ This table says, per area, what it is, who actually calls it, and what I recomme
 
 Recommendations are mine. "Decide" means the answer depends on a choice only the owner can make.
 
+> **Decided 2026-11-16.** The owner chose to end the per-PR Spec Kit requirement. The decision is
+> recorded in `docs/decisions/pr-gated-change-workflow.md` (ADR-0016), which supersedes ADR-0007,
+> ADR-0012 and ADR-0013. A second review of this audit found the corrections listed in
+> "Corrections after review" below; where they conflict with the tables, the corrections win.
+
 ## Summary
 
 | Area | Lines | Recommendation |
@@ -59,6 +64,9 @@ not less.
 Evidence columns: **Called by** is what references the area from outside it (CI, pre-commit, hook
 config, other tools, docs). Activity is the date of the last commit touching the area and the number
 of commits in the last 90 days.
+
+Activity measures edits, not use. The hooks and skills run on every Codex session even when nobody
+has edited them for months, so "0 commits" does not mean "unused".
 
 ### `.codex/hooks/` (8 scripts, wired in `.codex/config.toml`)
 
@@ -110,16 +118,43 @@ Not audited in depth, but they belong to the same decision:
 - `specs/` (63 directories, 325 files): history. Archive or delete after the decision; nothing
   executable depends on it except the validators above.
 
+## Corrections after review
+
+A second pass over this audit, checking its claims against the repository, found these.
+
+1. **ADR-0013 forbade the hard gate.** It said the harness "must not add hard gates for TDD or
+   smoke testing until the practice proves stable". Making `dev-smoke` required is such a gate, so
+   the superseding record was needed before that step, not only before the deletions. ADR-0016 now
+   covers it.
+2. **The repository was already outside ADR-0012.** PRs #454 to #476 merged without
+   `specs/<implementation>/` artifacts, on the owner's direction. ADR-0016 makes the written rule
+   match.
+3. **"`dev-smoke` is the evidence" was overstated.** It is true only for apps with a smoke profile
+   (whoami and homepage). Everything else reports "not smoke-tested" and passes. ADR-0016 rule 4
+   therefore keeps a development-validation requirement for those changes, stated in the PR
+   description.
+4. **Missed: a production Grafana dashboard depends on the hooks.**
+   `kubernetes/infra/monitoring/grafana/dashboards/codex-operations-dashboard.json` charts
+   telemetry that `.codex/scripts/codex_observe.py` emits around every hook call. Removing hooks
+   empties the matching panels. Keep `codex_observe.py` wrapping the hooks that stay, and treat
+   removing or trimming the dashboard as its own production change.
+5. **Missed: a required test asserts the workflow guard is wired.**
+   `tools/verification/tests/test_hook_migration.py` checks that
+   `implementation_workflow_guard.sh` is in the hook config. The removal PR must update it.
+6. **Confirmed:** `.codex/memory/` holds only `.gitkeep` and is `tools/agent-memory`'s default
+   root, so that tool is unused (its ADR-0007 is now superseded). Nothing invokes
+   `tools/context-pack` except the stop hook's tests; `README.md` documents `.codex/retrieval.yaml`
+   and needs an edit when it goes. `pre_commit_check.sh` is unwired on purpose.
+
 ## Suggested order, once you decide
 
-1. Write the superseding decision record (ends per-PR Spec Kit evidence; keeps SOPS and Terraform
-   guards; says `dev-smoke` is the evidence).
+1. Decision record ADR-0016 (done with this correction).
 2. Unconditional deletes (flux_reminder, pre_commit_check, stop_self_verify, context-pack and the
-   retrieval manifest check): one PR.
+   retrieval manifest check, agent-memory): one PR.
 3. Move the two operational test files out of `tools/codex-harness`; one PR.
 4. Spec Kit removal (hooks, `.agents`, `.specify`, SDD validators, the pre-push guard, the CI step,
-   runbooks, AGENTS.md sections): one PR, after the decision record merges.
-5. `tools/agent-memory` and `.codex/memory`: one PR.
-6. `specs/`: archive or delete, last.
+   runbooks, AGENTS.md sections, the wiring test): one PR.
+5. `specs/`: archive or delete, last, once no in-flight branch still adds to it.
+6. Making `dev-smoke` required and the Renovate auto-merge rule: GitHub issue #477.
 
 Task 11 (trimming AGENTS.md) overlaps with step 4 and should be done together with it.

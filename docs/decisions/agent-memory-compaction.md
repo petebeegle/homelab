@@ -1,6 +1,6 @@
 ---
 id: ADR-0007
-status: accepted
+status: superseded
 scope:
   - agent-memory
   - context-management
@@ -9,6 +9,7 @@ created: 2026-05-09
 last_verified: 2026-07-03
 supersedes: []
 superseded_by:
+  - ADR-0016
 ---
 
 # Agent Memory And Compaction
