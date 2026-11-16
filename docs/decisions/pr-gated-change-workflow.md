@@ -76,7 +76,8 @@ process artifacts.
 - AGENTS.md, the Spec Kit runbooks, the Spec Kit skills, `.specify/`, the
   implementation-workflow and push guards, and the SDD validators are removed
   or rewritten to match this record.
-- Existing `specs/` directories are history. Nothing may depend on them.
+- The `specs/` directory was removed. Its 325 files remain in git history
+  (last present at commit `a3cb1cc`); nothing may depend on them.
 - PR descriptions carry the validation statement that rule 4 requires.
 - Expanding smoke coverage (more app profiles, branch overlays built from the
   real manifests) is the way to shrink rule 4's manual share.

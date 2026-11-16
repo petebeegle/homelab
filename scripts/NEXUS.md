@@ -15,7 +15,7 @@ existing group endpoint retains its Synology reverse proxy/certificate renewal.
 Group pushes require Nexus PRO; Community publishers must use the hosted endpoint.
 
 Deployment state and exact verification results are recorded in
-`specs/nexus-hosted-registry/evidence.md` and the implementation PR/deploy handoff.
+[NEXUS-deployment-evidence.md](./NEXUS-deployment-evidence.md) and the implementation PR/deploy handoff.
 Always recover existing state and verify the saved plan before applying changes.
 Do not run a fresh apply against an already configured Nexus instance.
 
