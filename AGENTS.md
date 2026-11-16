@@ -7,12 +7,10 @@ Synology NFS, Grafana/Loki/Mimir/Alloy.
 
 ## Start Here
 
-- Use Spec Kit for repository changes. Start with
-  `docs/runbooks/spec-driven-development.md`, follow
-  `docs/runbooks/implementation-workflow.md`, and keep implementation artifacts
-  in `specs/<implementation>/`.
+- Make every change on a branch and merge it through a pull request; never
+  commit to `main`. `docs/runbooks/change-workflow.md` is the procedure and
+  `docs/decisions/pr-gated-change-workflow.md` (ADR-0016) is the rule behind it.
 - Binding architecture and operating decisions live in `docs/decisions/`.
-  SDD artifacts summarize and trace to them; they do not replace them.
 - General operational procedures live in `docs/runbooks/`; Codex-local notes live
   in `.codex/runbooks/`.
 - `docs/architecture.md` is generated. Do not edit it by hand; run
@@ -25,10 +23,13 @@ Synology NFS, Grafana/Loki/Mimir/Alloy.
   Flux reconcile it.
 - Keep live-cluster changes temporary unless a runbook explicitly says
   otherwise. Never make production-first mutations.
-- Validate Kubernetes, Terraform, Flux, Gateway, storage, secret reference, and
-  app behavior changes through the development cluster before production-oriented
-  PR completion, or document the unavailable-infrastructure exception and
-  substitute checks.
+- Prove changes in the development cluster before they reach production. For
+  apps with a smoke profile (`prSmoke: true` in
+  `tools/development/smoke-profiles/`), the `dev-smoke` PR check does this. For
+  every other Kubernetes, Terraform, Flux, Gateway, storage, secret reference, or
+  app behavior change, validate in the development cluster yourself and state in
+  the PR description what you ran and what it showed, or the
+  unavailable-infrastructure exception and the substitute checks.
 - Commit only SOPS-encrypted secret manifests. Kubernetes Secret manifests must
   use repo path names matched by `.sops.yaml`.
 - Use Gateway API with Cilium for ingress. Use `HTTPRoute` or `TLSRoute`, not
@@ -39,38 +40,33 @@ Synology NFS, Grafana/Loki/Mimir/Alloy.
 - Preserve other people's work. Check the working tree before editing and avoid
   unrelated rewrites.
 
-## Implementation Workflow
+## Change Workflow
 
-- Break work into named implementations. One implementation maps to one branch,
-  one `specs/<implementation>/` directory, and one PR.
-- Default tracked repository changes to a dedicated worktree:
-  `/workspaces/homelab-worktrees/<implementation>` on branch
-  `codex/<implementation>`. Use the current checkout only when explicitly
-  requested; sibling clones are an allowed fallback.
-- Treat SDD as a human decision workflow. Humans own intent, constraints, and
-  acceptance; agents draft artifacts and stop for the spec, plan, and
-  task/analysis gates before implementation unless a lightweight exception is
-  recorded.
-- For meaningful work, run the full Spec Kit cycle: specify, clarify, plan,
-  checklist, tasks, analyze, implement, then converge.
-- In `plan.md`, declare SDD tier, workflow risk tier, smoke strategy, fanout
-  targets, and exceptions before implementation edits.
-- In `tasks.md`, mark independent non-conflicting fanout work with `[P]`;
-  consolidate all helper-lane results into one `evidence.md`.
+- One change, one branch, one PR. Default to a dedicated worktree:
+  `/workspaces/homelab-worktrees/<name>` on branch `codex/<name>`. Use the
+  current checkout only when explicitly requested.
+- No per-change process artifacts are required. For work large enough to need a
+  written design or plan, put it under `docs/superpowers/specs/` and
+  `docs/superpowers/plans/`, and get the human's approval of the design before
+  building it.
+- Write a failing test before the code wherever the change has testable
+  behavior. Before pushing, run
+  `python3 tools/verification/verify.py --profile harness` and pre-commit.
+- Required PR checks gate the merge. `dev-smoke` deploys and tests changes to
+  smoke-profiled apps in the development cluster; for anything it reports as
+  "not smoke-tested", the PR description carries your validation statement.
+- To smoke-test by hand:
+  `python3 tools/development/verify_branch_deploy.py --app <app> --branch <branch> --slug <slug>`
+  (add `--browser` for apps with a browser check).
 - Before worktree or clone commands that need ignored local secret/config files,
-  stage them under
-  `.codex/tmp/implementation-secrets/<implementation>/` in the main checkout
-  without logging secret contents; install staged files into the same
+  stage them under `.codex/tmp/implementation-secrets/<name>/` in the main
+  checkout without logging secret contents; install staged files into the same
   repo-relative paths in worktrees or clones before commands that need them.
-- Runtime scratch files stay under `.codex/tmp/` and are not committed. Durable
-  requirements, plans, tasks, and evidence stay under `specs/<implementation>/`.
+- Runtime scratch files stay under `.codex/tmp/` and are not committed.
 - Prefer automated smoke for user-facing, routed, deployed, or operational
   changes. Do not call such work done from render checks, pod readiness, Service
   probes, or route `Accepted=True` alone; verify the exact user path or record
   the unverified layer.
-- Push and PR automation require matching non-empty Spec Kit artifacts,
-  including `evidence.md`; normal GitHub PR review and status checks provide
-  review gating.
 
 ## Tool Routing
 
@@ -100,6 +96,8 @@ Synology NFS, Grafana/Loki/Mimir/Alloy.
   passthrough uses `gateway/external-passthrough`.
 - Synology CSI runs in namespace `dataplane` and must be healthy before
   PVC-backed workloads can schedule.
+- Branch environments for smoke-tested apps are kustomize overlays on the real
+  manifests (`kubernetes/apps/<app>/branch/`). Do not copy manifests into them.
 
 ## Useful Fallback Commands
 

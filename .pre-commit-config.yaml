@@ -41,13 +41,6 @@ repos:
           - test
   - repo: local
     hooks:
-      - id: spec-kit-push-guard
-        name: Require Spec Kit evidence before origin push
-        entry: .codex/hooks/verifier_push_guard.sh
-        language: system
-        stages: [pre-push]
-        pass_filenames: false
-        always_run: true
       - id: architecture-doc
         name: Check generated architecture document
         entry: python3 tools/architecture/render.py --check
