@@ -1,0 +1,29 @@
+name: dev-heartbeat
+
+# The development cluster has no monitoring stack, so this is its alert: it runs on a
+# GitHub-hosted runner (so it still runs when the dev runner is dead) and fails, which
+# makes GitHub email the repo owner, when dev-cleanup has not succeeded in two hours.
+on:
+  schedule:
+    - cron: '7 * * * *'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  heartbeat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Check that dev-cleanup is still succeeding
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "repos/${{ github.repository }}/actions/workflows/dev-cleanup.yml/runs?status=success&per_page=5" \
+            | python3 tools/development/dev_heartbeat.py --max-age-seconds 7200

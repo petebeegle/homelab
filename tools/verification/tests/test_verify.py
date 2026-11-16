@@ -33,6 +33,8 @@ class VerificationContractTests(unittest.TestCase):
         self.assertTrue(any("-p test_runner_image.py" in c for c in flat))
         self.assertTrue(any("-p test_dev_smoke_workflow.py" in c for c in flat))
         self.assertTrue(any("-p test_branch_overlay_images.py" in c for c in flat))
+        self.assertTrue(any("-p test_dev_heartbeat.py" in c for c in flat))
+        self.assertTrue(any("-p test_dev_heartbeat_workflows.py" in c for c in flat))
         self.assertFalse(any("tools/development/runner" in c for c in flat))
 
 

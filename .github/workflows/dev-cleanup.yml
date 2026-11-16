@@ -1,0 +1,38 @@
+name: dev-cleanup
+
+# Removes PR smoke environments that outlived their run (a cancelled or crashed job).
+# It also doubles as a liveness probe: it can only succeed when the dev runner pod can
+# start and reach the dev cluster, and dev-heartbeat alerts when it stops succeeding.
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dev-cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: homelab-dev
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Write a kubeconfig from the pod's service account
+        run: |
+          set -euo pipefail
+          sa=/var/run/secrets/kubernetes.io/serviceaccount
+          kc="${RUNNER_TEMP}/kubeconfig"
+          kubectl config set-cluster dev --server=https://kubernetes.default.svc --certificate-authority="${sa}/ca.crt" --embed-certs=true --kubeconfig="${kc}"
+          kubectl config set-credentials runner --token="$(cat "${sa}/token")" --kubeconfig="${kc}"
+          kubectl config set-context dev --cluster=dev --user=runner --kubeconfig="${kc}"
+          kubectl config use-context dev --kubeconfig="${kc}"
+          chmod 600 "${kc}"
+          echo "KUBECONFIG=${kc}" >> "${GITHUB_ENV}"
+      - name: Remove stale PR environments
+        run: python3 tools/development/cleanup_pr_envs.py --kubeconfig "${KUBECONFIG}" --older-than 3h
