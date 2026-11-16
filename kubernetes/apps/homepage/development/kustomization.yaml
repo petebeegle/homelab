@@ -21,7 +21,7 @@ patches:
               - Homepage:
                   icon: homepage.png
                   href: https://homepage.lab.petebeegle.com
-                  description: Homelab dashboard
+                  description: Homelab dashboard (overlay proof)
               - Authentik:
                   icon: authentik.png
                   href: https://authentik.lab.petebeegle.com
