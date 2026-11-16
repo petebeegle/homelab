@@ -20,6 +20,6 @@ jobs:
       - name: Playwright launches Chromium
         working-directory: tests/browser
         run: |
-          npm ci
+          npm install --no-audit --no-fund
           npx --no-install playwright --version
           node -e "const {chromium}=require('@playwright/test');(async()=>{const b=await chromium.launch();const p=await b.newPage();await p.setContent('<h1>ok</h1>');console.log(await p.textContent('h1'));await b.close();})()"
