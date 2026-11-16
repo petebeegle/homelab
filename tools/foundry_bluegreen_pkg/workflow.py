@@ -91,8 +91,27 @@ spec:
         },
     )
     print("dev-rehearse succeeded; production commands are now unblocked for this tool/config version")
-    # The fixture is not a standing deployment: remove it, and its two NFS volumes, when done.
+    # The fixture is not a standing deployment: remove it when done. The storage and snapshot
+    # classes use Retain, so the cluster objects for the volumes are deleted by name afterwards.
+    volumes = runner.run(
+        [*kubectl, "-n", namespace, "get", "pvc", "-o", "jsonpath={.items[*].spec.volumeName}"]
+    ).stdout.split()
+    snapshot_contents = runner.run(
+        [
+            *kubectl,
+            "-n",
+            namespace,
+            "get",
+            "volumesnapshot",
+            "-o",
+            "jsonpath={.items[*].status.boundVolumeSnapshotContentName}",
+        ]
+    ).stdout.split()
     runner.run([*kubectl, "delete", f"namespace/{namespace}", "--ignore-not-found", "--wait", "--timeout=180s"])
+    if volumes:
+        runner.run([*kubectl, "delete", "pv", *volumes, "--ignore-not-found"])
+    if snapshot_contents:
+        runner.run([*kubectl, "delete", "volumesnapshotcontent", *snapshot_contents, "--ignore-not-found"])
     return 0
 
 

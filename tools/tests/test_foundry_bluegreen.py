@@ -26,7 +26,13 @@ class FakeRunner:
 
     def run(self, args, *, input_text=None):
         self.calls.append((list(args), input_text))
-        return foundry_bluegreen.CommandResult(args=args)
+        command = " ".join(args)
+        stdout = ""
+        if "get pvc" in command:
+            stdout = "pvc-blue pvc-green"
+        elif "get volumesnapshot" in command:
+            stdout = "snapcontent-1"
+        return foundry_bluegreen.CommandResult(args=args, stdout=stdout)
 
 
 class FoundryBlueGreenTests(unittest.TestCase):
@@ -220,9 +226,17 @@ resources:
         )
 
         commands = [" ".join(call[0]) for call in runner.calls]
-        self.assertIn("delete namespace/foundry-bluegreen-fixture", commands[-1])
-        self.assertIn("--wait", commands[-1])
-        self.assertIn(str(foundry_bluegreen.DEV_KUBECONFIG), commands[-1])
+        namespace_delete = next(i for i, c in enumerate(commands) if "delete namespace/foundry-bluegreen-fixture" in c)
+        self.assertIn("--wait", commands[namespace_delete])
+        self.assertIn(str(foundry_bluegreen.DEV_KUBECONFIG), commands[namespace_delete])
+        # The storage classes use reclaimPolicy Retain, so the volumes and the snapshot content
+        # outlive the namespace unless they are deleted by name. Names are read before it goes.
+        lookups = [i for i, c in enumerate(commands) if "get pvc" in c or "get volumesnapshot" in c]
+        self.assertEqual(len(lookups), 2)
+        self.assertLess(max(lookups), namespace_delete)
+        after = commands[namespace_delete + 1 :]
+        self.assertTrue(any("delete pv pvc-blue pvc-green" in c for c in after), after)
+        self.assertTrue(any("delete volumesnapshotcontent snapcontent-1" in c for c in after), after)
 
     def test_no_standing_fixture_deployment_in_development(self) -> None:
         repo = Path(__file__).resolve().parents[2]
