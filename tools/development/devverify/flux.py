@@ -18,6 +18,7 @@ from .profiles import render_profile_value
 
 
 CI_BASE_KUSTOMIZATIONS = ("flux-system", "gateway")
+CI_BASE_READY_TIMEOUT = "300s"
 
 
 def assert_dev_base_ready(config: AppConfig, *, runner: Runner) -> None:
@@ -47,8 +48,26 @@ def assert_dev_base_ready(config: AppConfig, *, runner: Runner) -> None:
         if any(c.get("type") == "Ready" and c.get("status") == "True" for c in item.get("status", {}).get("conditions", []))
     }
     unhealthy = [name for name in CI_BASE_KUSTOMIZATIONS if name not in ready]
-    if unhealthy:
-        raise VerificationError(f"development base is not healthy: {', '.join(unhealthy)}")
+    if not unhealthy:
+        return
+    # Each merge to main makes Flux re-reconcile the base for a while, so give it time to settle
+    # before calling it unhealthy. A missing object makes `kubectl wait` fail at once.
+    try:
+        run_command(
+            kubectl(
+                config,
+                "-n",
+                FLUX_NAMESPACE,
+                "wait",
+                "--for=condition=Ready",
+                f"--timeout={CI_BASE_READY_TIMEOUT}",
+                *(f"kustomization.kustomize.toolkit.fluxcd.io/{name}" for name in unhealthy),
+            ),
+            runner=runner,
+            timeout=config.timeout,
+        )
+    except VerificationError as exc:
+        raise VerificationError(f"development base is not healthy: {', '.join(unhealthy)}") from exc
 
 
 def flux(config: AppConfig, *args: str) -> list[str]:
