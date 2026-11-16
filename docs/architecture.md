@@ -17,8 +17,8 @@ This document is generated for agentic repo navigation. It records relationships
 
 - Root Kustomization: `kubernetes/clusters/development/kustomization.yaml`.
 - Root resources: `flux-system`, `cluster-vars.yaml`, `infra`, `apps`.
-- Infra activation list: `crds.yaml`, `onepassword-operator.yaml`, `cert-manager.yaml`, `local-path-provisioner.yaml`, `cloudnative-pg.yaml`, `intel-device-plugins-operator.yaml`, `intel-gpu-device-plugin.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `metrics-server.yaml`, `certs.yaml`, `gateway.yaml`.
-- App activation list: `whoami.yaml`, `homepage.yaml`, `foundry-bluegreen-fixture.yaml`.
+- Infra activation list: `crds.yaml`, `onepassword-operator.yaml`, `cert-manager.yaml`, `local-path-provisioner.yaml`, `cloudnative-pg.yaml`, `intel-device-plugins-operator.yaml`, `intel-gpu-device-plugin.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `metrics-server.yaml`, `arc.yaml`, `certs.yaml`, `gateway.yaml`.
+- App activation list: `whoami.yaml`, `homepage.yaml`, `foundry-bluegreen-fixture.yaml`, `dev-runner.yaml`.
 
 - Branch environment templates: `whoami-template.yaml`, `jellyfin-template.yaml`, `homepage-template.yaml`, `home-assistant-template.yaml`, `immich-template.yaml`, `nexus-template.yaml`.
 
@@ -80,6 +80,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `production` | `onepassword-operator` | `./kubernetes/infra/controllers/onepassword-operator` | `crds` | `(none)` | `no` |
 | `production` | `otel-collector` | `./kubernetes/infra/monitoring/otel-collector` | `crds`, `gateway` | `cluster-vars` | `no` |
 | `production` | `vpn` | `./kubernetes/infra/network/vpn` | `cilium`, `nfs-csi`, `gateway`, `authentik` | `cluster-vars` | `sops` |
+| `development` | `arc` | `./kubernetes/infra/controllers/arc` | `crds`, `cilium` | `(none)` | `no` |
 | `development` | `cert-manager` | `./kubernetes/infra/controllers/cert-manager-development` | `crds` | `cluster-vars` | `sops` |
 | `development` | `certs` | `./kubernetes/infra/network/certs-development` | `cert-manager`, `cilium` | `cluster-vars` | `no` |
 | `development` | `cilium` | `./kubernetes/infra/network/cilium` | `crds` | `cluster-vars` | `no` |
@@ -112,6 +113,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `production` | `app-synthetics` | `./kubernetes/apps/synthetics` | `gateway`, `grafana`, `authentik`, `vpn`, `app-whoami`, `app-homepage`, `app-jellyfin`, `app-immich`, `app-home-assistant`, `app-pihole`, `app-foundryvtt` | `cluster-vars` | `no` |
 | `production` | `app-valheim` | `./kubernetes/apps/valheim` | `gateway`, `nfs-csi` | `cluster-vars` | `sops` |
 | `production` | `app-whoami` | `./kubernetes/apps/whoami` | `gateway` | `cluster-vars` | `no` |
+| `development` | `app-dev-runner` | `./kubernetes/apps/dev-runner` | `arc`, `onepassword-operator` | `(none)` | `no` |
 | `development` | `app-foundry-bluegreen-fixture` | `./kubernetes/apps/foundry-bluegreen-fixture` | `gateway`, `nfs-csi` | `cluster-vars` | `no` |
 | `development` | `app-homepage` | `./kubernetes/apps/homepage/development` | `gateway`, `metrics-server` | `cluster-vars` | `no` |
 | `development` | `app-whoami` | `./kubernetes/apps/whoami` | `gateway` | `cluster-vars` | `no` |
@@ -121,6 +123,7 @@ This document is generated for agentic repo navigation. It records relationships
 | Component path | Listed resources |
 | --- | --- |
 | `kubernetes/infra/authentik` | `namespace.yaml`, `app.yaml`, `secret.yaml`, `httproute.yaml`, `referencegrant.yaml`, `blueprints` |
+| `kubernetes/infra/controllers/arc` | `namespace.yaml`, `app.yaml` |
 | `kubernetes/infra/controllers/cert-manager` | `app.yaml`, `secret.yaml` |
 | `kubernetes/infra/controllers/cert-manager-development` | `../cert-manager`, `onepassword-item.yaml` |
 | `kubernetes/infra/controllers/cloudnative-pg` | `namespace.yaml`, `app.yaml` |
@@ -155,6 +158,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/infra/network/vpn` | `./namespace.yaml`, `./global-config.yaml`, `./secret.yaml`, `./pvc.yaml`, `./deployment.yaml`, `./service.yaml`, `./vpn-dns.yaml`, `./httproute.yaml` |
 | `kubernetes/apps/access-broker` | `namespace.yaml`, `configmap.yaml`, `secret.yaml`, `pvc.yaml`, `deployment.yaml`, `service.yaml`, `httproute.yaml` |
 | `kubernetes/apps/cloudflare-tunnels` | `namespace.yaml`, `secret.yaml`, `deployment.yaml`, `podmonitor.yaml` |
+| `kubernetes/apps/dev-runner` | `namespace.yaml`, `onepassword-item.yaml`, `rbac.yaml`, `app.yaml` |
 | `kubernetes/apps/external` | `namespace.yaml`, `synology.yaml`, `nexus-registry.yaml` |
 | `kubernetes/apps/foundry-bluegreen-fixture` | `namespace.yaml`, `pvc-blue.yaml`, `pvc-green.yaml`, `deployment-blue.yaml`, `deployment-green.yaml`, `service-blue.yaml`, `service-green.yaml`, `httproute-green-preview.yaml` |
 | `kubernetes/apps/foundryvtt` | `namespace.yaml`, `pvc.yaml`, `secret.yaml`, `deployment.yaml`, `service.yaml`, `httproute.yaml`, `httproute-public.yaml` |

@@ -5,3 +5,4 @@ resources:
   - whoami.yaml
   - homepage.yaml
   - foundry-bluegreen-fixture.yaml
+  - dev-runner.yaml
