@@ -18,6 +18,9 @@ spec:
         - name: whoami
           image: traefik/whoami:v1.11.0
           imagePullPolicy: IfNotPresent
+          env:
+            - name: WHOAMI_NAME
+              value: overlay-proof
           ports:
             - containerPort: 80
               name: http
