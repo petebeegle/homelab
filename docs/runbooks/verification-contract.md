@@ -21,7 +21,7 @@ This is deliberately **not** a full browser or development-cluster check. The ex
 
 ## Hook migration
 
-Keep `.codex/hooks/sops_guard.sh`, Terraform safety checks, and implementation-workflow branch guards as immediate agent-side safety protections. The expensive `.codex/hooks/pre_commit_check.sh` PostToolUse invocation was removed after verifying the independent CI pre-commit job. The wrapper script remains available for optional targeted local checks. Run `pre-commit run --files <changed paths>` for fast local feedback, or `pre-commit run --all-files` for full parity with the authoritative CI pre-commit job. CI runs `pre-commit run --all-files` on PRs and pushes to main.
+Keep `.codex/hooks/sops_guard.sh` and the Terraform plan guard as immediate agent-side safety protections. The implementation-workflow branch guards were removed with the Spec Kit layer (ADR-0016); branch protection on `main` and the required PR checks replace them. The expensive `.codex/hooks/pre_commit_check.sh` PostToolUse invocation was removed after verifying the independent CI pre-commit job. The wrapper script remains available for optional targeted local checks. Run `pre-commit run --files <changed paths>` for fast local feedback, or `pre-commit run --all-files` for full parity with the authoritative CI pre-commit job. CI runs `pre-commit run --all-files` on PRs and pushes to main.
 
 Next migration: expose more existing validators through named, stable profiles; remove only redundant post-tool validation (not safety guards) once CI equivalence is proven. Require the verification job via repository branch protection after observing a passing run. A successful workflow alone does not configure branch protection.
 

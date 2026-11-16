@@ -1,14 +1,6 @@
 [features]
 hooks = true
 
-[[hooks.UserPromptSubmit]]
-
-[[hooks.UserPromptSubmit.hooks]]
-type = "command"
-command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase user_prompt_submit --hook repo_change_intent --session-start -- \"$root/.codex/hooks/user_prompt_submit.sh\"'"
-timeout = 10
-statusMessage = "Checking repository change intent"
-
 [mcp_servers.kubernetes]
 command = "npx"
 args = ["-y", "kubernetes-mcp-server@latest"]
@@ -34,12 +26,6 @@ matcher = "^Bash$"
 
 [[hooks.PreToolUse.hooks]]
 type = "command"
-command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase pre_tool --hook implementation_workflow_record -- \"$root/.codex/hooks/implementation_workflow_guard.sh\" --record'"
-timeout = 10
-statusMessage = "Recording implementation workflow state"
-
-[[hooks.PreToolUse.hooks]]
-type = "command"
 command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase pre_tool --hook sops_guard -- \"$root/.codex/hooks/sops_guard.sh\"'"
 timeout = 30
 statusMessage = "Checking SOPS safety"
@@ -50,46 +36,11 @@ command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$ro
 timeout = 120
 statusMessage = "Checking Terraform apply safety"
 
-[[hooks.PreToolUse.hooks]]
-type = "command"
-command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase pre_tool --hook implementation_workflow_preflight_bash -- \"$root/.codex/hooks/implementation_workflow_guard.sh\" --preflight-bash'"
-timeout = 30
-statusMessage = "Checking implementation workflow for mutating commands"
-
-[[hooks.PreToolUse]]
-matcher = "^(apply_patch|Edit|MultiEdit|Write)$"
-
-[[hooks.PreToolUse.hooks]]
-type = "command"
-command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase pre_tool --hook implementation_workflow_record -- \"$root/.codex/hooks/implementation_workflow_guard.sh\" --record'"
-timeout = 10
-statusMessage = "Recording implementation workflow state"
-
-[[hooks.PreToolUse.hooks]]
-type = "command"
-command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase pre_tool --hook implementation_workflow_preflight_mutation -- \"$root/.codex/hooks/implementation_workflow_guard.sh\" --preflight-mutation'"
-timeout = 30
-statusMessage = "Checking implementation workflow before editing"
-
 [[hooks.PostToolUse]]
 matcher = "^(Bash|apply_patch|Edit|MultiEdit|Write)$"
-
-[[hooks.PostToolUse.hooks]]
-type = "command"
-command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase post_tool --hook implementation_workflow_guard -- \"$root/.codex/hooks/implementation_workflow_guard.sh\"'"
-timeout = 30
-statusMessage = "Checking implementation workflow"
 
 [[hooks.PostToolUse.hooks]]
 type = "command"
 command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase post_tool --hook sops_guard -- \"$root/.codex/hooks/sops_guard.sh\"'"
 timeout = 60
 statusMessage = "Checking secret files"
-
-[[hooks.Stop]]
-
-[[hooks.Stop.hooks]]
-type = "command"
-command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase stop --hook create_implementation_pr --session-end -- \"$root/.codex/scripts/create_implementation_pr.sh\" --auto'"
-timeout = 300
-statusMessage = "Creating implementation PR"
