@@ -182,8 +182,33 @@ Preconditions: Task 7's five proofs recorded; Task 8 verified; at least a week o
 - [ ] **Step 1:** For each of `.codex/hooks/*`, `.agents`, `.specify`, `tools/codex-harness`, `tools/context-pack`, `tools/agent-memory`, `tools/foundry_bluegreen_pkg`, `tools/nexus`, `tools/vpn`, `tools/onepassword`: read it, `git grep` for references, and record in a table: purpose, who calls it, keep/delete/decide, evidence. Keep the SOPS guard.
 - [ ] **Step 2:** Commit and hand the table to the owner; deletions are separate PRs after the owner decides.
 
+### Task 13: Branch overlays built from the real manifests (whoami, homepage)
+
+**Why:** the PR smoke deploys `kubernetes/apps/<app>/branch/`, and today that is a hand-kept copy of the app's manifests (whoami: a 96-line copy that already differs from `whoami.yaml` in labels, selector and replicas; homepage: a 417-line copy of `base/` plus the development patches). A PR that edits only the real manifest is "smoke-tested" against a different file. `test_branch_overlay_images.py` (#468) catches a one-sided image change only; replicas, env, probes, resources and config can still drift. Found by proof (d) of Task 7.
+
+**Files:** modify `kubernetes/apps/whoami/branch/kustomization.yaml` and `kubernetes/apps/homepage/branch/kustomization.yaml` (overlays on the real manifests: `../` for whoami, `../development` for homepage); delete `kubernetes/apps/whoami/branch/whoami.yaml` and `kubernetes/apps/homepage/branch/homepage.yaml`; create `tools/development/tests/test_branch_overlay_render.py`; update `kubernetes/clusters/development/branches/README.md`; register the test in `tools/verification/verify.py` and `tools/verification/tests/test_verify.py`.
+
+**What the overlay must do** (this is the whole change; the app manifests do not change):
+- rename the Namespace and namespaced objects to `<app>-${branch_slug}`;
+- set replicas to 1 and rewrite the HTTPRoute hostname to `<app>-${branch_slug}.${cluster_domain}` and its `parentRefs` sections to the dev gateway listeners;
+- drop anything a branch environment must not own (production-only routes, PDBs that block deletion, secrets);
+- leave every container spec (image, env, probes, resources, security context, volumes, config) exactly as the real manifest has it.
+
+**Interfaces:** Consumes: the smoke profiles' `checks` (`kustomizations`, `services`, `httpRoutes`, `namespace`) and the `branch_slug` and `cluster_domain` substitutions Flux provides. Produces: the same object names the profiles check today, so the verifier and the browser spec need no change.
+
+- [ ] **Step 1: Failing test.** `test_branch_overlay_render.py` renders each smoke-tested app's branch directory with `kubectl kustomize` and substitutes `branch_slug=example`, `cluster_domain=dev.lab.petebeegle.com` (stdlib only; skip with a clear message if `kubectl` is absent, but CI has it). Assertions: (a) the rendered objects include every name the app's profile `checks` list; (b) for each Deployment, the rendered container specs equal the real manifest's container specs (parse both renders; compare `spec.template.spec.containers` and `initContainers`); (c) the branch `kustomization.yaml` has a `resources:` entry that points at the real manifest directory, so a copy cannot be reintroduced. Run it: expect FAIL on (b) and (c) for both apps today.
+- [ ] **Step 2: Whoami.** Replace `branch/whoami.yaml` with an overlay that satisfies Step 1. Prove the old and new renders are equivalent apart from labels and the intended deltas: save the old render before deleting (`kubectl kustomize ... > old.yaml`), diff, and read every difference. Run the test: expect PASS for whoami.
+- [ ] **Step 3: Homepage.** Same for homepage. Its development overlay already carries the patches the old copy had baked in; start from `../development` and add only the branch renames and hostname.
+- [ ] **Step 4: Retire the stopgap.** `test_branch_overlay_images.py` becomes redundant once (b) holds; delete it and its profile entry in the same PR, or keep it if the PR reviewer prefers belt and braces (record the choice as a ruling).
+- [ ] **Step 5: Prove on real PRs**, recording each in the PR description: (a) a PR that edits only the real `whoami.yaml` (replicas or an env var, not only the image) now exercises the change and passes; (b) a PR that deliberately breaks only the real `whoami.yaml` now FAILS `dev-smoke` and cleans up (this is the case that falsely passed in Task 7); (c) the same two for homepage.
+- [ ] **Step 6:** Update the README's local-verification section, run the harness and pre-commit, commit.
+
+**Sequencing:** do this before the Renovate auto-merge rule (Task 10) if possible. If it slips, Task 10 stays safe because Renovate only bumps image tags and the image-drift test covers that; the auto-merge rule must then stay limited to image-tag bumps. **Out of scope:** `home-assistant`, `immich`, `jellyfin` also keep branch copies, but none has `prSmoke: true`; convert each before turning that flag on.
+
 ---
 
 ## Self-review notes
 
 Spec coverage: pods (6), image (5), workflow incl. same-repo/no-path-filter/classify/aggregate (7), slug (7), Renovate auto-merge (10), stale cleanup (4, 8), fork guard (0), health instead of Grafana alert (8, deviation noted), cleanup (1), audit (12), AGENTS.md (11), rollout order and gating (9 before 10). Not in this plan by design: promotion, other apps, network policy, second App.
+
+Known gap, closed by Task 13: the smoke deploys a copy of each app's manifests, so non-image edits to the real manifest are not exercised until the copy is replaced by an overlay on the real files. Until then #468's image test is the only guard.
