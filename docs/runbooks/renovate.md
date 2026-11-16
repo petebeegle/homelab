@@ -31,3 +31,21 @@ The self-hosted Renovate app allows only this exact command for Terraform docs
 regeneration. The script uses an existing `terraform-docs` only when it is
 v0.23.0; otherwise it downloads the pinned linux-amd64 release into a temporary
 directory and removes it before exiting.
+
+## Run It By Hand
+
+Renovate runs as a CronJob in the `renovate` namespace. To trigger a run now:
+
+```sh
+kubectl create job --from=cronjob.batch/renovate renovate-manual-run -n renovate
+```
+
+Delete the job afterwards. For a local dry run with a token:
+
+```sh
+docker run --rm \
+  -e LOG_LEVEL="debug" \
+  -e RENOVATE_CONFIG="$(cat renovate.json)" \
+  renovate/renovate:<version> \
+  --token "$TOKEN" --dry-run="true" petebeegle/homelab
+```
