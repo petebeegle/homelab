@@ -11,7 +11,7 @@ import unittest
 from pathlib import Path
 
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 HOOK_PATH = REPO_ROOT / ".codex" / "hooks" / "terraform_plan.sh"
 
 

@@ -9,7 +9,7 @@ import unittest
 from pathlib import Path
 
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT_SOURCE = REPO_ROOT / ".codex" / "scripts" / "prepare_development_smoke_secrets.sh"
 STAGE_SOURCE = REPO_ROOT / ".codex" / "scripts" / "stage_implementation_secrets.sh"
 INSTALL_SOURCE = REPO_ROOT / ".codex" / "scripts" / "install_implementation_secrets.sh"
