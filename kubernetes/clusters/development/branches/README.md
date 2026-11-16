@@ -4,6 +4,8 @@ This directory is a template library, not part of the live development cluster e
 
 The manifests here are cluster-layer activation templates: they create a branch-specific Flux `GitRepository` and `Kustomization` that point the development cluster at a Git branch. The app payload they activate lives under app directories such as `kubernetes/apps/whoami/branch/`, where resource names, namespaces, and hostnames are parameterized with `${branch_slug}`.
 
+For apps that the PR smoke test covers (`prSmoke: true` in their smoke profile: `whoami` and `homepage`), that `branch/` directory is a kustomize overlay on the real manifests, not a copy: `branch/app/kustomization.yaml` renames and re-hosts what the app already deploys (`../../base` for whoami, `../../development` for homepage). Change the real manifests and the branch environment picks the change up. `tools/development/tests/test_branch_overlay_render.py` enforces this (no workload manifests under `branch/`, container specs equal the real ones). The remaining apps (`home-assistant`, `immich`, `jellyfin`) still keep hand-written copies; convert each before turning `prSmoke` on for it.
+
 To test an app branch, copy the relevant template into `kubernetes/clusters/development/apps/branches/` or another reviewed cluster-layer path, replace `branch_name` and `branch_slug`, set `spec.suspend: false`, and commit the activation. Branch app hostnames should follow `<app>-${branch_slug}.dev.lab.petebeegle.com`.
 
 ## Local Verification

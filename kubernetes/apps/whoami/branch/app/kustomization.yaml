@@ -1,0 +1,33 @@
+---
+# The real whoami manifests (../../base), renamed for one branch environment. Nothing here
+# copies the app: change kubernetes/apps/whoami/ and the PR smoke test exercises it.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+namespace: whoami-${branch_slug}
+nameSuffix: -${branch_slug}
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: branch-environment
+      homelab.petebeegle.com/branch-slug: ${branch_slug}
+    includeSelectors: false
+replicas:
+  - name: whoami
+    count: 1
+patches:
+  - target:
+      group: gateway.networking.k8s.io
+      version: v1
+      kind: HTTPRoute
+      name: whoami
+    patch: |-
+      - op: replace
+        path: /spec/hostnames/0
+        value: whoami-${branch_slug}.${cluster_domain}
+      - op: remove
+        path: /spec/parentRefs/1
+      # kustomize renames Services but does not follow names inside Gateway API routes.
+      - op: replace
+        path: /spec/rules/0/backendRefs/0/name
+        value: whoami-${branch_slug}
