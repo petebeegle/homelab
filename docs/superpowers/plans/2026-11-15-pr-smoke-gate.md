@@ -153,20 +153,11 @@ Jobs: `classify` (`ubuntu-latest`; `gh api --paginate repos/${{ github.repositor
 
 ### Task 9: Make `dev-smoke` required
 
-Preconditions: Task 7's five proofs recorded; Task 8 verified; at least a week of stable runs.
-
-- [ ] **Step 1:** Update the ruleset: add `{ "context": "dev-smoke", "integration_id": 15368 }` to `required_status_checks` in `.github/rulesets/main-required-checks.json` and apply with `gh api -X PUT repos/petebeegle/homelab/rulesets/27289884 --input .github/rulesets/main-required-checks.json`.
-- [ ] **Step 2:** Verify: the API shows three required checks; an open PR that has `dev-smoke` green still shows mergeable; update `docs/runbooks/main-branch-protection.md`.
+Moved to GitHub issue #477 (section 1). It waits for about a week of stable runs.
 
 ### Task 10: Renovate auto-merge for whoami and homepage
 
-**Files:** modify `renovate.json`; test `tools/development/tests/test_renovate_automerge.py`.
-
-**Do this only after Task 9** (before it, automerge would merge on `Pre-commit` and the harness alone).
-
-- [ ] **Step 1:** Test `test_automerge_apps_match_pr_smoke_profiles`: the app names in the automerge `packageRules` `matchFileNames` equal the set of profiles with `prSmoke: true`; `test_automerge_excludes_major_updates`.
-- [ ] **Step 2:** Run; expect FAIL. **Step 3:** Add one package rule: `matchFileNames` for `kubernetes/apps/whoami/**` and `kubernetes/apps/homepage/**`, `matchUpdateTypes: ["minor","patch","digest","pin"]`, `automerge: true`. **Step 4:** Run; expect pass; validate with `npx --yes --package renovate renovate-config-validator renovate.json` if available.
-- [ ] **Step 5:** Verify on the next real Renovate PR for whoami or homepage: `dev-smoke` runs, then the PR merges by itself, and the push CI runs on `main`. If the merge does not trigger CI on `main`, record it and decide with the owner.
+Moved to GitHub issue #477 (section 2). Only after Task 9.
 
 ### Task 11: Trim the agent instructions
 

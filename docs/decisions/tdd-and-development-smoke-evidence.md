@@ -1,6 +1,6 @@
 ---
 id: ADR-0013
-status: accepted
+status: superseded
 scope:
   - codex-harness
   - implementation-workflow
@@ -11,6 +11,7 @@ created: 2026-05-16
 last_verified: 2026-05-16
 supersedes: []
 superseded_by:
+  - ADR-0016
 ---
 
 # TDD And Development Smoke Evidence
