@@ -15,14 +15,6 @@ SCRATCHPAD.md
 settings.local.json
 
 # Codex local memory and transient agent artifacts
-.codex/memory/candidates/*
-!.codex/memory/candidates/.gitkeep
-.codex/memory/checkpoints/*
-!.codex/memory/checkpoints/.gitkeep
-.codex/memory/rejected/*
-!.codex/memory/rejected/.gitkeep
-.codex/memory/reports/*
-!.codex/memory/reports/.gitkeep
 .codex/logs/
 .codex/tmp/
 
