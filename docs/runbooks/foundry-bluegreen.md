@@ -34,7 +34,7 @@ python3 tools/foundry_bluegreen.py status
 python3 tools/foundry_bluegreen.py dev-rehearse
 ```
 
-The rehearsal applies the safe fixture to development, waits for blue and green HTTP workloads, scales blue to zero, creates `VolumeSnapshot/foundry-fixture-blue-rehearsal` with `VolumeSnapshotClass/nfs-csi-snapshot`, waits for readiness, scales blue back to one replica, and then deletes the fixture namespace along with its two NFS volumes.
+The rehearsal applies the safe fixture to development, waits for blue and green HTTP workloads, scales blue to zero, creates `VolumeSnapshot/foundry-fixture-blue-rehearsal` with `VolumeSnapshotClass/nfs-csi-snapshot`, waits for readiness, scales blue back to one replica, and then deletes the fixture namespace, its two PersistentVolumes and the snapshot content. The storage and snapshot classes use `Retain`, so the small fixture folders stay on the NAS; remove them there if they pile up.
 
 If development access is unavailable, do not run production commands. Record the blocker in the PR summary and rerun rehearsal when access returns.
 
