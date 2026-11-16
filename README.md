@@ -1,5 +1,7 @@
 # Homelab
 
+For how the pieces fit together, with diagrams and a runbook index, start at [docs/overview.md](./docs/overview.md).
+
 ## Prerequisites
 1. A user provisioned in proxmox
 2. An api token provisioned in proxmox

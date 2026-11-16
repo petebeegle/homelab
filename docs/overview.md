@@ -1,0 +1,208 @@
+# Overview
+
+What this repo is, how the pieces fit, and where to look for a given task.
+This page is written by hand. For the generated inventory of every Flux
+Kustomization, HelmRelease, route and Terraform resource, see
+[architecture.md](./architecture.md).
+
+## The short version
+
+This repo is the single source of truth for two Kubernetes clusters that run on
+Proxmox VMs with Talos OS. Terraform builds the VMs and bootstraps Talos and
+Flux. From then on, Flux applies whatever is on `main`.
+
+- **Production** runs the apps and a full monitoring stack.
+- **Development** is one node. It runs a handful of apps and exists to test
+  changes before they merge. Pull requests are deployed into it by CI.
+
+| Directory | What it holds |
+|-----------|---------------|
+| `terraform/` | VMs, Talos bootstrap, Flux bootstrap, plus Grafana and Synology config under `terraform/external/` |
+| `kubernetes/clusters/<cluster>/` | The Flux entrypoint for each cluster: which infra and apps it activates |
+| `kubernetes/infra/` | Shared platform manifests: networking, storage, secrets, monitoring, controllers |
+| `kubernetes/apps/` | Shared app manifests. `branch/` subfolders are overlays used for PR environments |
+| `tools/` | The branch-environment verifier, CI helpers, policy checks and their tests |
+| `tests/browser/` | Playwright checks used by the smoke gate |
+| `.github/workflows/` | CI checks, the `dev-smoke` gate, cleanup and heartbeat |
+| `docs/` | This page, decisions, runbooks |
+
+## The platform
+
+```mermaid
+flowchart TB
+  TF["Terraform<br/>terraform/production, terraform/development"]
+  subgraph PVE["Proxmox VE hosts: pve01 to pve04"]
+    PRODVM["Production VMs<br/>Talos + Kubernetes<br/>two workers with an Intel iGPU"]
+    DEVVM["Development VM<br/>one Talos node"]
+  end
+  NAS["Synology NAS<br/>NFS volumes, Nexus registry, reverse proxy"]
+  GH["GitHub: this repo"]
+  FLUXP["Flux in production"]
+  FLUXD["Flux in development"]
+  TF -->|creates VMs, installs Talos and Flux| PVE
+  TF -->|users, proxy rules| NAS
+  PRODVM --- FLUXP
+  DEVVM --- FLUXD
+  GH -->|main| FLUXP
+  GH -->|main, plus PR branches| FLUXD
+  PRODVM -->|NFS CSI| NAS
+  DEVVM -->|NFS CSI| NAS
+```
+
+Node counts and sizes live in `terraform.tfvars`, which is not in git. Talos
+nodes have no SSH; everything goes through `talosctl`. Terraform state is local
+to the checkout and ignored by git.
+
+## What runs where
+
+| Layer | Production | Development |
+|-------|------------|-------------|
+| Networking | Cilium, Gateway API, cert-manager, WireGuard VPN | Cilium, Gateway API, cert-manager |
+| Storage | NFS CSI to the NAS, local-path, CloudNativePG | Same three |
+| Secrets | SOPS for workloads, with the 1Password operator installed alongside | 1Password operator |
+| Identity | Authentik | None |
+| Monitoring | Alloy, Mimir, Loki, Grafana, Discord alerts, synthetic smoke tests | None. The `dev-heartbeat` workflow stands in |
+| Apps | homepage, pihole, whoami, jellyfin, immich, home-assistant, foundryvtt, valheim, access-broker, cloudflare-tunnels, renovate, synthetics, external routes | whoami, homepage, a foundry blue/green fixture, the CI runner |
+| CI | None in-cluster | Actions Runner Controller, one ephemeral runner pod at a time |
+
+## How a change reaches production
+
+```mermaid
+flowchart LR
+  A["Branch + pull request<br/>you, an agent, or Renovate"] --> B["Pre-commit"]
+  A --> C["Verification harness"]
+  A --> D["dev-smoke"]
+  D --> E{"Only one smoke-tested<br/>app changed?"}
+  E -->|yes| F["Runner pod in dev deploys the PR branch<br/>as app-pr-N, checks it, removes it"]
+  E -->|no| G["Reports not smoke-tested.<br/>Validate in dev by hand and<br/>say so in the PR description"]
+  B --> M["Merge to main"]
+  C --> M
+  F --> M
+  G --> M
+  M --> P["Flux applies to production"]
+  M --> Q["Flux applies to development"]
+```
+
+Nothing is committed to `main` directly. An app is smoke-tested when it has a
+profile with `prSmoke: true` in `tools/development/smoke-profiles/` and an
+overlay in `kubernetes/apps/<app>/branch/`. The rule is
+[ADR-0016](./decisions/pr-gated-change-workflow.md); the procedure is
+[change-workflow.md](./runbooks/change-workflow.md).
+
+Three workflows support the gate:
+
+| Workflow | When | What it does |
+|----------|------|--------------|
+| `dev-smoke` | Every PR | Classifies the change, then deploys and tests it in development if it can |
+| `dev-cleanup` | Every 30 minutes | Removes PR environments that outlived their run |
+| `dev-heartbeat` | Hourly | Checks the development cluster and runner are alive, since nothing else monitors them |
+
+## How traffic gets in
+
+```mermaid
+flowchart LR
+  LAN["LAN client"] --> GI["Gateway internal"]
+  VPN["WireGuard client"] --> GE["Gateway external"]
+  NET["Internet"] --> CF["Cloudflare Tunnel"] --> GP["Gateway public"]
+  LAN --> GT["Gateway passthrough"]
+  GI --> APPS["All routed apps<br/>*.lab.petebeegle.com"]
+  GE --> SUB["A subset of apps,<br/>reachable over the VPN"]
+  GP --> PUB["The few internet-facing hosts"]
+  GT --> EXT["Proxmox UIs, UniFi<br/>TLS ends at the target"]
+```
+
+All four gateways live in namespace `gateway`. There is no Kubernetes `Ingress`
+anywhere; routes are `HTTPRoute` or `TLSRoute`. "External" means the WireGuard
+service plane, not the internet. Internet exposure needs both a route on
+`gateway/public` and a cloudflared ingress rule. Gateway addresses and pools
+are set per cluster in `cluster-vars.yaml`. Development mirrors the layout
+under `dev.lab.petebeegle.com`.
+
+## How you find out something broke
+
+```mermaid
+flowchart LR
+  W["Workloads and nodes"] --> AL["Alloy<br/>collects metrics and logs"]
+  KSM["kube-state-metrics,<br/>SNMP exporter"] --> AL
+  AL --> MI["Mimir<br/>metrics"]
+  AL --> LO["Loki<br/>logs"]
+  MI --> GR["Grafana<br/>dashboards, alert rules"]
+  LO --> GR
+  GR --> DC["Discord alerts"]
+  SY["Synthetic smoke CronJob<br/>Playwright against real routes"] -->|run summaries in pod logs| AL
+```
+
+Production only. The synthetic smoke job writes a summary line per run; Grafana
+reads those from Loki and alerts on repeated failures. Development has none of
+this stack.
+
+## Decisions
+
+Binding decisions live in [`decisions/`](./decisions/).
+
+| Topic | Record |
+|-------|--------|
+| Git is the source of truth | [flux-gitops-source-of-truth.md](./decisions/flux-gitops-source-of-truth.md) |
+| How changes are made and gated | [pr-gated-change-workflow.md](./decisions/pr-gated-change-workflow.md) |
+| Ingress | [cilium-gateway-api-ingress.md](./decisions/cilium-gateway-api-ingress.md) |
+| Storage | [synology-nfs-storage.md](./decisions/synology-nfs-storage.md), [jellyfin-local-config-storage.md](./decisions/jellyfin-local-config-storage.md) |
+| Secrets | [sops-age-secrets.md](./decisions/sops-age-secrets.md), [terraform-sensitive-values.md](./decisions/terraform-sensitive-values.md) |
+| Nodes and hosts | [talos-management-boundaries.md](./decisions/talos-management-boundaries.md), [proxmox-ve-host-baseline.md](./decisions/proxmox-ve-host-baseline.md) |
+| NAS HTTPS | [synology-gateway-terminated-https.md](./decisions/synology-gateway-terminated-https.md) |
+| Monitoring | [observability-stack.md](./decisions/observability-stack.md) |
+| Agent tooling | [mcp-tool-routing.md](./decisions/mcp-tool-routing.md), [mcp-config-surfaces.md](./decisions/mcp-config-surfaces.md) |
+
+Superseded and kept for history: `codex-implementation-workflow.md`,
+`agent-memory-compaction.md`, `tdd-and-development-smoke-evidence.md`.
+
+## Runbooks by task
+
+**Making a change**
+
+- [Change workflow](./runbooks/change-workflow.md): branch, PR, checks, merge
+- [Development cluster](./runbooks/development-cluster.md)
+- [Golden-path browser verification](./runbooks/harness-golden-path.md)
+- [Shared verification contract](./runbooks/verification-contract.md): what the harness runs
+- [`main` branch protection and break glass](./runbooks/main-branch-protection.md)
+- [Renovate](./runbooks/renovate.md)
+
+**Adding things**
+
+- [Add an app](./runbooks/add-app.md)
+- [Add a secret](./runbooks/add-secret.md)
+- [Add an Authentik proxy application](./runbooks/authentik-proxy-apps.md)
+- [Cloudflare tunnels](./runbooks/cloudflare-tunnels.md)
+- [Operate the 1Password operator](./runbooks/onepassword-operator.md)
+
+**When something is broken**
+
+- [Diagnose a Kustomization](./runbooks/diagnose-kustomization.md)
+- [Diagnose a HelmRelease](./runbooks/diagnose-helmrelease.md)
+- [Stabilize overloaded services](./runbooks/stabilize-overloaded-services.md)
+- [Synthetic smoke tests](./runbooks/synthetic-smoke-tests.md)
+- [Discord alert delivery health](./runbooks/discord-alert-delivery-health.md)
+- [Verify Grafana alert rules](./runbooks/verify-grafana-alert-rules.md)
+- [Observability scrape topology](./runbooks/observability-scrape-topology.md)
+
+**Nodes, hosts and storage**
+
+- [Upgrade Talos](./runbooks/upgrade-talos.md)
+- [Proxmox no-subscription repository](./runbooks/proxmox-no-subscription-repository.md)
+- [Configure NFS with Proxmox](./runbooks/configure-nfs-with-proxmox.md)
+- [Resize a PVC](./runbooks/resize-pvc.md)
+- [WireGuard](./runbooks/wireguard.md)
+
+**Specific apps**
+
+- [Home Assistant](./runbooks/home-assistant.md)
+- [Immich](./runbooks/immich.md)
+- [Foundry blue/green upgrade](./runbooks/foundry-bluegreen.md)
+- Jellyfin: [SSO](./runbooks/jellyfin-authentik-sso.md), [GPU nodes](./runbooks/jellyfin-gpu-nodes.md), [hardware transcoding](./runbooks/jellyfin-hardware-transcoding.md)
+
+## Known gaps
+
+- No runbook for rebuilding a cluster or restoring from backup.
+- No decision record for the 1Password migration; production workloads still
+  read SOPS secrets while the operator runs alongside.
+- Development runs a fraction of production, so most production changes cannot
+  be rehearsed there yet.
