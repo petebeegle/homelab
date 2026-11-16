@@ -9,7 +9,7 @@ last_verified: 2026-05-11
 
 # Observability Scrape Topology
 
-This runbook describes the operational scrape topology. The decision context for the observability stack lives in `docs/decisions/observability-stack.md`.
+This runbook describes the operational scrape topology. The decision context for the observability stack is in [decisions.md](../decisions.md#observability-is-in-git).
 
 Alloy runs as a DaemonSet and tolerates the control-plane taint so one pod can run on every Kubernetes node. Pod logs are discovered independently from metrics and are scoped to the local node; together, the DaemonSet collects logs for all pods without requiring metrics annotations.
 

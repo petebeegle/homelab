@@ -38,7 +38,7 @@ class HookMigrationContractTests(unittest.TestCase):
             "flux_reminder.sh",
             "pre_commit_check.sh",
             "stop_self_verify.sh",
-            # ADR-0016: no hook or push guard may require per-PR Spec Kit artifacts.
+            # docs/decisions.md (changes): no hook or push guard may require per-PR Spec Kit artifacts.
             "implementation_workflow_guard.sh",
             "verifier_push_guard.sh",
             "user_prompt_submit.sh",
@@ -49,7 +49,7 @@ class HookMigrationContractTests(unittest.TestCase):
     def test_the_two_safety_guards_stay_wired(self):
         commands = self._all_hook_commands()
         for name in ("sops_guard.sh", "terraform_plan.sh"):
-            self.assertTrue(any(name in cmd for cmd in commands), f"{name} must stay wired (ADR-0016)")
+            self.assertTrue(any(name in cmd for cmd in commands), f"{name} must stay wired (docs/decisions.md)")
             self.assertTrue((ROOT / ".codex/hooks" / name).exists())
 
     def test_nothing_requires_spec_kit_artifacts_before_a_push(self):

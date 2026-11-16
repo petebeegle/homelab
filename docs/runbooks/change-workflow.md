@@ -1,7 +1,7 @@
 # Change Workflow
 
-How a change gets from an idea to `main`. The rule behind this is
-`docs/decisions/pr-gated-change-workflow.md` (ADR-0016).
+How a change gets from an idea to `main`, what checks it, and how to get past a
+broken check. The reasoning is in [decisions.md](../decisions.md#changes-go-through-pull-requests-and-the-check-is-the-evidence).
 
 ## Procedure
 
@@ -13,9 +13,9 @@ How a change gets from an idea to `main`. The rule behind this is
    git worktree add /workspaces/homelab-worktrees/<name> -b codex/<name> origin/main
    ```
 
-2. **Design, if the change is big enough to need one.** Put the design under
-   `docs/superpowers/specs/` and the plan under `docs/superpowers/plans/`, and get
-   the owner's approval of the design before building. Small changes skip this.
+2. **Design, if the change is big enough to need one.** Write the design and plan
+   in a GitHub issue or the PR description, not in the repo, and get the owner's
+   approval of the design before building. Small changes skip this.
 3. **Test first.** Where the change has testable behavior, write the failing
    test, watch it fail, then write the code.
 4. **Check locally.**
@@ -26,13 +26,24 @@ How a change gets from an idea to `main`. The rule behind this is
    ```
 
 5. **Open the PR.** In the description, say what you validated and how.
-6. **Let the checks run.** `Pre-commit` and `Verification / harness` are
-   required. `dev-smoke` deploys and tests the change in the development cluster
-   when the PR changes only an app with a smoke profile.
-7. **Merge** when the required checks pass. The break-glass path is in
-   `docs/runbooks/main-branch-protection.md`.
+6. **Let the checks run** (below).
+7. **Merge** when the required checks pass. If a required check itself is broken,
+   see [Break glass](#break-glass).
 
-## What `dev-smoke` covers, and what it does not
+## What checks a PR
+
+| Check | Required | What it does |
+|-------|----------|--------------|
+| `Pre-commit` | yes | `pre-commit run --all-files`: YAML lint, manifest validation, `terraform fmt` and docs, the generated architecture doc, policy checks |
+| `Verification / harness` | yes | `python3 tools/verification/verify.py --profile harness`: runs every Python and Node test it discovers under `tools/`, except a short excluded list in `verify.py` |
+| `dev-smoke` | not yet (issue #477) | Deploys the change to the development cluster and tests it, when the PR qualifies (below) |
+
+The harness is deliberately not a browser or cluster check. It proves the tools
+and manifests render; it does not prove anything runs. That is what `dev-smoke`
+and your own development validation are for. A new test file under `tools/` is
+picked up automatically.
+
+### What `dev-smoke` covers, and what it does not
 
 `dev-smoke` tests a PR when every changed file is under one
 `kubernetes/apps/<app>/` directory and that app's profile in
@@ -60,10 +71,39 @@ python3 tools/development/verify_branch_deploy.py \
   --app <app> --branch <branch> --slug <slug> --kubeconfig ~/.kube/homelab-development.config
 ```
 
-Add `--browser` for apps with a browser check (needs Playwright; see
-`docs/runbooks/harness-golden-path.md`). Add `--ci` to skip the Terraform step
-and wait for the development base to be healthy first. The branch must be
-pushed. The verifier removes the environment when it finishes.
+Add `--ci` to skip the Terraform step and wait for the development base to be
+healthy first. The branch must be pushed. The verifier removes the environment
+when it finishes; add `--keep` to leave it for inspection.
+
+### Browser check
+
+Add `--browser` for apps whose profile has a browser test. It runs Playwright
+against the deployed route through development DNS, TLS and the Gateway, so it
+checks what a user would reach, not just Kubernetes objects. You need Node and
+npm, Chromium (and its OS libraries), development DNS reachable, and the
+development certificate trusted:
+
+```sh
+npm --prefix tests/browser install --no-save --package-lock=false
+(cd tests/browser && npx playwright install chromium)
+npm --prefix tests/browser run test:unit
+python3 tools/development/verify_branch_deploy.py --app whoami --branch <branch> --slug <slug> --browser
+```
+
+To run the browser test alone against a kept environment:
+
+```sh
+WHOAMI_URL=https://whoami-<branch_slug>.dev.lab.petebeegle.com npm --prefix tests/browser test
+```
+
+- **Pass:** the browser reached the route over trusted HTTPS and got the
+  expected response.
+- **Fail:** navigation, TLS, HTTP, content or an unexpected redirect.
+- **Not run:** no environment, DNS, Chromium or dependencies. Report it as
+  unverified, never as a pass.
+
+It does not prove Authentik, network policy, production routing or
+infrastructure-wide correctness.
 
 ## Worktrees that need local secrets
 
@@ -89,3 +129,43 @@ without printing their contents:
 4. Prove it on two throwaway PRs: one that edits only the real manifest must
    pass, and one that breaks only the real manifest must fail and leave the
    development cluster clean.
+
+## Branch protection on `main`
+
+Repository ruleset `main-required-checks` (id `27289884`) requires
+`Verification / harness` and `Pre-commit` to pass before a merge. Both are pinned
+to the GitHub Actions app (`integration_id` 15368), so no other app can report a
+passing status under those names. Branches need not be up to date and no
+approving review is required. The rule file at
+`.github/rulesets/main-required-checks.json` is a record only; GitHub does not
+read it from the repository.
+
+Not covered: required reviews, force-push or deletion protection, signed
+commits, a merge queue. Add them deliberately.
+
+### Break glass
+
+Repository admins can bypass the ruleset only when merging a pull request. Direct
+pushes to `main` stay blocked, so every override leaves a PR trail. Use it only
+when a required check is wrong or broken (the CI itself is down, or a check fails
+for a reason unrelated to the change) and waiting is worse than the risk:
+
+```sh
+gh pr merge <number> --merge --admin
+```
+
+Afterwards, say in the PR why the bypass was needed and open a follow-up to fix
+the check. Do not use it to skip a check that is correctly failing.
+
+### Changing the ruleset
+
+It is managed through the GitHub API, not Terraform:
+
+```sh
+gh api repos/petebeegle/homelab/rulesets/27289884            # inspect
+gh api -X PUT repos/petebeegle/homelab/rulesets/27289884 --input .github/rulesets/main-required-checks.json
+```
+
+Check names must match the check-run names exactly. Renaming a job in a workflow
+silently makes the old required name unsatisfiable and blocks every merge until
+the ruleset is updated (or bypassed).

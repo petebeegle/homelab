@@ -18,7 +18,7 @@ INSTALL_HINT = (
     "install the pinned Playwright package and browser first: "
     "`npm --prefix tests/browser install --no-save --package-lock=false --ignore-scripts` "
     "then `npx --prefix tests/browser playwright install chromium` "
-    "(Chromium also needs its OS libraries; see docs/runbooks/harness-golden-path.md)"
+    "(Chromium also needs its OS libraries; see docs/runbooks/change-workflow.md)"
 )
 
 

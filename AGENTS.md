@@ -8,12 +8,13 @@ Synology NFS, Grafana/Loki/Mimir/Alloy.
 ## Start Here
 
 - Make every change on a branch and merge it through a pull request; never
-  commit to `main`. `docs/runbooks/change-workflow.md` is the procedure and
-  `docs/decisions/pr-gated-change-workflow.md` (ADR-0016) is the rule behind it.
+  commit to `main`. `docs/runbooks/change-workflow.md` is the procedure.
 - `docs/overview.md` explains how the repo fits together and indexes the
   runbooks. Keep it current when the shape of the platform changes.
-- Binding architecture and operating decisions live in `docs/decisions/`.
-- Operational procedures live in `docs/runbooks/`.
+- `docs/decisions.md` holds the choices that are not obvious from the code and
+  why they were made. Edit an entry when a decision changes.
+- Operational procedures live in `docs/runbooks/`; symptom-to-fix tables are in
+  `docs/troubleshooting.md`. Keep each fact in one place and link to it.
 - `docs/architecture.md` is generated. Do not edit it by hand; run
   `python3 tools/architecture/render.py --write` when Kubernetes or Terraform
   source changes affect it.
@@ -47,9 +48,8 @@ Synology NFS, Grafana/Loki/Mimir/Alloy.
   `/workspaces/homelab-worktrees/<name>` on branch `codex/<name>`. Use the
   current checkout only when explicitly requested.
 - No per-change process artifacts are required. For work large enough to need a
-  written design or plan, put it under `docs/superpowers/specs/` and
-  `docs/superpowers/plans/`, and get the human's approval of the design before
-  building it.
+  written design or plan, put it in a GitHub issue or the PR description, not in
+  the repo, and get the human's approval of the design before building it.
 - Write a failing test before the code wherever the change has testable
   behavior. Before pushing, run
   `python3 tools/verification/verify.py --profile harness` and pre-commit.

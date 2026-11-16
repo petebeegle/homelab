@@ -2,7 +2,7 @@
 
 Use this runbook to configure the Proxmox VE no-subscription repository when recreating or creating Proxmox hosts.
 
-This procedure applies to the current Proxmox host baseline: Proxmox VE 9 on Debian Trixie. See `docs/decisions/proxmox-ve-host-baseline.md`.
+This procedure applies to the current Proxmox host baseline: Proxmox VE 9 on Debian Trixie. See [decisions.md](../decisions.md#talos-and-proxmox-are-managed-through-their-own-tools).
 
 Proxmox says the no-subscription repository does not require a subscription key and can be used for testing or non-production use. It is not recommended for production servers because packages are not always tested and validated as heavily as the enterprise repository.
 

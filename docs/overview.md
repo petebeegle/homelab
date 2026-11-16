@@ -86,7 +86,7 @@ flowchart LR
 Nothing is committed to `main` directly. An app is smoke-tested when it has a
 profile with `prSmoke: true` in `tools/development/smoke-profiles/` and an
 overlay in `kubernetes/apps/<app>/branch/`. The rule is
-[ADR-0016](./decisions/pr-gated-change-workflow.md); the procedure is
+in [decisions.md](./decisions.md#changes-go-through-pull-requests-and-the-check-is-the-evidence); the procedure is
 [change-workflow.md](./runbooks/change-workflow.md).
 
 Three workflows support the gate:
@@ -111,7 +111,7 @@ flowchart LR
   GT --> EXT["Proxmox UIs, UniFi<br/>TLS ends at the target"]
 ```
 
-All four gateways live in namespace `gateway`. There is no Kubernetes `Ingress`
+The five gateways (`internal`, `external`, `public`, `passthrough`, `external-passthrough`) live in namespace `gateway`. There is no Kubernetes `Ingress`
 anywhere; routes are `HTTPRoute` or `TLSRoute`. "External" means the WireGuard
 service plane, not the internet. Internet exposure needs both a route on
 `gateway/public` and a cloudflared ingress rule. Gateway addresses and pools
@@ -136,34 +136,62 @@ Production only. The synthetic smoke job writes a summary line per run; Grafana
 reads those from Loki and alerts on repeated failures. Development has none of
 this stack.
 
-## Decisions
+## How the manifests are laid out
 
-Binding decisions live in [`decisions/`](./decisions/).
+```text
+kubernetes/
+├── apps/<name>/          # one app: HelmRelease or manifests, httproute.yaml, secret
+│   └── branch/           # overlay used for PR environments (smoke-tested apps)
+├── infra/                # shared platform: controllers, network, authentik, monitoring
+└── clusters/<env>/
+    ├── kustomization.yaml, cluster-vars.yaml
+    ├── infra/            # Flux Kustomizations choosing which infra this cluster runs
+    └── apps/             # Flux Kustomizations choosing which apps this cluster runs
+```
 
-| Topic | Record |
-|-------|--------|
-| Git is the source of truth | [flux-gitops-source-of-truth.md](./decisions/flux-gitops-source-of-truth.md) |
-| How changes are made and gated | [pr-gated-change-workflow.md](./decisions/pr-gated-change-workflow.md) |
-| Ingress | [cilium-gateway-api-ingress.md](./decisions/cilium-gateway-api-ingress.md) |
-| Storage | [synology-nfs-storage.md](./decisions/synology-nfs-storage.md), [jellyfin-local-config-storage.md](./decisions/jellyfin-local-config-storage.md) |
-| Secrets | [sops-age-secrets.md](./decisions/sops-age-secrets.md), [terraform-sensitive-values.md](./decisions/terraform-sensitive-values.md) |
-| Nodes and hosts | [talos-management-boundaries.md](./decisions/talos-management-boundaries.md), [proxmox-ve-host-baseline.md](./decisions/proxmox-ve-host-baseline.md) |
-| NAS HTTPS | [synology-gateway-terminated-https.md](./decisions/synology-gateway-terminated-https.md) |
-| Monitoring | [observability-stack.md](./decisions/observability-stack.md) |
-| Agent tooling | [mcp-tool-routing.md](./decisions/mcp-tool-routing.md), [mcp-config-surfaces.md](./decisions/mcp-config-surfaces.md) |
+Shared manifests use `${variable}` placeholders instead of hardcoded values.
+Each cluster has a `cluster-vars` ConfigMap that Flux injects at reconcile time
+with `postBuild.substituteFrom`.
 
-Superseded and kept for history: `codex-implementation-workflow.md`,
-`agent-memory-compaction.md`, `tdd-and-development-smoke-evidence.md`.
+| Variable | Production | Meaning |
+|----------|------------|---------|
+| `cluster_domain` | `lab.petebeegle.com` | Base domain for routes (`dev.lab...` in development) |
+| `cluster_env` | `production` | Environment name |
+| `gateway_internal_ip`, `gateway_passthrough_ip` | `192.168.30.241`, `.242` | LAN gateway addresses |
+| `gateway_external_ip`, `gateway_external_passthrough_ip` | `192.168.40.241`, `.242` | WireGuard-reachable gateway addresses |
+| `gateway_internal_pool`, `gateway_external_pool` | `192.168.30.240/28`, `192.168.40.240/28` | Cilium load-balancer pools |
+| `cilium_operator_replicas` | `3` | `1` in development |
+| `nfs_server` | `192.168.30.99` | The NAS |
+| `letsencrypt_server`, `wildcard_cert_name` | | ACME endpoint and the wildcard TLS Secret name |
+
+Development uses `192.168.30.224/28` and `192.168.40.224/28` for its pools.
+
+**Adding an environment:**
+
+1. Create `kubernetes/clusters/<env>/cluster-vars.yaml` and list it in that
+   cluster's `kustomization.yaml`.
+2. Create `clusters/<env>/infra/` and `apps/` Flux Kustomizations with
+   `postBuild.substituteFrom` and the subset you want. Use `patches:` there for
+   environment-specific sizing; there are no overlay directories.
+3. Bootstrap Flux at `./kubernetes/clusters/<env>`, or use the matching
+   Terraform root.
+4. Provide the environment's secret bootstrap (see
+   [add-secret](./runbooks/add-secret.md)).
+
+## Decisions and troubleshooting
+
+- [decisions.md](./decisions.md): the choices that are not obvious from the
+  code (PR-gated changes, Gateway API only, NFS storage and the Jellyfin
+  exception, secrets, Talos and Proxmox, observability) and why.
+- [troubleshooting.md](./troubleshooting.md): symptom-to-fix tables for storage,
+  networking, observability and Talos.
 
 ## Runbooks by task
 
 **Making a change**
 
-- [Change workflow](./runbooks/change-workflow.md): branch, PR, checks, merge
+- [Change workflow](./runbooks/change-workflow.md): branch, PR, checks, browser verification, branch protection and break glass
 - [Development cluster](./runbooks/development-cluster.md)
-- [Golden-path browser verification](./runbooks/harness-golden-path.md)
-- [Shared verification contract](./runbooks/verification-contract.md): what the harness runs
-- [`main` branch protection and break glass](./runbooks/main-branch-protection.md)
 - [Renovate](./runbooks/renovate.md)
 
 **Adding things**

@@ -94,7 +94,7 @@ class JellyfinManifestsTest(unittest.TestCase):
         )
 
     def test_config_lives_only_on_the_local_volume(self) -> None:
-        # ADR-0015: the one-time NFS-to-local migration is finished and its leftovers are gone.
+        # docs/decisions.md (storage): the one-time NFS-to-local migration is finished and its leftovers are gone.
         self.assertIn("claimName: jellyfin-config-local-v1", self.helm_manifests)
         self.assertIn("name: install-sso-auth", self.helm_manifests)
         self.assertIn("gpu.intel.com/i915: 1", self.helm_manifests)

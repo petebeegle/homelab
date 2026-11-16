@@ -38,7 +38,7 @@ After reconcile, acceptance should confirm:
 Jellyfin's `/config` volume is `jellyfin-config-local-v1` on `local-path`.
 Media remains on Synology NFS. The storage decision and its availability
 tradeoffs are documented in
-`docs/decisions/jellyfin-local-config-storage.md`.
+[decisions.md](../decisions.md#storage-is-nfs-on-the-synology-except-jellyfins-config).
 
 The one-time migration from the old NFS claim `jellyfin-config-v2` is finished.
 The migration init container, its script and the old claim have been removed,
