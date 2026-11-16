@@ -59,7 +59,7 @@ def cleanup_pr_envs(
     now = now or datetime.now(timezone.utc)
 
     listing = run_command(
-        _kubectl(kubeconfig, "-n", FLUX_NAMESPACE, "get", KUSTOMIZATION, GITREPOSITORY, "-o", "json"),
+        _kubectl(kubeconfig, "-n", FLUX_NAMESPACE, "get", f"{KUSTOMIZATION},{GITREPOSITORY}", "-o", "json"),
         runner=runner,
         timeout=TIMEOUT,
         capture_output=True,

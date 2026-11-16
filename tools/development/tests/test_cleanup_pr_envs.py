@@ -97,6 +97,15 @@ class CleanupPrEnvsTest(unittest.TestCase):
         deleted, _ = self.run_cleanup(items, older_than_seconds=3 * 3600)
         self.assertEqual(sorted(deleted), ["gitrepository/branch-pr-12", "kustomization/branch-whoami-pr-12"])
 
+    def test_listing_names_both_resource_types_in_one_comma_separated_argument(self) -> None:
+        # `kubectl get A B` reads B as an object name of type A, so the two types must be one
+        # comma-separated argument. The fake kubectl above accepts anything, so pin the shape here.
+        _, fake = self.run_cleanup(ENVIRONMENT, slug="pr-12")
+        get = next(call for call in fake.calls if "get" in call)
+        index = get.index("get")
+        self.assertEqual(f"{cleanup.KUSTOMIZATION},{cleanup.GITREPOSITORY}", get[index + 1])
+        self.assertTrue(get[index + 2].startswith("-"), f"unexpected extra positional: {get[index + 2]}")
+
     def test_non_pr_objects_are_never_touched_even_when_very_old(self) -> None:
         deleted, fake = self.run_cleanup(ENVIRONMENT, older_than_seconds=60)
         self.assertEqual(sorted(deleted), sorted(
