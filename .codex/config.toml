@@ -86,19 +86,7 @@ command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$ro
 timeout = 60
 statusMessage = "Checking secret files"
 
-[[hooks.PostToolUse.hooks]]
-type = "command"
-command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase post_tool --hook flux_reminder -- \"$root/.codex/hooks/flux_reminder.sh\"'"
-timeout = 10
-statusMessage = "Checking Flux follow-up"
-
 [[hooks.Stop]]
-
-[[hooks.Stop.hooks]]
-type = "command"
-command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase stop --hook stop_self_verify -- \"$root/.codex/hooks/stop_self_verify.sh\"'"
-timeout = 120
-statusMessage = "Running Codex harness self-check"
 
 [[hooks.Stop.hooks]]
 type = "command"

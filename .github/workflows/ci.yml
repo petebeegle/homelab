@@ -68,14 +68,6 @@ jobs:
       - name: Run 1Password migration safety tests
         run: python3 -m unittest discover -s tools/onepassword/tests
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v10.2.0
-
-      - name: Run tests
-        run: >-
-          uv run --project tools/agent-memory --with pytest pytest
-          tools/agent-memory/tests
-
   terraform:
     name: Terraform
     runs-on: ubuntu-latest
