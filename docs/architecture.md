@@ -228,7 +228,6 @@ This document is generated for agentic repo navigation. It records relationships
 | PVC | `immich/immich-library` | `nfs-csi-media-storage` | `kubernetes/apps/immich/base/pvc.yaml` |
 | PVC | `jellyfin-${branch_slug}/jellyfin-config-${branch_slug}` | `nfs-csi-storage` | `kubernetes/apps/jellyfin/branch/jellyfin.yaml` |
 | PVC | `jellyfin/jellyfin-config-local-v1` | `local-path` | `kubernetes/apps/jellyfin/pvc.yaml` |
-| PVC | `jellyfin/jellyfin-config-v2` | `nfs-csi-storage` | `kubernetes/apps/jellyfin/pvc.yaml` |
 | PVC | `wireguard/wireguard-pvc` | `nfs-csi-storage` | `kubernetes/infra/network/vpn/pvc.yaml` |
 | Values file | `authentik` | `nfs-csi-storage` | `kubernetes/infra/authentik/values.yaml` |
 | Values file | `immich` | `nfs-csi-storage` | `kubernetes/apps/immich/base/values.yaml` |

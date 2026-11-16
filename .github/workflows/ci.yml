@@ -164,7 +164,7 @@ jobs:
       - name: Test Jellyfin config migration
         run: >-
           python3 -m unittest
-          tools.development.tests.test_jellyfin_config_migration
+          tools.development.tests.test_jellyfin_manifests
 
       - name: Validate rendered manifests
         run: >-

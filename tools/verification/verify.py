@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[2]
 # Test files the harness must NOT run, each with the reason. Everything else that looks
 # like a test is discovered and run, so a new test file is gated without editing this file.
 EXCLUDED = {
-    "tools/development/tests/test_jellyfin_config_migration.py": (
+    "tools/development/tests/test_jellyfin_manifests.py": (
         "needs the jellyfin Helm chart repository; the Kubernetes job in ci.yml adds it and runs this test"
     ),
     "tools/vpn/test_defaults.mjs": (

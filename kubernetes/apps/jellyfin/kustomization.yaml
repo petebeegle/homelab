@@ -12,13 +12,5 @@ configMapGenerator:
     namespace: jellyfin
     files:
       - values.yaml=values.yaml
-  - name: jellyfin-config-migration
-    namespace: jellyfin
-    files:
-      - migrate.sh=migrate-config.sh
-    options:
-      disableNameSuffixHash: true
-      annotations:
-        kustomize.toolkit.fluxcd.io/substitute: disabled
 configurations:
   - kustomizeconfig.yaml
