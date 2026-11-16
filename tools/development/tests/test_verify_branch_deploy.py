@@ -807,7 +807,7 @@ class VerifyBranchDeployTest(unittest.TestCase):
 
     def test_ci_unhealthy_base_fails_before_activation(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            runner = FakeRunner(base_json=GATEWAY_NOT_READY)
+            runner = FakeRunner(base_json=GATEWAY_NOT_READY, fail_on="wait --for=condition=Ready")
             with self.assertRaises(verify.VerificationError) as ctx:
                 verify.run_acceptance(self._config(ci=True), runner=runner, repo_root=Path(tmp), template_text=TEMPLATE)
 
@@ -817,9 +817,29 @@ class VerifyBranchDeployTest(unittest.TestCase):
         self.assertFalse(any("apply -f -" in command for command in commands))
         self.assertFalse(any(" delete " in command for command in commands))
 
+    def test_ci_waits_for_a_base_that_is_still_reconciling(self) -> None:
+        # Every merge to main makes Flux re-reconcile the dev base for a while; a one-shot check
+        # would fail the PR spuriously in that window.
+        with tempfile.TemporaryDirectory() as tmp:
+            runner = FakeRunner(base_json=GATEWAY_NOT_READY)
+            verify.run_acceptance(self._config(ci=True), runner=runner, repo_root=Path(tmp), template_text=TEMPLATE)
+
+        commands = [" ".join(command) for command in runner.commands]
+        wait = self._index_containing(commands, "wait --for=condition=Ready")
+        self.assertIn("kustomization.kustomize.toolkit.fluxcd.io/gateway", commands[wait])
+        self.assertNotIn("/flux-system", commands[wait], "only the unready objects are waited on")
+        self.assertIn("--timeout=300s", commands[wait])
+        self.assertLess(wait, self._index_containing(commands, "apply -f -"))
+
+    def test_ci_does_not_wait_when_the_base_is_already_ready(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            runner = FakeRunner()
+            verify.run_acceptance(self._config(ci=True), runner=runner, repo_root=Path(tmp), template_text=TEMPLATE)
+        self.assertFalse(any("wait --for=condition=Ready" in " ".join(c) for c in runner.commands))
+
     def test_ci_missing_base_object_is_unhealthy(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            runner = FakeRunner(base_json=GATEWAY_MISSING)
+            runner = FakeRunner(base_json=GATEWAY_MISSING, fail_on="wait --for=condition=Ready")
             with self.assertRaises(verify.VerificationError) as ctx:
                 verify.run_acceptance(self._config(ci=True), runner=runner, repo_root=Path(tmp), template_text=TEMPLATE)
         self.assertIn("gateway", str(ctx.exception))
