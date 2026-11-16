@@ -20,6 +20,7 @@ PROFILES = {
         (sys.executable, "-m", "unittest", "discover", "-s", "tools/development/tests", "-p", "test_classify_pr.py"),
         (sys.executable, "-m", "unittest", "discover", "-s", "tools/development/tests", "-p", "test_cleanup_pr_envs.py"),
         (sys.executable, "-m", "unittest", "discover", "-s", "tools/development/tests", "-p", "test_runner_image.py"),
+        (sys.executable, "-m", "unittest", "discover", "-s", "tools/development/tests", "-p", "test_dev_smoke_workflow.py"),
         ("node", "--test", "tests/browser/tests/url-guard.test.cjs"),
     ),
 }

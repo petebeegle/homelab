@@ -1,0 +1,135 @@
+name: dev-smoke
+
+# Smoke-tests a PR's app change in the development cluster before merge.
+# pull_request_target runs THIS file as it exists on main, never the PR's copy,
+# and the jobs check out main only; the PR's code reaches the cluster through
+# Flux (the branch environment), not through this workflow's checkout.
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: dev-smoke-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  classify:
+    name: classify
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    outputs:
+      tested: ${{ steps.classify.outputs.tested }}
+      app: ${{ steps.classify.outputs.app }}
+      browser: ${{ steps.classify.outputs.browser }}
+      reason: ${{ steps.classify.outputs.reason }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Classify the PR's changed files
+        id: classify
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          gh api --paginate "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" --jq '.[].filename' \
+            | python3 tools/development/classify_pr.py > classification.json
+          cat classification.json
+          {
+            echo "tested=$(jq -r '.tested' classification.json)"
+            echo "app=$(jq -r '.app // ""' classification.json)"
+            echo "browser=$(jq -r '.browser' classification.json)"
+            echo "reason=$(jq -r '.reason | gsub("[\\r\\n]"; " ")' classification.json)"
+          } >> "$GITHUB_OUTPUT"
+
+  smoke:
+    name: smoke
+    needs: classify
+    if: github.event.pull_request.head.repo.full_name == github.repository && needs.classify.outputs.tested == 'true'
+    runs-on: homelab-dev
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Write a kubeconfig from the pod's service account
+        run: |
+          set -euo pipefail
+          sa=/var/run/secrets/kubernetes.io/serviceaccount
+          kc="${RUNNER_TEMP}/kubeconfig"
+          kubectl config set-cluster dev --server=https://kubernetes.default.svc --certificate-authority="${sa}/ca.crt" --embed-certs=true --kubeconfig="${kc}"
+          kubectl config set-credentials runner --token="$(cat "${sa}/token")" --kubeconfig="${kc}"
+          kubectl config set-context dev --cluster=dev --user=runner --kubeconfig="${kc}"
+          kubectl config use-context dev --kubeconfig="${kc}"
+          chmod 600 "${kc}"
+          echo "KUBECONFIG=${kc}" >> "${GITHUB_ENV}"
+      - name: Install browser test dependencies
+        if: needs.classify.outputs.browser == 'true'
+        working-directory: tests/browser
+        run: npm install --no-audit --no-fund
+      - name: Remove leftovers for this PR
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: python3 tools/development/cleanup_pr_envs.py --kubeconfig "${KUBECONFIG}" --slug "pr-${PR_NUMBER}"
+      - name: Smoke-test the PR in the development cluster
+        env:
+          APP: ${{ needs.classify.outputs.app }}
+          BROWSER: ${{ needs.classify.outputs.browser }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          args=(--ci --app "$APP" --branch "$HEAD_REF" --slug "pr-${PR_NUMBER}" --kubeconfig "${KUBECONFIG}")
+          if [ "$BROWSER" = true ]; then
+            args+=(--browser)
+          fi
+          python3 tools/development/verify_branch_deploy.py "${args[@]}"
+      - name: Remove this PR's environment
+        if: always()
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: python3 tools/development/cleanup_pr_envs.py --kubeconfig "${KUBECONFIG}" --slug "pr-${PR_NUMBER}"
+      - name: Upload smoke results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-results
+          path: |
+            tests/browser/test-results
+            browser-results
+          if-no-files-found: ignore
+
+  dev-smoke:
+    name: dev-smoke
+    needs: [classify, smoke]
+    if: always() && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report the result
+        env:
+          CLASSIFY_RESULT: ${{ needs.classify.result }}
+          SMOKE_RESULT: ${{ needs.smoke.result }}
+          TESTED: ${{ needs.classify.outputs.tested }}
+          REASON: ${{ needs.classify.outputs.reason }}
+        run: |
+          set -euo pipefail
+          if [ "$CLASSIFY_RESULT" != success ]; then
+            echo "classification ${CLASSIFY_RESULT}" | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          if [ "$TESTED" != true ]; then
+            echo "not smoke-tested: ${REASON}" | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [ "$SMOKE_RESULT" != success ]; then
+            echo "smoke ${SMOKE_RESULT}" | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo "smoke passed" | tee -a "$GITHUB_STEP_SUMMARY"
