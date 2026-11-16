@@ -131,7 +131,6 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/infra/controllers/intel-device-plugins/gpu` | `app.yaml` |
 | `kubernetes/infra/controllers/intel-device-plugins` | `./operator`, `./gpu` |
 | `kubernetes/infra/controllers/intel-device-plugins/operator` | `namespace.yaml`, `app.yaml` |
-| `kubernetes/infra/controllers` | `./local-path-provisioner`, `./nfs-csi`, `./cloudnative-pg`, `./cert-manager`, `./grafana-operator`, `./metrics-server`, `./intel-device-plugins` |
 | `kubernetes/infra/controllers/local-path-provisioner` | `github.com/rancher/local-path-provisioner/deploy?ref=v0.0.37` |
 | `kubernetes/infra/controllers/metrics-server` | `app.yaml` |
 | `kubernetes/infra/controllers/nfs-csi` | `app.yaml`, `media-storageclass.yaml`, `storageclass.yaml`, `volumesnapshotclass.yaml` |
@@ -154,7 +153,6 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/infra/network/certs-development` | `../certs` |
 | `kubernetes/infra/network/cilium` | `app.yaml`, `announcement.yaml`, `ip-pool.yaml` |
 | `kubernetes/infra/network/gateway` | `./namespace.yaml`, `./certificate.yaml`, `./gateway-internal.yaml`, `./gateway-passthrough.yaml`, `./gateway-external.yaml`, `./gateway-external-passthrough.yaml`, `./https-redirect.yaml`, `./referencegrant.yaml` |
-| `kubernetes/infra/network` | `./cilium`, `./certs`, `./vpn`, `./gateway` |
 | `kubernetes/infra/network/vpn` | `./namespace.yaml`, `./global-config.yaml`, `./secret.yaml`, `./pvc.yaml`, `./deployment.yaml`, `./service.yaml`, `./vpn-dns.yaml`, `./httproute.yaml` |
 | `kubernetes/apps/access-broker` | `namespace.yaml`, `configmap.yaml`, `secret.yaml`, `pvc.yaml`, `deployment.yaml`, `service.yaml`, `httproute.yaml` |
 | `kubernetes/apps/cloudflare-tunnels` | `namespace.yaml`, `secret.yaml`, `deployment.yaml`, `podmonitor.yaml` |

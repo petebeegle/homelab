@@ -11,8 +11,7 @@ Synology NFS, Grafana/Loki/Mimir/Alloy.
   commit to `main`. `docs/runbooks/change-workflow.md` is the procedure and
   `docs/decisions/pr-gated-change-workflow.md` (ADR-0016) is the rule behind it.
 - Binding architecture and operating decisions live in `docs/decisions/`.
-- General operational procedures live in `docs/runbooks/`; Codex-local notes live
-  in `.codex/runbooks/`.
+- Operational procedures live in `docs/runbooks/`.
 - `docs/architecture.md` is generated. Do not edit it by hand; run
   `python3 tools/architecture/render.py --write` when Kubernetes or Terraform
   source changes affect it.
