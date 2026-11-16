@@ -8,7 +8,7 @@ scope:
   - authentication
 authority: binding
 created: 2026-08-08
-last_verified: 2026-08-08
+last_verified: 2026-11-16
 supersedes: []
 superseded_by:
 ---
@@ -27,8 +27,11 @@ container validates the copied Jellyfin databases, SSO plugin, SSO
 configuration, branding, and system configuration before creating a completion
 marker.
 
-The existing NFS PVC remains declared and retained as a point-in-time rollback
-source. The Authentik blueprint, OAuth client ID, encrypted client secret,
+The NFS PVC was kept as a point-in-time rollback source during cutover. The
+migration init container, its script, and that PVC were removed in November 2026
+after the local volume had been in service for three months, so the migration
+constraints below describe the cutover and no longer apply to the running
+workload. The Authentik blueprint, OAuth client ID, encrypted client secret,
 redirect URI, group names, and native Jellyfin login behavior are not changed by
 the storage migration.
 
@@ -73,11 +76,8 @@ rule in `docs/decisions/synology-nfs-storage.md`.
 - The config volume becomes node-affine. Jellyfin cannot automatically move to
   another worker after the local PVC binds.
 - A failed or unavailable bound worker can make Jellyfin unavailable until the
-  node returns, the local volume is recovered, or the workload is deliberately
-  rolled back to the retained NFS PVC.
-- The retained NFS PVC becomes stale after cutover. It is suitable for immediate
-  rollback, but later rollback can lose settings, users, and metadata created
-  after migration.
+  node returns or the local volume is recovered. There is no NFS copy to roll
+  back to since the retained PVC was removed.
 - Backups of the local config volume require an explicit host-level or
   application-level strategy; Synology snapshots no longer protect live
   `/config`.
