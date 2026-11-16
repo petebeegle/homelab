@@ -1,0 +1,25 @@
+name: Dev runner proof (throwaway, do not merge)
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  proof:
+    runs-on: homelab-dev
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Identity and cluster access
+        run: |
+          id
+          kubectl get kustomization -n flux-system
+          kubectl auth can-i get secrets -n flux-system || true
+      - name: Playwright launches Chromium
+        working-directory: tests/browser
+        run: |
+          npm ci
+          npx --no-install playwright --version
+          node -e "const {chromium}=require('@playwright/test');(async()=>{const b=await chromium.launch();const p=await b.newPage();await p.setContent('<h1>ok</h1>');console.log(await p.textContent('h1'));await b.close();})()"
