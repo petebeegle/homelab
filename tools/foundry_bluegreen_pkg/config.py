@@ -18,5 +18,4 @@ CONFIG_VERSION_GLOBS = [
     "tools/foundry_bluegreen_pkg/*.py",
     "kubernetes/infra/controllers/nfs-csi/*.yaml",
     "kubernetes/apps/foundry-bluegreen-fixture/*.yaml",
-    "kubernetes/clusters/development/apps/foundry-bluegreen-fixture.yaml",
 ]

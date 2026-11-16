@@ -45,12 +45,6 @@ configMapGenerator:
       - dashboard.json=observability-health-dashboard.json
     options:
       disableNameSuffixHash: true
-  - name: codex-operations-dashboard
-    namespace: grafana
-    files:
-      - dashboard.json=codex-operations-dashboard.json
-    options:
-      disableNameSuffixHash: true
   - name: synthetic-smoke-dashboard
     namespace: grafana
     files:
@@ -72,6 +66,5 @@ resources:
   - immich-dashboard.yaml
   - home-assistant-dashboard.yaml
   - observability-health-dashboard.yaml
-  - codex-operations-dashboard.yaml
   - synthetic-smoke-dashboard.yaml
   - monitoring-radar-dashboard.yaml

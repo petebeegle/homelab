@@ -91,6 +91,8 @@ spec:
         },
     )
     print("dev-rehearse succeeded; production commands are now unblocked for this tool/config version")
+    # The fixture is not a standing deployment: remove it, and its two NFS volumes, when done.
+    runner.run([*kubectl, "delete", f"namespace/{namespace}", "--ignore-not-found", "--wait", "--timeout=180s"])
     return 0
 
 
