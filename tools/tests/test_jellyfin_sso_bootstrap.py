@@ -149,9 +149,18 @@ class JellyfinSsoBootstrapTest(unittest.TestCase):
 
             namespace["PLUGIN_DIR"] = plugin_dir
             namespace["PLUGIN_SHA256"] = namespace["hashlib"].sha256(archive_bytes).hexdigest()
+            real_rmtree = namespace["shutil"].rmtree
+
+            def busy_plugin_dir(path, *args, **kwargs):
+                # Only the existing plugin directory is "busy". tempfile's own cleanup also goes
+                # through shutil.rmtree (Python 3.14), and failing that would mask the real error.
+                if Path(path) == plugin_dir:
+                    raise OSError("busy")
+                return real_rmtree(path, *args, **kwargs)
+
             with (
                 mock.patch.object(namespace["urllib"].request, "urlopen", return_value=Response()),
-                mock.patch.object(namespace["shutil"], "rmtree", side_effect=OSError("busy")),
+                mock.patch.object(namespace["shutil"], "rmtree", side_effect=busy_plugin_dir),
             ):
                 with self.assertRaisesRegex(RuntimeError, "could not be replaced safely; stop Jellyfin and retry"):
                     namespace["install_plugin"]()
