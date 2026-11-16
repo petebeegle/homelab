@@ -60,6 +60,36 @@ class HookMigrationContractTests(unittest.TestCase):
         for path in (".specify", ".agents/skills"):
             self.assertFalse((ROOT / path).exists(), f"{path} still exists")
 
+    def test_hooks_run_directly_without_the_telemetry_wrapper(self):
+        # The Codex operations dashboard is gone, so nothing consumes hook telemetry.
+        self.assertFalse(any("codex_observe" in cmd for cmd in self._all_hook_commands()))
+        self.assertFalse((ROOT / ".codex/scripts/codex_observe.py").exists())
+
+    def _claude_hook_commands(self):
+        import json
+
+        settings = json.loads((ROOT / ".claude/settings.json").read_text())
+        return [
+            item["command"]
+            for groups in settings.get("hooks", {}).values()
+            for group in groups
+            for item in group.get("hooks", [])
+        ]
+
+    def test_claude_uses_the_same_two_guard_scripts_and_nothing_else(self):
+        import re
+
+        commands = self._claude_hook_commands()
+        self.assertFalse((ROOT / ".claude/hooks").exists(), ".claude/hooks duplicates .codex/hooks")
+        scripts = sorted(
+            name for cmd in commands for name in re.findall(r"\.codex/hooks/([\w.-]+)", cmd)
+        )
+        self.assertEqual(scripts, ["sops_guard.sh", "terraform_plan.sh"])
+        self.assertEqual(len(commands), 2, f"unexpected extra Claude hooks: {commands}")
+        for cmd in commands:
+            # Claude Code only blocks a tool call on exit code 2.
+            self.assertIn("|| exit 2", cmd)
+
     def test_every_wired_hook_script_exists(self):
         import re
 

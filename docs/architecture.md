@@ -18,7 +18,7 @@ This document is generated for agentic repo navigation. It records relationships
 - Root Kustomization: `kubernetes/clusters/development/kustomization.yaml`.
 - Root resources: `flux-system`, `cluster-vars.yaml`, `infra`, `apps`.
 - Infra activation list: `crds.yaml`, `onepassword-operator.yaml`, `cert-manager.yaml`, `local-path-provisioner.yaml`, `cloudnative-pg.yaml`, `intel-device-plugins-operator.yaml`, `intel-gpu-device-plugin.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `metrics-server.yaml`, `arc.yaml`, `certs.yaml`, `gateway.yaml`.
-- App activation list: `whoami.yaml`, `homepage.yaml`, `foundry-bluegreen-fixture.yaml`, `dev-runner.yaml`.
+- App activation list: `whoami.yaml`, `homepage.yaml`, `dev-runner.yaml`.
 
 - Branch environment templates: `whoami-template.yaml`, `jellyfin-template.yaml`, `homepage-template.yaml`, `home-assistant-template.yaml`, `immich-template.yaml`, `nexus-template.yaml`.
 
@@ -114,7 +114,6 @@ This document is generated for agentic repo navigation. It records relationships
 | `production` | `app-valheim` | `./kubernetes/apps/valheim` | `gateway`, `nfs-csi` | `cluster-vars` | `sops` |
 | `production` | `app-whoami` | `./kubernetes/apps/whoami` | `gateway` | `cluster-vars` | `no` |
 | `development` | `app-dev-runner` | `./kubernetes/apps/dev-runner` | `arc`, `onepassword-operator` | `(none)` | `no` |
-| `development` | `app-foundry-bluegreen-fixture` | `./kubernetes/apps/foundry-bluegreen-fixture` | `gateway`, `nfs-csi` | `cluster-vars` | `no` |
 | `development` | `app-homepage` | `./kubernetes/apps/homepage/development` | `gateway`, `metrics-server` | `cluster-vars` | `no` |
 | `development` | `app-whoami` | `./kubernetes/apps/whoami` | `gateway` | `cluster-vars` | `no` |
 
@@ -140,7 +139,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/infra/crds/prometheus` | `app.yaml` |
 | `kubernetes/infra/monitoring/alloy` | `repositories.yaml`, `namespace.yaml`, `app.yaml` |
 | `kubernetes/infra/monitoring/grafana/alerting` | `alert-rules-kubernetes.yaml`, `alert-rules-certificates.yaml`, `alert-rules-gateway-cilium.yaml`, `alert-rules-observability.yaml`, `alert-rules-apps.yaml`, `alert-rules-proxmox.yaml`, `alert-rules-flux.yaml`, `alert-rules-onepassword.yaml`, `alert-rules-valheim.yaml`, `alert-rules-synthetics.yaml` |
-| `kubernetes/infra/monitoring/grafana/dashboards` | `proxmox-dashboard.yaml`, `flux-dashboard.yaml`, `kubernetes-dashboard.yaml`, `authentik-dashboard.yaml`, `jellyfin-dashboard.yaml`, `immich-dashboard.yaml`, `home-assistant-dashboard.yaml`, `observability-health-dashboard.yaml`, `codex-operations-dashboard.yaml`, `synthetic-smoke-dashboard.yaml`, `monitoring-radar-dashboard.yaml` |
+| `kubernetes/infra/monitoring/grafana/dashboards` | `proxmox-dashboard.yaml`, `flux-dashboard.yaml`, `kubernetes-dashboard.yaml`, `authentik-dashboard.yaml`, `jellyfin-dashboard.yaml`, `immich-dashboard.yaml`, `home-assistant-dashboard.yaml`, `observability-health-dashboard.yaml`, `synthetic-smoke-dashboard.yaml`, `monitoring-radar-dashboard.yaml` |
 | `kubernetes/infra/monitoring/grafana` | `namespace.yaml`, `repositories.yaml`, `app.yaml`, `secret.yaml`, `grafana-env.yaml`, `gateway.yaml`, `grafana-instance.yaml`, `folders.yaml`, `dashboards`, `alerting` |
 | `kubernetes/infra/monitoring/kube-state-metrics` | `repositories.yaml`, `app.yaml` |
 | `kubernetes/infra/monitoring` | `namespace.yaml`, `kube-state-metrics`, `snmp-exporter`, `pretty-discord-alerts` |

@@ -15,7 +15,7 @@ Use this runbook for Foundry VTT image upgrades. Production changes stay GitOps-
 ## Safety Model
 
 - Development rehearsal is mandatory before production `prepare`, `promote`, `rollback`, or `retire`.
-- `dev-rehearse` uses the small development-only fixture in `kubernetes/apps/foundry-bluegreen-fixture`, not real Foundry and not Foundry secrets.
+- `dev-rehearse` uses the small development-only fixture in `kubernetes/apps/foundry-bluegreen-fixture`, not real Foundry and not Foundry secrets. The fixture is not deployed by Flux; the rehearsal applies it and deletes its namespace when it succeeds.
 - `dev-rehearse` only accepts the development kubeconfig at `~/.kube/homelab-development.config` after path expansion and resolution.
 - Rehearsal evidence is written to `.codex/tmp/foundry-bluegreen-dev-rehearse.json` and is valid only for the current tool/config version.
 - `prepare` pauses the blue Foundry deployment before creating the NFS CSI snapshot desired state.
@@ -34,7 +34,7 @@ python3 tools/foundry_bluegreen.py status
 python3 tools/foundry_bluegreen.py dev-rehearse
 ```
 
-The rehearsal applies the safe fixture to development, waits for blue and green HTTP workloads, scales blue to zero, creates `VolumeSnapshot/foundry-fixture-blue-rehearsal` with `VolumeSnapshotClass/nfs-csi-snapshot`, waits for readiness, and scales blue back to one replica.
+The rehearsal applies the safe fixture to development, waits for blue and green HTTP workloads, scales blue to zero, creates `VolumeSnapshot/foundry-fixture-blue-rehearsal` with `VolumeSnapshotClass/nfs-csi-snapshot`, waits for readiness, scales blue back to one replica, and then deletes the fixture namespace along with its two NFS volumes.
 
 If development access is unavailable, do not run production commands. Record the blocker in the PR summary and rerun rehearsal when access returns.
 

@@ -45,7 +45,6 @@ class FoundryBlueGreenTests(unittest.TestCase):
         self.write("tools/foundry_bluegreen.py", "tool version\n")
         self.write("kubernetes/infra/controllers/nfs-csi/app.yaml", "nfs\n")
         self.write("kubernetes/apps/foundry-bluegreen-fixture/kustomization.yaml", "fixture\n")
-        self.write("kubernetes/clusters/development/apps/foundry-bluegreen-fixture.yaml", "fixture flux\n")
         self.write(
             "kubernetes/apps/foundryvtt/deployment.yaml",
             """---
@@ -209,6 +208,29 @@ resources:
         self.assertIsNotNone(evidence)
         self.assertEqual(evidence["status"], "succeeded")
         self.assertEqual(evidence["config_version"], foundry_bluegreen.config_version(self.root))
+
+    def test_dev_rehearse_removes_the_fixture_when_it_finishes(self) -> None:
+        # The fixture is applied on demand, not kept running by Flux, so a rehearsal cleans up.
+        runner = FakeRunner()
+
+        self.quiet(
+            foundry_bluegreen.command_dev_rehearse,
+            self.args("dev-rehearse", kubeconfig=str(foundry_bluegreen.DEV_KUBECONFIG)),
+            runner,
+        )
+
+        commands = [" ".join(call[0]) for call in runner.calls]
+        self.assertIn("delete namespace/foundry-bluegreen-fixture", commands[-1])
+        self.assertIn("--wait", commands[-1])
+        self.assertIn(str(foundry_bluegreen.DEV_KUBECONFIG), commands[-1])
+
+    def test_no_standing_fixture_deployment_in_development(self) -> None:
+        repo = Path(__file__).resolve().parents[2]
+        apps = repo / "kubernetes/clusters/development/apps"
+        self.assertFalse((apps / "foundry-bluegreen-fixture.yaml").exists())
+        self.assertNotIn("foundry-bluegreen-fixture", (apps / "kustomization.yaml").read_text())
+        self.assertFalse(any("clusters/development" in glob for glob in foundry_bluegreen.CONFIG_VERSION_GLOBS))
+        self.assertTrue((repo / foundry_bluegreen.FIXTURE_DIR / "kustomization.yaml").exists())
 
     def test_dev_rehearse_rejects_non_development_kubeconfig_before_kubectl(self) -> None:
         runner = FakeRunner()

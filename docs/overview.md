@@ -62,7 +62,7 @@ to the checkout and ignored by git.
 | Secrets | SOPS for workloads, with the 1Password operator installed alongside | 1Password operator |
 | Identity | Authentik | None |
 | Monitoring | Alloy, Mimir, Loki, Grafana, Discord alerts, synthetic smoke tests | None. The `dev-heartbeat` workflow stands in |
-| Apps | homepage, pihole, whoami, jellyfin, immich, home-assistant, foundryvtt, valheim, access-broker, cloudflare-tunnels, renovate, synthetics, external routes | whoami, homepage, a foundry blue/green fixture, the CI runner |
+| Apps | homepage, pihole, whoami, jellyfin, immich, home-assistant, foundryvtt, valheim, access-broker, cloudflare-tunnels, renovate, synthetics, external routes | whoami, homepage, the CI runner |
 | CI | None in-cluster | Actions Runner Controller, one ephemeral runner pod at a time |
 
 ## How a change reaches production

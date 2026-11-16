@@ -26,13 +26,13 @@ matcher = "^Bash$"
 
 [[hooks.PreToolUse.hooks]]
 type = "command"
-command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase pre_tool --hook sops_guard -- \"$root/.codex/hooks/sops_guard.sh\"'"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/sops_guard.sh\"'"
 timeout = 30
 statusMessage = "Checking SOPS safety"
 
 [[hooks.PreToolUse.hooks]]
 type = "command"
-command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase pre_tool --hook terraform_plan_guard -- \"$root/.codex/hooks/terraform_plan.sh\"'"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/terraform_plan.sh\"'"
 timeout = 120
 statusMessage = "Checking Terraform apply safety"
 
@@ -41,6 +41,6 @@ matcher = "^(Bash|apply_patch|Edit|MultiEdit|Write)$"
 
 [[hooks.PostToolUse.hooks]]
 type = "command"
-command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec python3 \"$root/.codex/scripts/codex_observe.py\" --phase post_tool --hook sops_guard -- \"$root/.codex/hooks/sops_guard.sh\"'"
+command = "bash -lc 'root=$(git rev-parse --show-toplevel) && exec \"$root/.codex/hooks/sops_guard.sh\"'"
 timeout = 60
 statusMessage = "Checking secret files"

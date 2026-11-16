@@ -78,18 +78,6 @@
       "tooltip": "Open synthetic smoke dashboard",
       "type": "link",
       "url": "/d/synthetic-smoke"
-    },
-    {
-      "asDropdown": false,
-      "icon": "external link",
-      "includeVars": false,
-      "keepTime": true,
-      "tags": [],
-      "targetBlank": false,
-      "title": "Codex Operations",
-      "tooltip": "Open Codex operations dashboard",
-      "type": "link",
-      "url": "/d/codex-operations"
     }
   ],
   "liveNow": false,

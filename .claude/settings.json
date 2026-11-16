@@ -39,57 +39,14 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/terraform-plan.sh",
-            "statusMessage": "Running terraform plan...",
+            "command": "bash -c '\"$CLAUDE_PROJECT_DIR/.codex/hooks/terraform_plan.sh\" || exit 2'",
+            "statusMessage": "Checking Terraform apply safety",
             "timeout": 120
           },
           {
             "type": "command",
-            "command": "bash .claude/hooks/sops-guard.sh",
-            "statusMessage": "Checking for unencrypted secrets..."
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "CMD=$(python3 -c \"import json,sys; d=json.load(sys.stdin); print(d.get('tool_input',d).get('command',''))\" 2>/dev/null || true); case \"$CMD\" in *grep*|*rg\\ *|*ripgrep*|*find\\ *|*fd\\ *|*ack\\ *|*ag\\ *)   [ -f graphify-out/graph.json ] &&   echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"graphify: Knowledge graph exists. Read graphify-out/GRAPH_REPORT.md for god nodes and community structure before searching raw files.\"}}'   || true ;; esac"
-          }
-        ]
-      }
-    ],
-    "PreCompact": [
-      {
-        "matcher": "auto",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash .claude/hooks/compact-checkpoint.sh",
-            "statusMessage": "Noting auto-compact..."
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash .claude/hooks/pre-commit-check.sh",
-            "statusMessage": "Running pre-commit..."
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash .claude/hooks/flux-reminder.sh",
-            "statusMessage": "Noting push..."
+            "command": "bash -c 'jq -r .tool_input.command | grep -qE \"git (commit|push)\" || exit 0; \"$CLAUDE_PROJECT_DIR/.codex/hooks/sops_guard.sh\" || exit 2'",
+            "statusMessage": "Checking for unencrypted secrets"
           }
         ]
       }
