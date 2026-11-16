@@ -6,7 +6,8 @@ metadata:
   namespace: dev-runner
 automountServiceAccountToken: true
 ---
-# Branch environments are Flux objects in flux-system.
+# Branch environments are Flux objects in flux-system. `patch` is for `flux reconcile`,
+# which requests a reconcile by annotating the object.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -15,10 +16,10 @@ metadata:
 rules:
   - apiGroups: ["source.toolkit.fluxcd.io"]
     resources: ["gitrepositories"]
-    verbs: ["create", "get", "list", "watch", "delete"]
+    verbs: ["create", "get", "list", "watch", "patch", "delete"]
   - apiGroups: ["kustomize.toolkit.fluxcd.io"]
     resources: ["kustomizations"]
-    verbs: ["create", "get", "list", "watch", "delete"]
+    verbs: ["create", "get", "list", "watch", "patch", "delete"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -50,6 +51,10 @@ rules:
   - apiGroups: [""]
     resources: ["pods/log"]
     verbs: ["get"]
+  # `kubectl run -i --rm` (the verifier's probe pods) attaches to the pod; attach needs get and create.
+  - apiGroups: [""]
+    resources: ["pods/attach"]
+    verbs: ["get", "create"]
   - apiGroups: ["gateway.networking.k8s.io"]
     resources: ["httproutes"]
     verbs: ["get", "list", "watch"]
