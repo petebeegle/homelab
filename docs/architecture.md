@@ -155,7 +155,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/infra/network/vpn` | `./namespace.yaml`, `./global-config.yaml`, `./secret.yaml`, `./pvc.yaml`, `./deployment.yaml`, `./service.yaml`, `./vpn-dns.yaml`, `./httproute.yaml` |
 | `kubernetes/apps/access-broker` | `namespace.yaml`, `configmap.yaml`, `secret.yaml`, `pvc.yaml`, `deployment.yaml`, `service.yaml`, `httproute.yaml` |
 | `kubernetes/apps/cloudflare-tunnels` | `namespace.yaml`, `secret.yaml`, `deployment.yaml`, `podmonitor.yaml` |
-| `kubernetes/apps/dev-runner` | `namespace.yaml`, `onepassword-item.yaml`, `rbac.yaml`, `app.yaml` |
+| `kubernetes/apps/dev-runner` | `namespace.yaml`, `onepassword-item.yaml`, `rbac.yaml`, `token.yaml`, `app.yaml` |
 | `kubernetes/apps/external` | `namespace.yaml`, `synology.yaml`, `nexus-registry.yaml` |
 | `kubernetes/apps/foundry-bluegreen-fixture` | `namespace.yaml`, `pvc-blue.yaml`, `pvc-green.yaml`, `deployment-blue.yaml`, `deployment-green.yaml`, `service-blue.yaml`, `service-green.yaml`, `httproute-green-preview.yaml` |
 | `kubernetes/apps/foundryvtt` | `namespace.yaml`, `pvc.yaml`, `secret.yaml`, `deployment.yaml`, `service.yaml`, `httproute.yaml`, `httproute-public.yaml` |
@@ -242,6 +242,7 @@ This lists secret manifest presence only. Secret values are not rendered.
 | `authentik` | `authentik/authentik-secrets` | `yes` | `kubernetes/infra/authentik/secret.yaml` |
 | `cloudflare-tunnels` | `cloudflare/tunnel-credentials` | `yes` | `kubernetes/apps/cloudflare-tunnels/secret.yaml` |
 | `controllers/cert-manager` | `cert-manager/cloudflare-api-token` | `yes` | `kubernetes/infra/controllers/cert-manager/secret.yaml` |
+| `dev-runner` | `dev-runner/dev-runner-token` | `unknown` | `kubernetes/apps/dev-runner/token.yaml` |
 | `foundryvtt` | `foundryvtt/foundryvtt-secret` | `yes` | `kubernetes/apps/foundryvtt/secret.yaml` |
 | `home-assistant` | `home-assistant/home-assistant-secrets` | `yes` | `kubernetes/apps/home-assistant/secret.yaml` |
 | `immich` | `immich/immich-postgres-user` | `yes` | `kubernetes/apps/immich/base/secret.yaml` |

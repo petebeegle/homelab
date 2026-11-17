@@ -1,0 +1,13 @@
+---
+# A long-lived token for the dev-runner ServiceAccount, so a runner outside the development
+# cluster (production, #522 A0) can act with exactly this account's Roles. Kubernetes fills
+# in the token; the repo holds none. Rotate it by deleting this Secret (Flux recreates it)
+# and updating the dev-runner kubeconfig item in the "cluster production" 1Password vault.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dev-runner-token
+  namespace: dev-runner
+  annotations:
+    kubernetes.io/service-account.name: dev-runner
+type: kubernetes.io/service-account-token

@@ -5,4 +5,5 @@ resources:
   - namespace.yaml
   - onepassword-item.yaml
   - rbac.yaml
+  - token.yaml
   - app.yaml
