@@ -26,6 +26,13 @@ to ADR-0016. They are in git history up to commit `850c034`.
 - Tests come first where the change has testable behaviour. Review enforces it.
 - Two local guards stay on for agents: no unencrypted secret manifests, and no
   `terraform apply` without a plan.
+- The development cluster's only alert is `dev-heartbeat`, and it does not rely
+  on GitHub's cron. GitHub fires scheduled workflows on this repo only every few
+  hours (a 10h40m gap between `*/30` runs was seen in November 2026), so the
+  heartbeat counts a success of any job on the in-cluster runner (`dev-cleanup`
+  or `dev-smoke`'s `smoke` job) and allows 12 hours, longer than any gap seen.
+  For the same reason every smoke run also sweeps stale `pr-*` environments
+  rather than leaving that to `dev-cleanup` alone.
 
 **Why.** A per-change paper trail (spec, plan, tasks, evidence files) grew to
 about 9,000 lines of tooling and 325 committed files, and the evidence was
