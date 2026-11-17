@@ -11,6 +11,9 @@
     ":enablePreCommit",
     ":pinVersions"
   ],
+  "ignorePaths": [
+    "**/node_modules/**"
+  ],
   "flux": {
     "managerFilePatterns": [
       "/(?:^|/)gotk-components\\.ya?ml$/",
@@ -88,6 +91,16 @@
       ],
       "matchDatasources": [
         "helm"
+      ]
+    },
+    {
+      "description": "Playwright's runner image and npm package must be the same version (tools/renovate/tests/test_renovate_config.py, tools/development/tests/test_runner_image.py); update every copy in one PR",
+      "groupName": "playwright",
+      "matchPackageNames": [
+        "@playwright/test",
+        "playwright",
+        "playwright-core",
+        "mcr.microsoft.com/playwright"
       ]
     },
     {

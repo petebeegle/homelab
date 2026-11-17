@@ -1,19 +1,35 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-chart_version="2.4.1"
-operator_version="1.12.0"
-chart_repository="https://1password.github.io/connect-helm-charts"
-repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
-values_file="$repo_root/kubernetes/infra/controllers/onepassword-operator/values.yaml"
-rendered="$(mktemp)"
-rendered_values="$(mktemp)"
+# Renders the committed 1Password HelmRelease and checks the properties that matter
+# (direct service-account auth, no Connect, no token Secret, pinned operator image,
+# polling interval, resources). Versions are read from the committed manifests, not
+# hardcoded, so Renovate chart bumps are checked rather than rejected.
 
-if ! grep -q 'chart: connect' "$repo_root/kubernetes/infra/controllers/onepassword-operator/app.yaml" || \
-	! grep -q 'version: "2.4.1"' "$repo_root/kubernetes/infra/controllers/onepassword-operator/app.yaml"; then
-	echo "1Password chart check: committed HelmRelease chart pin is not connect 2.4.1" >&2
+repo_root="${ONEPASSWORD_CHART_CHECK_ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)}"
+app_file="$repo_root/kubernetes/infra/controllers/onepassword-operator/app.yaml"
+values_file="$repo_root/kubernetes/infra/controllers/onepassword-operator/values.yaml"
+
+# First "chart:" in the HelmRelease spec, the "version:" that follows it, and the
+# HelmRepository url.
+chart_name="$(sed -nE 's/^ +chart: *"?([^" ]+)"?$/\1/p' "$app_file" | head -n1)"
+chart_version="$(sed -nE '/^ +chart: *"?connect"?$/,/^ +version:/s/^ +version: *"?([^" ]+)"?$/\1/p' "$app_file" | head -n1)"
+chart_repository="$(sed -nE 's/^ +url: *"?([^" ]+)"?$/\1/p' "$app_file" | head -n1)"
+operator_version="$(sed -nE '/^operator:/,/^[^ ]/s/^  version: *"?([^" ]+)"?$/\1/p' "$values_file" | head -n1)"
+
+if [ "$chart_name" != "connect" ]; then
+	echo "1Password chart check: committed HelmRelease chart is '$chart_name', not connect" >&2
 	exit 1
 fi
+for pin in chart_version chart_repository operator_version; do
+	if [ -z "${!pin}" ]; then
+		echo "1Password chart check: could not read $pin from the committed manifests" >&2
+		exit 1
+	fi
+done
+
+rendered="$(mktemp)"
+rendered_values="$(mktemp)"
 
 cleanup() {
 	rm -f -- "$rendered" "$rendered_values"
@@ -50,8 +66,8 @@ if grep -q '^kind: Secret$' "$rendered"; then
 	exit 1
 fi
 
-if ! grep -q 'image: .*1password/onepassword-operator:1.12.0' "$rendered"; then
-	echo "1Password chart check: pinned operator image is missing" >&2
+if ! grep -Eq "image: .*1password/onepassword-operator:${operator_version//./\\.}([\"' ]|\$)" "$rendered"; then
+	echo "1Password chart check: pinned operator image ${operator_version} is missing" >&2
 	exit 1
 fi
 
@@ -70,4 +86,4 @@ if ! grep -A12 '^          resources:$' "$rendered" | grep -q 'memory: 256Mi'; t
 	exit 1
 fi
 
-echo "1Password chart check: direct operator rendered without Connect or token Secret."
+echo "1Password chart check: connect ${chart_version} renders the direct operator without Connect or token Secret."

@@ -107,10 +107,24 @@ def manifests_under(*roots: Path, repo_root: Path) -> list[Manifest]:
     return manifests
 
 
+REMOTE_REF_QUERY = re.compile(r"([?&]ref=)[^&\s]+")
+RAW_GITHUB_REF = re.compile(r"^(https://raw\.githubusercontent\.com/[^/]+/[^/]+/)[^/]+/")
+
+
+def unversioned(resource: str) -> str:
+    """Replace the pinned ref in a remote kustomize resource with ``<ref>``.
+
+    The generated doc must not change when Renovate bumps a version, because Renovate
+    cannot regenerate it (see docs/runbooks/renovate.md).
+    """
+    resource = REMOTE_REF_QUERY.sub(r"\1<ref>", resource)
+    return RAW_GITHUB_REF.sub(r"\1<ref>/", resource)
+
+
 def kustomize_resources(path: Path) -> list[str]:
     if not path.exists():
         return []
-    return list_scalars(read(path), "resources")
+    return [unversioned(item) for item in list_scalars(read(path), "resources")]
 
 
 def cluster_vars(root: Path) -> list[tuple[str, str]]:
