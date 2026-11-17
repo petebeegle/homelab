@@ -98,7 +98,7 @@ jobs:
         run: python3 tools/development/cleanup_pr_envs.py --kubeconfig "${KUBECONFIG}" --slug "pr-${PR_NUMBER}"
       - name: Upload smoke results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: smoke-results
           path: |
