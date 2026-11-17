@@ -528,7 +528,10 @@ class VerifyBranchDeployTest(unittest.TestCase):
         self.assertTrue(any("get namespace homepage-example-change" in command for command in commands))
         self.assertTrue(any("get service homepage-example-change" in command for command in commands))
         self.assertTrue(any("get httproute homepage-example-change -o json" in command for command in commands))
-        self.assertTrue(any("run probe-example-change" in command and "Home Lab|Branch|Homepage" in command for command in commands))
+        self.assertTrue(any("run p0-example-change" in command and "Home Lab|Branch|Homepage" in command for command in commands))
+        self.assertTrue(
+            any("run p1-example-change" in command and "/api/services" in command and "Single sign-on" in command for command in commands)
+        )
 
     def test_home_assistant_profile_checks_pvc_service_route_and_http_probe(self) -> None:
         runner = FakeRunner(pods_json=READY_HOME_ASSISTANT_PODS, pvc_json=READY_HOME_ASSISTANT_PVC)

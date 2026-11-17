@@ -165,6 +165,25 @@ class BranchOverlayRenderTest(unittest.TestCase):
                     for name in re.findall(r"- (\S+)", hostname):
                         self.assertIn(name, allowed_hosts, f"route hostname {name} would get HTTP 400")
 
+    def test_homepage_probe_checks_the_merged_services_config(self) -> None:
+        # The merge-config init container (mikefarah/yq) writes services.yaml. A probe of "/"
+        # only matches page chrome, so a yq bump that emptied the config would still pass.
+        # One probe must read /api/services and expect a service the branch config defines.
+        profile = json.loads((PROFILES / "homepage.json").read_text(encoding="utf-8"))
+        api_probes = [p for p in profile["checks"]["httpProbes"] if p["path"] == "/api/services"]
+        self.assertTrue(api_probes, "no dev-smoke probe reads /api/services")
+        docs = documents(kustomize("kubernetes/apps/homepage/branch"))
+        services_config = "\n".join(
+            d for d in docs if kind_of(d) == "ConfigMap" and "services.yaml:" in d
+        )
+        self.assertTrue(services_config, "branch environment renders no services.yaml")
+        for probe in api_probes:
+            expected = re.search(probe["bodyRegex"], services_config)
+            self.assertIsNotNone(
+                expected, f"/api/services probe expects {probe['bodyRegex']!r}, which services.yaml lacks"
+            )
+            self.assertNotRegex("Home Lab Homepage Branch", probe["bodyRegex"], "regex must not match page chrome")
+
 
 if __name__ == "__main__":
     unittest.main()

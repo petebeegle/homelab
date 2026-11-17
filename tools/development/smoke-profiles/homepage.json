@@ -16,6 +16,12 @@
         "port": 80,
         "path": "/",
         "bodyRegex": "Home Lab|Branch|Homepage"
+      },
+      {
+        "service": "homepage-${branch_slug}",
+        "port": 80,
+        "path": "/api/services",
+        "bodyRegex": "Single sign-on"
       }
     ]
   },
