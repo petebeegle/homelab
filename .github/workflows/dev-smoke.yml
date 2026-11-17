@@ -96,6 +96,16 @@ jobs:
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: python3 tools/development/cleanup_pr_envs.py --kubeconfig "${KUBECONFIG}" --slug "pr-${PR_NUMBER}"
+      # dev-cleanup's cron fires only every few hours, so each smoke run also sweeps
+      # environments other runs left behind. The 3h age limit (the same as dev-cleanup)
+      # spares any concurrently running PR, whose job times out after 20 minutes. A
+      # failed sweep is only a warning: it must not change this PR's smoke result.
+      - name: Remove other PRs' stale environments
+        if: ${{ !cancelled() }}
+        run: |
+          if ! python3 tools/development/cleanup_pr_envs.py --kubeconfig "${KUBECONFIG}" --older-than 3h; then
+            echo "::warning::could not remove stale pr-* environments; dev-cleanup will retry"
+          fi
       - name: Upload smoke results
         if: always()
         uses: actions/upload-artifact@v4

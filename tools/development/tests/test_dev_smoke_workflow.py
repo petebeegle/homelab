@@ -111,6 +111,21 @@ class DevSmokeWorkflowTest(unittest.TestCase):
         self.assertIn("needs.smoke.result", block)
         self.assertIn("needs.classify.result", block)
 
+    def test_smoke_job_also_sweeps_stale_environments_without_failing_the_smoke(self) -> None:
+        smoke = jobs(read())["smoke"]
+        steps = re.split(r"\n      - ", smoke)
+        sweeps = [s for s in steps if "--older-than 3h" in s]
+        self.assertEqual(1, len(sweeps), "one step removes other PRs' stale environments")
+        sweep = sweeps[0]
+        self.assertIn("cleanup_pr_envs.py", sweep)
+        self.assertNotIn("--slug", sweep, "the sweep is age-based, never a named PR")
+        self.assertIn("::warning::", sweep, "a failed sweep is a warning, not a smoke failure")
+        self.assertRegex(sweep, r"(?m)^\s+if ! python3 tools/development/cleanup_pr_envs\.py")
+        self.assertIn("if: ${{ !cancelled() }}", sweep)
+        own = [i for i, s in enumerate(steps) if "Remove this PR's environment" in s]
+        self.assertEqual(1, len(own))
+        self.assertGreater(steps.index(sweep), own[0], "sweep after the PR's own environment is removed")
+
 
 if __name__ == "__main__":
     unittest.main()

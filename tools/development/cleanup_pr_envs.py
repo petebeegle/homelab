@@ -2,7 +2,7 @@
 """Delete leftover PR smoke environments from the dev cluster.
 
 A cancelled workflow can die before its cleanup runs, so each smoke run starts by
-removing its own slug (`--slug pr-12`), and a scheduled job removes anything older
+removing its own slug (`--slug pr-12`), and dev-cleanup and every smoke run remove anything older
 than a threshold (`--older-than 3h`). Only objects named for a `pr-<number>` slug
 are ever considered: `branch-<app>-pr-<N>` Kustomizations and `branch-pr-<N>`
 GitRepositories in flux-system.

@@ -54,15 +54,18 @@ class DevHeartbeatWorkflowTest(unittest.TestCase):
     def test_runs_on_github_hosted_so_it_survives_a_dead_dev_runner(self) -> None:
         text = read(HEARTBEAT)
         self.assertRegex(text, r"(?m)^    runs-on: ubuntu-latest$")
-        self.assertNotIn("homelab-dev", text)
+        self.assertNotRegex(text, r"runs-on: .*homelab-dev")
 
-    def test_fails_when_dev_cleanup_has_not_succeeded_in_two_hours(self) -> None:
+    def test_judges_liveness_from_any_dev_runner_job_with_a_12_hour_limit(self) -> None:
         text = read(HEARTBEAT)
-        self.assertRegex(text, r"actions/workflows/dev-cleanup\.yml/runs\?status=success")
+        for workflow in ("dev-cleanup.yml", "dev-smoke.yml"):
+            self.assertIn(workflow, text)
+        self.assertRegex(text, r"actions/runs/\$\{?run\}?/jobs")
         self.assertIn("dev_heartbeat.py", text)
-        self.assertIn("--max-age-seconds 7200", text)
+        self.assertIn("--runner-label homelab-dev", text.replace("'", "").replace('"', ""))
+        self.assertIn("--max-age-seconds 43200", text)
+        self.assertIn("set -euo pipefail", text)
         self.assertRegex(text, r"(?m)^permissions:\n  actions: read\n  contents: read$")
-
 
 if __name__ == "__main__":
     unittest.main()

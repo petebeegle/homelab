@@ -1,8 +1,10 @@
 name: dev-cleanup
 
 # Removes PR smoke environments that outlived their run (a cancelled or crashed job).
-# It also doubles as a liveness probe: it can only succeed when the dev runner pod can
-# start and reach the dev cluster, and dev-heartbeat alerts when it stops succeeding.
+# GitHub fires this cron far less often than asked, so dev-smoke sweeps too. It also
+# doubles as a liveness probe: it can only succeed when the dev runner pod can start
+# and reach the dev cluster, and dev-heartbeat alerts when nothing on that runner
+# (this or a dev-smoke run) has succeeded recently.
 on:
   schedule:
     - cron: '*/30 * * * *'

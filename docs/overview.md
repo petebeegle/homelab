@@ -93,9 +93,9 @@ Three workflows support the gate:
 
 | Workflow | When | What it does |
 |----------|------|--------------|
-| `dev-smoke` | Every PR | Classifies the change, then deploys and tests it in development if it can |
-| `dev-cleanup` | Every 30 minutes | Removes PR environments that outlived their run |
-| `dev-heartbeat` | Hourly | Checks the development cluster and runner are alive, since nothing else monitors them |
+| `dev-smoke` | Every PR | Classifies the change, then deploys and tests it in development if it can; also removes stale PR environments |
+| `dev-cleanup` | Scheduled every 30 minutes (GitHub fires it far less often) | Removes PR environments that outlived their run |
+| `dev-heartbeat` | Scheduled hourly (likewise sparse) | Checks the development cluster and runner are alive, since nothing else monitors them |
 
 ## How traffic gets in
 

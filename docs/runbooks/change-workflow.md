@@ -74,9 +74,10 @@ rerun.
    means development itself is unhealthy, not your PR. Check with
    `kubectl --kubeconfig ~/.kube/homelab-development.config -n flux-system get kustomization`.
 3. If the change is at fault, fix it and push. The next run replaces the
-   environment. A run removes its own environment when it ends; `dev-cleanup`
-   (every 30 minutes) removes any `pr-*` environment older than three hours
-   that a cancelled run left behind.
+   environment. A run removes its own environment when it ends, then removes
+   any other `pr-*` environment older than three hours that a cancelled run
+   left behind; `dev-cleanup` does the same on a schedule. A failed sweep is a
+   warning on the run, not a smoke failure.
 4. If development is at fault, fix development first (it is changed through PRs
    like production), then re-run the failed job.
 5. To see it yourself, deploy the same branch by hand with `--keep` (below),
@@ -85,9 +86,9 @@ rerun.
    (the slug must start with `pr-`; for other slugs delete the
    `branch-<app>-<slug>` Kustomization and `branch-<slug>` GitRepository).
 
-`dev-heartbeat` runs hourly on a GitHub-hosted runner and fails when
-`dev-cleanup` has not succeeded recently, which means the in-cluster runner or
-the development cluster is down. A red heartbeat usually explains a burst of red
+`dev-heartbeat` runs on a GitHub-hosted runner and fails when no job on the
+in-cluster runner (`dev-cleanup`, or a `dev-smoke` `smoke` job) has succeeded
+in 12 hours, which means the runner or the development cluster is down. A red heartbeat usually explains a burst of red
 or stuck smoke runs.
 
 ## Smoke-testing by hand
