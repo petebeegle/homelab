@@ -130,7 +130,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/infra/controllers/intel-device-plugins/gpu` | `app.yaml` |
 | `kubernetes/infra/controllers/intel-device-plugins` | `./operator`, `./gpu` |
 | `kubernetes/infra/controllers/intel-device-plugins/operator` | `namespace.yaml`, `app.yaml` |
-| `kubernetes/infra/controllers/local-path-provisioner` | `github.com/rancher/local-path-provisioner/deploy?ref=<ref>` |
+| `kubernetes/infra/controllers/local-path-provisioner` | `https://github.com/rancher/local-path-provisioner//deploy?ref=<ref>` |
 | `kubernetes/infra/controllers/metrics-server` | `app.yaml` |
 | `kubernetes/infra/controllers/nfs-csi` | `app.yaml`, `media-storageclass.yaml`, `storageclass.yaml`, `volumesnapshotclass.yaml` |
 | `kubernetes/infra/controllers/onepassword-operator` | `namespace.yaml`, `app.yaml` |

@@ -64,6 +64,18 @@
       "datasourceTemplate": "helm",
       "registryUrlTemplate": "https://helm.cilium.io/",
       "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "description": "Tool versions pinned in workflows and composite actions, marked with a `# renovate:` comment on the line above",
+      "managerFilePatterns": [
+        "/(?:^|/)\\.github/workflows/[^/]+\\.ya?ml$/",
+        "/(?:^|/)\\.github/actions/.+/action\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)(?: extractVersion=(?<extractVersion>\\S+))?\\n\\s*[A-Za-z_]+:\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "versioningTemplate": "semver"
     }
   ],
   "terraform": {
