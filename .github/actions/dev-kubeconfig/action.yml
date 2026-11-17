@@ -1,0 +1,31 @@
+---
+name: Development cluster kubeconfig
+description: >-
+  Write a kubeconfig for the development cluster to $RUNNER_TEMP/kubeconfig and export
+  KUBECONFIG. A runner outside development (production, #522 A0) names a mounted file
+  with DEV_CLUSTER_KUBECONFIG; a runner inside development uses its pod ServiceAccount.
+runs:
+  using: composite
+  steps:
+    - name: Write the development cluster kubeconfig
+      shell: bash
+      run: |
+        set -euo pipefail
+        kc="${RUNNER_TEMP}/kubeconfig"
+        if [ -n "${DEV_CLUSTER_KUBECONFIG:-}" ]; then
+          # Named but missing means the mount is broken: fail rather than use the pod's own account.
+          if [ ! -f "${DEV_CLUSTER_KUBECONFIG}" ]; then
+            echo "::error::DEV_CLUSTER_KUBECONFIG=${DEV_CLUSTER_KUBECONFIG} does not exist"
+            exit 1
+          fi
+          install -m 600 "${DEV_CLUSTER_KUBECONFIG}" "${kc}"
+        else
+          sa=/var/run/secrets/kubernetes.io/serviceaccount
+          kubectl config set-cluster dev --server=https://kubernetes.default.svc --certificate-authority="${sa}/ca.crt" --embed-certs=true --kubeconfig="${kc}"
+          kubectl config set-credentials runner --token="$(cat "${sa}/token")" --kubeconfig="${kc}"
+          kubectl config set-context dev --cluster=dev --user=runner --kubeconfig="${kc}"
+          kubectl config use-context dev --kubeconfig="${kc}"
+          touch "${kc}"
+          chmod 600 "${kc}"
+        fi
+        echo "KUBECONFIG=${kc}" >> "${GITHUB_ENV}"
