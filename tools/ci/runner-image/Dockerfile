@@ -2,7 +2,7 @@
 # its OS libraries preinstalled) plus the GitHub Actions runner, kubectl, the Flux
 # CLI and Python. The Playwright tag must match tests/browser/package.json
 # (tools/development/tests/test_runner_image.py enforces it).
-FROM mcr.microsoft.com/playwright:v1.56.1-noble
+FROM mcr.microsoft.com/playwright:v1.65.1-noble
 
 # Versions are pinned and every download is checksum-verified. kubectl matches the
 # dev cluster's Kubernetes version and flux matches the dev cluster's Flux version.
