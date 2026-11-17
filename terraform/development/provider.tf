@@ -18,6 +18,21 @@ terraform {
       source  = "hashicorp/kubernetes"
       version = "3.1.0"
     }
+    // Used only by ../modules/*, declared here too so Renovate updates this
+    // directory's .terraform.lock.hcl when it bumps them (docs/runbooks/renovate.md).
+    // Keep the versions equal to the modules' (tools/renovate/tests enforce it).
+    talos = {
+      source  = "siderolabs/talos"
+      version = "0.11.0"
+    }
+    local = {
+      source  = "hashicorp/local"
+      version = "2.9.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "3.9.0"
+    }
   }
 }
 
