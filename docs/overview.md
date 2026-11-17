@@ -71,12 +71,14 @@ to the checkout and ignored by git.
 flowchart LR
   A["Branch + pull request<br/>you, an agent, or Renovate"] --> B["Pre-commit"]
   A --> C["Verification harness"]
+  A --> R["Flux render<br/>production built and templated"]
   A --> D["dev-smoke"]
   D --> E{"Only one smoke-tested<br/>app changed?"}
   E -->|yes| F["Runner pod in dev deploys the PR branch<br/>as app-pr-N, checks it, removes it"]
   E -->|no| G["Reports not smoke-tested.<br/>Validate in dev by hand and<br/>say so in the PR description"]
   B --> M["Merge to main"]
   C --> M
+  R --> M
   F --> M
   G --> M
   M --> P["Flux applies to production"]

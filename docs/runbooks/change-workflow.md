@@ -36,6 +36,7 @@ broken check. The reasoning is in [decisions.md](../decisions.md#changes-go-thro
 |-------|----------|--------------|
 | `Pre-commit` | yes | `pre-commit run --all-files`: YAML lint, manifest validation, `terraform fmt` and docs, the generated architecture doc, policy checks |
 | `Verification / harness` | yes | `python3 tools/verification/verify.py --profile harness`: runs every Python and Node test it discovers under `tools/`, except a short excluded list in `verify.py` |
+| `Flux render` | yes | `flux-local test --enable-helm` on `kubernetes/clusters/production`: builds every Flux Kustomization production runs, with `cluster-vars` substituted, and templates every HelmRelease with its pinned chart. Catches missing chart versions, values a new chart rejects, broken kustomize builds and remote bases. Proves it renders, not that it runs |
 | `dev-smoke` | not yet (issue #477) | Deploys the change to the development cluster and tests it, when the PR qualifies (below) |
 
 The harness is deliberately not a browser or cluster check. It proves the tools
@@ -160,7 +161,7 @@ without printing their contents:
 ## Branch protection on `main`
 
 Repository ruleset `main-required-checks` (id `27289884`) requires
-`Verification / harness` and `Pre-commit` to pass before a merge. Both are pinned
+`Verification / harness`, `Pre-commit` and `Flux render` to pass before a merge. All are pinned
 to the GitHub Actions app (`integration_id` 15368), so no other app can report a
 passing status under those names. Branches need not be up to date and no
 approving review is required. The rule file at
