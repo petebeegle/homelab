@@ -144,6 +144,27 @@ class BranchOverlayRenderTest(unittest.TestCase):
                 if namespace is not None:
                     self.assertIn(namespace, (f"{app}{SUFFIX}", "gateway"), f"{app}: {kind}/{name} is in namespace {namespace}")
 
+    def test_homepage_allows_the_hosts_the_smoke_probe_and_route_send(self) -> None:
+        # Since homepage v2 the HOMEPAGE_ALLOWED_HOSTS check covers pages, not only /api, so the
+        # in-cluster probe (Host: <service>.<namespace>.svc.cluster.local) gets HTTP 400 unless
+        # that host is allowed alongside the route hostname.
+        profile = json.loads((PROFILES / "homepage.json").read_text(encoding="utf-8"))
+        docs = documents(kustomize("kubernetes/apps/homepage/branch"))
+        deployment = next(d for d in docs if kind_of(d) == "Deployment")
+        allowed = field(deployment, r"name: HOMEPAGE_ALLOWED_HOSTS\n\s+value: (\S+)$")
+        self.assertIsNotNone(allowed, "homepage Deployment does not set HOMEPAGE_ALLOWED_HOSTS")
+        allowed_hosts = set(allowed.split(","))
+        for probe in profile["checks"]["httpProbes"]:
+            host = f"{probe['service']}.{profile['namespace']}.svc.cluster.local"
+            if probe["port"] != 80:
+                host = f"{host}:{probe['port']}"
+            self.assertIn(host, allowed_hosts, "the dev-smoke HTTP probe would get HTTP 400")
+        for doc in docs:
+            if kind_of(doc) == "HTTPRoute":
+                for hostname in re.findall(r"(?m)^  hostnames:\n((?:  - \S+\n)+)", doc + "\n"):
+                    for name in re.findall(r"- (\S+)", hostname):
+                        self.assertIn(name, allowed_hosts, f"route hostname {name} would get HTTP 400")
+
 
 if __name__ == "__main__":
     unittest.main()
