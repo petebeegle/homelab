@@ -100,7 +100,9 @@ spec:
           imagePullPolicy: IfNotPresent
           env:
             - name: HOMEPAGE_ALLOWED_HOSTS
-              value: homepage.${cluster_domain}
+              # Since v2 this check covers every page, not just /api. The Service name lets
+              # in-cluster clients (the dev-smoke probe) reach it; the route hostname is for users.
+              value: homepage.${cluster_domain},homepage.homepage.svc.cluster.local
             - name: LOG_TARGETS
               value: stdout
           ports:

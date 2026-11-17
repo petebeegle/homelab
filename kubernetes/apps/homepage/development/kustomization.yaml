@@ -83,7 +83,7 @@ patches:
               - name: homepage
                 env:
                   - name: HOMEPAGE_ALLOWED_HOSTS
-                    value: homepage.${cluster_domain}
+                    value: homepage.${cluster_domain},homepage.homepage.svc.cluster.local
   - target:
       group: gateway.networking.k8s.io
       version: v1
