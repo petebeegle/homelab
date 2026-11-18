@@ -14,7 +14,7 @@ The generated kubeconfig and talosconfig are written to cluster-specific paths b
 | <a name="requirement_local"></a> [local](#requirement\_local) | 2.9.0 |
 | <a name="requirement_proxmox"></a> [proxmox](#requirement\_proxmox) | 0.111.1 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | 3.9.0 |
-| <a name="requirement_talos"></a> [talos](#requirement\_talos) | 0.11.0 |
+| <a name="requirement_talos"></a> [talos](#requirement\_talos) | 0.12.0 |
 
 ## Providers
 
