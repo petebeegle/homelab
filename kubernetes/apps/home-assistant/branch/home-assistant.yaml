@@ -65,7 +65,7 @@ spec:
               mountPath: /config
       containers:
         - name: home-assistant
-          image: ghcr.io/home-assistant/home-assistant:2026.9.4
+          image: ghcr.io/home-assistant/home-assistant:2026.11.2
           imagePullPolicy: IfNotPresent
           env:
             - name: TZ
