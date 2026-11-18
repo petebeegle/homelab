@@ -23,7 +23,7 @@ terraform {
     // Keep the versions equal to the modules' (tools/renovate/tests enforce it).
     talos = {
       source  = "siderolabs/talos"
-      version = "0.11.0"
+      version = "0.12.0"
     }
     local = {
       source  = "hashicorp/local"
