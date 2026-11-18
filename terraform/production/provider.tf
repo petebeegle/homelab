@@ -12,7 +12,7 @@ terraform {
     // https://registry.terraform.io/providers/hashicorp/helm/3.1.1/docs
     helm = {
       source  = "hashicorp/helm"
-      version = "3.2.0"
+      version = "3.3.0"
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
