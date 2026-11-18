@@ -16,7 +16,7 @@ terraform {
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = "3.1.0"
+      version = "3.5.0"
     }
     // Used only by ../modules/*, declared here too so Renovate updates this
     // directory's .terraform.lock.hcl when it bumps them (docs/runbooks/renovate.md).
