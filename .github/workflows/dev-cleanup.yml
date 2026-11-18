@@ -22,7 +22,7 @@ jobs:
     runs-on: homelab-dev
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.1.0
         with:
           persist-credentials: false
       - name: Development cluster kubeconfig
