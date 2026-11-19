@@ -12,7 +12,7 @@ The generated kubeconfig and talosconfig are written to cluster-specific paths b
 | <a name="requirement_helm"></a> [helm](#requirement\_helm) | 3.2.0 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | 3.1.0 |
 | <a name="requirement_local"></a> [local](#requirement\_local) | 2.9.0 |
-| <a name="requirement_proxmox"></a> [proxmox](#requirement\_proxmox) | 0.111.1 |
+| <a name="requirement_proxmox"></a> [proxmox](#requirement\_proxmox) | 0.123.1 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | 3.9.0 |
 | <a name="requirement_talos"></a> [talos](#requirement\_talos) | 0.11.0 |
 
@@ -20,7 +20,7 @@ The generated kubeconfig and talosconfig are written to cluster-specific paths b
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_proxmox"></a> [proxmox](#provider\_proxmox) | 0.111.1 |
+| <a name="provider_proxmox"></a> [proxmox](#provider\_proxmox) | 0.123.1 |
 | <a name="provider_terraform"></a> [terraform](#provider\_terraform) | n/a |
 
 ## Modules
@@ -35,8 +35,8 @@ The generated kubeconfig and talosconfig are written to cluster-specific paths b
 
 | Name | Type |
 | ---- | ---- |
-| [proxmox_hardware_mapping_pci.jellyfin_igpu](https://registry.terraform.io/providers/bpg/proxmox/0.111.1/docs/resources/hardware_mapping_pci) | resource |
-| [proxmox_virtual_environment_file.talos_iso](https://registry.terraform.io/providers/bpg/proxmox/0.111.1/docs/resources/virtual_environment_file) | resource |
+| [proxmox_hardware_mapping_pci.jellyfin_igpu](https://registry.terraform.io/providers/bpg/proxmox/0.123.1/docs/resources/hardware_mapping_pci) | resource |
+| [proxmox_virtual_environment_file.talos_iso](https://registry.terraform.io/providers/bpg/proxmox/0.123.1/docs/resources/virtual_environment_file) | resource |
 | [terraform_data.bootstrap_script](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) | resource |
 
 ## Inputs
