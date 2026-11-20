@@ -31,7 +31,7 @@ spec:
       containers:
         - name: nexus
           # Production reports 3.87.1-01. Pin the matching amd64 release.
-          image: sonatype/nexus3:3.87.1@sha256:ad6debd7a1441ed8b1fd8a51fefc4902ca23167b16bfe6f677e261678162dade
+          image: sonatype/nexus3:3.98.3@sha256:29abd49cd52d9984b452a0ddf02d61ea3f36504886ee851b2fecfbbed6bde03d
           env:
             - name: INSTALL4J_ADD_VM_PARAMS
               value: "-Xms512m -Xmx1024m -XX:MaxDirectMemorySize=512m -Djava.util.prefs.userRoot=/nexus-data/javaprefs"
