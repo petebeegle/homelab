@@ -79,11 +79,19 @@ def assert_smoke_profile(config: AppConfig, profile, *, runner: Runner) -> None:
         )
         assert_tlsroute_ready(str(getattr(route, "stdout", "")), route_name=resource_name)
     for index, probe in enumerate(profile.http_probes):
-        run_command(
-            build_http_probe_command(config, namespace=name, probe=probe, probe_index=index, total_probes=len(profile.http_probes)),
-            runner=runner,
-            timeout=config.timeout,
-        )
+        try:
+            run_command(
+                build_http_probe_command(config, namespace=name, probe=probe, probe_index=index, total_probes=len(profile.http_probes)),
+                runner=runner,
+                timeout=config.timeout,
+            )
+        except VerificationError as exc:
+            # The probe pod's command line is long and says nothing a reader needs; name what was asked.
+            service = render_profile_value(probe.service, config=config, field="httpProbe.service")
+            raise VerificationError(
+                f"GET http://{service}:{probe.port}{probe.path} did not return 2xx with a body matching "
+                f"{probe.body_regex!r} ({str(exc).split(':', 1)[0]})"
+            ) from exc
 
 
 def assert_whoami(config: AppConfig, *, runner: Runner) -> None:

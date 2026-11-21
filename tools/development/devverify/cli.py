@@ -9,6 +9,7 @@ from typing import Sequence
 
 from .config import DEFAULT_KUBECONFIG, DEFAULT_TIMEOUT, VerificationError, config_from_args, parse_duration, validate_app, validate_branch, validate_slug
 from .profiles import load_smoke_profile, render_profile_value, supported_apps
+from .summary import step_summary_path
 from .workflow import run_acceptance
 
 
@@ -57,7 +58,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(render_profile_value(route_url, config=config, field="routeUrls"))
         return 0
     try:
-        run_acceptance(config)
+        run_acceptance(config, step_summary=step_summary_path())
     except VerificationError as exc:
         print(f"verification failed: {exc}", file=sys.stderr)
         return 1

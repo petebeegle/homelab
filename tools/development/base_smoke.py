@@ -41,6 +41,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Iterable, Sequence
 
+from devverify.summary import Stages, append, step_summary_path
+
 NS = "flux-system"
 KS = "kustomization.kustomize.toolkit.fluxcd.io"
 KS_LIST = "kustomizations.kustomize.toolkit.fluxcd.io"
@@ -67,6 +69,7 @@ class Config:
     ready_timeout_s: int = 1200
     poll_s: int = 15
     canaries: tuple[str, ...] = ("whoami", "homepage")
+    step_summary: Path | None = None
 
     @property
     def source(self) -> str:
@@ -180,7 +183,7 @@ def settled(k: Cluster) -> None:
     k.wait("development on the PR", problems)
 
 
-def canaries(k: Cluster) -> None:
+def canaries(k: Cluster, stages: Stages) -> None:
     c = k.c
     tools = c.base_dir / "tools" / "development"
     for app in c.canaries:
@@ -189,7 +192,8 @@ def canaries(k: Cluster) -> None:
         if app in BROWSER_CANARIES:
             args.append("--browser")
         try:
-            k.run(args)
+            with stages.stage(f"Canary {app} (from main)"):
+                k.run(args)
         finally:
             k.run(["python3", str(tools / "cleanup_pr_envs.py"), "--kubeconfig", str(c.kubeconfig), "--slug", c.slug], check=False)
 
@@ -207,27 +211,51 @@ def restore(k: Cluster) -> None:
 
 
 def run(config: Config, *, runner: Runner = subprocess.run, sleep=time.sleep, clock=time.monotonic) -> int:
-    k = Cluster(config, runner, sleep, clock)
+    stages = Stages()
+    outcome = 1
     try:
-        k.wait("development before the test", lambda: not_ready(k.kustomizations()))
+        outcome = run_stages(Cluster(config, runner, sleep, clock), stages)
+    finally:
+        try:
+            append(config.step_summary, report(config, stages, outcome))
+        except OSError as exc:
+            print(f"base-smoke: could not write the job summary: {exc}", flush=True)
+    return outcome
+
+
+def run_stages(k: Cluster, stages: Stages) -> int:
+    try:
+        with stages.stage("Development healthy before the test"):
+            k.wait("development before the test", lambda: not_ready(k.kustomizations()))
     except Failure as exc:
         print(f"base-smoke: FAILED: development is not healthy before the test, not touching it: {exc}", flush=True)
         return 1
     outcome = 0
     try:
-        start(k)
-        settled(k)
-        canaries(k)
+        with stages.stage("Apply the PR to development"):
+            start(k)
+        with stages.stage("PR settled (every Kustomization on the merge commit, Ready)"):
+            settled(k)
+        canaries(k, stages)
         print("base-smoke: the PR's platform settled and the canaries passed", flush=True)
     except Failure as exc:
         print(f"base-smoke: FAILED: {exc}", flush=True)
         outcome = 1
     try:
-        restore(k)
+        with stages.stage("Restore main"):
+            restore(k)
     except Failure as exc:
         print(f"base-smoke: DEVELOPMENT DID NOT RECOVER: {exc}", flush=True)
         return 2
     return outcome
+
+
+def report(c: Config, stages: Stages, outcome: int) -> str:
+    verdict = {0: "passed", 1: "FAILED (development restored to main)"}.get(outcome, "DEVELOPMENT DID NOT RECOVER")
+    planned = ("Development healthy before the test", "Apply the PR to development",
+               "PR settled (every Kustomization on the merge commit, Ready)",
+               *(f"Canary {app} (from main)" for app in c.canaries), "Restore main")
+    return f"### Base smoke PR #{c.pr} at `{c.sha[:12]}`: {verdict}\n\n{stages.table(planned)}"
 
 
 def recover_stale(kubeconfig: Path, *, max_age_s: int, runner: Runner = subprocess.run, now: float | None = None,
@@ -288,7 +316,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return recover_stale(a.kubeconfig, max_age_s=a.max_age_seconds)
     if a.pr is None or not a.sha or a.head_dir is None:
         p.error("--pr, --sha and --head-dir are required unless --recover-stale")
-    return run(Config(a.kubeconfig, a.pr, a.sha, a.head_dir, a.base_dir))
+    return run(Config(a.kubeconfig, a.pr, a.sha, a.head_dir, a.base_dir, step_summary=step_summary_path()))
 
 
 if __name__ == "__main__":
