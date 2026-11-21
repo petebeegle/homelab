@@ -5,7 +5,8 @@ A cancelled workflow can die before its cleanup runs, so each smoke run starts b
 removing its own slug (`--slug pr-12`), and dev-cleanup and every smoke run remove anything older
 than a threshold (`--older-than 3h`). Only objects named for a `pr-<number>` slug
 are ever considered: `branch-<app>-pr-<N>` Kustomizations and `branch-pr-<N>`
-GitRepositories in flux-system.
+GitRepositories in flux-system, and Released PersistentVolumes whose claim was in a
+`<app>-pr-<N>` namespace (switched to reclaimPolicy Delete so the NAS copy goes too).
 """
 
 from __future__ import annotations
@@ -23,6 +24,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from devverify.config import FLUX_NAMESPACE, VerificationError, parse_duration  # noqa: E402
+from devverify.cleanup import delete_released_volumes  # noqa: E402
 from devverify.kube import run_command  # noqa: E402
 
 SLUG = re.compile(r"^pr-[0-9]+$")
@@ -30,6 +32,7 @@ KUSTOMIZATION = "kustomization.kustomize.toolkit.fluxcd.io"
 GITREPOSITORY = "gitrepository.source.toolkit.fluxcd.io"
 KUSTOMIZATION_NAME = re.compile(r"^branch-(?P<app>[a-z0-9]+(?:-[a-z0-9]+)*?)-(?P<slug>pr-[0-9]+)$")
 GITREPOSITORY_NAME = re.compile(r"^branch-(?P<slug>pr-[0-9]+)$")
+BRANCH_NAMESPACE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*?-(?P<slug>pr-[0-9]+)$")
 TIMEOUT = parse_duration("5m")
 
 
@@ -107,6 +110,14 @@ def cleanup_pr_envs(
             timeout=TIMEOUT,
         )
         deleted.append(f"gitrepository/{name}")
+
+    # Volumes too, including ones whose environment an earlier cleanup already removed.
+    def branch_volume(namespace: str, pv: dict) -> bool:
+        match = BRANCH_NAMESPACE.fullmatch(namespace)
+        return bool(match) and selected(pv, match["slug"])
+
+    for name in delete_released_volumes(kubeconfig, branch_volume, runner=runner, timeout=TIMEOUT):
+        deleted.append(f"persistentvolume/{name}")
     return deleted
 
 

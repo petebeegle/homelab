@@ -41,8 +41,9 @@ def gitrepository(name: str, age: timedelta = timedelta(minutes=1)) -> dict:
 class FakeKubectl:
     quiet = True
 
-    def __init__(self, items: list[dict], *, fail_on: str | None = None) -> None:
+    def __init__(self, items: list[dict], *, fail_on: str | None = None, pvs: list[dict] | None = None) -> None:
         self.items = items
+        self.pvs = pvs or []
         self.fail_on = fail_on
         self.calls: list[list[str]] = []
 
@@ -51,9 +52,14 @@ class FakeKubectl:
         command = " ".join(args)
         if self.fail_on and self.fail_on in command:
             return SimpleNamespace(returncode=1, stdout="")
+        if "get" in args and "persistentvolumes" in args:
+            return SimpleNamespace(returncode=0, stdout=json.dumps({"items": self.pvs}))
         if "get" in args:
             return SimpleNamespace(returncode=0, stdout=json.dumps({"items": self.items}))
         return SimpleNamespace(returncode=0, stdout="")
+
+    def patched_volumes(self) -> list[str]:
+        return [c[c.index("persistentvolume") + 1] for c in self.calls if "patch" in c]
 
     def deletes(self) -> list[str]:
         return [" ".join(c) for c in self.calls if "delete" in c or "wait" in c]
@@ -70,6 +76,55 @@ ENVIRONMENT = [
     kustomization("app-whoami", timedelta(days=180)),
     gitrepository("flux-system", timedelta(days=180)),
 ]
+
+
+def pv(name: str, claim_namespace: str, *, phase: str = "Released", policy: str = "Retain",
+       age: timedelta = timedelta(minutes=1)) -> dict:
+    return {
+        "metadata": {"name": name, "creationTimestamp": (NOW - age).strftime("%Y-%m-%dT%H:%M:%SZ")},
+        "spec": {"persistentVolumeReclaimPolicy": policy, "claimRef": {"namespace": claim_namespace, "name": "data"}},
+        "status": {"phase": phase},
+    }
+
+
+class BranchVolumeCleanupTest(unittest.TestCase):
+    """Development's StorageClasses Retain; a branch environment's volumes would outlive it on the NAS."""
+
+    def run_cleanup(self, pvs: list[dict], **kwargs) -> tuple[list[str], FakeKubectl]:
+        fake = FakeKubectl(ENVIRONMENT, pvs=pvs)
+        deleted = cleanup.cleanup_pr_envs(kubeconfig=Path("/tmp/kc"), runner=fake, now=NOW, **kwargs)
+        return deleted, fake
+
+    def test_slug_releases_only_that_slugs_released_retained_volumes(self) -> None:
+        pvs = [
+            pv("pvc-a", "whoami-pr-12"),
+            pv("pvc-b", "whoami-pr-13"),
+            pv("pvc-c", "whoami-pr-12", phase="Bound"),
+            pv("pvc-d", "whoami-pr-12", policy="Delete"),
+            pv("pvc-e", "whoami"),
+        ]
+        deleted, fake = self.run_cleanup(pvs, slug="pr-12")
+        self.assertEqual(fake.patched_volumes(), ["pvc-a"])
+        self.assertIn("persistentvolume/pvc-a", deleted)
+        patch = next(c for c in fake.calls if "patch" in c)
+        self.assertIn('{"spec":{"persistentVolumeReclaimPolicy":"Delete"}}', patch)
+
+    def test_older_than_also_finds_volumes_whose_environment_is_already_gone(self) -> None:
+        pvs = [
+            pv("old", "immich-pr-9", age=timedelta(hours=5)),
+            pv("young", "immich-pr-9", age=timedelta(minutes=10)),
+        ]
+        _, fake = self.run_cleanup(pvs, older_than_seconds=3 * 3600)
+        self.assertEqual(fake.patched_volumes(), ["old"])
+
+    def test_volumes_outside_pr_environments_are_never_touched(self) -> None:
+        pvs = [
+            pv("hand-run", "home-assistant-home-assistant-ui-automation", age=timedelta(days=90)),
+            pv("prod-name", "immich", age=timedelta(days=90)),
+            pv("cnpg", "immich-pr-9-extra", age=timedelta(days=90)),
+        ]
+        _, fake = self.run_cleanup(pvs, older_than_seconds=3600)
+        self.assertEqual(fake.patched_volumes(), [])
 
 
 class CleanupPrEnvsTest(unittest.TestCase):
