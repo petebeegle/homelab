@@ -62,8 +62,8 @@ to the checkout and ignored by git.
 | Secrets | SOPS for workloads, with the 1Password operator installed alongside | 1Password operator |
 | Identity | Authentik | None |
 | Monitoring | Alloy, Mimir, Loki, Grafana, Discord alerts, synthetic smoke tests | None. The `dev-heartbeat` workflow stands in |
-| Apps | homepage, pihole, whoami, jellyfin, immich, home-assistant, foundryvtt, valheim, access-broker, cloudflare-tunnels, renovate, synthetics, external routes | whoami, homepage, the CI runner |
-| CI | None in-cluster | Actions Runner Controller, one ephemeral runner pod at a time |
+| Apps | homepage, pihole, whoami, jellyfin, immich, home-assistant, foundryvtt, valheim, access-broker, cloudflare-tunnels, renovate, synthetics, external routes | whoami, homepage, and the `dev-runner` account the CI runner acts as |
+| CI | Actions Runner Controller and the `homelab-dev` runner, one ephemeral pod at a time, fenced off from production ([decisions](./decisions.md#changes-go-through-pull-requests-and-the-check-is-the-evidence)) | None; the production runner drives it from outside |
 
 ## How a change reaches production
 
@@ -74,7 +74,7 @@ flowchart LR
   A --> R["Flux render<br/>production built and templated"]
   A --> D["dev-smoke"]
   D --> E{"Only one smoke-tested<br/>app changed?"}
-  E -->|yes| F["Runner pod in dev deploys the PR branch<br/>as app-pr-N, checks it, removes it"]
+  E -->|yes| F["Runner pod in production deploys the PR branch<br/>into dev as app-pr-N, checks it, removes it"]
   E -->|no| G["Reports not smoke-tested.<br/>Validate in dev by hand and<br/>say so in the PR description"]
   B --> M["Merge to main"]
   C --> M
@@ -195,6 +195,7 @@ Development uses `192.168.30.224/28` and `192.168.40.224/28` for its pools.
 - [Change workflow](./runbooks/change-workflow.md): branch, PR, checks, browser verification, branch protection and break glass
 - [Development cluster](./runbooks/development-cluster.md)
 - [Renovate](./runbooks/renovate.md)
+- [CI runner](./runbooks/ci-runner.md)
 
 **Adding things**
 

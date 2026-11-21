@@ -158,7 +158,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/apps/access-broker` | `namespace.yaml`, `configmap.yaml`, `secret.yaml`, `pvc.yaml`, `deployment.yaml`, `service.yaml`, `httproute.yaml` |
 | `kubernetes/apps/ci-runner` | `namespace.yaml`, `network-policy.yaml`, `onepassword-items.yaml`, `app.yaml` |
 | `kubernetes/apps/cloudflare-tunnels` | `namespace.yaml`, `secret.yaml`, `deployment.yaml`, `podmonitor.yaml` |
-| `kubernetes/apps/dev-runner` | `namespace.yaml`, `onepassword-item.yaml`, `rbac.yaml`, `token.yaml`, `app.yaml` |
+| `kubernetes/apps/dev-runner` | `namespace.yaml`, `rbac.yaml`, `token.yaml` |
 | `kubernetes/apps/external` | `namespace.yaml`, `synology.yaml`, `nexus-registry.yaml` |
 | `kubernetes/apps/foundry-bluegreen-fixture` | `namespace.yaml`, `pvc-blue.yaml`, `pvc-green.yaml`, `deployment-blue.yaml`, `deployment-green.yaml`, `service-blue.yaml`, `service-green.yaml`, `httproute-green-preview.yaml` |
 | `kubernetes/apps/foundryvtt` | `namespace.yaml`, `pvc.yaml`, `secret.yaml`, `deployment.yaml`, `service.yaml`, `httproute.yaml`, `httproute-public.yaml` |

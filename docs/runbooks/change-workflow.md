@@ -88,8 +88,9 @@ rerun.
    `branch-<app>-<slug>` Kustomization and `branch-<slug>` GitRepository).
 
 `dev-heartbeat` runs on a GitHub-hosted runner and fails when no job on the
-in-cluster runner (`dev-cleanup`, or a `dev-smoke` `smoke` job) has succeeded
-in 12 hours, which means the runner or the development cluster is down. A red heartbeat usually explains a burst of red
+`homelab-dev` runner (`dev-cleanup`, or a `dev-smoke` `smoke` job) has succeeded
+in 12 hours, which means the runner (in production, namespace `ci-runner`) or
+the development cluster is down. A red heartbeat usually explains a burst of red
 or stuck smoke runs.
 
 ## Smoke-testing by hand

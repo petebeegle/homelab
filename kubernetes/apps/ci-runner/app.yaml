@@ -26,8 +26,9 @@ spec:
   values:
     githubConfigUrl: https://github.com/petebeegle/homelab
     githubConfigSecret: ci-runner-github-app
-    # Temporary name while it is proven (#522 A0 rollout step 3); becomes homelab-dev at cutover.
-    runnerScaleSetName: homelab-dev-prod
+    # The label every self-hosted job uses (runs-on: homelab-dev). The runner lives in
+    # production so it can test, and restore, the development cluster from outside (#522 A0).
+    runnerScaleSetName: homelab-dev
     # One runner at a time is the concurrency lock for the shared development cluster.
     minRunners: 0
     maxRunners: 1
