@@ -4,7 +4,7 @@
 A cancelled workflow can die before its cleanup runs, so each smoke run starts by
 removing its own slug (`--slug pr-12`), and dev-cleanup and every smoke run remove anything older
 than a threshold (`--older-than 3h`). Only objects named for a `pr-<number>` slug
-are ever considered: `branch-<app>-pr-<N>` Kustomizations and `branch-pr-<N>`
+are ever considered: `branch-<app>-pr-<N>` Kustomizations and `branch-pr-<N>` or `branch-<app>-pr-<N>`
 GitRepositories in flux-system, and Released PersistentVolumes whose claim was in a
 `<app>-pr-<N>` namespace (switched to reclaimPolicy Delete so the NAS copy goes too).
 """
@@ -31,7 +31,7 @@ SLUG = re.compile(r"^pr-[0-9]+$")
 KUSTOMIZATION = "kustomization.kustomize.toolkit.fluxcd.io"
 GITREPOSITORY = "gitrepository.source.toolkit.fluxcd.io"
 KUSTOMIZATION_NAME = re.compile(r"^branch-(?P<app>[a-z0-9]+(?:-[a-z0-9]+)*?)-(?P<slug>pr-[0-9]+)$")
-GITREPOSITORY_NAME = re.compile(r"^branch-(?P<slug>pr-[0-9]+)$")
+GITREPOSITORY_NAME = re.compile(r"^branch-(?:[a-z0-9]+(?:-[a-z0-9]+)*?-)?(?P<slug>pr-[0-9]+)$")
 BRANCH_NAMESPACE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*?-(?P<slug>pr-[0-9]+)$")
 TIMEOUT = parse_duration("5m")
 

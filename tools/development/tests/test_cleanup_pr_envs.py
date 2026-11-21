@@ -170,6 +170,22 @@ class CleanupPrEnvsTest(unittest.TestCase):
         for protected in ("smoke", "homepage-dashboard", "app-whoami", f"{GR}/flux-system"):
             self.assertNotIn(protected, joined)
 
+    def test_per_app_sources_are_swept_too(self) -> None:
+        # homepage and home-assistant profiles name their source branch-<app>-<slug>.
+        items = [
+            kustomization("branch-homepage-pr-12"),
+            gitrepository("branch-homepage-pr-12"),
+            gitrepository("branch-home-assistant-pr-12"),
+            gitrepository("branch-home-assistant-pr-13"),
+            gitrepository("branch-homepage-homepage-dashboard", timedelta(days=175)),
+        ]
+        deleted, _ = self.run_cleanup(items, slug="pr-12")
+        self.assertEqual(sorted(deleted), [
+            "gitrepository/branch-home-assistant-pr-12",
+            "gitrepository/branch-homepage-pr-12",
+            "kustomization/branch-homepage-pr-12",
+        ])
+
     def test_hyphenated_app_names_are_parsed(self) -> None:
         deleted, fake = self.run_cleanup(
             [kustomization("branch-home-assistant-pr-5"), gitrepository("branch-pr-5")], slug="pr-5"
