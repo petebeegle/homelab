@@ -2,15 +2,4 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - ./app.yaml
-  - ./pvc.yaml
-  - ./httproute.yaml
-  - ./secret.yaml
-  - ./sso-bootstrap.yaml
-configMapGenerator:
-  - name: jellyfin-values
-    namespace: jellyfin
-    files:
-      - values.yaml=values.yaml
-configurations:
-  - kustomizeconfig.yaml
+  - base

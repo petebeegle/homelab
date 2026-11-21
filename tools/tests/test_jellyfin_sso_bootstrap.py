@@ -78,34 +78,21 @@ class JellyfinSsoBootstrapTest(unittest.TestCase):
         self.assertEqual(grant_types, ["authorization_code", "refresh_token"])
 
     def test_production_bootstrap_writes_oid_value_with_plugin_configuration_root(self) -> None:
-        script = embedded_script("kubernetes/apps/jellyfin/sso-bootstrap.yaml")
+        script = embedded_script("kubernetes/apps/jellyfin/base/sso-bootstrap.yaml")
 
         self.assertIn('PROVIDER_NAME = "authentik"', script)
         self.assertIn('oid_config = ET.Element("PluginConfiguration")', script)
         self.assertNotIn('oid_config = ET.Element("OidConfig")', script)
         self.assertIn("./value/PluginConfiguration/CanonicalLinks", script)
 
-    def test_branch_bootstrap_static_xml_uses_plugin_configuration_value_root(self) -> None:
-        script = embedded_script("kubernetes/apps/jellyfin/branch/jellyfin.yaml")
-
-        self.assertIn("<key><string>authentik</string></key>", script)
-        self.assertIn("<value>\n        <PluginConfiguration>", script)
-        self.assertIn("</PluginConfiguration>\n      </value>", script)
-        self.assertNotIn("<OidConfig>", script)
-        self.assertNotIn("</OidConfig>", script)
-
     def test_bootstrap_scripts_force_https_scheme_for_gateway_tls_termination(self) -> None:
-        production = embedded_script_namespace("kubernetes/apps/jellyfin/sso-bootstrap.yaml")
+        production = embedded_script_namespace("kubernetes/apps/jellyfin/base/sso-bootstrap.yaml")
         oid_config = production["build_oid_config"](None)
 
         self.assertEqual(oid_config.findtext("SchemeOverride"), "https")
 
-        branch = embedded_script("kubernetes/apps/jellyfin/branch/jellyfin.yaml")
-        self.assertIn("<SchemeOverride>https</SchemeOverride>", branch)
-        self.assertNotIn("<SchemeOverride />", branch)
-
     def test_production_bootstrap_skips_complete_plugin_without_removing_it(self) -> None:
-        namespace = embedded_script_namespace("kubernetes/apps/jellyfin/sso-bootstrap.yaml")
+        namespace = embedded_script_namespace("kubernetes/apps/jellyfin/base/sso-bootstrap.yaml")
 
         with tempfile.TemporaryDirectory() as temp_dir:
             plugin_dir = Path(temp_dir) / "plugins" / "SSO Authentication_4.0.0.4"
@@ -124,7 +111,7 @@ class JellyfinSsoBootstrapTest(unittest.TestCase):
             self.assertTrue(plugin_dir.is_dir())
 
     def test_production_bootstrap_reports_incomplete_plugin_replacement_failure(self) -> None:
-        namespace = embedded_script_namespace("kubernetes/apps/jellyfin/sso-bootstrap.yaml")
+        namespace = embedded_script_namespace("kubernetes/apps/jellyfin/base/sso-bootstrap.yaml")
 
         archive_buffer = io.BytesIO()
         with zipfile.ZipFile(archive_buffer, "w") as plugin_zip:
@@ -166,10 +153,8 @@ class JellyfinSsoBootstrapTest(unittest.TestCase):
                     namespace["install_plugin"]()
 
     def test_bootstrap_scripts_check_expected_plugin_files_before_reinstalling(self) -> None:
-        production = embedded_script("kubernetes/apps/jellyfin/sso-bootstrap.yaml")
-        branch = embedded_script("kubernetes/apps/jellyfin/branch/jellyfin.yaml")
-
-        for script in (production, branch):
+        production = embedded_script("kubernetes/apps/jellyfin/base/sso-bootstrap.yaml")
+        for script in (production,):
             self.assertIn("SSO-Auth.dll", script)
             self.assertIn("Duende.IdentityModel.dll", script)
             self.assertIn("Duende.IdentityModel.OidcClient.dll", script)
@@ -181,12 +166,10 @@ class JellyfinSsoBootstrapTest(unittest.TestCase):
             self.assertIn("could not be replaced safely", script)
 
         self.assertNotIn("if PLUGIN_DIR.exists():\n                shutil.rmtree(PLUGIN_DIR)", production)
-        self.assertNotIn("if plugin_dir.exists():\n                shutil.rmtree(plugin_dir)", branch)
 
     def test_bootstrap_scripts_force_qsv_encoding_settings(self) -> None:
         for path in (
-            "kubernetes/apps/jellyfin/sso-bootstrap.yaml",
-            "kubernetes/apps/jellyfin/branch/jellyfin.yaml",
+            "kubernetes/apps/jellyfin/base/sso-bootstrap.yaml",
         ):
             with self.subTest(path=path), tempfile.TemporaryDirectory() as temp_dir:
                 namespace = embedded_script_namespace(path)
