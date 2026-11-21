@@ -43,7 +43,7 @@ class DevSmokeWorkflowTest(unittest.TestCase):
 
     def test_every_job_requires_same_repo(self) -> None:
         all_jobs = jobs(read())
-        self.assertEqual({"classify", "smoke", "dev-smoke"}, set(all_jobs))
+        self.assertEqual({"classify", "smoke", "base", "dev-smoke"}, set(all_jobs))
         for name, block in all_jobs.items():
             self.assertIn(SAME_REPO, job_if(block), f"job {name} must require a same-repo PR")
         aggregator = job_if(all_jobs["dev-smoke"])
@@ -56,16 +56,57 @@ class DevSmokeWorkflowTest(unittest.TestCase):
         self.assertRegex(text, r"(?m)^  group: .*github\.event\.pull_request\.number")
         self.assertRegex(text, r"(?m)^  cancel-in-progress: true$")
 
-    def test_checkouts_use_main_only(self) -> None:
+    def test_checkouts_use_main_except_one_data_only_pr_checkout(self) -> None:
         text = read()
         withs = indented_blocks(text, "with:", 8)
         checkout_withs = [w for w in withs if "persist-credentials" in w or "ref:" in w]
         self.assertGreaterEqual(len(checkout_withs), 2, "classify and smoke both check out")
         for block in checkout_withs:
-            self.assertRegex(block, r"(?m)^\s+ref: main$")
             self.assertRegex(block, r"(?m)^\s+persist-credentials: false$")
-        for block in withs:
-            self.assertNotIn("github.event.pull_request.head", block)
+            if "refs/pull/" in block:
+                # The PR merged onto main (GitHub's test merge), checked out only as data into pr/.
+                self.assertRegex(block, r"(?m)^\s+ref: refs/pull/\$\{\{ github\.event\.pull_request\.number \}\}/merge$")
+                self.assertRegex(block, r"(?m)^\s+path: pr$")
+                self.assertRegex(block, r"(?m)^\s+fetch-depth: 2$", "HEAD^1 must exist to check the merge")
+            else:
+                self.assertRegex(block, r"(?m)^\s+ref: main$")
+
+    def test_the_pr_checkout_is_only_rendered_never_executed(self) -> None:
+        for script in indented_blocks(read(), "run: |", 8) + re.findall(r"(?m)^        run: (.+)$", read()):
+            if re.search(r"(?<![\w/-])pr/|--head(?:-dir)? pr\b", script):
+                self.assertRegex(script, r"affected_dev\.py|base_smoke\.py", script)
+            self.assertNotRegex(script, r"(?:python3|bash|sh|node|npm|npx)\s+(?:--prefix\s+)?pr/", script)
+            self.assertNotRegex(script, r"working-directory: pr")
+
+    def test_classify_finds_affected_development_kustomizations(self) -> None:
+        classify = jobs(read())["classify"]
+        self.assertIn("base: ${{ steps.affected.outputs.base }}", classify)
+        self.assertIn("python3 tools/development/affected_dev.py --base . --head pr", classify)
+
+    def test_base_job_applies_the_pr_to_development_and_always_restores(self) -> None:
+        base = jobs(read())["base"]
+        self.assertIn("needs.classify.outputs.base == 'true'", job_if(base))
+        self.assertIn("github.event.pull_request.head.repo.full_name == github.repository", job_if(base))
+        self.assertRegex(base, r"(?m)^    runs-on: homelab-dev$")
+        self.assertRegex(base, r"(?m)^    timeout-minutes: \d+$")
+        steps = re.split(r"\n      - ", base)
+        run = [s for s in steps if "base_smoke.py" in s and "--head-dir pr" in s]
+        self.assertEqual(len(run), 1)
+        restore = [s for s in steps if "--recover-stale" in s]
+        self.assertEqual(len(restore), 1)
+        self.assertIn("if: always()", restore[0])
+        self.assertIn("--max-age-seconds 0", restore[0])
+        self.assertTrue(any("upload-artifact" in s and "if: always()" in s for s in steps))
+
+    def test_the_merge_must_be_onto_current_main(self) -> None:
+        text = read()
+        for job in ("classify", "base"):
+            block = jobs(text)[job]
+            self.assertIn('git -C pr rev-parse HEAD^1', block, f"{job} must check the merge's first parent")
+            self.assertIn("is not a merge onto current main", block, job)
+
+    def test_no_dead_upload_paths(self) -> None:
+        self.assertNotIn("browser-results", read())
 
     def test_head_ref_is_passed_via_env(self) -> None:
         text = read()
@@ -105,7 +146,8 @@ class DevSmokeWorkflowTest(unittest.TestCase):
     def test_aggregator_is_the_dev_smoke_check_and_explains_untested_prs(self) -> None:
         block = jobs(read())["dev-smoke"]
         self.assertRegex(block, r"(?m)^    name: dev-smoke$")
-        self.assertRegex(block, r"(?m)^    needs: \[classify, smoke\]$")
+        self.assertRegex(block, r"(?m)^    needs: \[classify, smoke, base\]$")
+        self.assertIn("needs.base.result", block)
         self.assertIn("not smoke-tested: ", block)
         self.assertIn("GITHUB_STEP_SUMMARY", block)
         self.assertIn("needs.smoke.result", block)
