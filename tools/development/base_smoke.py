@@ -100,11 +100,16 @@ class Cluster:
     def flux(self, *args: str) -> object:
         return self.run(["flux", "--kubeconfig", str(self.c.kubeconfig), *args])
 
+    # Only the platform: what the root applies (on flux-system, or on the test's source).
+    # Branch environments from app smoke or hand runs sit in flux-system on their own
+    # sources; they are not development's platform and are left alone.
     def kustomizations(self) -> list[dict]:
-        return json.loads(self.kubectl("-n", NS, "get", KS_LIST, "-o", "json").stdout)["items"]
+        items = json.loads(self.kubectl("-n", NS, "get", KS_LIST, "-o", "json").stdout)["items"]
+        return [i for i in items if source_of(i) in ("flux-system", self.c.source)]
 
     def helmreleases(self) -> list[dict]:
-        return json.loads(self.kubectl("get", HR_LIST, "-A", "-o", "json").stdout)["items"]
+        items = json.loads(self.kubectl("get", HR_LIST, "-A", "-o", "json").stdout)["items"]
+        return [i for i in items if not applied_by_branch_environment(i)]
 
     def wait(self, what: str, problems: Callable[[], list[str]]) -> None:
         """Poll until `problems()` is empty, or fail with the last problems seen."""
@@ -132,6 +137,11 @@ def message(item: dict) -> str:
 
 def not_ready(items: Iterable[dict]) -> list[str]:
     return [message(i) for i in items if not ready(i)]
+
+
+def applied_by_branch_environment(item: dict) -> bool:
+    labels = item.get("metadata", {}).get("labels") or {}
+    return labels.get("kustomize.toolkit.fluxcd.io/name", "").startswith("branch-")
 
 
 def source_of(item: dict) -> str:

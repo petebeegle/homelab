@@ -194,6 +194,31 @@ class BaseSmokeTest(unittest.TestCase):
         cluster = FakeCluster(recovers=False)
         self.assertEqual(self.run_smoke(cluster), 2)
 
+    def test_branch_environments_are_not_part_of_the_platform(self) -> None:
+        # An app smoke run or a hand run (`verify_branch_deploy.py --keep`) has its own
+        # Kustomization on its own source in flux-system, and its HelmReleases. Neither is
+        # something the root applies, so neither may block, fail or be deleted by the test.
+        cluster = FakeCluster()
+        real_ks = cluster.kustomizations
+        branch_env = ks("branch-home-assistant-hatest", source="branch-home-assistant-hatest", ready=False)
+        cluster.kustomizations = lambda: real_ks() + [branch_env]  # type: ignore[method-assign]
+        original = cluster.__call__
+
+        def call(args, input=None, **kw):
+            if "get helmreleases.helm.toolkit.fluxcd.io" in " ".join(args):
+                cluster.commands.append(" ".join(args))
+                hr = {"metadata": {"name": "jellyfin-hatest", "namespace": "jellyfin-hatest",
+                                   "labels": {"kustomize.toolkit.fluxcd.io/name": "branch-jellyfin-hatest"}},
+                      "status": {"conditions": [{"type": "Ready", "status": "False", "message": "installing"}]}}
+                return SimpleNamespace(returncode=0, stdout=json.dumps({"items": [hr]}), stderr="")
+            return original(args, input=input, **kw)
+
+        head = Path(tempfile.mkdtemp())
+        code = base_smoke.run(config(head), runner=call, sleep=lambda _s: None, clock=iter(range(0, 10_000, 5)).__next__)
+        self.assertEqual(code, 0, "\n".join(cluster.commands))
+        self.assertFalse(any("delete kustomization.kustomize.toolkit.fluxcd.io branch-home-assistant-hatest" in c
+                             for c in cluster.commands))
+
     def test_refuses_to_start_on_an_unhealthy_development(self) -> None:
         cluster = FakeCluster()
         cluster.kustomizations = lambda: [ks("flux-system"), ks("cilium", ready=False)]  # type: ignore[method-assign]
