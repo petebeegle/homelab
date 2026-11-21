@@ -42,6 +42,8 @@ spec:
           runAsNonRoot: true
           runAsUser: 1002
           runAsGroup: 1002
+          # Gives the runner user read access to the 0440 kubeconfig mount below.
+          fsGroup: 1002
         containers:
           - name: runner
             # Built by .github/workflows/runner-image.yml; uid 1002 matches its runner user.
