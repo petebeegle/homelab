@@ -38,11 +38,15 @@ jobs:
           # Production's gateways are Cilium's Envoy, which enforces this pod's policy itself and
           # answers 403 "Access denied" instead of dropping the connection. Any app response fails.
           for u in https://homepage.lab.petebeegle.com/ https://whoami.lab.petebeegle.com/ https://grafana.lab.petebeegle.com/; do
-            body=$(curl -sk --max-time 8 -w ' HTTP%{http_code}' "$u" || echo "dropped")
-            case "$body" in
-              "Access denied HTTP403"|dropped) echo "blocked: $u ($body)" ;;
-              *) echo "REACHABLE (bad): $u -> ${body: -40}"; fail=1 ;;
-            esac
+            if code=$(curl -sk -o /tmp/body -w '%{http_code}' --max-time 8 "$u"); then
+              if [ "$code" = 403 ] && grep -qx 'Access denied' <(tr -d '\r' < /tmp/body); then
+                echo "blocked: $u (Cilium Envoy: 403 Access denied)"
+              else
+                echo "REACHABLE (bad): $u -> HTTP $code $(head -c 80 /tmp/body | tr '\n' ' ')"; fail=1
+              fi
+            else
+              echo "blocked: $u (connection dropped)"
+            fi
           done
           exit "$fail"
       - name: Development route through its gateway
