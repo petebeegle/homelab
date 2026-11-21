@@ -37,7 +37,7 @@ jobs:
           done
           # Production's gateways are Cilium's Envoy, which enforces this pod's policy itself and
           # answers 403 "Access denied" instead of dropping the connection. Any app response fails.
-          for u in https://homepage.lab.petebeegle.com/ https://whoami.lab.petebeegle.com/ https://grafana.lab.petebeegle.com/; do
+          for u in https://homepage.lab.petebeegle.com/ https://whoami.lab.petebeegle.com/ https://monitoring.lab.petebeegle.com/; do
             if code=$(curl -sk -o /tmp/body -w '%{http_code}' --max-time 8 "$u"); then
               if [ "$code" = 403 ] && grep -qx 'Access denied' <(tr -d '\r' < /tmp/body); then
                 echo "blocked: $u (Cilium Envoy: 403 Access denied)"
