@@ -182,7 +182,9 @@ class FakeRunner:
         cluster_pods_json: str = READY_PODS,
         pvc_json: str = READY_PVC,
         base_json: str = READY_BASE,
+        pvs_json: str = '{"items": []}',
     ) -> None:
+        self.pvs_json = pvs_json
         self.plan_returncode = plan_returncode
         self.fail_on = fail_on
         self.timeout_on = timeout_on
@@ -211,6 +213,8 @@ class FakeRunner:
             return SimpleNamespace(returncode=0, stdout=READY_HTTPROUTE)
         if "get" in args and "tlsroute" in args and args[-2:] == ["-o", "json"]:
             return SimpleNamespace(returncode=0, stdout=READY_TLSROUTE)
+        if "get" in args and "persistentvolumes" in args:
+            return SimpleNamespace(returncode=0, stdout=self.pvs_json)
         if "get" in args and "pvc" in args and args[-2:] == ["-o", "json"]:
             return SimpleNamespace(returncode=0, stdout=self.pvc_json)
         return SimpleNamespace(returncode=0, stdout="")
@@ -674,6 +678,22 @@ class VerifyBranchDeployTest(unittest.TestCase):
         self.assertTrue(any('"branch": "main"' in command for command in commands))
         self.assertTrue(any("resume kustomization flux-system" in command for command in commands[-4:]))
         self.assertTrue(any("reconcile kustomization flux-system" in command for command in commands[-2:]))
+
+    def test_cleanup_deletes_the_volumes_the_branch_environment_left_released(self) -> None:
+        def volume(name: str, namespace: str) -> dict:
+            return {"metadata": {"name": name},
+                    "spec": {"persistentVolumeReclaimPolicy": "Retain", "claimRef": {"namespace": namespace}},
+                    "status": {"phase": "Released"}}
+
+        runner = FakeRunner(pvs_json=json.dumps({"items": [volume("mine", "whoami-example-change"), volume("prod", "whoami")]}))
+        verify.cleanup_branch_environment(self._config(), verify.load_smoke_profile("whoami"), runner=runner)
+
+        commands = [" ".join(command) for command in runner.commands]
+        namespace_gone = next(i for i, c in enumerate(commands) if "wait namespace/whoami-example-change --for=delete" in c)
+        patches = [i for i, c in enumerate(commands) if " patch persistentvolume " in c]
+        self.assertEqual(len(patches), 1, commands)
+        self.assertIn("patch persistentvolume mine", commands[patches[0]])
+        self.assertGreater(patches[0], namespace_gone, "only once the namespace and its claims are gone")
 
     def test_cleanup_is_attempted_after_activation_failure_unless_keep_is_set(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

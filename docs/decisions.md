@@ -85,6 +85,9 @@ gateway, not the NAS.
 - `nfs-csi-storage` (default, `/volume2/Homelab`) is for app data.
   `nfs-csi-media-storage` (`/volume1/Media`) is opt-in for media and downloads.
   Both use `reclaimPolicy: Retain`: deleting a claim leaves the data on the NAS.
+  The exception is development's branch environments: their cleanup switches the
+  Released volumes of a removed `<app>-<slug>` namespace to `Delete`, so smoke runs
+  do not leave a copy of the app's data on the NAS each time.
 - Use Btrfs volumes on the NAS (the CSI driver's quota support needs them), and
   NFS v4.1 for volumes shared by several pods.
 - NFS-backed apps depend on the `nfs-csi` Kustomization. Nothing PVC-backed

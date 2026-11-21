@@ -95,7 +95,8 @@ rerun.
 3. If the change is at fault, fix it and push. The next run replaces the
    environment. A run removes its own environment when it ends, then removes
    any other `pr-*` environment older than three hours that a cancelled run
-   left behind; `dev-cleanup` does the same on a schedule. A failed sweep is a
+   left behind, including the PVs their claims left Released; `dev-cleanup`
+   does the same on a schedule. A failed sweep is a
    warning on the run, not a smoke failure.
 4. If development is at fault, fix development first (it is changed through PRs
    like production), then re-run the failed job. A `base` failure that says
