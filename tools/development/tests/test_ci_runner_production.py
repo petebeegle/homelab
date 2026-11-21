@@ -62,12 +62,9 @@ class RunnerTest(unittest.TestCase):
         self.assertRegex(self.release, rf"(?m)^          fsGroup: {uid}$")
         self.assertRegex(self.release, r"(?m)^              defaultMode: 0440$")
 
-    def test_uses_the_same_runner_image_as_development(self) -> None:
-        image = re.compile(r"(?m)^\s+image: (ghcr\.io/petebeegle/homelab-dev-runner\S*)$")
-        dev = image.search(read(REPO_ROOT / "kubernetes" / "apps" / "dev-runner" / "app.yaml"))
-        prod = image.search(self.release)
-        self.assertIsNotNone(prod)
-        self.assertEqual(prod.group(1), dev.group(1))
+    def test_uses_the_runner_image_this_repo_builds(self) -> None:
+        self.assertRegex(self.release, r"(?m)^\s+image: ghcr\.io/petebeegle/homelab-dev-runner\S*$")
+        self.assertIn("homelab-dev-runner", read(REPO_ROOT / ".github" / "workflows" / "runner-image.yml"))
 
     def test_credentials_come_from_the_cluster_production_vault(self) -> None:
         items = read(APP / "onepassword-items.yaml")
@@ -76,6 +73,32 @@ class RunnerTest(unittest.TestCase):
         secret = re.search(r"(?m)^    githubConfigSecret: (\S+)$", self.release).group(1)
         self.assertRegex(items, rf"(?m)^  name: {re.escape(secret)}$")
         self.assertRegex(items, r"(?m)^  name: dev-runner-kubeconfig$")
+
+
+class CutoverTest(unittest.TestCase):
+    """After cutover (#522 A0 step 4) production's runner is the only homelab-dev runner."""
+
+    def test_production_registers_the_name_the_workflows_use(self) -> None:
+        name = re.search(r"(?m)^    runnerScaleSetName: (\S+)$", read(APP / "app.yaml")).group(1)
+        self.assertEqual(name, "homelab-dev")
+        workflows = sorted((REPO_ROOT / ".github" / "workflows").glob("*.yml"))
+        self_hosted = {
+            label
+            for path in workflows
+            for label in re.findall(r"(?m)^    runs-on: (\S+)$", read(path))
+            if not label.startswith(("ubuntu-", "windows-", "macos-"))
+        }
+        self.assertEqual(self_hosted, {name})
+
+    def test_development_no_longer_runs_a_runner(self) -> None:
+        dev = REPO_ROOT / "kubernetes" / "apps" / "dev-runner"
+        for path in dev.glob("*.yaml"):
+            text = read(path)
+            self.assertNotRegex(text, r"(?m)^kind: (HelmRelease|OnePasswordItem)$", f"{path.name} still runs a runner")
+        # What stays in development: the account the production runner acts as.
+        kustomization = read(dev / "kustomization.yaml")
+        for kept in ("namespace.yaml", "rbac.yaml", "token.yaml"):
+            self.assertIn(f"- {kept}", kustomization)
 
 
 class EgressPolicyTest(unittest.TestCase):

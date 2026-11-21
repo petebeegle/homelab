@@ -29,10 +29,20 @@ to ADR-0016. They are in git history up to commit `850c034`.
 - The development cluster's only alert is `dev-heartbeat`, and it does not rely
   on GitHub's cron. GitHub fires scheduled workflows on this repo only every few
   hours (a 10h40m gap between `*/30` runs was seen in November 2026), so the
-  heartbeat counts a success of any job on the in-cluster runner (`dev-cleanup`
+  heartbeat counts a success of any job on the `homelab-dev` runner (`dev-cleanup`
   or `dev-smoke`'s `smoke` job) and allows 12 hours, longer than any gap seen.
   For the same reason every smoke run also sweeps stale `pr-*` environments
   rather than leaving that to `dev-cleanup` alone.
+- The CI runner (`homelab-dev`) runs in **production**, not in the development
+  cluster it tests. A test harness inside the system under test dies with it:
+  a PR that breaks development's networking would kill the runner before it
+  could restore development or report the failure (#522). In production it
+  holds no production credentials (no ServiceAccount token, no RBAC), reaches
+  development only as the narrow `dev-runner` account through a kubeconfig in
+  the "cluster production" vault, and a default-deny `CiliumNetworkPolicy`
+  lets it reach only DNS, GitHub, npm, and development's API server and
+  internal gateway. Requests to production's gateways get Cilium's `403 Access
+  denied`. The cost is that CI depends on production being up.
 
 **Why.** A per-change paper trail (spec, plan, tasks, evidence files) grew to
 about 9,000 lines of tooling and 325 committed files, and the evidence was
