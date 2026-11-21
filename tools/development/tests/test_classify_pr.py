@@ -80,8 +80,8 @@ class ClassifyPrTest(unittest.TestCase):
         self.assertFalse(result.tested)
         self.assertEqual(result.reason, "no changes")
 
-    def test_only_whoami_and_homepage_opt_in(self) -> None:
-        self.assertEqual({app for app, p in self.profiles.items() if p.pr_smoke}, {"whoami", "homepage"})
+    def test_the_opted_in_apps(self) -> None:
+        self.assertEqual({app for app, p in self.profiles.items() if p.pr_smoke}, {"whoami", "homepage", "home-assistant"})
 
     def test_pr_smoke_must_be_a_boolean(self) -> None:
         profile = json.loads((TOOLS_DEVELOPMENT / "smoke-profiles" / "whoami.json").read_text(encoding="utf-8"))

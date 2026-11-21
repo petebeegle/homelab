@@ -26,7 +26,7 @@ fields read-only. Public regional defaults live directly in the ConfigMap:
 `unit_system: us_customary`. Exact home latitude, longitude, and elevation are
 loaded through `!secret` references from `/config/secrets.yaml`, which is
 mounted from the SOPS-encrypted `home-assistant-secrets` Kubernetes Secret.
-Update those location values through `kubernetes/apps/home-assistant/secret.yaml`
+Update those location values through `kubernetes/apps/home-assistant/base/secret.yaml`
 and keep the manifest encrypted before staging.
 
 The production app uses Authentik OIDC through `christiaangoossens/hass-oidc-auth` pinned to `v1.1.1`, installed by the pod init container into `/config/custom_components/auth_oidc`. The Authentik blueprint creates `Home Assistant Users`, `Home Assistant Admins`, the public `home-assistant` OAuth2/OIDC provider, and the strict redirect URI `https://homeassistant.${cluster_domain}/auth/oidc/callback`.

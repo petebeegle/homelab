@@ -161,8 +161,10 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/apps/external` | `namespace.yaml`, `synology.yaml`, `nexus-registry.yaml` |
 | `kubernetes/apps/foundry-bluegreen-fixture` | `namespace.yaml`, `pvc-blue.yaml`, `pvc-green.yaml`, `deployment-blue.yaml`, `deployment-green.yaml`, `service-blue.yaml`, `service-green.yaml`, `httproute-green-preview.yaml` |
 | `kubernetes/apps/foundryvtt` | `namespace.yaml`, `pvc.yaml`, `secret.yaml`, `deployment.yaml`, `service.yaml`, `httproute.yaml`, `httproute-public.yaml` |
-| `kubernetes/apps/home-assistant/branch` | `home-assistant.yaml` |
-| `kubernetes/apps/home-assistant` | `namespace.yaml`, `pvc.yaml`, `secret.yaml`, `deployment.yaml`, `service.yaml`, `httproute.yaml` |
+| `kubernetes/apps/home-assistant/base` | `namespace.yaml`, `pvc.yaml`, `secret.yaml`, `deployment.yaml`, `service.yaml`, `httproute.yaml` |
+| `kubernetes/apps/home-assistant/branch/app` | `../../base` |
+| `kubernetes/apps/home-assistant/branch` | `app`, `referencegrant.yaml` |
+| `kubernetes/apps/home-assistant` | `base` |
 | `kubernetes/apps/homepage/base` | `namespace.yaml`, `rbac.yaml`, `configmap.yaml`, `deployment.yaml`, `service.yaml`, `pdb.yaml`, `httproute.yaml` |
 | `kubernetes/apps/homepage/branch/app` | `../../development` |
 | `kubernetes/apps/homepage/branch` | `app`, `referencegrant.yaml` |
@@ -197,7 +199,6 @@ This document is generated for agentic repo navigation. It records relationships
 | `HTTPRoute` | `foundryvtt/foundryvtt` | `foundry.${cluster_domain}` | `gateway/internal/https-gateway` | `foundryvtt:80` |
 | `HTTPRoute` | `gateway/https-redirect` | `*.${cluster_domain}, ${cluster_domain}` | `gateway/internal/http-gateway, gateway/external/http-gateway` | `(none)` |
 | `HTTPRoute` | `grafana/monitoring` | `monitoring.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `grafana:80` |
-| `HTTPRoute` | `home-assistant-${branch_slug}/home-assistant-${branch_slug}` | `homeassistant-${branch_slug}.${cluster_domain}` | `gateway/internal/https-gateway` | `home-assistant-${branch_slug}:80` |
 | `HTTPRoute` | `home-assistant/home-assistant` | `homeassistant.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `home-assistant:80` |
 | `HTTPRoute` | `homepage/homepage` | `homepage.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `homepage:80` |
 | `HTTPRoute` | `immich/immich` | `immich.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `immich-server:2283` |
@@ -225,8 +226,7 @@ This document is generated for agentic repo navigation. It records relationships
 | PVC | `foundry-bluegreen-fixture/foundry-fixture-blue` | `nfs-csi-storage` | `kubernetes/apps/foundry-bluegreen-fixture/pvc-blue.yaml` |
 | PVC | `foundry-bluegreen-fixture/foundry-fixture-green` | `nfs-csi-storage` | `kubernetes/apps/foundry-bluegreen-fixture/pvc-green.yaml` |
 | PVC | `foundryvtt/foundryvtt-data-pvc` | `nfs-csi-storage` | `kubernetes/apps/foundryvtt/pvc.yaml` |
-| PVC | `home-assistant-${branch_slug}/home-assistant-config-${branch_slug}` | `nfs-csi-storage` | `kubernetes/apps/home-assistant/branch/home-assistant.yaml` |
-| PVC | `home-assistant/home-assistant-config` | `nfs-csi-storage` | `kubernetes/apps/home-assistant/pvc.yaml` |
+| PVC | `home-assistant/home-assistant-config` | `nfs-csi-storage` | `kubernetes/apps/home-assistant/base/pvc.yaml` |
 | PVC | `immich/immich-library` | `nfs-csi-media-storage` | `kubernetes/apps/immich/base/pvc.yaml` |
 | PVC | `jellyfin-${branch_slug}/jellyfin-config-${branch_slug}` | `nfs-csi-storage` | `kubernetes/apps/jellyfin/branch/jellyfin.yaml` |
 | PVC | `jellyfin/jellyfin-config-local-v1` | `local-path` | `kubernetes/apps/jellyfin/pvc.yaml` |
@@ -246,7 +246,7 @@ This lists secret manifest presence only. Secret values are not rendered.
 | `controllers/cert-manager` | `cert-manager/cloudflare-api-token` | `yes` | `kubernetes/infra/controllers/cert-manager/secret.yaml` |
 | `dev-runner` | `dev-runner/dev-runner-token` | `unknown` | `kubernetes/apps/dev-runner/token.yaml` |
 | `foundryvtt` | `foundryvtt/foundryvtt-secret` | `yes` | `kubernetes/apps/foundryvtt/secret.yaml` |
-| `home-assistant` | `home-assistant/home-assistant-secrets` | `yes` | `kubernetes/apps/home-assistant/secret.yaml` |
+| `home-assistant` | `home-assistant/home-assistant-secrets` | `yes` | `kubernetes/apps/home-assistant/base/secret.yaml` |
 | `immich` | `immich/immich-postgres-user` | `yes` | `kubernetes/apps/immich/base/secret.yaml` |
 | `immich` | `immich/immich-secrets` | `yes` | `kubernetes/apps/immich/base/secret.yaml` |
 | `jellyfin` | `jellyfin/jellyfin-secrets` | `yes` | `kubernetes/apps/jellyfin/secret.yaml` |

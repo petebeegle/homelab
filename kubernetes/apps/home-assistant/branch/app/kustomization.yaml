@@ -1,0 +1,73 @@
+---
+# Production's home-assistant (../../base), renamed for one branch environment on the
+# development cluster. Nothing here copies the app: change kubernetes/apps/home-assistant/
+# and the PR smoke test exercises it. Differences from production:
+# - no SOPS Secret (development cannot decrypt it): secrets.yaml comes from a ConfigMap
+#   of placeholders;
+# - the route is on the internal gateway only, at homeassistant-<slug>.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+namespace: home-assistant-${branch_slug}
+nameSuffix: -${branch_slug}
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: branch-environment
+      homelab.petebeegle.com/branch-slug: ${branch_slug}
+    includeSelectors: false
+configMapGenerator:
+  - name: home-assistant-branch-secrets
+    files:
+      - secrets.yaml
+patches:
+  - patch: |-
+      $patch: delete
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: home-assistant-secrets
+        namespace: home-assistant
+  - target:
+      kind: Namespace
+      name: home-assistant
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: home-assistant-${branch_slug}
+      - op: replace
+        path: /metadata/labels/name
+        value: home-assistant-${branch_slug}
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: home-assistant
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: home-assistant
+      spec:
+        template:
+          spec:
+            volumes:
+              - name: home-assistant-secrets
+                secret: null
+                configMap:
+                  name: home-assistant-branch-secrets
+  - target:
+      group: gateway.networking.k8s.io
+      version: v1
+      kind: HTTPRoute
+      name: home-assistant
+    patch: |-
+      - op: replace
+        path: /spec/hostnames/0
+        value: homeassistant-${branch_slug}.${cluster_domain}
+      - op: remove
+        path: /spec/parentRefs/1
+      # kustomize renames Services but does not follow names inside Gateway API routes.
+      - op: replace
+        path: /spec/rules/0/backendRefs/0/name
+        value: home-assistant-${branch_slug}

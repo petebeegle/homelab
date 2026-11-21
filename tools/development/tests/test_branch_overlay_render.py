@@ -19,6 +19,13 @@ POD_SPEC_KEYS = ("initContainers:", "containers:", "volumes:")
 REAL_DIRS = {
     "whoami": "kubernetes/apps/whoami",
     "homepage": "kubernetes/apps/homepage/development",
+    "home-assistant": "kubernetes/apps/home-assistant",
+}
+
+# Pod volumes a branch overlay may swap for something development can provide, and why.
+# Everything else in the pod spec must equal the real manifest.
+SWAPPED_VOLUMES = {
+    "home-assistant": {"home-assistant-secrets": "the SOPS Secret is production-only; placeholders come from a ConfigMap"},
 }
 
 
@@ -75,6 +82,21 @@ def pod_block(doc: str, key: str) -> str:
     return "\n".join(block)
 
 
+def without_volumes(block: str, names: set[str]) -> str:
+    """A `volumes:` block with the named entries removed (each entry starts at "      - ")."""
+    if not names or not block:
+        return block
+    header, *rest = block.splitlines()
+    entries: list[list[str]] = []
+    for line in rest:
+        if line.startswith("      - ") or not entries:
+            entries.append([line])
+        else:
+            entries[-1].append(line)
+    kept = [entry for entry in entries if not any(re.fullmatch(rf"\s*(- )?name: {re.escape(n)}", l) for l in entry for n in names)]
+    return "\n".join([header, *(line for entry in kept for line in entry)])
+
+
 class BranchOverlayRenderTest(unittest.TestCase):
     """The PR smoke test deploys kubernetes/apps/<app>/branch/. It must be the real app, renamed,
     so a green dev-smoke means the change in the real manifests was exercised."""
@@ -100,13 +122,29 @@ class BranchOverlayRenderTest(unittest.TestCase):
             }
             self.assertTrue(real, f"{app}: no Deployment rendered from {real_dir}")
             self.assertEqual(sorted(real), sorted(branch), f"{app}: Deployments differ")
+            swapped = set(SWAPPED_VOLUMES.get(app, {}))
             for name, real_doc in real.items():
                 for key in POD_SPEC_KEYS:
                     self.assertEqual(
-                        pod_block(real_doc, key),
-                        pod_block(branch[name], key).replace(SUFFIX, ""),
+                        without_volumes(pod_block(real_doc, key), swapped),
+                        without_volumes(pod_block(branch[name], key).replace(SUFFIX, ""), swapped),
                         f"{app}/{name}: {key.rstrip(':')} differ from the real manifest",
                     )
+
+    def test_a_swapped_volume_keeps_its_name_and_is_still_mounted(self) -> None:
+        for app, swapped in SWAPPED_VOLUMES.items():
+            for doc in documents(kustomize(f"kubernetes/apps/{app}/branch")):
+                if kind_of(doc) != "Deployment":
+                    continue
+                volumes = pod_block(doc, "volumes:")
+                for name in swapped:
+                    self.assertNotEqual(without_volumes(volumes, {name}), volumes, f"{app}: volume {name} is gone")
+
+    def test_home_assistant_branch_has_no_secret_and_reaches_only_the_internal_gateway(self) -> None:
+        docs = documents(kustomize("kubernetes/apps/home-assistant/branch"))
+        self.assertEqual([d for d in docs if kind_of(d) == "Secret"], [], "development cannot decrypt the SOPS Secret")
+        route = next(d for d in docs if kind_of(d) == "HTTPRoute")
+        self.assertEqual(re.findall(r"(?m)^  - name: (internal|external)$", route), ["internal"])
 
     def test_profile_checked_objects_are_rendered(self) -> None:
         for app in smoke_tested_apps():

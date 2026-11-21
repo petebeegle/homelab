@@ -548,7 +548,12 @@ class VerifyBranchDeployTest(unittest.TestCase):
         self.assertTrue(any("get pvc home-assistant-config-example-change -o json" in command for command in commands))
         self.assertTrue(any("get service home-assistant-example-change" in command for command in commands))
         self.assertTrue(any("get httproute home-assistant-example-change -o json" in command for command in commands))
-        self.assertTrue(any("run probe-example-change" in command and "curlimages/curl:8.16.0" in command for command in commands))
+        self.assertTrue(any("run p0-example-change" in command and "curlimages/curl:8.16.0" in command for command in commands))
+        # The deeper probe: the auth_oidc init container installed the integration and
+        # configuration.yaml loaded it, so the login page offers it.
+        providers = next(command for command in commands if "run p1-example-change" in command)
+        self.assertIn("/auth/providers", providers)
+        self.assertIn("auth_oidc", providers)
 
     def test_pvc_assert_requires_bound_phase_and_expected_storage_class(self) -> None:
         verify.assert_pvc_bound(READY_PVC, pvc_name="jellyfin-config-example-change", storage_class="nfs-csi-storage")
