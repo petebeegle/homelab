@@ -12,6 +12,5 @@ resources:
   - nfs-csi.yaml
   - cilium.yaml
   - metrics-server.yaml
-  - arc.yaml
   - certs.yaml
   - gateway.yaml

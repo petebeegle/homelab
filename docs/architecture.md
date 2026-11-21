@@ -17,7 +17,7 @@ This document is generated for agentic repo navigation. It records relationships
 
 - Root Kustomization: `kubernetes/clusters/development/kustomization.yaml`.
 - Root resources: `flux-system`, `cluster-vars.yaml`, `infra`, `apps`.
-- Infra activation list: `crds.yaml`, `onepassword-operator.yaml`, `cert-manager.yaml`, `local-path-provisioner.yaml`, `cloudnative-pg.yaml`, `intel-device-plugins-operator.yaml`, `intel-gpu-device-plugin.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `metrics-server.yaml`, `arc.yaml`, `certs.yaml`, `gateway.yaml`.
+- Infra activation list: `crds.yaml`, `onepassword-operator.yaml`, `cert-manager.yaml`, `local-path-provisioner.yaml`, `cloudnative-pg.yaml`, `intel-device-plugins-operator.yaml`, `intel-gpu-device-plugin.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `metrics-server.yaml`, `certs.yaml`, `gateway.yaml`.
 - App activation list: `whoami.yaml`, `homepage.yaml`, `dev-runner.yaml`.
 
 - Branch environment templates: `whoami-template.yaml`, `jellyfin-template.yaml`, `homepage-template.yaml`, `home-assistant-template.yaml`, `immich-template.yaml`, `nexus-template.yaml`.
@@ -81,7 +81,6 @@ This document is generated for agentic repo navigation. It records relationships
 | `production` | `onepassword-operator` | `./kubernetes/infra/controllers/onepassword-operator` | `crds` | `(none)` | `no` |
 | `production` | `otel-collector` | `./kubernetes/infra/monitoring/otel-collector` | `crds`, `gateway` | `cluster-vars` | `no` |
 | `production` | `vpn` | `./kubernetes/infra/network/vpn` | `cilium`, `nfs-csi`, `gateway`, `authentik` | `cluster-vars` | `sops` |
-| `development` | `arc` | `./kubernetes/infra/controllers/arc` | `crds`, `cilium` | `(none)` | `no` |
 | `development` | `cert-manager` | `./kubernetes/infra/controllers/cert-manager-development` | `crds` | `cluster-vars` | `sops` |
 | `development` | `certs` | `./kubernetes/infra/network/certs-development` | `cert-manager`, `cilium` | `cluster-vars` | `no` |
 | `development` | `cilium` | `./kubernetes/infra/network/cilium` | `crds` | `cluster-vars` | `no` |
@@ -115,7 +114,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `production` | `app-synthetics` | `./kubernetes/apps/synthetics` | `gateway`, `grafana`, `authentik`, `vpn`, `app-whoami`, `app-homepage`, `app-jellyfin`, `app-immich`, `app-home-assistant`, `app-pihole`, `app-foundryvtt` | `cluster-vars` | `no` |
 | `production` | `app-valheim` | `./kubernetes/apps/valheim` | `gateway`, `nfs-csi` | `cluster-vars` | `sops` |
 | `production` | `app-whoami` | `./kubernetes/apps/whoami` | `gateway` | `cluster-vars` | `no` |
-| `development` | `app-dev-runner` | `./kubernetes/apps/dev-runner` | `arc`, `onepassword-operator` | `(none)` | `no` |
+| `development` | `app-dev-runner` | `./kubernetes/apps/dev-runner` | (none) | `(none)` | `no` |
 | `development` | `app-homepage` | `./kubernetes/apps/homepage/development` | `gateway`, `metrics-server` | `cluster-vars` | `no` |
 | `development` | `app-whoami` | `./kubernetes/apps/whoami` | `gateway` | `cluster-vars` | `no` |
 
