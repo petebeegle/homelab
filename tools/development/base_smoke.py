@@ -236,7 +236,11 @@ def recover_stale(kubeconfig: Path, *, max_age_s: int, runner: Runner = subproce
     stamped longer ago than `max_age_s`. A root suspended without the stamp was a person's
     choice and is left alone. Returns 0 when nothing was needed or the restore succeeded."""
     probe = Cluster(Config(kubeconfig, 0, "", Path("."), Path(".")), runner, sleep, clock)
-    root = json.loads(probe.kubectl("-n", NS, "get", f"{KS}/flux-system", "-o", "json").stdout)
+    try:
+        root = json.loads(probe.kubectl("-n", NS, "get", f"{KS}/flux-system", "-o", "json").stdout)
+    except (Failure, ValueError) as exc:
+        print(f"base-smoke: cannot read development's root Kustomization: {exc}", flush=True)
+        return 2
     annotations = root.get("metadata", {}).get("annotations", {}) or {}
     slug, stamped = annotations.get(STAMP, ""), annotations.get(STAMP_TIME, "")
     if not root.get("spec", {}).get("suspend") or not slug.startswith("pr-") or not stamped.isdigit():

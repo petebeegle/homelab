@@ -232,6 +232,13 @@ class RecoverStaleTest(unittest.TestCase):
         self.assertTrue(any("resume kustomization flux-system" in c for c in cluster.commands))
         self.assertTrue(any("delete gitrepository.source.toolkit.fluxcd.io/base-pr-7" in c for c in cluster.commands))
 
+    def test_an_unreachable_cluster_is_a_clean_failure(self) -> None:
+        def broken(args, input=None, **_):
+            return SimpleNamespace(returncode=1, stdout="", stderr="error loading config file")
+        code = base_smoke.recover_stale(Path("/kc"), max_age_s=0, runner=broken, now=0, sleep=lambda _s: None,
+                                        clock=iter(range(0, 100, 5)).__next__)
+        self.assertEqual(code, 2)
+
     def test_leaves_a_running_test_alone(self) -> None:
         cluster = self.cluster_with_root({"homelab.dev/base-smoke": "pr-7", "homelab.dev/suspended-at": "1000"})
         self.assertEqual(self.recover(cluster, now=1000 + 600), 0)

@@ -109,12 +109,26 @@ class DevSmokeWorkflowTest(unittest.TestCase):
         base = jobs(read())["base"]
         self.assertRegex(base, r"(?m)^    permissions:\n      contents: write$")
         steps = re.split(r"\n      - ", base)
-        publish = [s for s in steps if "git/refs" in s and "-X DELETE" not in s]
+        publish = [s for s in steps if "Publish the merge" in s]
         self.assertEqual(len(publish), 1)
-        self.assertIn("refs/heads/base-smoke/pr-${PR_NUMBER}", publish[0])
+        self.assertIn('ref="refs/heads/base-smoke/pr-${PR_NUMBER}"', publish[0])
+        self.assertIn("-X POST", publish[0])
+        self.assertIn("${MERGE_SHA}", publish[0])
         delete = [s for s in steps if "-X DELETE" in s and "git/refs/heads/base-smoke/pr-${PR_NUMBER}" in s]
         self.assertEqual(len(delete), 1)
         self.assertIn("if: always()", delete[0])
+
+    def test_base_job_runs_only_tools_the_runner_image_has(self) -> None:
+        # The runner image has kubectl, flux, curl, node and python, but no gh CLI.
+        base = jobs(read())["base"]
+        self.assertNotRegex(base, r"(?m)^\s+(?:run: )?gh |\bgh api\b")
+
+    def test_kubeconfig_comes_before_anything_the_always_steps_depend_on(self) -> None:
+        base = jobs(read())["base"]
+        steps = re.split(r"\n      - ", base)
+        kubeconfig = next(i for i, s in enumerate(steps) if "dev-kubeconfig" in s)
+        publish = next(i for i, s in enumerate(steps) if "Publish the merge" in s)
+        self.assertLess(kubeconfig, publish, "a failed publish must still leave the restore step a kubeconfig")
 
     def test_base_smoke_receives_cancellation_signals_directly(self) -> None:
         # bash does not forward SIGINT/SIGTERM to a foreground child; a cancelled run would leave

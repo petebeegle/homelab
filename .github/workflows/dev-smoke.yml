@@ -206,7 +206,10 @@ jobs:
             exit 1
           fi
           echo "sha=$(git -C pr rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Development cluster kubeconfig
+        uses: ./.github/actions/dev-kubeconfig
       # Flux cannot fetch refs/pull/<N>/merge, so point a temporary branch at that commit.
+      # curl, not gh: the runner image has no gh CLI. api.github.com is inside its egress fence.
       - name: Publish the merge as a temporary branch for Flux
         env:
           GH_TOKEN: ${{ github.token }}
@@ -214,14 +217,15 @@ jobs:
           MERGE_SHA: ${{ steps.merge.outputs.sha }}
         run: |
           set -euo pipefail
+          api="${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/git"
+          auth=(-H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json")
           ref="refs/heads/base-smoke/pr-${PR_NUMBER}"
-          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/base-smoke/pr-${PR_NUMBER}" >/dev/null 2>&1; then
-            gh api -X PATCH "repos/${GITHUB_REPOSITORY}/git/${ref}" -f sha="${MERGE_SHA}" -F force=true >/dev/null
+          if curl -fsS "${auth[@]}" "${api}/ref/heads/base-smoke/pr-${PR_NUMBER}" >/dev/null 2>&1; then
+            curl -fsS -X PATCH "${auth[@]}" "${api}/${ref}" -d "{\"sha\":\"${MERGE_SHA}\",\"force\":true}" >/dev/null
           else
-            gh api "repos/${GITHUB_REPOSITORY}/git/refs" -f ref="${ref}" -f sha="${MERGE_SHA}" >/dev/null
+            curl -fsS -X POST "${auth[@]}" "${api}/refs" -d "{\"ref\":\"${ref}\",\"sha\":\"${MERGE_SHA}\"}" >/dev/null
           fi
-      - name: Development cluster kubeconfig
-        uses: ./.github/actions/dev-kubeconfig
+          echo "published ${ref} at ${MERGE_SHA}"
       - name: Install browser test dependencies
         working-directory: tests/browser
         run: npm install --no-audit --no-fund
@@ -245,7 +249,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: gh api -X DELETE "repos/${GITHUB_REPOSITORY}/git/refs/heads/base-smoke/pr-${PR_NUMBER}" || true
+        run: >-
+          curl -sS -o /dev/null -w 'delete base-smoke/pr-%{http_code}\n' -X DELETE
+          -H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json"
+          "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/git/refs/heads/base-smoke/pr-${PR_NUMBER}" || true
       - name: Upload smoke results
         if: always()
         uses: actions/upload-artifact@v4
