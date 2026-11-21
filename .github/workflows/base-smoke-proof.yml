@@ -1,0 +1,93 @@
+name: Base smoke proof (throwaway, do not merge)
+on:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  proof:
+    name: proof
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: homelab-dev
+    timeout-minutes: 60
+    # contents: write only to publish and delete the temporary base-smoke/pr-<N> branch.
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Check out the PR merged onto main, as data
+        uses: actions/checkout@v6
+        with:
+          ref: refs/pull/496/merge
+          path: pr
+          # Depth 2 so the merge's first parent (main) is present to compare against.
+          fetch-depth: 2
+          persist-credentials: false
+      - name: The merge must be onto current main
+        id: merge
+        env:
+          PR_NUMBER: "496"
+        run: |
+          set -euo pipefail
+          git fetch --quiet --depth=1 origin main
+          if [ "$(git -C pr rev-parse HEAD^1)" != "$(git rev-parse FETCH_HEAD)" ]; then
+            echo "::error::refs/pull/${PR_NUMBER}/merge is not a merge onto current main; re-run this check"
+            exit 1
+          fi
+          echo "sha=$(git -C pr rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Development cluster kubeconfig
+        uses: ./.github/actions/dev-kubeconfig
+      # Flux cannot fetch refs/pull/<N>/merge, so point a temporary branch at that commit.
+      # curl, not gh: the runner image has no gh CLI. api.github.com is inside its egress fence.
+      - name: Publish the merge as a temporary branch for Flux
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: "496"
+          MERGE_SHA: ${{ steps.merge.outputs.sha }}
+        run: |
+          set -euo pipefail
+          api="${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/git"
+          auth=(-H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json")
+          ref="refs/heads/base-smoke/pr-${PR_NUMBER}"
+          if curl -fsS "${auth[@]}" "${api}/ref/heads/base-smoke/pr-${PR_NUMBER}" >/dev/null 2>&1; then
+            curl -fsS -X PATCH "${auth[@]}" "${api}/${ref}" -d "{\"sha\":\"${MERGE_SHA}\",\"force\":true}" >/dev/null
+          else
+            curl -fsS -X POST "${auth[@]}" "${api}/refs" -d "{\"ref\":\"${ref}\",\"sha\":\"${MERGE_SHA}\"}" >/dev/null
+          fi
+          echo "published ${ref} at ${MERGE_SHA}"
+      - name: Install browser test dependencies
+        working-directory: tests/browser
+        run: npm install --no-audit --no-fund
+      - name: Apply the PR to development's platform, check it, restore main
+        env:
+          MERGE_SHA: ${{ steps.merge.outputs.sha }}
+          PR_NUMBER: "496"
+          AFFECTED: nfs-csi (proof)
+        run: |
+          set -euo pipefail
+          echo "Development Kustomizations this PR changes: ${AFFECTED}" | tee -a "$GITHUB_STEP_SUMMARY"
+          # exec: bash would not pass a cancellation signal on to a child process.
+          exec python3 tools/development/base_smoke.py --kubeconfig "${KUBECONFIG}" --pr "${PR_NUMBER}" \
+            --sha "${MERGE_SHA}" --head-dir pr
+      # A cancelled or killed job never reaches base_smoke's own restore; this does.
+      - name: Make sure development is restored
+        if: always()
+        run: python3 tools/development/base_smoke.py --kubeconfig "${KUBECONFIG}" --recover-stale --max-age-seconds 0
+      - name: Delete the temporary branch
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: "496"
+        run: >-
+          curl -sS -o /dev/null -w 'delete base-smoke/pr-%{http_code}\n' -X DELETE
+          -H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json"
+          "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/git/refs/heads/base-smoke/pr-${PR_NUMBER}" || true
+      - name: Upload smoke results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: base-smoke-results
+          path: tests/browser/test-results
+          if-no-files-found: ignore
+
