@@ -28,12 +28,21 @@ jobs:
         run: |
           set -u
           fail=0
-          for u in https://192.168.30.150:6443/version https://kubernetes.default.svc/version https://homepage.lab.petebeegle.com/ https://192.168.30.99:5001/ https://www.google.com/ https://1.1.1.1/; do
+          for u in https://192.168.30.150:6443/version https://kubernetes.default.svc/version https://192.168.30.99:5001/ https://www.google.com/ https://1.1.1.1/; do
             if code=$(curl -sk -o /dev/null -w '%{http_code}' --max-time 8 "$u"); then
               echo "REACHABLE (bad): $u -> $code"; fail=1
             else
               echo "blocked: $u"
             fi
+          done
+          # Production's gateways are Cilium's Envoy, which enforces this pod's policy itself and
+          # answers 403 "Access denied" instead of dropping the connection. Any app response fails.
+          for u in https://homepage.lab.petebeegle.com/ https://whoami.lab.petebeegle.com/ https://grafana.lab.petebeegle.com/; do
+            body=$(curl -sk --max-time 8 -w ' HTTP%{http_code}' "$u" || echo "dropped")
+            case "$body" in
+              "Access denied HTTP403"|dropped) echo "blocked: $u ($body)" ;;
+              *) echo "REACHABLE (bad): $u -> ${body: -40}"; fail=1 ;;
+            esac
           done
           exit "$fail"
       - name: Development route through its gateway
