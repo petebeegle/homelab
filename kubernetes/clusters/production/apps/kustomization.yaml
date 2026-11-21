@@ -15,4 +15,5 @@ resources:
   - valheim.yaml
   - synthetics.yaml
   - access-broker.yaml
+  - ci-runner.yaml
   - private
