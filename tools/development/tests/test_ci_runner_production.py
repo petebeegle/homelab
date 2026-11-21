@@ -56,6 +56,11 @@ class RunnerTest(unittest.TestCase):
         )
         self.assertRegex(self.release, r"(?m)^                mountPath: /var/run/dev-cluster$")
         self.assertRegex(self.release, r"(?m)^              secretName: dev-runner-kubeconfig$")
+        # The Secret volume is root-owned with mode 0440: the runner user (uid 1002) reads it only
+        # through its group, so the pod's fsGroup must be the runner's group.
+        uid = re.search(r"(?m)^          runAsUser: (\d+)$", self.release).group(1)
+        self.assertRegex(self.release, rf"(?m)^          fsGroup: {uid}$")
+        self.assertRegex(self.release, r"(?m)^              defaultMode: 0440$")
 
     def test_uses_the_same_runner_image_as_development(self) -> None:
         image = re.compile(r"(?m)^\s+image: (ghcr\.io/petebeegle/homelab-dev-runner\S*)$")
