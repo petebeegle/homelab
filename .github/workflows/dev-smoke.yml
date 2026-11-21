@@ -90,7 +90,7 @@ jobs:
             exit 0
           fi
           if [ "$(git -C pr rev-parse HEAD^1)" != "$(git rev-parse HEAD)" ]; then
-            { echo "base=false"; echo "reason=refs/pull/${PR_NUMBER}/merge is not a merge onto current main; re-run this check"; } >> "$GITHUB_OUTPUT"
+            { echo "base=false"; echo "reason=refs/pull/${PR_NUMBER}/merge is not a merge onto current main (main moved); re-run all jobs, not only the failed one, so classify refreshes it"; } >> "$GITHUB_OUTPUT"
             exit 0
           fi
           gh api --paginate "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" --jq '.[].filename' \
@@ -202,11 +202,12 @@ jobs:
           set -euo pipefail
           git fetch --quiet --depth=1 origin main
           if [ "$(git -C pr rev-parse HEAD^1)" != "$(git rev-parse FETCH_HEAD)" ]; then
-            echo "::error::refs/pull/${PR_NUMBER}/merge is not a merge onto current main; re-run this check"
+            echo "::error::refs/pull/${PR_NUMBER}/merge is not a merge onto current main (main moved); re-run all jobs, not only the failed one, so classify refreshes it"
             exit 1
           fi
           echo "sha=$(git -C pr rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - name: Development cluster kubeconfig
+        id: kubeconfig
         uses: ./.github/actions/dev-kubeconfig
       # Flux cannot fetch refs/pull/<N>/merge, so point a temporary branch at that commit.
       # curl, not gh: the runner image has no gh CLI. api.github.com is inside its egress fence.
@@ -241,8 +242,9 @@ jobs:
           exec python3 tools/development/base_smoke.py --kubeconfig "${KUBECONFIG}" --pr "${PR_NUMBER}" \
             --sha "${MERGE_SHA}" --head-dir pr
       # A cancelled or killed job never reaches base_smoke's own restore; this does.
+      # Not when the job stopped before the kubeconfig: then nothing touched development.
       - name: Make sure development is restored
-        if: always()
+        if: always() && steps.kubeconfig.outcome == 'success'
         run: python3 tools/development/base_smoke.py --kubeconfig "${KUBECONFIG}" --recover-stale --max-age-seconds 0
       - name: Delete the temporary branch
         if: always()
