@@ -28,7 +28,14 @@
         "port": 80,
         "path": "/",
         "bodyRegex": "Home Assistant|Sign in|Login"
+      },
+      {
+        "service": "home-assistant-${branch_slug}",
+        "port": 80,
+        "path": "/auth/providers",
+        "bodyRegex": "\"type\": ?\"auth_oidc\""
       }
     ]
-  }
+  },
+  "prSmoke": true
 }
