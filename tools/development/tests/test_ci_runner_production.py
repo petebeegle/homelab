@@ -101,6 +101,13 @@ class CutoverTest(unittest.TestCase):
             self.assertIn(f"- {kept}", kustomization)
 
 
+    def test_development_does_not_run_the_runner_controller(self) -> None:
+        dev = REPO_ROOT / "kubernetes" / "clusters" / "development"
+        self.assertNotRegex(read(dev / "infra" / "kustomization.yaml"), r"(?m)^  - arc\.yaml$")
+        self.assertFalse((dev / "infra" / "arc.yaml").exists())
+        self.assertNotRegex(read(dev / "apps" / "dev-runner.yaml"), r"(?m)^    - name: (arc|onepassword-operator)$")
+
+
 class EgressPolicyTest(unittest.TestCase):
     def setUp(self) -> None:
         self.policy = read(APP / "network-policy.yaml")
