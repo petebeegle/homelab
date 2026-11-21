@@ -13,3 +13,4 @@ resources:
   - alert-rules-onepassword.yaml
   - alert-rules-valheim.yaml
   - alert-rules-synthetics.yaml
+  - alert-rules-ci-runner.yaml
