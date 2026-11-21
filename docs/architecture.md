@@ -10,8 +10,8 @@ This document is generated for agentic repo navigation. It records relationships
 
 - Root Kustomization: `kubernetes/clusters/production/kustomization.yaml`.
 - Root resources: `flux-system`, `cluster-vars.yaml`, `infra`, `apps`, `onepassword-items.yaml`.
-- Infra activation list: `crds.yaml`, `onepassword-operator.yaml`, `cert-manager.yaml`, `local-path-provisioner.yaml`, `cloudnative-pg.yaml`, `grafana-operator.yaml`, `intel-device-plugins-operator.yaml`, `intel-gpu-device-plugin.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `metrics-server.yaml`, `certs.yaml`, `gateway.yaml`, `vpn.yaml`, `monitoring.yaml`, `loki.yaml`, `mimir.yaml`, `alloy.yaml`, `grafana.yaml`, `otel-collector.yaml`, `authentik.yaml`.
-- App activation list: `external.yaml`, `homepage.yaml`, `pihole.yaml`, `whoami.yaml`, `renovate.yaml`, `cloudflare-tunnels.yaml`, `jellyfin.yaml`, `immich.yaml`, `home-assistant.yaml`, `foundryvtt.yaml`, `valheim.yaml`, `synthetics.yaml`, `access-broker.yaml`, `private`.
+- Infra activation list: `crds.yaml`, `onepassword-operator.yaml`, `cert-manager.yaml`, `local-path-provisioner.yaml`, `cloudnative-pg.yaml`, `grafana-operator.yaml`, `intel-device-plugins-operator.yaml`, `intel-gpu-device-plugin.yaml`, `nfs-csi.yaml`, `cilium.yaml`, `arc.yaml`, `metrics-server.yaml`, `certs.yaml`, `gateway.yaml`, `vpn.yaml`, `monitoring.yaml`, `loki.yaml`, `mimir.yaml`, `alloy.yaml`, `grafana.yaml`, `otel-collector.yaml`, `authentik.yaml`.
+- App activation list: `external.yaml`, `homepage.yaml`, `pihole.yaml`, `whoami.yaml`, `renovate.yaml`, `cloudflare-tunnels.yaml`, `jellyfin.yaml`, `immich.yaml`, `home-assistant.yaml`, `foundryvtt.yaml`, `valheim.yaml`, `synthetics.yaml`, `access-broker.yaml`, `ci-runner.yaml`, `private`.
 
 ### Development
 
@@ -60,6 +60,7 @@ This document is generated for agentic repo navigation. It records relationships
 | Cluster | Kustomization | Path | Depends on | Substitute from | SOPS |
 | --- | --- | --- | --- | --- | --- |
 | `production` | `alloy` | `./kubernetes/infra/monitoring/alloy` | `loki`, `mimir` | `cluster-vars` | `no` |
+| `production` | `arc` | `./kubernetes/infra/controllers/arc` | `crds`, `cilium` | `(none)` | `no` |
 | `production` | `authentik` | `./kubernetes/infra/authentik` | `gateway`, `cert-manager` | `cluster-vars` | `sops` |
 | `production` | `cert-manager` | `./kubernetes/infra/controllers/cert-manager` | `crds` | `cluster-vars` | `sops` |
 | `production` | `certs` | `./kubernetes/infra/network/certs` | `cert-manager`, `cilium` | `cluster-vars` | `no` |
@@ -99,6 +100,7 @@ This document is generated for agentic repo navigation. It records relationships
 | Cluster | Kustomization | Path | Depends on | Substitute from | SOPS |
 | --- | --- | --- | --- | --- | --- |
 | `production` | `app-access-broker` | `./kubernetes/apps/access-broker` | `gateway`, `nfs-csi`, `app-cloudflare-tunnels` | `cluster-vars` | `sops` |
+| `production` | `app-ci-runner` | `./kubernetes/apps/ci-runner` | `arc`, `onepassword-operator` | `(none)` | `no` |
 | `production` | `app-cloudflare-tunnels` | `./kubernetes/apps/cloudflare-tunnels` | `gateway` | `cluster-vars` | `sops` |
 | `production` | `app-external` | `./kubernetes/apps/external` | `gateway` | `cluster-vars` | `no` |
 | `production` | `app-foundryvtt` | `./kubernetes/apps/foundryvtt` | `gateway`, `nfs-csi` | `cluster-vars` | `sops` |
@@ -154,6 +156,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/infra/network/gateway` | `./namespace.yaml`, `./certificate.yaml`, `./gateway-internal.yaml`, `./gateway-passthrough.yaml`, `./gateway-external.yaml`, `./gateway-external-passthrough.yaml`, `./https-redirect.yaml`, `./referencegrant.yaml` |
 | `kubernetes/infra/network/vpn` | `./namespace.yaml`, `./global-config.yaml`, `./secret.yaml`, `./pvc.yaml`, `./deployment.yaml`, `./service.yaml`, `./vpn-dns.yaml`, `./httproute.yaml` |
 | `kubernetes/apps/access-broker` | `namespace.yaml`, `configmap.yaml`, `secret.yaml`, `pvc.yaml`, `deployment.yaml`, `service.yaml`, `httproute.yaml` |
+| `kubernetes/apps/ci-runner` | `namespace.yaml`, `network-policy.yaml`, `onepassword-items.yaml`, `app.yaml` |
 | `kubernetes/apps/cloudflare-tunnels` | `namespace.yaml`, `secret.yaml`, `deployment.yaml`, `podmonitor.yaml` |
 | `kubernetes/apps/dev-runner` | `namespace.yaml`, `onepassword-item.yaml`, `rbac.yaml`, `token.yaml`, `app.yaml` |
 | `kubernetes/apps/external` | `namespace.yaml`, `synology.yaml`, `nexus-registry.yaml` |

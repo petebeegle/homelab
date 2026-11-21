@@ -1,0 +1,79 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: ci-runner
+  namespace: ci-runner
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: gha-runner-scale-set
+      version: 0.15.1
+      sourceRef:
+        kind: HelmRepository
+        name: arc
+        namespace: arc-systems
+      interval: 12h
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      remediateLastFailure: true
+  values:
+    githubConfigUrl: https://github.com/petebeegle/homelab
+    githubConfigSecret: ci-runner-github-app
+    # Temporary name while it is proven (#522 A0 rollout step 3); becomes homelab-dev at cutover.
+    runnerScaleSetName: homelab-dev-prod
+    # One runner at a time is the concurrency lock for the shared development cluster.
+    minRunners: 0
+    maxRunners: 1
+    controllerServiceAccount:
+      namespace: arc-systems
+      name: arc-gha-rs-controller
+    template:
+      spec:
+        # No production credentials: the chart's no-permission account, token not mounted.
+        automountServiceAccountToken: false
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1002
+          runAsGroup: 1002
+        containers:
+          - name: runner
+            # Built by .github/workflows/runner-image.yml; uid 1002 matches its runner user.
+            image: ghcr.io/petebeegle/homelab-dev-runner:latest
+            imagePullPolicy: Always
+            command: ["/home/runner/run.sh"]
+            env:
+              - name: DEV_CLUSTER_KUBECONFIG
+                value: /var/run/dev-cluster/kubeconfig
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
+            resources:
+              requests:
+                cpu: "1"
+                memory: 2Gi
+              limits:
+                cpu: "3"
+                memory: 6Gi
+            volumeMounts:
+              - name: dshm
+                mountPath: /dev/shm
+              - name: dev-cluster
+                mountPath: /var/run/dev-cluster
+                readOnly: true
+        volumes:
+          - name: dshm
+            emptyDir:
+              medium: Memory
+              sizeLimit: 1Gi
+          - name: dev-cluster
+            secret:
+              secretName: dev-runner-kubeconfig
+              defaultMode: 0440

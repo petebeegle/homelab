@@ -1,0 +1,55 @@
+---
+# The runner checks out code, renders PR-built pages in Chromium and drives the development
+# cluster. It runs in production, so it may reach only DNS, GitHub, npm, and development's API
+# server and internal gateway: nothing in production, the NAS, or the rest of the internet.
+# Development addresses are hardcoded because cluster-vars holds production's here.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: ci-runner-egress
+  namespace: ci-runner
+spec:
+  endpointSelector: {}
+  enableDefaultDeny:
+    egress: true
+    ingress: true
+  egress:
+    # DNS through Cilium's proxy, so the toFQDNs rules below can match.
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: ANY
+          rules:
+            dns:
+              - matchPattern: "*"
+    # GitHub (runner broker, checkout, actions, logs and artifacts) and npm.
+    - toFQDNs:
+        - matchName: "github.com"
+        - matchName: "api.github.com"
+        - matchName: "codeload.github.com"
+        - matchPattern: "*.actions.githubusercontent.com"
+        - matchPattern: "*.githubusercontent.com"
+        - matchPattern: "*.blob.core.windows.net"
+        - matchName: "registry.npmjs.org"
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+    # Development's Kubernetes API server.
+    - toCIDR:
+        - 192.168.30.170/32
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP
+    # Development's internal gateway, for the browser and route checks.
+    - toCIDR:
+        - 192.168.30.225/32
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
