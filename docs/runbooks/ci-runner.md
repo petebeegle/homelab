@@ -38,8 +38,33 @@ kubectl -n arc-systems get pods     # controller and the homelab-dev listener
 ```
 
 A queued job that never starts usually means the listener is not running or the
-GitHub App item did not sync. `dev-heartbeat` goes red when nothing on the runner has
-succeeded for 12 hours.
+GitHub App item did not sync.
+
+## Alerts
+
+Grafana rule group `ci-runner` (`kubernetes/infra/monitoring/grafana/alerting/alert-rules-ci-runner.yaml`):
+
+| Alert | Fires when | Start with |
+|-------|-----------|------------|
+| CI Runner Controller Unavailable | `arc-gha-rs-controller` has unavailable replicas for 10 minutes | `kubectl -n arc-systems get deploy,pods`; `flux get kustomization arc` |
+| CI Runner Listener Down | no `homelab-dev-*-listener` pod Running for 15 minutes | controller logs; the `ci-runner-github-app` OnePasswordItem |
+| Development Cluster Unhealthy | no `DEV_PROBE status=ok` line for 45 minutes | the latest probe line (below) says which check failed |
+
+`dev-probe` (`kubernetes/apps/ci-runner/dev-probe.yaml`) runs every 10 minutes under
+the runner's network policy and `dev-runner` account. It checks development's API
+server (`/readyz`), that every Flux Kustomization there is Ready, and that
+`whoami.dev.lab.petebeegle.com` answers 200, then logs one line:
+
+```logql
+{namespace="ci-runner", app="dev-probe"} |= "DEV_PROBE"
+```
+
+e.g. `DEV_PROBE status=failed api=ok kustomizations_not_ready=2 route=200`. The 45-minute
+window rides out an infrastructure smoke test briefly un-readying development.
+
+`dev-heartbeat` (GitHub-hosted) stays: it goes red when nothing on the runner has
+succeeded for 12 hours, and it is the only watcher that still works when production,
+and so this alerting, is down.
 
 ## Rotate the development credentials
 

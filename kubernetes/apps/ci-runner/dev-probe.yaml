@@ -1,0 +1,84 @@
+---
+# Watches the development cluster from production (#522 A0). Development has no monitoring
+# stack, so this is its health signal: every 10 minutes it checks the API server, that every
+# Flux Kustomization is Ready, and that a route answers through development's gateway, then
+# logs one DEV_PROBE line. Grafana alerts when no "status=ok" line arrives for 45 minutes
+# (kubernetes/infra/monitoring/grafana/alerting/alert-rules-ci-runner.yaml).
+# It runs under the runner's egress policy and acts as the same dev-runner account.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: dev-probe
+  namespace: ci-runner
+  labels:
+    app: dev-probe
+spec:
+  schedule: "*/10 * * * *"
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 300
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    metadata:
+      labels:
+        app: dev-probe
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 120
+      ttlSecondsAfterFinished: 3600
+      template:
+        metadata:
+          labels:
+            app: dev-probe
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1002
+            runAsGroup: 1002
+            fsGroup: 1002
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: probe
+              # The runner image already has kubectl and curl and is cached on the nodes.
+              image: ghcr.io/petebeegle/homelab-dev-runner:latest
+              imagePullPolicy: IfNotPresent
+              command: ["bash", "-c"]
+              args:
+                - |
+                  set -u
+                  kc=/var/run/dev-cluster/kubeconfig
+                  api=failed
+                  kubectl --kubeconfig "$kc" --request-timeout=15s get --raw /readyz >/dev/null 2>&1 && api=ok
+                  not_ready=unknown
+                  if states=$(kubectl --kubeconfig "$kc" --request-timeout=15s -n flux-system \
+                      get kustomizations.kustomize.toolkit.fluxcd.io \
+                      -o jsonpath='{range .items[*]}{.status.conditions[?(@.type=="Ready")].status}{"\n"}{end}' 2>/dev/null); then
+                    not_ready=$(printf '%s\n' "$states" | grep -c -v '^True$' || true)
+                  fi
+                  route=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 https://whoami.dev.lab.petebeegle.com/ || true)
+                  status=failed
+                  if [ "$api" = ok ] && [ "$not_ready" = 0 ] && [ "$route" = 200 ]; then status=ok; fi
+                  echo "DEV_PROBE status=$status api=$api kustomizations_not_ready=$not_ready route=$route"
+                  [ "$status" = ok ]
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 64Mi
+                limits:
+                  memory: 256Mi
+              volumeMounts:
+                - name: dev-cluster
+                  mountPath: /var/run/dev-cluster
+                  readOnly: true
+          volumes:
+            - name: dev-cluster
+              secret:
+                secretName: dev-runner-kubeconfig
+                defaultMode: 0440

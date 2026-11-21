@@ -1,0 +1,172 @@
+---
+# The CI runner lives in production (docs/runbooks/ci-runner.md) and watches the development
+# cluster through kubernetes/apps/ci-runner/dev-probe.yaml. dev-heartbeat (GitHub-hosted) stays
+# as the outside watcher for when production, and so this alerting, is down.
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaAlertRuleGroup
+metadata:
+  name: ci-runner
+  namespace: grafana
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  folderRef: "kubernetes"
+  interval: 1m
+  rules:
+    - uid: ci-runner-controller-unavailable
+      title: CI Runner Controller Unavailable
+      condition: C
+      for: 10m
+      noDataState: Alerting
+      execErrState: Error
+      annotations:
+        description: "The Actions Runner Controller Deployment in arc-systems is missing or has unavailable replicas for 10 minutes. No homelab-dev jobs (dev-smoke, dev-cleanup) can start."
+        summary: The CI runner controller is down
+        runbook: "docs/runbooks/ci-runner.md"
+      labels:
+        severity: warning
+        component: ci-runner
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: 'max(kube_deployment_spec_replicas{exported_namespace="arc-systems",deployment="arc-gha-rs-controller"} - kube_deployment_status_replicas_available{exported_namespace="arc-systems",deployment="arc-gha-rs-controller"}) OR absent(kube_deployment_spec_replicas{exported_namespace="arc-systems",deployment="arc-gha-rs-controller"})'
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 0
+                  type: gt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+    - uid: ci-runner-listener-down
+      title: CI Runner Listener Down
+      condition: C
+      for: 15m
+      noDataState: Alerting
+      execErrState: Error
+      annotations:
+        description: "No homelab-dev runner scale set listener has been Running in arc-systems for 15 minutes, so GitHub jobs for homelab-dev queue and never start."
+        summary: The homelab-dev runner is not taking jobs
+        runbook: "docs/runbooks/ci-runner.md"
+      labels:
+        severity: warning
+        component: ci-runner
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 900
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: '(sum(kube_pod_status_phase{exported_namespace="arc-systems", pod=~"homelab-dev-.*-listener", phase="Running"}) or vector(0))'
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 900
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 900
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 1
+                  type: lt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
+    - uid: development-cluster-unhealthy
+      title: Development Cluster Unhealthy
+      condition: C
+      for: 0s
+      noDataState: Alerting
+      execErrState: Error
+      annotations:
+        description: "No successful dev-probe run in 45 minutes: the development API server, a Flux Kustomization, or the whoami route through its gateway is failing (or the probe is not running). PR smoke tests will fail or stall. See the latest DEV_PROBE lines for which check failed."
+        summary: The development cluster is unhealthy or unreachable from production
+        runbook: "docs/runbooks/ci-runner.md"
+      labels:
+        severity: warning
+        component: ci-runner
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 2700
+            to: 0
+          datasourceUid: loki
+          model:
+            expr: 'sum(count_over_time({namespace="ci-runner", app="dev-probe"} |= "DEV_PROBE" | logfmt | status="ok" [45m]))'
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 2700
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: A
+            reducer: last
+            type: reduce
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 2700
+            to: 0
+          datasourceUid: __expr__
+          model:
+            expression: B
+            conditions:
+              - evaluator:
+                  params:
+                    - 1
+                  type: lt
+                operator:
+                  type: and
+                query:
+                  params:
+                    - C
+                type: query
+            type: threshold
+            refId: C
