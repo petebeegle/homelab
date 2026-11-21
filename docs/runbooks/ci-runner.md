@@ -66,6 +66,17 @@ window rides out an infrastructure smoke test briefly un-readying development.
 succeeded for 12 hours, and it is the only watcher that still works when production,
 and so this alerting, is down.
 
+## Leftovers to look for
+
+- **`base-smoke/pr-<N>` branches.** The base smoke job publishes one per run and
+  deletes it in an `always()` step. One left behind (the runner pod was killed) is
+  harmless; delete it with
+  `gh api -X DELETE repos/petebeegle/homelab/git/refs/heads/base-smoke/pr-<N>`.
+- **A suspended root in development.** `kubectl -n flux-system get kustomization
+  flux-system` shows `SUSPENDED True` and the annotation `homelab.dev/base-smoke`.
+  `dev-cleanup` and every smoke run restore it after an hour; to do it now, run
+  `python3 tools/development/base_smoke.py --kubeconfig ~/.kube/homelab-development.config --recover-stale --max-age-seconds 0`.
+
 ## Rotate the development credentials
 
 The runner's development access is the `dev-runner-token` Secret in development,
