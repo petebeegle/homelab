@@ -29,3 +29,5 @@ jobs:
         uses: ./.github/actions/dev-kubeconfig
       - name: Remove stale PR environments
         run: python3 tools/development/cleanup_pr_envs.py --kubeconfig "${KUBECONFIG}" --older-than 3h
+      - name: Restore development if a base smoke test was killed mid-run
+        run: python3 tools/development/base_smoke.py --kubeconfig "${KUBECONFIG}" --recover-stale

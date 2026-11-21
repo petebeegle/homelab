@@ -46,17 +46,35 @@ picked up automatically.
 
 ### What `dev-smoke` covers, and what it does not
 
-`dev-smoke` tests a PR when every changed file is under one
-`kubernetes/apps/<app>/` directory and that app's profile in
-`tools/development/smoke-profiles/` has `"prSmoke": true` (today: `whoami` and
-`homepage`). It creates a branch environment in the development cluster, checks
-it, runs the browser test where the profile has one, and removes the
-environment.
+`dev-smoke` tests a PR in one of two ways.
+
+- **App smoke** (`smoke` job): every changed file is under one
+  `kubernetes/apps/<app>/` directory and that app's profile in
+  `tools/development/smoke-profiles/` has `"prSmoke": true` (today: `whoami` and
+  `homepage`). It creates a branch environment in the development cluster, checks
+  it, runs the browser test where the profile has one, and removes the
+  environment.
+- **Base smoke** (`base` job): the PR changes something the development cluster
+  itself runs. `tools/development/affected_dev.py` decides by rendering each
+  development Flux Kustomization at `main` and at GitHub's merge of the PR onto
+  `main` (so a change through a shared base or patch counts, and a
+  production-only path does not). `tools/development/base_smoke.py` then:
+  1. publishes that merge as the temporary branch `base-smoke/pr-<N>`;
+  2. suspends development's root Kustomization and points every child at that
+     branch;
+  3. waits for every Kustomization and HelmRelease to be Ready;
+  4. runs the whoami and homepage smoke tests (from `main`) on top as canaries;
+  5. always restores `main` and deletes the branch.
+
+  A PR that changes development's Flux bootstrap (`flux-system/`),
+  `cluster-vars.yaml` or entrypoint is refused, and so is one GitHub cannot merge
+  onto current `main` (rebase it). If a killed job leaves the root suspended,
+  `dev-cleanup` and every smoke run restore it after an hour
+  (`base_smoke.py --recover-stale`).
 
 For everything else it reports "not smoke-tested: <reason>" and passes. That
-does not mean the change needs no validation. For Terraform, Flux wiring,
-infrastructure, Gateway routes, storage, secret references, and apps without a
-profile:
+does not mean the change needs no validation. For Terraform, production-only
+infrastructure and apps, Flux bootstrap changes, and apps without a profile:
 
 - validate in the development cluster before merging, and
 - state in the PR description what you ran and what it showed.
@@ -80,7 +98,10 @@ rerun.
    left behind; `dev-cleanup` does the same on a schedule. A failed sweep is a
    warning on the run, not a smoke failure.
 4. If development is at fault, fix development first (it is changed through PRs
-   like production), then re-run the failed job.
+   like production), then re-run the failed job. A `base` failure that says
+   `DEVELOPMENT DID NOT RECOVER` means development is still broken after the
+   restore: check `kubectl -n flux-system get kustomization` and
+   `flux resume kustomization flux-system` before anything else runs.
 5. To see it yourself, deploy the same branch by hand with `--keep` (below),
    inspect it, then delete it with
    `python3 tools/development/cleanup_pr_envs.py --kubeconfig ~/.kube/homelab-development.config --slug <slug>`

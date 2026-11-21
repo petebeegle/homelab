@@ -26,6 +26,9 @@ jobs:
       app: ${{ steps.classify.outputs.app }}
       browser: ${{ steps.classify.outputs.browser }}
       reason: ${{ steps.classify.outputs.reason }}
+      base: ${{ steps.affected.outputs.base }}
+      affected: ${{ steps.affected.outputs.affected }}
+      base_reason: ${{ steps.affected.outputs.reason }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -46,6 +49,64 @@ jobs:
             echo "app=$(jq -r '.app // ""' classification.json)"
             echo "browser=$(jq -r '.browser' classification.json)"
             echo "reason=$(jq -r '.reason | gsub("[\\r\\n]"; " ")' classification.json)"
+          } >> "$GITHUB_OUTPUT"
+      # Not an app-only PR: does it change anything the development cluster runs? Judge the PR
+      # as it would land, GitHub's test merge onto main (a stale head would show main's newer
+      # changes as the PR's). Asking for the PR makes GitHub recompute that merge.
+      - name: Ask GitHub for a fresh merge of the PR onto main
+        id: merge
+        if: steps.classify.outputs.tested != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          for _ in $(seq 1 12); do
+            mergeable=$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}" --jq '.mergeable')
+            [ "$mergeable" != null ] && break
+            sleep 5
+          done
+          echo "mergeable=${mergeable}" >> "$GITHUB_OUTPUT"
+      - name: Check out the PR merged onto main, as data
+        if: steps.classify.outputs.tested != 'true' && steps.merge.outputs.mergeable == 'true'
+        uses: actions/checkout@v6
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
+          path: pr
+          # Depth 2 so the merge's first parent (main) is present to compare against.
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Find the development Kustomizations the PR changes
+        id: affected
+        if: steps.classify.outputs.tested != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          MERGEABLE: ${{ steps.merge.outputs.mergeable }}
+        run: |
+          set -euo pipefail
+          if [ "$MERGEABLE" != true ]; then
+            { echo "base=false"; echo "reason=GitHub has no merge of this PR onto main (mergeable=${MERGEABLE}); rebase it"; } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$(git -C pr rev-parse HEAD^1)" != "$(git rev-parse HEAD)" ]; then
+            { echo "base=false"; echo "reason=refs/pull/${PR_NUMBER}/merge is not a merge onto current main; re-run this check"; } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          gh api --paginate "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" --jq '.[].filename' \
+            | python3 tools/development/affected_dev.py --base . --head pr > affected.json
+          cat affected.json
+          affected=$(jq -r '.affected | join(",")' affected.json)
+          blocked=$(jq -r '.blocked // ""' affected.json | tr -d '\r\n')
+          {
+            echo "affected=${affected}"
+            if [ -n "$blocked" ]; then
+              echo "base=false"; echo "reason=${blocked}"
+            elif [ -n "$affected" ]; then
+              echo "base=true"; echo "reason=changes development Kustomizations: ${affected}"
+            else
+              echo "base=false"; echo "reason=changes nothing the development cluster runs (production-only paths are covered by Flux render)"
+            fi
           } >> "$GITHUB_OUTPUT"
 
   smoke:
@@ -97,19 +158,112 @@ jobs:
           if ! python3 tools/development/cleanup_pr_envs.py --kubeconfig "${KUBECONFIG}" --older-than 3h; then
             echo "::warning::could not remove stale pr-* environments; dev-cleanup will retry"
           fi
+          if ! python3 tools/development/base_smoke.py --kubeconfig "${KUBECONFIG}" --recover-stale; then
+            echo "::warning::could not restore development after a stale base smoke test; dev-cleanup will retry"
+          fi
       - name: Upload smoke results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: smoke-results
-          path: |
-            tests/browser/test-results
-            browser-results
+          path: tests/browser/test-results
+          if-no-files-found: ignore
+
+  # The PR changes the development cluster's own platform (Cilium, cert-manager, CSI, CRDs,
+  # Gateway, ...): apply it to development, wait for everything to settle, run the whoami and
+  # homepage smoke tests on top, and always restore main. tools/development/base_smoke.py.
+  base:
+    name: base
+    needs: classify
+    if: github.event.pull_request.head.repo.full_name == github.repository && needs.classify.outputs.base == 'true'
+    runs-on: homelab-dev
+    timeout-minutes: 60
+    # contents: write only to publish and delete the temporary base-smoke/pr-<N> branch.
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Check out the PR merged onto main, as data
+        uses: actions/checkout@v6
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
+          path: pr
+          # Depth 2 so the merge's first parent (main) is present to compare against.
+          fetch-depth: 2
+          persist-credentials: false
+      - name: The merge must be onto current main
+        id: merge
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          git fetch --quiet --depth=1 origin main
+          if [ "$(git -C pr rev-parse HEAD^1)" != "$(git rev-parse FETCH_HEAD)" ]; then
+            echo "::error::refs/pull/${PR_NUMBER}/merge is not a merge onto current main; re-run this check"
+            exit 1
+          fi
+          echo "sha=$(git -C pr rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Development cluster kubeconfig
+        uses: ./.github/actions/dev-kubeconfig
+      # Flux cannot fetch refs/pull/<N>/merge, so point a temporary branch at that commit.
+      # curl, not gh: the runner image has no gh CLI. api.github.com is inside its egress fence.
+      - name: Publish the merge as a temporary branch for Flux
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          MERGE_SHA: ${{ steps.merge.outputs.sha }}
+        run: |
+          set -euo pipefail
+          api="${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/git"
+          auth=(-H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json")
+          ref="refs/heads/base-smoke/pr-${PR_NUMBER}"
+          if curl -fsS "${auth[@]}" "${api}/ref/heads/base-smoke/pr-${PR_NUMBER}" >/dev/null 2>&1; then
+            curl -fsS -X PATCH "${auth[@]}" "${api}/${ref}" -d "{\"sha\":\"${MERGE_SHA}\",\"force\":true}" >/dev/null
+          else
+            curl -fsS -X POST "${auth[@]}" "${api}/refs" -d "{\"ref\":\"${ref}\",\"sha\":\"${MERGE_SHA}\"}" >/dev/null
+          fi
+          echo "published ${ref} at ${MERGE_SHA}"
+      - name: Install browser test dependencies
+        working-directory: tests/browser
+        run: npm install --no-audit --no-fund
+      - name: Apply the PR to development's platform, check it, restore main
+        env:
+          MERGE_SHA: ${{ steps.merge.outputs.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          AFFECTED: ${{ needs.classify.outputs.affected }}
+        run: |
+          set -euo pipefail
+          echo "Development Kustomizations this PR changes: ${AFFECTED}" | tee -a "$GITHUB_STEP_SUMMARY"
+          # exec: bash would not pass a cancellation signal on to a child process.
+          exec python3 tools/development/base_smoke.py --kubeconfig "${KUBECONFIG}" --pr "${PR_NUMBER}" \
+            --sha "${MERGE_SHA}" --head-dir pr
+      # A cancelled or killed job never reaches base_smoke's own restore; this does.
+      - name: Make sure development is restored
+        if: always()
+        run: python3 tools/development/base_smoke.py --kubeconfig "${KUBECONFIG}" --recover-stale --max-age-seconds 0
+      - name: Delete the temporary branch
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: >-
+          curl -sS -o /dev/null -w 'delete base-smoke/pr-%{http_code}\n' -X DELETE
+          -H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json"
+          "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/git/refs/heads/base-smoke/pr-${PR_NUMBER}" || true
+      - name: Upload smoke results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: base-smoke-results
+          path: tests/browser/test-results
           if-no-files-found: ignore
 
   dev-smoke:
     name: dev-smoke
-    needs: [classify, smoke]
+    needs: [classify, smoke, base]
     if: always() && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
@@ -117,16 +271,27 @@ jobs:
         env:
           CLASSIFY_RESULT: ${{ needs.classify.result }}
           SMOKE_RESULT: ${{ needs.smoke.result }}
+          BASE_RESULT: ${{ needs.base.result }}
           TESTED: ${{ needs.classify.outputs.tested }}
+          BASE: ${{ needs.classify.outputs.base }}
           REASON: ${{ needs.classify.outputs.reason }}
+          BASE_REASON: ${{ needs.classify.outputs.base_reason }}
         run: |
           set -euo pipefail
           if [ "$CLASSIFY_RESULT" != success ]; then
             echo "classification ${CLASSIFY_RESULT}" | tee -a "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
+          if [ "$BASE" = true ]; then
+            if [ "$BASE_RESULT" != success ]; then
+              echo "base smoke ${BASE_RESULT}: ${BASE_REASON}" | tee -a "$GITHUB_STEP_SUMMARY"
+              exit 1
+            fi
+            echo "base smoke passed: ${BASE_REASON}" | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           if [ "$TESTED" != true ]; then
-            echo "not smoke-tested: ${REASON}" | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "not smoke-tested: ${REASON}; ${BASE_REASON}" | tee -a "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
           if [ "$SMOKE_RESULT" != success ]; then

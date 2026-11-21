@@ -35,6 +35,10 @@ class DevCleanupWorkflowTest(unittest.TestCase):
         self.assertIn('--older-than 3h', text)
         self.assertRegex(text, r"(?m)^permissions:\n  contents: read$")
 
+    def test_restores_development_if_a_base_smoke_test_was_killed(self) -> None:
+        text = read(CLEANUP)
+        self.assertIn("python3 tools/development/base_smoke.py --kubeconfig \"${KUBECONFIG}\" --recover-stale", text)
+
     def test_never_overlaps_itself(self) -> None:
         head = triggers(read(CLEANUP))
         self.assertRegex(head, r"(?m)^concurrency:\n  group: dev-cleanup$")

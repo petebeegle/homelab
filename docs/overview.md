@@ -73,13 +73,15 @@ flowchart LR
   A --> C["Verification harness"]
   A --> R["Flux render<br/>production built and templated"]
   A --> D["dev-smoke"]
-  D --> E{"Only one smoke-tested<br/>app changed?"}
-  E -->|yes| F["Runner pod in production deploys the PR branch<br/>into dev as app-pr-N, checks it, removes it"]
-  E -->|no| G["Reports not smoke-tested.<br/>Validate in dev by hand and<br/>say so in the PR description"]
+  D --> E{"What does the<br/>PR change?"}
+  E -->|"one smoke-tested app"| F["App smoke: deploy the PR's app<br/>into dev as app-pr-N, check it, remove it"]
+  E -->|"something dev runs"| H["Base smoke: apply the PR to dev's platform,<br/>wait Ready, canary apps, restore main"]
+  E -->|"neither"| G["Reports not smoke-tested.<br/>Validate in dev by hand and<br/>say so in the PR description"]
   B --> M["Merge to main"]
   C --> M
   R --> M
   F --> M
+  H --> M
   G --> M
   M --> P["Flux applies to production"]
   M --> Q["Flux applies to development"]
@@ -87,7 +89,9 @@ flowchart LR
 
 Nothing is committed to `main` directly. An app is smoke-tested when it has a
 profile with `prSmoke: true` in `tools/development/smoke-profiles/` and an
-overlay in `kubernetes/apps/<app>/branch/`. The rule is
+overlay in `kubernetes/apps/<app>/branch/`. Any other change to something the
+development cluster runs gets the base smoke. Both run on the CI runner in
+production, which drives development from outside. The rule is
 in [decisions.md](./decisions.md#changes-go-through-pull-requests-and-the-check-is-the-evidence); the procedure is
 [change-workflow.md](./runbooks/change-workflow.md).
 
