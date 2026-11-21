@@ -51,7 +51,7 @@ picked up automatically.
 - **App smoke** (`smoke` job): every changed file is under one
   `kubernetes/apps/<app>/` directory and that app's profile in
   `tools/development/smoke-profiles/` has `"prSmoke": true` (today: `whoami`,
-  `homepage` and `home-assistant`). It creates a branch environment in the development cluster, checks
+  `homepage`, `home-assistant` and `jellyfin`). It creates a branch environment in the development cluster, checks
   it, runs the browser test where the profile has one, and removes the
   environment.
 - **Base smoke** (`base` job): the PR changes something the development cluster

@@ -20,6 +20,12 @@ REAL_DIRS = {
     "whoami": "kubernetes/apps/whoami",
     "homepage": "kubernetes/apps/homepage/development",
     "home-assistant": "kubernetes/apps/home-assistant",
+    "jellyfin": "kubernetes/apps/jellyfin",
+}
+
+# Services a HelmRelease renders at deploy time (so `kubectl kustomize` cannot show them).
+HELM_RENDERED_SERVICES = {
+    "jellyfin": {"jellyfin"},
 }
 
 # Pod volumes a branch overlay may swap for something development can provide, and why.
@@ -82,6 +88,25 @@ def pod_block(doc: str, key: str) -> str:
     return "\n".join(block)
 
 
+def pod_block_at(doc: str, key: str, indent: int) -> str:
+    """The lines of a top-level-ish block starting at `key` with the given indentation."""
+    lines = doc.splitlines()
+    try:
+        start = lines.index(" " * indent + key)
+    except ValueError:
+        return ""
+    block = [lines[start]]
+    for line in lines[start + 1 :]:
+        if line.strip() and len(line) - len(line.lstrip()) <= indent and not line.lstrip().startswith("- "):
+            break
+        block.append(line)
+    return "\n".join(block)
+
+
+def data_of(doc: str) -> str:
+    return doc[doc.index("\ndata:\n") : doc.index("\nkind:")] if "\ndata:\n" in doc else ""
+
+
 def without_volumes(block: str, names: set[str]) -> str:
     """A `volumes:` block with the named entries removed (each entry starts at "      - ")."""
     if not names or not block:
@@ -120,6 +145,8 @@ class BranchOverlayRenderTest(unittest.TestCase):
                 for d in documents(kustomize(f"kubernetes/apps/{app}/branch"))
                 if kind_of(d) == "Deployment"
             }
+            if not real and any(kind_of(d) == "HelmRelease" for d in documents(kustomize(real_dir))):
+                continue  # compared by test_helm_release_apps_deploy_productions_chart_values_and_patches
             self.assertTrue(real, f"{app}: no Deployment rendered from {real_dir}")
             self.assertEqual(sorted(real), sorted(branch), f"{app}: Deployments differ")
             swapped = set(SWAPPED_VOLUMES.get(app, {}))
@@ -146,6 +173,27 @@ class BranchOverlayRenderTest(unittest.TestCase):
         route = next(d for d in docs if kind_of(d) == "HTTPRoute")
         self.assertEqual(re.findall(r"(?m)^  - name: (internal|external)$", route), ["internal"])
 
+    def test_helm_release_apps_deploy_productions_chart_values_and_patches(self) -> None:
+        # The chart, its values and production's post-render patches must reach the branch
+        # unchanged; a branch may only append post-render patches (for what development lacks).
+        for app, real_dir in REAL_DIRS.items():
+            real_docs = documents(kustomize(real_dir))
+            real_releases = [d for d in real_docs if kind_of(d) == "HelmRelease"]
+            if not real_releases:
+                continue
+            branch_docs = documents(kustomize(f"kubernetes/apps/{app}/branch"))
+            branch_releases = {name_of(d).removesuffix(SUFFIX): d for d in branch_docs if kind_of(d) == "HelmRelease"}
+            for real in real_releases:
+                branch = branch_releases[name_of(real)]
+                for pattern in (r"(?m)^      chart: (\S+)$", r"(?m)^      version: (\S+)$", r"(?m)^  releaseName: (\S+)$"):
+                    self.assertEqual(field(real, pattern), field(branch, pattern), f"{app}: {pattern}")
+                real_patches = pod_block_at(real, "postRenderers:", 2)
+                branch_patches = pod_block_at(branch, "postRenderers:", 2)
+                self.assertTrue(branch_patches.startswith(real_patches.rstrip()), f"{app}: production's post-render patches changed")
+            real_values = [d for d in real_docs if kind_of(d) == "ConfigMap" and "values.yaml:" in d]
+            branch_values = [d for d in branch_docs if kind_of(d) == "ConfigMap" and "values.yaml:" in d]
+            self.assertEqual([data_of(d) for d in real_values], [data_of(d) for d in branch_values], f"{app}: values differ")
+
     def test_profile_checked_objects_are_rendered(self) -> None:
         for app in smoke_tested_apps():
             profile = json.loads((PROFILES / f"{app}.json").read_text(encoding="utf-8"))
@@ -153,7 +201,7 @@ class BranchOverlayRenderTest(unittest.TestCase):
             names = {kind: {name_of(d) for d in docs if kind_of(d) == kind} for kind in ("Namespace", "Service", "HTTPRoute")}
             self.assertIn(profile["namespace"], names["Namespace"], app)
             for service in profile["checks"].get("services", []):
-                self.assertIn(service, names["Service"], app)
+                self.assertIn(service, names["Service"] | HELM_RENDERED_SERVICES.get(app, set()), app)
             for route in profile["checks"].get("httpRoutes", []):
                 self.assertIn(route, names["HTTPRoute"], app)
 
@@ -162,7 +210,7 @@ class BranchOverlayRenderTest(unittest.TestCase):
         # overlay can render a route that points at a Service that does not exist.
         for app in smoke_tested_apps():
             docs = documents(kustomize(f"kubernetes/apps/{app}/branch"))
-            services = {name_of(d) for d in docs if kind_of(d) == "Service"}
+            services = {name_of(d) for d in docs if kind_of(d) == "Service"} | HELM_RENDERED_SERVICES.get(app, set())
             for doc in docs:
                 if kind_of(doc) != "HTTPRoute":
                     continue

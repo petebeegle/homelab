@@ -15,23 +15,31 @@
     ],
     "pvcs": [
       {
-        "name": "jellyfin-config-${branch_slug}",
-        "storageClass": "nfs-csi-storage"
+        "name": "jellyfin-config-local-v1-${branch_slug}",
+        "storageClass": "local-path"
       }
     ],
     "services": [
-      "jellyfin-${branch_slug}"
+      "jellyfin",
+      "jellyfin-metrics-deny-${branch_slug}"
     ],
     "httpRoutes": [
       "jellyfin-${branch_slug}"
     ],
     "httpProbes": [
       {
-        "service": "jellyfin-${branch_slug}",
+        "service": "jellyfin",
         "port": 8096,
         "path": "/",
         "bodyRegex": "Jellyfin|Please sign in|Wizard|Login"
+      },
+      {
+        "service": "jellyfin",
+        "port": 8096,
+        "path": "/Branding/Configuration",
+        "bodyRegex": "sso/OID/start/authentik"
       }
     ]
-  }
+  },
+  "prSmoke": true
 }

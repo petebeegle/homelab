@@ -253,7 +253,7 @@ class VerifyBranchDeployTest(unittest.TestCase):
         self.assertEqual(profiles["whoami"].route_urls, ("https://whoami-${branch_slug}.dev.lab.petebeegle.com",))
         self.assertEqual(profiles["jellyfin"].git_repository, "branch-jellyfin-${branch_slug}")
         self.assertEqual(profiles["jellyfin"].kustomizations, ("branch-jellyfin-${branch_slug}",))
-        self.assertEqual(profiles["jellyfin"].pvcs[0].name, "jellyfin-config-${branch_slug}")
+        self.assertEqual(profiles["jellyfin"].pvcs[0].name, "jellyfin-config-local-v1-${branch_slug}")
         self.assertEqual(profiles["home-assistant"].git_repository, "branch-home-assistant-${branch_slug}")
         self.assertEqual(profiles["home-assistant"].kustomizations, ("branch-home-assistant-${branch_slug}",))
         self.assertEqual(profiles["home-assistant"].pvcs[0].name, "home-assistant-config-${branch_slug}")
@@ -509,7 +509,8 @@ class VerifyBranchDeployTest(unittest.TestCase):
         self.assertFalse(any("secret whoami-secret-example-change -o json" in command for command in commands))
 
     def test_jellyfin_profile_checks_helm_pvc_service_route_and_http_probe(self) -> None:
-        runner = FakeRunner(pods_json=READY_JELLYFIN_PODS)
+        local_pvc = json.dumps({"spec": {"storageClassName": "local-path"}, "status": {"phase": "Bound"}})
+        runner = FakeRunner(pods_json=READY_JELLYFIN_PODS, pvc_json=local_pvc)
         config = self._config(app="jellyfin")
 
         verify.assert_smoke_profile(config, verify.load_smoke_profile("jellyfin"), runner=runner)
@@ -517,10 +518,17 @@ class VerifyBranchDeployTest(unittest.TestCase):
         commands = [" ".join(command) for command in runner.commands]
         self.assertTrue(any("get namespace jellyfin-example-change" in command for command in commands))
         self.assertTrue(any("wait helmrelease.helm.toolkit.fluxcd.io/jellyfin-example-change" in command for command in commands))
-        self.assertTrue(any("get pvc jellyfin-config-example-change -o json" in command for command in commands))
-        self.assertTrue(any("get service jellyfin-example-change" in command for command in commands))
+        # Production's claim and the chart's own Service (releaseName jellyfin), as the overlay renders them.
+        self.assertTrue(any("get pvc jellyfin-config-local-v1-example-change -o json" in command for command in commands))
+        self.assertTrue(any(command.endswith("get service jellyfin") for command in commands))
         self.assertTrue(any("get httproute jellyfin-example-change -o json" in command for command in commands))
-        self.assertTrue(any("run probe-example-change" in command and "curlimages/curl:8.16.0" in command for command in commands))
+        probe = next(command for command in commands if "run p0-example-change" in command)
+        self.assertIn("http://jellyfin.jellyfin-example-change.svc.cluster.local:8096/", probe)
+        # The deeper probe: the SSO bootstrap init container installed the plugin and wrote the
+        # login form that starts the authentik flow.
+        sso = next(command for command in commands if "run p1-example-change" in command)
+        self.assertIn("/Branding/Configuration", sso)
+        self.assertIn("sso/OID/start/authentik", sso)
 
     def test_homepage_profile_checks_service_route_and_http_probe(self) -> None:
         runner = FakeRunner()
@@ -630,10 +638,10 @@ class VerifyBranchDeployTest(unittest.TestCase):
         self.assertEqual(overrides["spec"]["containers"][0]["securityContext"]["runAsUser"], 1000)
 
     def test_jellyfin_fresh_start_values_do_not_use_flaky_health_for_pod_readiness(self) -> None:
-        production_values = (REPO_ROOT / "kubernetes/apps/jellyfin/values.yaml").read_text(encoding="utf-8")
-        branch_values = (REPO_ROOT / "kubernetes/apps/jellyfin/branch/jellyfin.yaml").read_text(encoding="utf-8")
+        # The branch environment renders these same values (kubernetes/apps/jellyfin/branch is an overlay).
+        production_values = (REPO_ROOT / "kubernetes/apps/jellyfin/base/values.yaml").read_text(encoding="utf-8")
 
-        for text in (production_values, branch_values):
+        for text in (production_values,):
             self.assertIn("startupProbe:", text)
             self.assertIn("tcpSocket:", text)
             self.assertIn("httpGet: null", text)

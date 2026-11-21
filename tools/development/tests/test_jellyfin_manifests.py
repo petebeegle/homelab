@@ -8,7 +8,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 JELLYFIN_MANIFESTS = REPO_ROOT / "kubernetes" / "apps" / "jellyfin"
-JELLYFIN_VALUES = JELLYFIN_MANIFESTS / "values.yaml"
+JELLYFIN_VALUES = JELLYFIN_MANIFESTS / "base" / "values.yaml"
 FLUX_KUSTOMIZATION = (
     REPO_ROOT / "kubernetes" / "clusters" / "production" / "apps" / "jellyfin.yaml"
 )

@@ -1,0 +1,109 @@
+---
+# Production's jellyfin (../../base), renamed for one branch environment on the
+# development cluster. Nothing here copies the app: the chart version, values.yaml and the
+# SSO bootstrap are production's, so a PR that changes them is what the smoke test runs.
+# What development cannot provide is swapped on the rendered Deployment (the
+# HelmRelease post-render patch below), and only that:
+# - no iGPU: no jellyfin-igpu nodeSelector, no gpu.intel.com/i915 request;
+# - no production media: the custom-media NFS share becomes an emptyDir;
+# - no SOPS Secret (development cannot decrypt it): the OAuth client secret is a placeholder;
+# - names that values.yaml spells out get this branch's suffix.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+namespace: jellyfin-${branch_slug}
+nameSuffix: -${branch_slug}
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: branch-environment
+      homelab.petebeegle.com/branch-slug: ${branch_slug}
+    includeSelectors: false
+configurations:
+  - kustomizeconfig.yaml
+patches:
+  - patch: |-
+      $patch: delete
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: jellyfin-secrets
+        namespace: jellyfin
+  - target:
+      kind: Namespace
+      name: jellyfin
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: jellyfin-${branch_slug}
+  - target:
+      group: helm.toolkit.fluxcd.io
+      version: v2
+      kind: HelmRelease
+      name: jellyfin
+    patch: |-
+      # The HelmRepository moved into the branch namespace with everything else.
+      - op: replace
+        path: /spec/chart/spec/sourceRef
+        value:
+          kind: HelmRepository
+          name: jellyfin-${branch_slug}
+          namespace: jellyfin-${branch_slug}
+      - op: add
+        path: /spec/postRenderers/0/kustomize/patches/-
+        value:
+          target:
+            group: apps
+            version: v1
+            kind: Deployment
+            name: jellyfin
+          patch: |
+            apiVersion: apps/v1
+            kind: Deployment
+            metadata:
+              name: jellyfin
+            spec:
+              template:
+                spec:
+                  nodeSelector: null
+                  initContainers:
+                    - name: install-sso-auth
+                      env:
+                        - name: JELLYFIN_OAUTH_CLIENT_SECRET
+                          value: branch-placeholder-not-secret
+                          valueFrom: null
+                        - name: JELLYFIN_PUBLIC_URL
+                          value: https://jellyfin-${branch_slug}.${cluster_domain}
+                  containers:
+                    - name: jellyfin
+                      resources:
+                        requests:
+                          gpu.intel.com/i915: null
+                        limits:
+                          gpu.intel.com/i915: null
+                  volumes:
+                    - name: config
+                      persistentVolumeClaim:
+                        claimName: jellyfin-config-local-v1-${branch_slug}
+                    - name: custom-media
+                      nfs: null
+                      emptyDir: {}
+                    - name: jellyfin-sso-bootstrap
+                      configMap:
+                        name: jellyfin-sso-bootstrap-${branch_slug}
+  - target:
+      group: gateway.networking.k8s.io
+      version: v1
+      kind: HTTPRoute
+      name: jellyfin
+    patch: |-
+      - op: replace
+        path: /spec/hostnames/0
+        value: jellyfin-${branch_slug}.${cluster_domain}
+      - op: remove
+        path: /spec/parentRefs/1
+      # kustomize renames Services but does not follow names inside Gateway API routes.
+      # `jellyfin` itself is rendered by the HelmRelease (releaseName jellyfin), not renamed.
+      - op: replace
+        path: /spec/rules/0/backendRefs/0/name
+        value: jellyfin-metrics-deny-${branch_slug}

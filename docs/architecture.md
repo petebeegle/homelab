@@ -173,8 +173,10 @@ This document is generated for agentic repo navigation. It records relationships
 | `kubernetes/apps/immich/base` | `namespace.yaml`, `pvc.yaml`, `postgres.yaml`, `app.yaml`, `metrics-service.yaml`, `httproute.yaml`, `secret.yaml` |
 | `kubernetes/apps/immich/branch` | `../base`, `onepassword-items/configuration.yaml`, `onepassword-items/postgres-user.yaml` |
 | `kubernetes/apps/immich` | `base` |
-| `kubernetes/apps/jellyfin/branch` | `jellyfin.yaml` |
-| `kubernetes/apps/jellyfin` | `./app.yaml`, `./pvc.yaml`, `./httproute.yaml`, `./secret.yaml`, `./sso-bootstrap.yaml` |
+| `kubernetes/apps/jellyfin/base` | `./app.yaml`, `./pvc.yaml`, `./httproute.yaml`, `./secret.yaml`, `./sso-bootstrap.yaml` |
+| `kubernetes/apps/jellyfin/branch/app` | `../../base` |
+| `kubernetes/apps/jellyfin/branch` | `app`, `referencegrant.yaml` |
+| `kubernetes/apps/jellyfin` | `base` |
 | `kubernetes/apps/nexus/branch` | `nexus.yaml` |
 | `kubernetes/apps/onepassword-canary/smoke` | `manifests.yaml` |
 | `kubernetes/apps/pihole` | `app.yaml`, `secret.yaml`, `httproute.yaml` |
@@ -202,7 +204,6 @@ This document is generated for agentic repo navigation. It records relationships
 | `HTTPRoute` | `home-assistant/home-assistant` | `homeassistant.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `home-assistant:80` |
 | `HTTPRoute` | `homepage/homepage` | `homepage.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `homepage:80` |
 | `HTTPRoute` | `immich/immich` | `immich.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `immich-server:2283` |
-| `HTTPRoute` | `jellyfin-${branch_slug}/jellyfin-${branch_slug}` | `jellyfin-${branch_slug}.${cluster_domain}` | `gateway/internal/https-gateway` | `jellyfin-${branch_slug}-metrics-deny:8096` |
 | `HTTPRoute` | `jellyfin/jellyfin` | `jellyfin.${cluster_domain}` | `gateway/internal/https-gateway, gateway/external/https-gateway` | `jellyfin-metrics-deny:8096` |
 | `HTTPRoute` | `nexus-${branch_slug}/nexus-group` | `docker-group-${branch_slug}.${cluster_domain}` | `gateway/internal/https-gateway` | `nexus-group:8082` |
 | `HTTPRoute` | `nexus-${branch_slug}/nexus-hosted` | `docker-push-${branch_slug}.${cluster_domain}` | `gateway/internal/https-gateway` | `nexus-hosted:8083` |
@@ -220,7 +221,6 @@ This document is generated for agentic repo navigation. It records relationships
 
 | Source | Owner | StorageClass | Path |
 | --- | --- | --- | --- |
-| HelmRelease values | `jellyfin-${branch_slug}/jellyfin-${branch_slug}` | `nfs-csi-storage` | `kubernetes/apps/jellyfin/branch/jellyfin.yaml` |
 | HelmRelease values | `valheim/valheim-server` | `nfs-csi-storage` | `kubernetes/apps/valheim/app.yaml` |
 | PVC | `access-broker/access-broker-data` | `nfs-csi-storage` | `kubernetes/apps/access-broker/pvc.yaml` |
 | PVC | `foundry-bluegreen-fixture/foundry-fixture-blue` | `nfs-csi-storage` | `kubernetes/apps/foundry-bluegreen-fixture/pvc-blue.yaml` |
@@ -228,8 +228,7 @@ This document is generated for agentic repo navigation. It records relationships
 | PVC | `foundryvtt/foundryvtt-data-pvc` | `nfs-csi-storage` | `kubernetes/apps/foundryvtt/pvc.yaml` |
 | PVC | `home-assistant/home-assistant-config` | `nfs-csi-storage` | `kubernetes/apps/home-assistant/base/pvc.yaml` |
 | PVC | `immich/immich-library` | `nfs-csi-media-storage` | `kubernetes/apps/immich/base/pvc.yaml` |
-| PVC | `jellyfin-${branch_slug}/jellyfin-config-${branch_slug}` | `nfs-csi-storage` | `kubernetes/apps/jellyfin/branch/jellyfin.yaml` |
-| PVC | `jellyfin/jellyfin-config-local-v1` | `local-path` | `kubernetes/apps/jellyfin/pvc.yaml` |
+| PVC | `jellyfin/jellyfin-config-local-v1` | `local-path` | `kubernetes/apps/jellyfin/base/pvc.yaml` |
 | PVC | `wireguard/wireguard-pvc` | `nfs-csi-storage` | `kubernetes/infra/network/vpn/pvc.yaml` |
 | Values file | `authentik` | `nfs-csi-storage` | `kubernetes/infra/authentik/values.yaml` |
 | Values file | `immich` | `nfs-csi-storage` | `kubernetes/apps/immich/base/values.yaml` |
@@ -249,7 +248,7 @@ This lists secret manifest presence only. Secret values are not rendered.
 | `home-assistant` | `home-assistant/home-assistant-secrets` | `yes` | `kubernetes/apps/home-assistant/base/secret.yaml` |
 | `immich` | `immich/immich-postgres-user` | `yes` | `kubernetes/apps/immich/base/secret.yaml` |
 | `immich` | `immich/immich-secrets` | `yes` | `kubernetes/apps/immich/base/secret.yaml` |
-| `jellyfin` | `jellyfin/jellyfin-secrets` | `yes` | `kubernetes/apps/jellyfin/secret.yaml` |
+| `jellyfin` | `jellyfin/jellyfin-secrets` | `yes` | `kubernetes/apps/jellyfin/base/secret.yaml` |
 | `monitoring/grafana` | `grafana/grafana-credentials` | `yes` | `kubernetes/infra/monitoring/grafana/secret.yaml` |
 | `monitoring/grafana` | `grafana/grafana-env` | `yes` | `kubernetes/infra/monitoring/grafana/grafana-env.yaml` |
 | `monitoring/pretty-discord-alerts` | `monitoring/grafana-env` | `yes` | `kubernetes/infra/monitoring/pretty-discord-alerts/grafana-env.yaml` |
