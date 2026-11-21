@@ -9,9 +9,10 @@ PR that breaks development's networking cannot take the restore down with it.
 2. Stamp and suspend the root `flux-system` Kustomization. The root re-applies every
    child's spec, so it would undo step 4 while it runs.
 3. Create GitRepository `base-pr-<N>`: flux-system's repository and deploy key at
-   `refs/pull/<N>/merge`, GitHub's test merge of the PR onto main. Never the PR head:
-   a branch behind main would roll development back. `--sha` is that merge commit,
-   which the workflow has checked is a merge onto current main.
+   branch `base-smoke/pr-<N>`, which the workflow publishes at GitHub's test merge of
+   the PR onto main (Flux cannot fetch refs/pull/*/merge itself) and always deletes.
+   Never the PR head: a branch behind main would roll development back. `--sha` is
+   that merge commit, which the workflow has checked is a merge onto current main.
 4. Render the PR's kubernetes/clusters/development/{infra,apps} (data only) and apply
    every child Kustomization with its sourceRef pointed at `base-pr-<N>`.
 5. Wait until every Kustomization from the PR has applied that commit and is Ready,
@@ -32,6 +33,7 @@ from __future__ import annotations
 import argparse
 import json
 import shlex
+import signal
 import subprocess
 import sys
 import time
@@ -148,9 +150,9 @@ def start(k: Cluster) -> None:
         "apiVersion": "source.toolkit.fluxcd.io/v1",
         "kind": "GitRepository",
         "metadata": {"name": c.source, "namespace": NS, "labels": {STAMP: c.slug}},
-        # A long interval: the merge ref moves when main or the PR does; this test is of one commit.
+        # A long interval: this test is of one commit, the branch is not expected to move.
         "spec": {"interval": "60m", "timeout": "60s", "url": root["url"], "secretRef": root["secretRef"],
-                 "ref": {"name": f"refs/pull/{c.pr}/merge"}},
+                 "ref": {"branch": f"base-smoke/pr-{c.pr}"}},
     }
     k.kubectl("apply", "--server-side", "--field-manager=base-smoke", "--force-conflicts", "-f", "-", input=json.dumps(source))
     for child in ("infra", "apps"):
@@ -166,7 +168,10 @@ def settled(k: Cluster) -> None:
         for item in k.kustomizations():
             if item["metadata"]["name"] == "flux-system":
                 continue
-            if source_of(item) == c.source and c.sha not in item.get("status", {}).get("lastAppliedRevision", ""):
+            if source_of(item) != c.source:
+                # Something restored development underneath the test; "all Ready" now means main.
+                raise Failure(f"{item['metadata']['name']} is no longer on {c.source}; development was changed under the test")
+            if c.sha not in item.get("status", {}).get("lastAppliedRevision", ""):
                 found.append(f"{item['metadata']['name']}: has not applied {c.sha[:12]} yet")
             elif not ready(item):
                 found.append(message(item))
@@ -251,6 +256,17 @@ def recover_stale(kubeconfig: Path, *, max_age_s: int, runner: Runner = subproce
     return 0
 
 
+def install_signal_handlers() -> None:
+    """Exit at once on cancellation. A cancelled job's always() step does the restore; a
+    process that kept going would run on top of it."""
+    def stop(signum, _frame):
+        print(f"base-smoke: received signal {signum}; stopping (the job's always() step restores)", flush=True)
+        raise SystemExit(128 + signum)
+
+    signal.signal(signal.SIGTERM, stop)
+    signal.signal(signal.SIGINT, stop)
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--kubeconfig", type=Path, required=True)
@@ -263,6 +279,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     p.add_argument("--head-dir", type=Path, help="checkout of the PR head (rendered as data only)")
     p.add_argument("--base-dir", type=Path, default=Path("."), help="checkout of main (the tools that run)")
     a = p.parse_args(argv)
+    install_signal_handlers()
     if a.recover_stale:
         return recover_stale(a.kubeconfig, max_age_s=a.max_age_seconds)
     if a.pr is None or not a.sha or a.head_dir is None:

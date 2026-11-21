@@ -134,8 +134,9 @@ class BaseSmokeTest(unittest.TestCase):
         self.assertEqual(source["metadata"]["name"], "base-pr-7")
         self.assertEqual(source["spec"]["url"], "ssh://git@github.com/o/r")
         self.assertEqual(source["spec"]["secretRef"], {"name": "flux-system"})
-        # The PR as it would land: GitHub's test merge onto main, never the (possibly stale) head.
-        self.assertEqual(source["spec"]["ref"], {"name": "refs/pull/7/merge"})
+        # The PR as it would land: GitHub's test merge onto main, never the (possibly stale) head,
+        # published by the workflow as a temporary branch (Flux cannot fetch refs/pull/*/merge).
+        self.assertEqual(source["spec"]["ref"], {"branch": "base-smoke/pr-7"})
         self.assertEqual(source["spec"]["interval"], "60m", "must not refetch a moved merge ref mid-test")
 
     def test_only_child_kustomizations_are_repointed(self) -> None:
@@ -146,6 +147,24 @@ class BaseSmokeTest(unittest.TestCase):
         self.assertNotIn("name: flux-system\n  namespace", applied.replace("  namespace: flux-system", ""))
         self.assertTrue(any("kustomize" in c and "clusters/development/infra" in c for c in cluster.commands))
         self.assertTrue(any("kustomize" in c and "clusters/development/apps" in c for c in cluster.commands))
+
+    def test_settling_requires_every_child_still_on_the_pr_source(self) -> None:
+        # A restore running underneath (a cancelled job's always() step) leaves every child Ready
+        # on main. That must not count as the PR having settled.
+        cluster = FakeCluster()
+        real = cluster.kustomizations
+        cluster.kustomizations = lambda: (  # type: ignore[method-assign]
+            [ks("flux-system"), ks("cilium"), ks("app-whoami")] if cluster.phase == "testing" else real()
+        )
+        self.assertEqual(self.run_smoke(cluster), 1)
+        self.assertFalse(any("verify_branch_deploy.py" in c for c in cluster.commands))
+
+    def test_termination_signals_stop_the_process(self) -> None:
+        import signal
+        base_smoke.install_signal_handlers()
+        handler = signal.getsignal(signal.SIGTERM)
+        with self.assertRaises(SystemExit):
+            handler(signal.SIGTERM, None)
 
     def test_kustomizations_only_the_pr_created_are_deleted_on_restore(self) -> None:
         cluster = FakeCluster()

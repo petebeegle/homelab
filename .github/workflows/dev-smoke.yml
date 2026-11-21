@@ -178,6 +178,9 @@ jobs:
     if: github.event.pull_request.head.repo.full_name == github.repository && needs.classify.outputs.base == 'true'
     runs-on: homelab-dev
     timeout-minutes: 60
+    # contents: write only to publish and delete the temporary base-smoke/pr-<N> branch.
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v6
         with:
@@ -203,6 +206,20 @@ jobs:
             exit 1
           fi
           echo "sha=$(git -C pr rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      # Flux cannot fetch refs/pull/<N>/merge, so point a temporary branch at that commit.
+      - name: Publish the merge as a temporary branch for Flux
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          MERGE_SHA: ${{ steps.merge.outputs.sha }}
+        run: |
+          set -euo pipefail
+          ref="refs/heads/base-smoke/pr-${PR_NUMBER}"
+          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/base-smoke/pr-${PR_NUMBER}" >/dev/null 2>&1; then
+            gh api -X PATCH "repos/${GITHUB_REPOSITORY}/git/${ref}" -f sha="${MERGE_SHA}" -F force=true >/dev/null
+          else
+            gh api "repos/${GITHUB_REPOSITORY}/git/refs" -f ref="${ref}" -f sha="${MERGE_SHA}" >/dev/null
+          fi
       - name: Development cluster kubeconfig
         uses: ./.github/actions/dev-kubeconfig
       - name: Install browser test dependencies
@@ -216,12 +233,19 @@ jobs:
         run: |
           set -euo pipefail
           echo "Development Kustomizations this PR changes: ${AFFECTED}" | tee -a "$GITHUB_STEP_SUMMARY"
-          python3 tools/development/base_smoke.py --kubeconfig "${KUBECONFIG}" --pr "${PR_NUMBER}" \
+          # exec: bash would not pass a cancellation signal on to a child process.
+          exec python3 tools/development/base_smoke.py --kubeconfig "${KUBECONFIG}" --pr "${PR_NUMBER}" \
             --sha "${MERGE_SHA}" --head-dir pr
       # A cancelled or killed job never reaches base_smoke's own restore; this does.
       - name: Make sure development is restored
         if: always()
         run: python3 tools/development/base_smoke.py --kubeconfig "${KUBECONFIG}" --recover-stale --max-age-seconds 0
+      - name: Delete the temporary branch
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: gh api -X DELETE "repos/${GITHUB_REPOSITORY}/git/refs/heads/base-smoke/pr-${PR_NUMBER}" || true
       - name: Upload smoke results
         if: always()
         uses: actions/upload-artifact@v4

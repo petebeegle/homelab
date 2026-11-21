@@ -105,6 +105,23 @@ class DevSmokeWorkflowTest(unittest.TestCase):
             self.assertIn('git -C pr rev-parse HEAD^1', block, f"{job} must check the merge's first parent")
             self.assertIn("is not a merge onto current main", block, job)
 
+    def test_base_job_publishes_the_merge_as_a_temporary_branch_and_always_deletes_it(self) -> None:
+        base = jobs(read())["base"]
+        self.assertRegex(base, r"(?m)^    permissions:\n      contents: write$")
+        steps = re.split(r"\n      - ", base)
+        publish = [s for s in steps if "git/refs" in s and "-X DELETE" not in s]
+        self.assertEqual(len(publish), 1)
+        self.assertIn("refs/heads/base-smoke/pr-${PR_NUMBER}", publish[0])
+        delete = [s for s in steps if "-X DELETE" in s and "git/refs/heads/base-smoke/pr-${PR_NUMBER}" in s]
+        self.assertEqual(len(delete), 1)
+        self.assertIn("if: always()", delete[0])
+
+    def test_base_smoke_receives_cancellation_signals_directly(self) -> None:
+        # bash does not forward SIGINT/SIGTERM to a foreground child; a cancelled run would leave
+        # base_smoke running underneath the always() restore.
+        base = jobs(read())["base"]
+        self.assertIn("exec python3 tools/development/base_smoke.py", base)
+
     def test_no_dead_upload_paths(self) -> None:
         self.assertNotIn("browser-results", read())
 
