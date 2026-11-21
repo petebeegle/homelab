@@ -94,9 +94,16 @@ class DevSmokeWorkflowTest(unittest.TestCase):
         self.assertEqual(len(run), 1)
         restore = [s for s in steps if "--recover-stale" in s]
         self.assertEqual(len(restore), 1)
-        self.assertIn("if: always()", restore[0])
+        # Always, once there is a kubeconfig: a job that stopped before it never touched development,
+        # and an empty --kubeconfig is a confusing "DEVELOPMENT DID NOT RECOVER"-class failure.
+        self.assertIn("if: always() && steps.kubeconfig.outcome == 'success'", restore[0])
+        self.assertTrue(any("id: kubeconfig" in s and "dev-kubeconfig" in s for s in steps))
         self.assertIn("--max-age-seconds 0", restore[0])
         self.assertTrue(any("upload-artifact" in s and "if: always()" in s for s in steps))
+
+    def test_a_stale_merge_says_to_rerun_every_job(self) -> None:
+        # Re-running only the failed job reuses classify's stale merge ref; a full re-run refreshes it.
+        self.assertIn("re-run all jobs", jobs(read())["base"])
 
     def test_the_merge_must_be_onto_current_main(self) -> None:
         text = read()
