@@ -63,6 +63,12 @@ class ClassifyPrTest(unittest.TestCase):
             self.assertIn("verifier", result.reason, path)
 
     def test_app_without_pr_smoke_is_not_tested(self) -> None:
+        profile = json.loads((TOOLS_DEVELOPMENT / "smoke-profiles" / "nexus.json").read_text(encoding="utf-8"))
+        profile.pop("prSmoke", None)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "nexus.json"
+            path.write_text(json.dumps(profile), encoding="utf-8")
+            self.profiles = {**self.profiles, "nexus": load_smoke_profile_file(path)}
         result = self.classify("kubernetes/apps/nexus/branch/nexus.yaml")
         self.assertFalse(result.tested)
         self.assertIn("nexus", result.reason)
@@ -81,7 +87,7 @@ class ClassifyPrTest(unittest.TestCase):
         self.assertEqual(result.reason, "no changes")
 
     def test_the_opted_in_apps(self) -> None:
-        self.assertEqual({app for app, p in self.profiles.items() if p.pr_smoke}, {"whoami", "homepage", "home-assistant", "jellyfin", "immich"})
+        self.assertEqual({app for app, p in self.profiles.items() if p.pr_smoke}, {"whoami", "homepage", "home-assistant", "jellyfin", "immich", "nexus"})
 
     def test_pr_smoke_must_be_a_boolean(self) -> None:
         profile = json.loads((TOOLS_DEVELOPMENT / "smoke-profiles" / "whoami.json").read_text(encoding="utf-8"))
