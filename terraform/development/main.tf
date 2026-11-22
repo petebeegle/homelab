@@ -142,7 +142,7 @@ resource "terraform_data" "bootstrap_script" {
 
     environment = {
       FLUX_BOOTSTRAP_PATH            = var.flux_bootstrap_path
-      FLUX_BOOTSTRAP_SECRET_PROVIDER = "dual"
+      FLUX_BOOTSTRAP_SECRET_PROVIDER = "onepassword"
       GITHUB_TOKEN                   = var.github_token
       GITHUB_USER                    = var.github_user
       KUBECONFIG                     = pathexpand(var.kubeconfig_output_path)

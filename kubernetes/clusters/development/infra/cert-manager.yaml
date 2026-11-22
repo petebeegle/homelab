@@ -15,10 +15,6 @@ spec:
     name: flux-system
   dependsOn:
     - name: crds
-  decryption:
-    provider: sops
-    secretRef:
-      name: sops-age
   postBuild:
     substituteFrom:
       - kind: ConfigMap

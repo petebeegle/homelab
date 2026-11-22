@@ -4,3 +4,13 @@ kind: Kustomization
 resources:
   - ../cert-manager
   - onepassword-item.yaml
+patches:
+  # Development issues certificates with its own 1Password token and holds no
+  # SOPS key, so production's encrypted token stays out of it.
+  - patch: |-
+      $patch: delete
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: cloudflare-api-token
+        namespace: cert-manager

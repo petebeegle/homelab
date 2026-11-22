@@ -105,8 +105,12 @@ used for the migration was removed in November 2026.
 - Committed Kubernetes secrets are SOPS-encrypted with Age. Flux decrypts them
   with the `sops-age` Secret. Files must be named `secret.yaml` or
   `grafana-env.yaml` so `.sops.yaml` matches them.
-- Production also runs the 1Password operator with 17 mirrored items; development
-  already reads from it. Finishing the move and removing SOPS is tracked in
+- Production also runs the 1Password operator with 17 mirrored items.
+  Development reads only from its own 1Password vault and holds no SOPS key:
+  every SOPS file is encrypted to the same Age key, so a cluster holding it can
+  read every production secret. Development's bootstrap uses the `onepassword`
+  mode, and `tools/tests/test_development_has_no_sops_key.py` fails if anything
+  development applies needs decryption. Finishing the move and removing SOPS is tracked in
   issue #490. Until then a secret change has to be made in both places.
 - Terraform's own sensitive inputs live in ignored local `*.tfvars` files, not in
   Git and not in SOPS. They are operator inputs, not cluster state.
