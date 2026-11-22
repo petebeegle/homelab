@@ -163,7 +163,7 @@ jobs:
           fi
       - name: Upload smoke results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: smoke-results
           path: tests/browser/test-results
@@ -257,7 +257,7 @@ jobs:
           "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/git/refs/heads/base-smoke/pr-${PR_NUMBER}" || true
       - name: Upload smoke results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: base-smoke-results
           path: tests/browser/test-results
