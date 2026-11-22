@@ -95,9 +95,10 @@ fd get kustomizations
 
 The development Terraform root runs the shared bootstrap script with
 `FLUX_BOOTSTRAP_PATH=./kubernetes/clusters/development` and
-`FLUX_BOOTSTRAP_SECRET_PROVIDER=dual`. Dual mode retains `flux-system/sops-age`
-and installs `onepassword-system/onepassword-service-account-token`. Production
-sets the same mode (`terraform/production/main.tf`). The helper defaults to
+`FLUX_BOOTSTRAP_SECRET_PROVIDER=onepassword`, which installs only
+`onepassword-system/onepassword-service-account-token`. Development holds no
+SOPS key (see the secrets entry in [decisions](../decisions.md)); production
+uses `dual`, which also installs `flux-system/sops-age`. The helper defaults to
 `sops` only when no mode is set.
 
 Before applying development Terraform:
@@ -116,12 +117,12 @@ The helper runs `op read` into a mode-0600 temporary file, applies the token wit
 `kubectl --from-file`, and removes the file on exit. It does not pass the token
 through Terraform state, Git, command arguments, or output.
 
-For a manual bootstrap or an existing development cluster, install both trust
-roots before pointing Flux at the development entrypoint:
+For a manual bootstrap or an existing development cluster, install the
+1Password token before pointing Flux at the development entrypoint:
 
 ```sh
 export KUBECONFIG="$HOME/.kube/homelab-development.config"
-export FLUX_BOOTSTRAP_SECRET_PROVIDER=dual
+export FLUX_BOOTSTRAP_SECRET_PROVIDER=onepassword
 export OP_SERVICE_ACCOUNT_TOKEN_REF='op://cluster bootstrap/onepassword-development-operator/credential'
 terraform/scripts/install-flux-bootstrap-secrets.sh
 
@@ -202,7 +203,7 @@ Branch environments are for app-scoped validation on the development cluster. Us
 
 Use `tools/development/verify_branch_deploy.py` as the canonical path for future branch validation. The tool loads JSON smoke profiles from `tools/development/smoke-profiles/`, renders the matching activation template, applies it directly to the development cluster, forces Flux reconciliation, checks the branch namespace and active pods, runs profile resource checks, and then removes the temporary branch Flux resources unless `--keep` is set. Automated profiles currently cover `whoami`, `jellyfin`, `home-assistant`, and `homepage`.
 
-The `whoami` profile checks the branch namespace, branch Flux Kustomization readiness, active pods, Service, and HTTPRoute. The `jellyfin` profile checks the branch namespace, branch Flux Kustomization readiness, HelmRelease readiness, active pods, config PVC binding on `nfs-csi-storage`, Service, HTTPRoute, and an in-cluster HTTP probe for the Jellyfin web shell. The `home-assistant` profile checks the branch namespace, branch Flux Kustomization readiness, active pods, config PVC binding on `nfs-csi-storage`, Service, HTTPRoute, and an in-cluster HTTP probe for the Home Assistant web shell. The `homepage` profile checks the branch namespace, active pods, Service, HTTPRoute, and an in-cluster HTTP probe for the dashboard shell. The `immich` profile checks the branch namespace, SOPS-backed app secrets, HelmRelease readiness, NAS media PVC binding, Service, HTTPRoute, and an in-cluster Immich API ping.
+The `whoami` profile checks the branch namespace, branch Flux Kustomization readiness, active pods, Service, and HTTPRoute. The `jellyfin` profile checks the branch namespace, branch Flux Kustomization readiness, HelmRelease readiness, active pods, config PVC binding on `nfs-csi-storage`, Service, HTTPRoute, and an in-cluster HTTP probe for the Jellyfin web shell. The `home-assistant` profile checks the branch namespace, branch Flux Kustomization readiness, active pods, config PVC binding on `nfs-csi-storage`, Service, HTTPRoute, and an in-cluster HTTP probe for the Home Assistant web shell. The `homepage` profile checks the branch namespace, active pods, Service, HTTPRoute, and an in-cluster HTTP probe for the dashboard shell. The `immich` profile checks the branch namespace, 1Password-backed app secrets, HelmRelease readiness, NAS media PVC binding, Service, HTTPRoute, and an in-cluster Immich API ping.
 
 Activation templates are in `kubernetes/clusters/development/branches/`, and branch-aware app payload overlays live under paths such as `kubernetes/apps/whoami/branch/` and `kubernetes/apps/jellyfin/branch/`. The cluster-layer template creates the Flux `GitRepository` and `Kustomization` that point at a branch; the app overlay is the rendered workload payload that Flux applies after substituting `${branch_slug}`. The templates are not referenced from the live development entrypoint and are suspended by default. The verification tool fills `branch_name` and `branch_slug`, sets both Flux objects to `suspend: false`, and applies the rendered activation temporarily.
 

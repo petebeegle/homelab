@@ -33,10 +33,6 @@ spec:
     - name: nfs-csi
     - name: local-path-provisioner
     - name: cloudnative-pg
-  decryption:
-    provider: sops
-    secretRef:
-      name: sops-age
   postBuild:
     substitute:
       branch_slug: ${branch_slug}

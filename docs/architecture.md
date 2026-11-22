@@ -81,7 +81,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `production` | `onepassword-operator` | `./kubernetes/infra/controllers/onepassword-operator` | `crds` | `(none)` | `no` |
 | `production` | `otel-collector` | `./kubernetes/infra/monitoring/otel-collector` | `crds`, `gateway` | `cluster-vars` | `no` |
 | `production` | `vpn` | `./kubernetes/infra/network/vpn` | `cilium`, `nfs-csi`, `gateway`, `authentik` | `cluster-vars` | `sops` |
-| `development` | `cert-manager` | `./kubernetes/infra/controllers/cert-manager-development` | `crds` | `cluster-vars` | `sops` |
+| `development` | `cert-manager` | `./kubernetes/infra/controllers/cert-manager-development` | `crds` | `cluster-vars` | `no` |
 | `development` | `certs` | `./kubernetes/infra/network/certs-development` | `cert-manager`, `cilium` | `cluster-vars` | `no` |
 | `development` | `cilium` | `./kubernetes/infra/network/cilium` | `crds` | `cluster-vars` | `no` |
 | `development` | `cloudnative-pg` | `./kubernetes/infra/controllers/cloudnative-pg` | `local-path-provisioner` | `(none)` | `no` |
