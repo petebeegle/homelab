@@ -1,4 +1,9 @@
 ---
+# Production's immich (../base) in a branch namespace on the development cluster. The
+# chart, values.yaml and database are production's, so a PR that changes them is what the
+# smoke test runs. Differences: production's SOPS Secrets are left out and the app reads the
+# -onepassword Secrets from development's vault instead (spec.values below), the route is
+# internal only, and the claims are sized for development.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: immich-${branch_slug}
@@ -7,6 +12,22 @@ resources:
   - onepassword-items/configuration.yaml
   - onepassword-items/postgres-user.yaml
 patches:
+  # Development cannot decrypt production's SOPS Secrets; the OnePasswordItems in
+  # onepassword-items/ create Secrets with the same names from development's vault.
+  - patch: |-
+      $patch: delete
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: immich-secrets
+        namespace: immich
+  - patch: |-
+      $patch: delete
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: immich-postgres-user
+        namespace: immich
   - target:
       kind: Namespace
       name: immich
@@ -43,6 +64,22 @@ patches:
       - op: replace
         path: /spec/chartRef/namespace
         value: immich-${branch_slug}
+      # Production's values.yaml, with only the Secret names pointed at the ones
+      # development's 1Password vault provides (Flux merges spec.values last).
+      - op: add
+        path: /spec/values
+        value:
+          controllers:
+            main:
+              containers:
+                main:
+                  env:
+                    DB_PASSWORD:
+                      valueFrom:
+                        secretKeyRef:
+                          name: immich-postgres-user-onepassword
+          immich:
+            existingConfiguration: immich-secrets-onepassword
   - target:
       group: postgresql.cnpg.io
       version: v1
@@ -55,76 +92,3 @@ patches:
       - op: replace
         path: /spec/bootstrap/initdb/secret/name
         value: immich-postgres-user-onepassword
-  - target:
-      kind: ConfigMap
-      name: immich-values
-    patch: |-
-      - op: replace
-        path: /data/values.yaml
-        value: |
-          controllers:
-            main:
-              containers:
-                main:
-                  image:
-                    tag: v3.0.1
-                  env:
-                    TZ: America/New_York
-                    REDIS_HOSTNAME: immich-valkey
-                    IMMICH_MACHINE_LEARNING_URL: http://immich-machine-learning:3003
-                    DB_HOSTNAME: immich-postgres-rw
-                    DB_PORT: "5432"
-                    DB_USERNAME: immich
-                    DB_DATABASE_NAME: immich
-                    DB_PASSWORD:
-                      valueFrom:
-                        secretKeyRef:
-                          name: immich-postgres-user-onepassword
-                          key: password
-          server:
-            service:
-              main:
-                annotations:
-                  prometheus.io/scrape: "true"
-                  prometheus.io/port: "8081"
-                  prometheus.io/path: /metrics
-            controllers:
-              main:
-                containers:
-                  main:
-                    resources:
-                      requests:
-                        cpu: 250m
-                        memory: 768Mi
-                      limits:
-                        cpu: "2"
-                        memory: 2Gi
-          immich:
-            metrics:
-              enabled: true
-            persistence:
-              library:
-                existingClaim: immich-library
-            existingConfiguration: immich-secrets-onepassword
-            configurationKind: Secret
-          valkey:
-            enabled: true
-          machine-learning:
-            persistence:
-              cache:
-                enabled: true
-                type: persistentVolumeClaim
-                size: 5Gi
-                accessMode: ReadWriteOnce
-                storageClass: nfs-csi-storage
-            controllers:
-              main:
-                containers:
-                  main:
-                    resources:
-                      requests:
-                        cpu: 250m
-                        memory: 1Gi
-                      limits:
-                        cpu: "2"
-                        memory: 3Gi

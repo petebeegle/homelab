@@ -35,7 +35,14 @@
         "port": 2283,
         "path": "/api/server/ping",
         "bodyRegex": "pong"
+      },
+      {
+        "service": "immich-server",
+        "port": 2283,
+        "path": "/api/server/features",
+        "bodyRegex": "\"configFile\": ?true"
       }
     ]
-  }
+  },
+  "prSmoke": true
 }
