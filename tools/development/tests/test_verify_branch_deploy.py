@@ -530,6 +530,13 @@ class VerifyBranchDeployTest(unittest.TestCase):
         self.assertIn("/Branding/Configuration", sso)
         self.assertIn("sso/OID/start/authentik", sso)
 
+    def test_nexus_profile_checks_that_the_rest_api_reads_its_database(self) -> None:
+        profile = verify.load_smoke_profile("nexus")
+        paths = {(probe.path, probe.body_regex) for probe in profile.http_probes}
+        self.assertIn(("/", "Nexus"), paths)
+        # Anonymous repository listing is a JSON array only once the REST API and its database are up.
+        self.assertIn(("/service/rest/v1/repositories", r"^\["), paths)
+
     def test_immich_profile_checks_that_the_config_secret_was_loaded(self) -> None:
         profile = verify.load_smoke_profile("immich")
         paths = {(probe.path, probe.body_regex) for probe in profile.http_probes}

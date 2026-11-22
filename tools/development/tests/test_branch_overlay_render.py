@@ -24,6 +24,12 @@ REAL_DIRS = {
     "immich": "kubernetes/apps/immich",
 }
 
+# Smoke-tested apps whose production does not run on Kubernetes, so there is no real manifest to
+# overlay: the branch directory is development's stand-in for it, and why.
+STAND_INS = {
+    "nexus": "production Nexus runs on the Synology NAS (scripts/synology/nexus.docker-compose.yaml)",
+}
+
 # Services a HelmRelease renders at deploy time (so `kubectl kustomize` cannot show them).
 HELM_RENDERED_SERVICES = {
     "jellyfin": {"jellyfin"},
@@ -129,10 +135,19 @@ class BranchOverlayRenderTest(unittest.TestCase):
     so a green dev-smoke means the change in the real manifests was exercised."""
 
     def test_every_smoke_tested_app_has_a_real_directory_to_compare_against(self) -> None:
-        self.assertEqual(sorted(REAL_DIRS), smoke_tested_apps())
+        self.assertEqual(sorted([*REAL_DIRS, *STAND_INS]), smoke_tested_apps())
+        self.assertFalse(set(REAL_DIRS) & set(STAND_INS))
+
+    def test_a_stand_in_has_nothing_on_kubernetes_to_overlay(self) -> None:
+        for app in STAND_INS:
+            app_dir = REPO_ROOT / "kubernetes" / "apps" / app
+            self.assertEqual([p.name for p in app_dir.iterdir()], ["branch"], f"{app}: deploy the real manifests and overlay them instead")
+            for cluster in ("production", "development"):
+                text = "".join(p.read_text(encoding="utf-8") for p in (REPO_ROOT / "kubernetes" / "clusters" / cluster).rglob("*.yaml") if p.parent.name != "branches")
+                self.assertNotIn(f"kubernetes/apps/{app}", text, f"{app}: {cluster} deploys it, so it is not a stand-in")
 
     def test_branch_directory_holds_no_copy_of_a_workload(self) -> None:
-        for app in smoke_tested_apps():
+        for app in sorted(REAL_DIRS):
             for path in sorted((REPO_ROOT / "kubernetes" / "apps" / app / "branch").rglob("*.yaml")):
                 self.assertIsNone(
                     WORKLOAD_KIND.search(path.read_text(encoding="utf-8")),
