@@ -530,6 +530,15 @@ class VerifyBranchDeployTest(unittest.TestCase):
         self.assertIn("/Branding/Configuration", sso)
         self.assertIn("sso/OID/start/authentik", sso)
 
+    def test_immich_profile_checks_that_the_config_secret_was_loaded(self) -> None:
+        profile = verify.load_smoke_profile("immich")
+        paths = {(probe.path, probe.body_regex) for probe in profile.http_probes}
+        self.assertIn(("/api/server/ping", "pong"), paths)
+        # Immich reports configFile only when it loaded the configuration Secret (development's
+        # 1Password item, through the branch's spec.values redirect).
+        self.assertIn(("/api/server/features", '"configFile": ?true'), paths)
+        self.assertEqual(profile.secret_refs, ("immich-secrets-onepassword", "immich-postgres-user-onepassword"))
+
     def test_homepage_profile_checks_service_route_and_http_probe(self) -> None:
         runner = FakeRunner()
         config = self._config(app="homepage")

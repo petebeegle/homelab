@@ -21,11 +21,13 @@ REAL_DIRS = {
     "homepage": "kubernetes/apps/homepage/development",
     "home-assistant": "kubernetes/apps/home-assistant",
     "jellyfin": "kubernetes/apps/jellyfin",
+    "immich": "kubernetes/apps/immich",
 }
 
 # Services a HelmRelease renders at deploy time (so `kubectl kustomize` cannot show them).
 HELM_RENDERED_SERVICES = {
     "jellyfin": {"jellyfin"},
+    "immich": {"immich-server"},
 }
 
 # Pod volumes a branch overlay may swap for something development can provide, and why.
@@ -193,6 +195,30 @@ class BranchOverlayRenderTest(unittest.TestCase):
             real_values = [d for d in real_docs if kind_of(d) == "ConfigMap" and "values.yaml:" in d]
             branch_values = [d for d in branch_docs if kind_of(d) == "ConfigMap" and "values.yaml:" in d]
             self.assertEqual([data_of(d) for d in real_values], [data_of(d) for d in branch_values], f"{app}: values differ")
+
+    def test_helm_value_overrides_only_redirect_secrets_to_development_1password_items(self) -> None:
+        # A branch may layer spec.values over production's values (Flux merges it last), but only
+        # to point a Secret name at the -onepassword Secret development's vault provides.
+        for app, real_dir in REAL_DIRS.items():
+            real = {name_of(d): d for d in documents(kustomize(real_dir)) if kind_of(d) == "HelmRelease"}
+            for doc in documents(kustomize(f"kubernetes/apps/{app}/branch")):
+                if kind_of(doc) != "HelmRelease":
+                    continue
+                production = real[name_of(doc).removesuffix(SUFFIX)]
+                self.assertEqual(pod_block_at(production, "values:", 2), "", f"{app}: production sets spec.values")
+                block = pod_block_at(doc, "values:", 2)
+                leaves = [line.split(":", 1)[1].strip() for line in block.splitlines()[1:] if re.match(r"^\s+[A-Za-z_]+: \S", line)]
+                for leaf in leaves:
+                    self.assertTrue(leaf.endswith("-onepassword"), f"{app}: spec.values sets {leaf!r}; only Secret redirects are allowed")
+
+    def test_immich_branch_reads_development_secrets_and_carries_no_production_ones(self) -> None:
+        docs = documents(kustomize("kubernetes/apps/immich/branch"))
+        self.assertEqual([name_of(d) for d in docs if kind_of(d) == "Secret"], [], "production's SOPS Secrets stay out of development")
+        release = next(d for d in docs if kind_of(d) == "HelmRelease")
+        for secret in ("immich-secrets-onepassword", "immich-postgres-user-onepassword"):
+            self.assertIn(secret, release)
+        cluster = next(d for d in docs if kind_of(d) == "Cluster")
+        self.assertIn("name: immich-postgres-user-onepassword", cluster)
 
     def test_profile_checked_objects_are_rendered(self) -> None:
         for app in smoke_tested_apps():

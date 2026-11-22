@@ -63,9 +63,9 @@ class ClassifyPrTest(unittest.TestCase):
             self.assertIn("verifier", result.reason, path)
 
     def test_app_without_pr_smoke_is_not_tested(self) -> None:
-        result = self.classify("kubernetes/apps/immich/base/kustomization.yaml")
+        result = self.classify("kubernetes/apps/nexus/branch/nexus.yaml")
         self.assertFalse(result.tested)
-        self.assertIn("immich", result.reason)
+        self.assertIn("nexus", result.reason)
 
     def test_unknown_app_directory_is_not_tested(self) -> None:
         self.assertFalse(self.classify("kubernetes/apps/nope/x.yaml").tested)
@@ -81,7 +81,7 @@ class ClassifyPrTest(unittest.TestCase):
         self.assertEqual(result.reason, "no changes")
 
     def test_the_opted_in_apps(self) -> None:
-        self.assertEqual({app for app, p in self.profiles.items() if p.pr_smoke}, {"whoami", "homepage", "home-assistant", "jellyfin"})
+        self.assertEqual({app for app, p in self.profiles.items() if p.pr_smoke}, {"whoami", "homepage", "home-assistant", "jellyfin", "immich"})
 
     def test_pr_smoke_must_be_a_boolean(self) -> None:
         profile = json.loads((TOOLS_DEVELOPMENT / "smoke-profiles" / "whoami.json").read_text(encoding="utf-8"))
