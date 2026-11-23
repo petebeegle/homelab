@@ -30,7 +30,7 @@ jobs:
       affected: ${{ steps.affected.outputs.affected }}
       base_reason: ${{ steps.affected.outputs.reason }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.1.0
         with:
           ref: main
           persist-credentials: false
@@ -69,7 +69,7 @@ jobs:
           echo "mergeable=${mergeable}" >> "$GITHUB_OUTPUT"
       - name: Check out the PR merged onto main, as data
         if: steps.classify.outputs.tested != 'true' && steps.merge.outputs.mergeable == 'true'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.1.0
         with:
           ref: refs/pull/${{ github.event.pull_request.number }}/merge
           path: pr
@@ -116,7 +116,7 @@ jobs:
     runs-on: homelab-dev
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.1.0
         with:
           ref: main
           persist-credentials: false
@@ -163,7 +163,7 @@ jobs:
           fi
       - name: Upload smoke results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: smoke-results
           path: tests/browser/test-results
@@ -182,12 +182,12 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.1.0
         with:
           ref: main
           persist-credentials: false
       - name: Check out the PR merged onto main, as data
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.1.0
         with:
           ref: refs/pull/${{ github.event.pull_request.number }}/merge
           path: pr
@@ -257,7 +257,7 @@ jobs:
           "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/git/refs/heads/base-smoke/pr-${PR_NUMBER}" || true
       - name: Upload smoke results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: base-smoke-results
           path: tests/browser/test-results
