@@ -30,7 +30,7 @@ jobs:
       affected: ${{ steps.affected.outputs.affected }}
       base_reason: ${{ steps.affected.outputs.reason }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: main
           persist-credentials: false
@@ -69,7 +69,7 @@ jobs:
           echo "mergeable=${mergeable}" >> "$GITHUB_OUTPUT"
       - name: Check out the PR merged onto main, as data
         if: steps.classify.outputs.tested != 'true' && steps.merge.outputs.mergeable == 'true'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: refs/pull/${{ github.event.pull_request.number }}/merge
           path: pr
@@ -116,7 +116,7 @@ jobs:
     runs-on: homelab-dev
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: main
           persist-credentials: false
@@ -182,12 +182,12 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: main
           persist-credentials: false
       - name: Check out the PR merged onto main, as data
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: refs/pull/${{ github.event.pull_request.number }}/merge
           path: pr
