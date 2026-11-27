@@ -22,6 +22,11 @@ spec:
       retries: 3
   upgrade:
     crds: CreateReplace
+    # The chart's webhook configurations carry cert-manager's CA bundle, so
+    # cainjector co-owns every webhook entry. Under server-side apply, entries
+    # a new chart drops (0.37 removed DLB/FPGA) keep cainjector's fields and
+    # fail validation. A client-side merge deletes them by name.
+    serverSideApply: disabled
     remediation:
       retries: 3
       remediateLastFailure: true
@@ -32,7 +37,7 @@ spec:
         kind: HelmRepository
         name: intel
         namespace: flux-system
-      version: "0.36.0"
+      version: "0.37.1"
   values:
     manager:
       devices:
