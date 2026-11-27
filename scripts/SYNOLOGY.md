@@ -101,6 +101,12 @@ One-time setup:
    ```sh
    terraform -chdir=terraform/external/synology apply
    ```
+   The keys reach the container through `/volume2/docker/s3/.env`, which Compose
+   reads from the project folder. The project itself only says `${ROOT_ACCESS_KEY}`:
+   the provider prints the project's content in every plan without masking it, so
+   the keys must never be in `services`. To rotate them, add
+   `-replace=random_password.s3_access_key -replace=random_password.s3_secret_key`
+   to the apply, then update the 1Password item (step 4).
 4. Store its keys in 1Password as the item `Terraform state S3` in the `cluster bootstrap` vault, without printing them:
    ```sh
    cd terraform/external/synology
