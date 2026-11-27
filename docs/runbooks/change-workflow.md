@@ -52,9 +52,12 @@ picked up automatically.
   `kubernetes/apps/<app>/` directory and that app's profile in
   `tools/development/smoke-profiles/` has `"prSmoke": true` (today: `whoami`,
   `homepage`, `home-assistant`, `jellyfin`, `immich` and
-  `nexus`). It creates a branch environment in the development cluster, checks
-  it, runs the browser test where the profile has one, and removes the
-  environment.
+  `nexus`). It publishes GitHub's merge of the PR onto current `main` as the
+  temporary branch `pr-smoke/pr-<N>`, creates a branch environment from it in
+  the development cluster, checks it with the profile from `main`, runs the
+  browser test where the profile has one, and removes the environment and the
+  branch. Deploying the merge, not the PR head, keeps a head that is behind
+  `main` from being judged by `main`'s probes against the old app.
 - **Base smoke** (`base` job): the PR changes something the development cluster
   itself runs. `tools/development/affected_dev.py` decides by rendering each
   development Flux Kustomization at `main` and at GitHub's merge of the PR onto

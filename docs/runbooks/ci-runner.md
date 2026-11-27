@@ -68,10 +68,10 @@ and so this alerting, is down.
 
 ## Leftovers to look for
 
-- **`base-smoke/pr-<N>` branches.** The base smoke job publishes one per run and
-  deletes it in an `always()` step. One left behind (the runner pod was killed) is
-  harmless; delete it with
-  `gh api -X DELETE repos/petebeegle/homelab/git/refs/heads/base-smoke/pr-<N>`.
+- **`base-smoke/pr-<N>` and `pr-smoke/pr-<N>` branches.** The base and app smoke
+  jobs publish one per run and delete it in an `always()` step. One left behind
+  (the runner pod was killed) is harmless; delete it with
+  `gh api -X DELETE repos/petebeegle/homelab/git/refs/heads/<branch>`.
 - **A suspended root in development.** `kubectl -n flux-system get kustomization
   flux-system` shows `SUSPENDED True` and the annotation `homelab.dev/base-smoke`.
   `dev-cleanup` and every smoke run restore it after an hour; to do it now, run

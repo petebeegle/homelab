@@ -49,8 +49,8 @@ infrastructure, Terraform, workflows and Flux itself, stays manual.
 - **One run a day.** Renovate runs at 01:00 UTC, so an update merges at the
   earliest on the run after its checks finish. The rule sets
   `rebaseWhen: conflicted`: rebasing a branch only because it is behind `main`
-  would replace a merge with a rebase on every run. The `base` job tests GitHub's
-  merge of the PR onto `main` as of its run.
+  would replace a merge with a rebase on every run. Both the `smoke` and `base`
+  jobs test GitHub's merge of the PR onto `main` as of their run.
 - **No green without a test.** `tools/development/classify_pr.py` reports
   `automerge: true` when every changed file is inside the rule's paths. If such
   a `renovate/*` PR was not tested (an image bumped in two apps at once, say),
