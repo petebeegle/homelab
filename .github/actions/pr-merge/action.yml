@@ -1,0 +1,59 @@
+---
+name: PR merged onto current main
+description: >-
+  Point a temporary branch at current main and have GitHub merge the PR head into it
+  (POST /merges), so Flux and the checks see exactly what merging would land now.
+  GitHub's own refs/pull/<N>/merge is not used: it is not reliably recomputed when main
+  moves. curl, not gh: the homelab-dev runner image has no gh CLI.
+inputs:
+  branch:
+    description: Temporary branch to build the merge on; reset to main first.
+    required: true
+  token:
+    description: A token with contents write.
+    required: true
+outputs:
+  mergeable:
+    description: "true when the merge was built; false on a conflict or nothing to merge."
+    value: ${{ steps.merge.outputs.mergeable }}
+  sha:
+    description: The merge commit, when mergeable.
+    value: ${{ steps.merge.outputs.sha }}
+  main:
+    description: The main commit the merge is onto.
+    value: ${{ steps.merge.outputs.main }}
+  reason:
+    description: Why it is not mergeable.
+    value: ${{ steps.merge.outputs.reason }}
+runs:
+  using: composite
+  steps:
+    - name: Merge the PR head onto current main
+      id: merge
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        BRANCH: ${{ inputs.branch }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+      run: |
+        set -euo pipefail
+        api="${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}"
+        auth=(-H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json")
+        field() { python3 -c 'import functools, json, sys; print(functools.reduce(lambda d, k: d[k], sys.argv[1:], json.load(sys.stdin)))' "$@"; }
+        main=$(curl -fsS "${auth[@]}" "${api}/git/ref/heads/main" | field object sha)
+        head=$(curl -fsS "${auth[@]}" "${api}/pulls/${PR_NUMBER}" | field head sha)
+        if curl -fsS "${auth[@]}" "${api}/git/ref/heads/${BRANCH}" >/dev/null 2>&1; then
+          curl -fsS -X PATCH "${auth[@]}" "${api}/git/refs/heads/${BRANCH}" -d "{\"sha\":\"${main}\",\"force\":true}" >/dev/null
+        else
+          curl -fsS -X POST "${auth[@]}" "${api}/git/refs" -d "{\"ref\":\"refs/heads/${BRANCH}\",\"sha\":\"${main}\"}" >/dev/null
+        fi
+        status=$(curl -sS -o "${RUNNER_TEMP}/pr-merge.json" -w '%{http_code}' -X POST "${auth[@]}" "${api}/merges" \
+          -d "{\"base\":\"${BRANCH}\",\"head\":\"${head}\",\"commit_message\":\"dev-smoke: PR #${PR_NUMBER} merged onto main\"}")
+        case "$status" in
+          201) printf 'mergeable=true\nsha=%s\n' "$(field sha < "${RUNNER_TEMP}/pr-merge.json")" ;;
+          409) printf 'mergeable=false\nreason=the PR conflicts with main; rebase it\n' ;;
+          204) printf 'mergeable=false\nreason=main already contains the PR head\n' ;;
+          *) echo "::error::merging PR #${PR_NUMBER} onto main on ${BRANCH} failed: HTTP ${status}" >&2; exit 1 ;;
+        esac >> "$GITHUB_OUTPUT"
+        echo "main=${main}" >> "$GITHUB_OUTPUT"
+        echo "PR #${PR_NUMBER} (${head}) onto main ${main} on ${BRANCH}: HTTP ${status}"
