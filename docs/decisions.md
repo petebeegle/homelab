@@ -132,6 +132,31 @@ used for the migration was removed in November 2026.
   no-subscription repository because they have no enterprise subscription. That
   is a homelab choice, not a general production recommendation.
 
+## Terraform state lives in S3 on the NAS
+
+- Every Terraform root keeps its state in the bucket `terraform-state` at
+  `https://s3.petebeegle.com`, one key per root, with the S3 backend's
+  `use_lockfile` for locking (#486). The NAS outlives both clusters, so state is
+  there when a cluster has to be rebuilt. Loki and Mimir's MinIO and
+  CloudNativePG run inside production and are ruled out for the same reason.
+- The server is Versity S3 Gateway (`versitygw`), a Container Manager project
+  managed by `terraform/external/synology/s3.tf`. Its POSIX backend stores
+  objects, and old versions, as plain files under `/volume2/docker/s3`. MinIO
+  was the first choice, but its open-source project is archived and its images
+  were withdrawn in 2025. Garage has no object versioning.
+- The hostname is `s3.petebeegle.com`, not under `lab.petebeegle.com`. LAN DNS
+  answers every `*.lab` name with the production gateway, so state behind such a
+  name would vanish with production. NAS services use public Cloudflare
+  DNS-only records pointing at the NAS's private address (`192.168.30.99`),
+  served by the Synology reverse proxy with their own certificates, like
+  `docker-registry.petebeegle.com`.
+- TLS is enough: there is no server-side encryption, because that would need a
+  key server. The gateway listens on the NAS loopback only, and the bucket is
+  versioned so a bad write can be rolled back.
+- The NAS itself is not backed up yet. Versioning does not cover losing the NAS.
+- The gateway's keys and each root's `terraform.tfvars` live in 1Password, not
+  on the NAS, so losing the NAS does not lose both state and inputs.
+
 ## Observability is in Git
 
 - Grafana, Mimir, Loki, Alloy, dashboards, alert rules and Discord alert routing
