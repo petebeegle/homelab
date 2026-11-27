@@ -31,10 +31,11 @@ class S3GatewayComposeTest(unittest.TestCase):
         self.assertIn("/volume2/docker/s3/data:/data", text)
         self.assertIn("/volume2/docker/s3/versions:/versions", text)
 
-    def test_credentials_are_template_placeholders_not_values(self) -> None:
+    def test_credentials_are_placeholders_that_terraform_replaces(self) -> None:
         text = compose()
-        self.assertIn("ROOT_ACCESS_KEY: ${access_key}", text)
-        self.assertIn("ROOT_SECRET_KEY: ${secret_key}", text)
+        self.assertIn("ROOT_ACCESS_KEY: set-by-terraform", text)
+        self.assertIn("ROOT_SECRET_KEY: set-by-terraform", text)
+        self.assertNotIn("${", text, "the file is yamldecoded, not templated")
 
     def test_renovate_tracks_the_image(self) -> None:
         # Renovate's docker-compose manager matches (docker-)compose*.yaml basenames only.
@@ -42,11 +43,33 @@ class S3GatewayComposeTest(unittest.TestCase):
 
 
 class SynologyRootTest(unittest.TestCase):
-    def test_the_gateway_is_a_container_project_rendered_from_the_compose_file(self) -> None:
+    def test_the_gateway_is_a_container_project_built_from_the_compose_file(self) -> None:
         text = (SYNOLOGY_ROOT / "s3.tf").read_text(encoding="utf-8")
         self.assertIn('resource "synology_container_project" "s3"', text)
         self.assertIn('share_path = "/docker/s3"', text)
-        self.assertIn("scripts/synology/s3/docker-compose.yaml", text)
+        self.assertRegex(text, r'yamldecode\(file\("\$\{path\.module\}/\.\./\.\./\.\./scripts/synology/s3/docker-compose\.yaml"\)\)')
+        self.assertRegex(text, r"(?m)^  services = \{$")
+
+    def test_the_project_never_sets_raw_content(self) -> None:
+        # Provider 0.6.11 plans `content` from the `services` attribute and rejects any literal
+        # content ("planned value services: {} does not match config value"), so the project is
+        # described only through `services`.
+        project = (SYNOLOGY_ROOT / "s3.tf").read_text(encoding="utf-8").split('resource "synology_container_project" "s3"', 1)[1]
+        self.assertNotRegex(project.split("\n}\n", 1)[0], r"(?m)^  content\s*=")
+
+    def test_keys_reach_the_gateway_through_an_env_file_never_the_project(self) -> None:
+        # The provider computes the project's `content` without a sensitive mark, so anything in
+        # `services` is printed by every plan (#486). Compose reads ${...} from .env in the project
+        # folder; that file's content comes from config and stays sensitive.
+        text = (SYNOLOGY_ROOT / "s3.tf").read_text(encoding="utf-8")
+        project = text.split('resource "synology_container_project" "s3"', 1)[1].split("\n}\n", 1)[0]
+        self.assertNotIn("random_password", project)
+        self.assertIn('ROOT_ACCESS_KEY = "$${ROOT_ACCESS_KEY}"', project)
+        self.assertIn('ROOT_SECRET_KEY = "$${ROOT_SECRET_KEY}"', project)
+        env_file = text.split('resource "synology_filestation_file" "s3_env"', 1)[1].split("\n}\n", 1)[0]
+        self.assertIn('path      = "/docker/s3/.env"', env_file)
+        self.assertIn("random_password.s3_access_key.result", env_file)
+        self.assertIn("random_password.s3_secret_key.result", env_file)
 
     def test_no_resource_calls_a_non_idempotent_synology_create_api(self) -> None:
         # synology_api with method "create" runs the call again on every replace, and its state
