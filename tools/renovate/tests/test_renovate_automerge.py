@@ -128,7 +128,7 @@ class RenovateAutomergeTest(unittest.TestCase):
     def test_an_auto_merge_branch_is_not_rebased_just_for_being_behind_main(self) -> None:
         # Renovate runs once a day. Its default for auto-merge rules rebases a branch that is
         # behind main instead of merging it, so on an active main nothing would ever merge.
-        # dev-smoke's base job already tests the PR merged onto main as of its run.
+        # dev-smoke's smoke and base jobs already test the PR merged onto main as of their run.
         for rule in automerge_rules():
             self.assertEqual(rule.get("rebaseWhen"), "conflicted")
 

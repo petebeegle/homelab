@@ -109,7 +109,7 @@ class DevSmokeWorkflowTest(unittest.TestCase):
 
     def test_the_merge_must_be_onto_current_main(self) -> None:
         text = read()
-        for job in ("classify", "base"):
+        for job in ("classify", "smoke", "base"):
             block = jobs(text)[job]
             self.assertIn('git -C pr rev-parse HEAD^1', block, f"{job} must check the merge's first parent")
             self.assertIn("is not a merge onto current main", block, job)
@@ -127,10 +127,10 @@ class DevSmokeWorkflowTest(unittest.TestCase):
         self.assertEqual(len(delete), 1)
         self.assertIn("if: always()", delete[0])
 
-    def test_base_job_runs_only_tools_the_runner_image_has(self) -> None:
+    def test_runner_jobs_use_only_tools_the_runner_image_has(self) -> None:
         # The runner image has kubectl, flux, curl, node and python, but no gh CLI.
-        base = jobs(read())["base"]
-        self.assertNotRegex(base, r"(?m)^\s+(?:run: )?gh |\bgh api\b")
+        for job in ("smoke", "base"):
+            self.assertNotRegex(jobs(read())[job], r"(?m)^\s+(?:run: )?gh |\bgh api\b", job)
 
     def test_kubeconfig_comes_before_anything_the_always_steps_depend_on(self) -> None:
         base = jobs(read())["base"]
@@ -152,9 +152,34 @@ class DevSmokeWorkflowTest(unittest.TestCase):
         text = read()
         for script in indented_blocks(text, "run: |", 8):
             self.assertNotIn("${{ github.event.", script, "untrusted event data must reach scripts through env")
-        smoke = jobs(text)["smoke"]
-        self.assertRegex(smoke, r"(?m)^\s+HEAD_REF: \$\{\{ github\.event\.pull_request\.head\.ref \}\}$")
-        self.assertIn('--branch "$HEAD_REF"', smoke)
+
+    def test_every_pr_gets_a_fresh_merge_onto_main(self) -> None:
+        # The smoke job deploys the merge too, so classify asks for it whatever the PR is.
+        classify = jobs(read())["classify"]
+        step = next(s for s in re.split(r"\n      - ", classify) if "Ask GitHub for a fresh merge" in s)
+        self.assertNotRegex(step, r"(?m)^        if: ")
+
+    def test_smoke_job_deploys_the_merge_onto_main_not_the_pr_head(self) -> None:
+        # The probes come from main. A head that is behind main would run them against the old
+        # app, and a pass would not describe what merging lands (#433).
+        smoke = jobs(read())["smoke"]
+        self.assertNotIn("head.ref", smoke)
+        self.assertRegex(smoke, r"(?m)^    permissions:\n      contents: write$")
+        steps = re.split(r"\n      - ", smoke)
+        publish = [s for s in steps if "Publish the merge" in s]
+        self.assertEqual(len(publish), 1)
+        self.assertIn('ref="refs/heads/pr-smoke/pr-${PR_NUMBER}"', publish[0])
+        self.assertIn("${MERGE_SHA}", publish[0])
+        run = [s for s in steps if "verify_branch_deploy.py" in s]
+        self.assertEqual(len(run), 1)
+        self.assertIn('--branch "pr-smoke/pr-${PR_NUMBER}"', run[0])
+        delete = [s for s in steps if "-X DELETE" in s and "git/refs/heads/pr-smoke/pr-${PR_NUMBER}" in s]
+        self.assertEqual(len(delete), 1)
+        self.assertIn("if: always()", delete[0])
+        self.assertLess(
+            next(i for i, s in enumerate(steps) if "dev-kubeconfig" in s),
+            steps.index(publish[0]),
+        )
 
     def test_smoke_job_runs_on_the_dev_runner_with_a_timeout(self) -> None:
         smoke = jobs(read())["smoke"]
