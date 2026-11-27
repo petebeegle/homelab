@@ -61,7 +61,7 @@ to the checkout and ignored by git.
 | Storage | NFS CSI to the NAS, local-path, CloudNativePG | Same three |
 | Secrets | SOPS for workloads, with the 1Password operator installed alongside | 1Password operator |
 | Identity | Authentik | None |
-| Monitoring | Alloy, Mimir, Loki, Grafana, Discord alerts, synthetic smoke tests | None. The `dev-heartbeat` workflow stands in |
+| Monitoring | Alloy, Mimir, Loki, Grafana, Discord alerts, synthetic smoke tests, and the `public-heartbeat` workflow from outside | None. The `dev-heartbeat` workflow stands in |
 | Apps | homepage, pihole, whoami, jellyfin, immich, home-assistant, foundryvtt, valheim, access-broker, cloudflare-tunnels, renovate, synthetics, external routes | whoami, homepage, and the `dev-runner` account the CI runner acts as |
 | CI | Actions Runner Controller and the `homelab-dev` runner, one ephemeral pod at a time, fenced off from production ([decisions](./decisions.md#changes-go-through-pull-requests-and-the-check-is-the-evidence)) | None; the production runner drives it from outside |
 
@@ -95,13 +95,14 @@ production, which drives development from outside. The rule is
 in [decisions.md](./decisions.md#changes-go-through-pull-requests-and-the-check-is-the-evidence); the procedure is
 [change-workflow.md](./runbooks/change-workflow.md).
 
-Three workflows support the gate:
+Three workflows support the gate, and one watches production from outside:
 
 | Workflow | When | What it does |
 |----------|------|--------------|
 | `dev-smoke` | Every PR | Classifies the change, then deploys and tests it in development if it can; also removes stale PR environments |
 | `dev-cleanup` | Scheduled every 30 minutes (GitHub fires it far less often) | Removes PR environments that outlived their run |
 | `dev-heartbeat` | Scheduled hourly (likewise sparse) | Checks the development cluster and runner are alive, since nothing else monitors them |
+| `public-heartbeat` | Scheduled twice an hour (likewise sparse) | Requests the internet-public hosts from outside, so a dead production or tunnel is noticed even though production's own alerting is down with it ([synthetic smoke](./runbooks/synthetic-smoke-tests.md#from-outside)) |
 
 ## How traffic gets in
 
