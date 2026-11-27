@@ -21,6 +21,6 @@ jobs:
           python-version-file: tools/.python-version
       - uses: actions/setup-node@v7
         with:
-          node-version: "24.21.0"
+          node-version: "24.22.3"
       - name: Run shared verification contract
         run: python3 tools/verification/verify.py --profile harness

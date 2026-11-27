@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v7
         with:
-          node-version: "24.21.0"
+          node-version: "24.22.3"
       - name: Run browser URL guard unit tests
         run: node --test tests/browser/tests/url-guard.test.cjs
       - name: Install Playwright test runner and list browser smoke
