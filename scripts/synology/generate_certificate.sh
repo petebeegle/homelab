@@ -44,6 +44,11 @@ if [ -z "$CF_TOKEN" ]; then
   exit 1
 fi
 
+# acme.sh's dns_cf reads CF_Token (case-sensitive), not CF_TOKEN. Without this it silently
+# falls back to a token saved in account.conf by an earlier run, and a stale one fails the
+# zone lookup with "invalid domain". The token needs Zone:Read and DNS:Edit on the zone.
+export CF_Token="$CF_TOKEN"
+
 if [ -z "$SYNO_PASSWORD" ]; then
   echo "Error: SYNO_PASSWORD environment variable is not set."
   exit 1
