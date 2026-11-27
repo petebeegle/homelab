@@ -19,6 +19,16 @@ The checks are intentionally deeper than pod readiness and lighter than full aut
 - `jellyfin.${cluster_domain}` verifies the Jellyfin web shell.
 - `pihole.${cluster_domain}` verifies the root redirect reaches the Pi-hole admin/login shell.
 - `foundry.${cluster_domain}` verifies the Foundry application shell.
+- `immich.${cluster_domain}` verifies the route reaches Immich's OIDC or Authentik login.
+- `homeassistant.${cluster_domain}` verifies the route reaches OIDC or Authentik
+  login, and that Home Assistant is not serving first-run onboarding.
+- Valheim is UDP only, so it gets a Steam A2S_INFO query at its LoadBalancer IP
+  (`192.168.30.251`, query port 2457) and must answer with its server name.
+  `tools/synthetics/tests/test_smoke_targets.py` keeps the IP and name in step
+  with `kubernetes/apps/valheim/app.yaml`.
+
+access-broker has no LAN route; its public host is checked from outside (see
+[From Outside](#from-outside)).
 
 ## From Outside
 

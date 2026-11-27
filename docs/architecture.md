@@ -111,7 +111,7 @@ This document is generated for agentic repo navigation. It records relationships
 | `production` | `private-apps` | `./kubernetes/clusters/production/apps` | `private-source` | `cluster-vars` | `sops` |
 | `production` | `private-source` | `./kubernetes/clusters/production/apps/private/source` | (none) | `(none)` | `sops` |
 | `production` | `app-renovate` | `./kubernetes/apps/renovate` | `gateway` | `cluster-vars` | `sops` |
-| `production` | `app-synthetics` | `./kubernetes/apps/synthetics` | `gateway`, `grafana`, `authentik`, `vpn`, `app-whoami`, `app-homepage`, `app-jellyfin`, `app-immich`, `app-home-assistant`, `app-pihole`, `app-foundryvtt` | `cluster-vars` | `no` |
+| `production` | `app-synthetics` | `./kubernetes/apps/synthetics` | `gateway`, `grafana`, `authentik`, `vpn`, `app-whoami`, `app-homepage`, `app-jellyfin`, `app-immich`, `app-home-assistant`, `app-pihole`, `app-foundryvtt`, `app-valheim` | `cluster-vars` | `no` |
 | `production` | `app-valheim` | `./kubernetes/apps/valheim` | `gateway`, `nfs-csi` | `cluster-vars` | `sops` |
 | `production` | `app-whoami` | `./kubernetes/apps/whoami` | `gateway` | `cluster-vars` | `no` |
 | `development` | `app-dev-runner` | `./kubernetes/apps/dev-runner` | (none) | `(none)` | `no` |

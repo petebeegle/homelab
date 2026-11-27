@@ -25,6 +25,7 @@ spec:
     - name: app-home-assistant
     - name: app-pihole
     - name: app-foundryvtt
+    - name: app-valheim
   postBuild:
     substituteFrom:
       - kind: ConfigMap
