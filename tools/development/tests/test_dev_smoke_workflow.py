@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import os
 import re
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -190,6 +192,46 @@ class DevSmokeWorkflowTest(unittest.TestCase):
         self.assertIn("GITHUB_STEP_SUMMARY", block)
         self.assertIn("needs.smoke.result", block)
         self.assertIn("needs.classify.result", block)
+
+    def report(self, **env: str) -> subprocess.CompletedProcess[str]:
+        """Run the aggregator's script with the given job results and classifier outputs."""
+        (script,) = indented_blocks(jobs(read())["dev-smoke"], "run: |", 8)
+        values = {
+            "CLASSIFY_RESULT": "success", "SMOKE_RESULT": "skipped", "BASE_RESULT": "skipped",
+            "TESTED": "false", "BASE": "false", "AUTOMERGE": "false", "HEAD_REF": "codex/change",
+            "REASON": "r", "BASE_REASON": "b", **env,
+        }
+        summary = self.enterContext(__import__("tempfile").NamedTemporaryFile())
+        return subprocess.run(
+            ["bash", "-c", "\n".join(line[10:] for line in script.splitlines())],
+            env={**os.environ, **values, "GITHUB_STEP_SUMMARY": summary.name},
+            capture_output=True,
+            text=True,
+        )
+
+    def test_an_untested_renovate_pr_that_would_auto_merge_fails(self) -> None:
+        result = self.report(HEAD_REF="renovate/whoami-1.x", AUTOMERGE="true", REASON="multiple apps: homepage, whoami")
+        self.assertEqual(result.returncode, 1, result.stdout)
+        self.assertIn("auto-merge", result.stdout)
+        self.assertIn("multiple apps", result.stdout)
+
+    def test_other_untested_prs_still_pass(self) -> None:
+        self.assertEqual(self.report(HEAD_REF="codex/two-apps", AUTOMERGE="true").returncode, 0)
+        self.assertEqual(self.report(HEAD_REF="renovate/pihole-1.x", AUTOMERGE="false").returncode, 0)
+
+    def test_a_tested_renovate_pr_passes_on_its_smoke_result(self) -> None:
+        renovate = {"HEAD_REF": "renovate/whoami-1.x", "AUTOMERGE": "true"}
+        self.assertEqual(self.report(**renovate, TESTED="true", SMOKE_RESULT="success").returncode, 0)
+        self.assertEqual(self.report(**renovate, TESTED="true", SMOKE_RESULT="failure").returncode, 1)
+        self.assertEqual(self.report(**renovate, BASE="true", BASE_RESULT="success").returncode, 0)
+        self.assertEqual(self.report(**renovate, BASE="true", BASE_RESULT="failure").returncode, 1)
+
+    def test_classify_passes_the_auto_merge_flag_to_the_aggregator(self) -> None:
+        all_jobs = jobs(read())
+        self.assertIn("automerge: ${{ steps.classify.outputs.automerge }}", all_jobs["classify"])
+        self.assertIn("echo \"automerge=$(jq -r '.automerge' classification.json)\"", all_jobs["classify"])
+        self.assertRegex(all_jobs["dev-smoke"], r"(?m)^\s+AUTOMERGE: \$\{\{ needs\.classify\.outputs\.automerge \}\}$")
+        self.assertRegex(all_jobs["dev-smoke"], r"(?m)^\s+HEAD_REF: \$\{\{ github\.event\.pull_request\.head\.ref \}\}$")
 
     def test_smoke_job_also_sweeps_stale_environments_without_failing_the_smoke(self) -> None:
         smoke = jobs(read())["smoke"]

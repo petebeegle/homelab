@@ -98,6 +98,31 @@ class ClassifyPrTest(unittest.TestCase):
             with self.assertRaises(Exception):
                 load_smoke_profile_file(path)
 
+    def test_a_pr_inside_renovates_auto_merge_paths_is_flagged(self) -> None:
+        prefixes = classify_pr.automerge_prefixes()
+        self.assertIn("kubernetes/apps/whoami/", prefixes)
+        self.assertTrue(classify_pr.within_automerge_paths(["kubernetes/apps/whoami/base/whoami.yaml"], prefixes))
+        # Two apps: dev-smoke cannot test it, so the aggregator must stop Renovate merging it.
+        self.assertTrue(
+            classify_pr.within_automerge_paths(
+                ["kubernetes/apps/whoami/base/whoami.yaml", "kubernetes/apps/homepage/base/deployment.yaml"], prefixes
+            )
+        )
+        self.assertFalse(classify_pr.within_automerge_paths(["kubernetes/apps/whoami/base/whoami.yaml", "renovate.json"], prefixes))
+        self.assertFalse(classify_pr.within_automerge_paths(["kubernetes/apps/whoamix/app.yaml"], prefixes))
+        self.assertFalse(classify_pr.within_automerge_paths([], prefixes))
+
+    def test_cli_reports_auto_merge_paths(self) -> None:
+        out = subprocess.run(
+            [sys.executable, "-B", str(TOOLS_DEVELOPMENT / "classify_pr.py")],
+            input="kubernetes/apps/whoami/base/whoami.yaml\nkubernetes/apps/homepage/base/deployment.yaml\n",
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        result = json.loads(out.stdout)
+        self.assertEqual((result["tested"], result["automerge"]), (False, True))
+
     def test_cli_reads_stdin_and_prints_json(self) -> None:
         out = subprocess.run(
             [sys.executable, "-B", str(TOOLS_DEVELOPMENT / "classify_pr.py")],
@@ -106,7 +131,7 @@ class ClassifyPrTest(unittest.TestCase):
             text=True,
             check=True,
         ).stdout
-        self.assertEqual(json.loads(out), {"tested": True, "app": "whoami", "browser": True, "reason": "ok"})
+        self.assertEqual(json.loads(out), {"tested": True, "app": "whoami", "browser": True, "reason": "ok", "automerge": True})
 
 
 if __name__ == "__main__":

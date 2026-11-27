@@ -73,8 +73,11 @@ picked up automatically.
   `dev-cleanup` and every smoke run restore it after an hour
   (`base_smoke.py --recover-stale`).
 
-For everything else it reports "not smoke-tested: <reason>" and passes. That
-does not mean the change needs no validation. For Terraform, production-only
+For everything else it reports "not smoke-tested: <reason>" and passes. The
+exception is a Renovate PR (`renovate/*` branch) inside Renovate's auto-merge
+paths: `dev-smoke` fails it instead, so Renovate cannot merge it on a green that
+tested nothing (see [Renovate](renovate.md#auto-merge)). Passing does not mean
+the change needs no validation. For Terraform, production-only
 infrastructure and apps, Flux bootstrap changes, and apps without a profile:
 
 - validate in the development cluster before merging, and

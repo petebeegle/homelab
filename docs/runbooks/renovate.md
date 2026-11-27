@@ -4,7 +4,7 @@ scope:
   - renovate
   - dependency-management
 created: 2026-05-16
-last_verified: 2026-11-17
+last_verified: 2026-11-27
 ---
 
 # Renovate
@@ -31,6 +31,34 @@ The self-hosted Renovate app allows only this exact command for Terraform docs
 regeneration. The script uses an existing `terraform-docs` only when it is
 v0.23.0; otherwise it downloads the pinned linux-amd64 release into a temporary
 directory and removes it before exiting.
+
+## Auto-merge
+
+One `packageRules` entry in `renovate.json` auto-merges minor, patch and digest
+updates, and only in directories that development deploys: the smoke-tested
+apps' manifests and branch overlays, and the infrastructure a development Flux
+Kustomization renders. `dev-smoke` therefore deploys and tests every update it
+can merge, through the `smoke` job (one app) or the `base` job (development's
+platform). Everything else, including major updates, production-only
+infrastructure, Terraform, workflows and Flux itself, stays manual.
+
+- **Renovate merges, not GitHub.** `platformAutomerge` is off, so Renovate merges
+  on a later run, and only when every check on the PR is green. GitHub
+  auto-merge would wait for the required checks only, and `dev-smoke` is not
+  one yet (#477).
+- **One run a day.** Renovate runs at 01:00 UTC, so an update merges at the
+  earliest on the run after its checks finish. The rule sets
+  `rebaseWhen: conflicted`: rebasing a branch only because it is behind `main`
+  would replace a merge with a rebase on every run. The `base` job tests GitHub's
+  merge of the PR onto `main` as of its run.
+- **No green without a test.** `tools/development/classify_pr.py` reports
+  `automerge: true` when every changed file is inside the rule's paths. If such
+  a `renovate/*` PR was not tested (an image bumped in two apps at once, say),
+  the `dev-smoke` check fails. Test it by hand, then merge it yourself.
+- **Adding a path.** `tools/renovate/tests/test_renovate_automerge.py` fails
+  unless every file a pattern matches is reached by a development Kustomization
+  or a smoke-tested branch overlay. Patterns are whole directories (`<dir>/**`).
+  When an app gets `prSmoke: true`, add its directories to the rule.
 
 ## Keeping Renovate PRs green
 

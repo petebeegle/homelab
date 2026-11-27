@@ -26,6 +26,7 @@ jobs:
       app: ${{ steps.classify.outputs.app }}
       browser: ${{ steps.classify.outputs.browser }}
       reason: ${{ steps.classify.outputs.reason }}
+      automerge: ${{ steps.classify.outputs.automerge }}
       base: ${{ steps.affected.outputs.base }}
       affected: ${{ steps.affected.outputs.affected }}
       base_reason: ${{ steps.affected.outputs.reason }}
@@ -49,6 +50,7 @@ jobs:
             echo "app=$(jq -r '.app // ""' classification.json)"
             echo "browser=$(jq -r '.browser' classification.json)"
             echo "reason=$(jq -r '.reason | gsub("[\\r\\n]"; " ")' classification.json)"
+            echo "automerge=$(jq -r '.automerge' classification.json)"
           } >> "$GITHUB_OUTPUT"
       # Not an app-only PR: does it change anything the development cluster runs? Judge the PR
       # as it would land, GitHub's test merge onto main (a stale head would show main's newer
@@ -278,6 +280,8 @@ jobs:
           BASE: ${{ needs.classify.outputs.base }}
           REASON: ${{ needs.classify.outputs.reason }}
           BASE_REASON: ${{ needs.classify.outputs.base_reason }}
+          AUTOMERGE: ${{ needs.classify.outputs.automerge }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
           set -euo pipefail
           if [ "$CLASSIFY_RESULT" != success ]; then
@@ -293,6 +297,12 @@ jobs:
             exit 0
           fi
           if [ "$TESTED" != true ]; then
+            # Renovate merges itself once every check is green. Its auto-merge paths are all
+            # deployed by development, so an untested PR inside them must not go green.
+            if [ "$AUTOMERGE" = true ] && [[ "$HEAD_REF" == renovate/* ]]; then
+              echo "not smoke-tested, so Renovate must not auto-merge it: ${REASON}; ${BASE_REASON}" | tee -a "$GITHUB_STEP_SUMMARY"
+              exit 1
+            fi
             echo "not smoke-tested: ${REASON}; ${BASE_REASON}" | tee -a "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
