@@ -88,3 +88,9 @@ talosctl -n <NODE_IP> image ls --namespace system
 | etcd membership looks wrong | Compare the expected control-plane count with `etcd members` |
 
 Upgrades: [upgrade-talos](./runbooks/upgrade-talos.md).
+
+## Flux and Helm
+
+| Symptom | Cause and fix |
+|---------|---------------|
+| Upgrade fails with `server-side apply failed ... webhooks[n].sideEffects: Required value`, then rolls back | The new chart drops a webhook entry whose CA bundle cert-manager's cainjector injects. Cainjector still owns part of the entry, so server-side apply leaves a stub. Set `spec.upgrade.serverSideApply: disabled` on the HelmRelease (see the intel operator) |
