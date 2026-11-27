@@ -45,8 +45,8 @@ Synology NFS, Grafana/Loki/Mimir/Alloy.
 ## Change Workflow
 
 - One change, one branch, one PR. Default to a dedicated worktree:
-  `/workspaces/homelab-worktrees/<name>` on branch `codex/<name>`. Use the
-  current checkout only when explicitly requested.
+  `.codex/tmp/worktrees/<name>` (git-ignored, under the main checkout) on branch
+  `codex/<name>`. Use the current checkout only when explicitly requested.
 - No per-change process artifacts are required. For work large enough to need a
   written design or plan, put it in a GitHub issue or the PR description, not in
   the repo, and get the human's approval of the design before building it.
