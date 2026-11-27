@@ -10,7 +10,7 @@ broken check. The reasoning is in [decisions.md](../decisions.md#changes-go-thro
 
    ```sh
    git fetch origin main
-   git worktree add /workspaces/homelab-worktrees/<name> -b codex/<name> origin/main
+   git worktree add .codex/tmp/worktrees/<name> -b codex/<name> origin/main
    ```
 
 2. **Design, if the change is big enough to need one.** Write the design and plan

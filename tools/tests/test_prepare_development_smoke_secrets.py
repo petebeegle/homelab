@@ -52,6 +52,16 @@ class PrepareDevelopmentSmokeSecretsTest(unittest.TestCase):
             self.assertTrue(installed.is_file())
             self.assertEqual(stat.S_IMODE(installed.stat().st_mode), 0o600)
 
+    def test_installs_into_the_default_worktree_without_a_path(self) -> None:
+        _write_tfvars(self.root)
+        worktree = self.root / ".codex" / "tmp" / "worktrees" / "example"
+        _init_repo(worktree, ignore_tfvars=True)
+
+        result = _run(self.root, "example")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue((worktree / "terraform" / "development" / "terraform.tfvars").is_file())
+
     def test_fails_when_development_tfvars_is_missing(self) -> None:
         result = _run(self.root, "example", str(self.clone))
 

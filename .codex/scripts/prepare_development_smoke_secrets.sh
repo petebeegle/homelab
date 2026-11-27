@@ -7,7 +7,7 @@ usage() {
     printf 'Usage: %s <implementation> [checkout-path ...]\n' "${0##*/}"
     printf '\n'
     printf 'Stages terraform/development/terraform.tfvars from this checkout and installs it into implementation worktrees or clones before development smoke.\n'
-    printf 'When no path is provided, installs into /workspaces/homelab-worktrees/<implementation>.\n'
+    printf 'When no path is provided, installs into .codex/tmp/worktrees/<implementation> under the main checkout.\n'
   } >&2
 }
 
@@ -46,7 +46,8 @@ fi
 
 checkouts=("$@")
 if [[ ${#checkouts[@]} -eq 0 ]]; then
-  checkouts=("/workspaces/homelab-worktrees/$implementation")
+  main_root="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
+  checkouts=("$main_root/.codex/tmp/worktrees/$implementation")
 fi
 
 for checkout in "${checkouts[@]}"; do
