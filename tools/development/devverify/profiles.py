@@ -135,7 +135,7 @@ def _http_probes(value: object, path: Path) -> list[HttpProbe]:
                 service=_required_string(raw, "service", path),
                 port=port,
                 path=_required_string(raw, "path", path),
-                body_regex=_required_string(raw, "bodyRegex", path),
+                body_regex=_required_string(raw, "bodyRegex", path) if "bodyRegex" in raw else None,
             )
         )
     return probes

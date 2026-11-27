@@ -80,7 +80,8 @@ def profile_checks(config: AppConfig, profile: SmokeProfile) -> list[str]:
     checks += [f"TLSRoute `{value(r, 'tlsRoute')}` accepted by its Gateway" for r in profile.tls_routes]
     for probe in profile.http_probes:
         service = value(probe.service, "httpProbe.service")
-        checks.append(f"GET `http://{service}:{probe.port}{probe.path}` returns 2xx with a body matching `{probe.body_regex}`")
+        body = "" if probe.body_regex is None else f" with a body matching `{probe.body_regex}`"
+        checks.append(f"GET `http://{service}:{probe.port}{probe.path}` returns 2xx{body}")
     if config.browser and profile.browser is not None:
         checks.append(f"Browser test `{profile.browser.spec}` passes through the Gateway")
     return checks

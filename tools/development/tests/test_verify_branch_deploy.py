@@ -530,12 +530,50 @@ class VerifyBranchDeployTest(unittest.TestCase):
         self.assertIn("/Branding/Configuration", sso)
         self.assertIn("sso/OID/start/authentik", sso)
 
-    def test_nexus_profile_checks_that_the_rest_api_reads_its_database(self) -> None:
+    def test_nexus_profile_checks_that_it_can_read_and_write_its_database(self) -> None:
         profile = verify.load_smoke_profile("nexus")
         paths = {(probe.path, probe.body_regex) for probe in profile.http_probes}
         self.assertIn(("/", "Nexus"), paths)
-        # Anonymous repository listing is a JSON array only once the REST API and its database are up.
-        self.assertIn(("/service/rest/v1/repositories", r"^\["), paths)
+        # 200 only when Nexus can read and write its database, and it needs no credentials.
+        # Repository listing is no probe: from 3.98 it answers 401 without credentials (#515).
+        self.assertIn(("/service/rest/v1/status/writable", None), paths)
+
+    def test_a_probe_without_a_body_regex_checks_the_status_only(self) -> None:
+        config = self._config(app="nexus")
+
+        command = verify.build_http_probe_command(
+            config,
+            namespace=config.namespace,
+            probe=verify.HttpProbe(service="nexus-api", port=8081, path="/service/rest/v1/status/writable"),
+            probe_index=0,
+            total_probes=1,
+        )
+
+        overrides = json.loads(command[command.index("--overrides") + 1])
+        script = overrides["spec"]["containers"][0]["args"][0]
+        self.assertIn("curl -LfsS", script)
+        self.assertIn("/service/rest/v1/status/writable", script)
+        self.assertNotIn("grep", script)
+        self.assertIn("seq 1 60", script)
+
+    def test_a_profile_probe_may_leave_out_the_body_regex(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            profile_dir = Path(tmp)
+            (profile_dir / "custom.json").write_text(
+                json.dumps(
+                    {
+                        "app": "custom",
+                        "activationTemplate": "template.yaml",
+                        "namespace": "custom-${branch_slug}",
+                        "checks": {"httpProbes": [{"service": "custom", "port": 80, "path": "/healthz"}]},
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            probe = verify.load_smoke_profiles(profile_dir)["custom"].http_probes[0]
+
+            self.assertIsNone(probe.body_regex)
 
     def test_immich_profile_checks_that_the_config_secret_was_loaded(self) -> None:
         profile = verify.load_smoke_profile("immich")

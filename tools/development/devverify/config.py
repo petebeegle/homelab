@@ -85,7 +85,8 @@ class HttpProbe:
     service: str
     port: int
     path: str
-    body_regex: str
+    # None: 2xx is enough (an endpoint whose status is the answer, with no body).
+    body_regex: str | None = None
 
 
 @dataclass(frozen=True)

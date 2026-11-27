@@ -88,9 +88,10 @@ def assert_smoke_profile(config: AppConfig, profile, *, runner: Runner) -> None:
         except VerificationError as exc:
             # The probe pod's command line is long and says nothing a reader needs; name what was asked.
             service = render_profile_value(probe.service, config=config, field="httpProbe.service")
+            wanted = "" if probe.body_regex is None else f" with a body matching {probe.body_regex!r}"
             raise VerificationError(
-                f"GET http://{service}:{probe.port}{probe.path} did not return 2xx with a body matching "
-                f"{probe.body_regex!r} ({str(exc).split(':', 1)[0]})"
+                f"GET http://{service}:{probe.port}{probe.path} did not return 2xx{wanted} "
+                f"({str(exc).split(':', 1)[0]})"
             ) from exc
 
 
@@ -140,10 +141,16 @@ def build_http_probe_command(
     service = render_profile_value(probe.service, config=config, field="httpProbe.service")
     pod_name_value = f"probe-{config.slug}" if total_probes == 1 else f"p{probe_index}-{config.slug}"
     url = f"http://{service}.{namespace}.svc.cluster.local:{probe.port}{probe.path}"
+    if probe.body_regex is None:
+        attempt = f"if curl -LfsS --max-time 20 -o /dev/null {shlex.quote(url)}; then exit 0; "
+    else:
+        attempt = (
+            f"if body=$(curl -LfsS --max-time 20 {shlex.quote(url)}); then "
+            f"printf '%s' \"$body\" | grep -E {shlex.quote(probe.body_regex)} >/dev/null && exit 0; "
+        )
     script = (
         "for attempt in $(seq 1 60); do "
-        f"if body=$(curl -LfsS --max-time 20 {shlex.quote(url)}); then "
-        f"printf '%s' \"$body\" | grep -E {shlex.quote(probe.body_regex)} >/dev/null && exit 0; "
+        f"{attempt}"
         "fi; "
         "sleep 5; "
         "done; "
