@@ -30,8 +30,7 @@
       {
         "service": "nexus-api",
         "port": 8081,
-        "path": "/service/rest/v1/repositories",
-        "bodyRegex": "^\\["
+        "path": "/service/rest/v1/status/writable"
       }
     ]
   },
