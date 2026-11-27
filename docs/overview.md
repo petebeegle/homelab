@@ -244,7 +244,7 @@ Each has an issue with the plan:
   (#490).
 - The production smoke job has no outside watcher and skips some apps and the
   public path (#492).
-- `dev-smoke` is informational, not yet required; Renovate auto-merge waits on
-  it (#477).
+- `dev-smoke` is informational, not yet required (#477). Renovate auto-merge
+  waits for it anyway, and covers only what development deploys.
 - Development runs a fraction of production, so most production changes cannot
   be rehearsed there yet.

@@ -21,8 +21,16 @@ to ADR-0016. They are in git history up to commit `850c034`.
   Gateway routes, storage, secret references, apps without a smoke profile) is
   validated in the development cluster by hand, and the PR description says what
   was run and what it showed.
-- Automatic merging is limited to Renovate, non-major updates, apps with a smoke
-  profile, and only after `dev-smoke` is required.
+- Automatic merging is limited to Renovate, non-major updates, and files that
+  development deploys, so `dev-smoke` tests them: the smoke-tested apps and the
+  infrastructure development runs. Production-only infrastructure, Terraform,
+  workflows and Flux itself never auto-merge. It starts before `dev-smoke` is
+  required because Renovate merges itself only once every check on the PR is
+  green, `dev-smoke` included (`platformAutomerge: false`; GitHub auto-merge
+  would wait for the required checks only). A Renovate PR inside those paths
+  that `dev-smoke` could not test (two apps at once, say) fails rather than
+  passing as "not smoke-tested". The details are in
+  [the Renovate runbook](runbooks/renovate.md#auto-merge).
 - Tests come first where the change has testable behaviour. Review enforces it.
 - Two local guards stay on for agents: no unencrypted secret manifests, and no
   `terraform apply` without a plan.

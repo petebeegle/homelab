@@ -2,6 +2,7 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "prConcurrentLimit": 10,
   "dependencyDashboard": true,
+  "platformAutomerge": false,
   "labels": [
     "dependencies"
   ],
@@ -132,6 +133,46 @@
         ],
         "executionMode": "update"
       }
+    },
+    {
+      "description": "Auto-merge only what dev-smoke deploys and tests in development: the smoke-tested apps and the infrastructure development runs. Every file these paths match must be deployed by development (tools/renovate/tests/test_renovate_automerge.py). Renovate merges once every check is green, dev-smoke included (platformAutomerge is off); major updates stay manual.",
+      "matchFileNames": [
+        "kubernetes/apps/dev-runner/**",
+        "kubernetes/apps/home-assistant/base/**",
+        "kubernetes/apps/home-assistant/branch/**",
+        "kubernetes/apps/homepage/base/**",
+        "kubernetes/apps/homepage/branch/**",
+        "kubernetes/apps/homepage/development/**",
+        "kubernetes/apps/immich/base/**",
+        "kubernetes/apps/immich/branch/**",
+        "kubernetes/apps/jellyfin/base/**",
+        "kubernetes/apps/jellyfin/branch/**",
+        "kubernetes/apps/nexus/branch/**",
+        "kubernetes/apps/whoami/**",
+        "kubernetes/infra/controllers/cert-manager/**",
+        "kubernetes/infra/controllers/cert-manager-development/**",
+        "kubernetes/infra/controllers/cloudnative-pg/**",
+        "kubernetes/infra/controllers/intel-device-plugins/gpu/**",
+        "kubernetes/infra/controllers/intel-device-plugins/operator/**",
+        "kubernetes/infra/controllers/local-path-provisioner/**",
+        "kubernetes/infra/controllers/metrics-server/**",
+        "kubernetes/infra/controllers/nfs-csi/**",
+        "kubernetes/infra/controllers/onepassword-operator/**",
+        "kubernetes/infra/crds/**",
+        "kubernetes/infra/network/certs/**",
+        "kubernetes/infra/network/certs-development/**",
+        "kubernetes/infra/network/cilium/**",
+        "kubernetes/infra/network/gateway/**"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "digest",
+        "pin",
+        "pinDigest"
+      ],
+      "automerge": true,
+      "rebaseWhen": "conflicted"
     }
   ]
 }
