@@ -1,3 +1,4 @@
+const dgram = require("node:dgram");
 const { expect, test } = require("@playwright/test");
 
 const baseDomain = process.env.SMOKE_BASE_DOMAIN || "lab.petebeegle.com";
@@ -12,6 +13,45 @@ async function gotoOk(page, url) {
   expect(response, url + " should return an HTTP response").not.toBeNull();
   expect(response.status(), url + " should not return a server error").toBeLessThan(500);
   return response;
+}
+
+// Valheim is UDP only and has no DNS name of its own, so it is probed at its LoadBalancer IP
+// (kubernetes/apps/valheim/app.yaml) through the Steam query port, the game port + 1.
+const valheimAddress = "192.168.30.251";
+const valheimQueryPort = 2457;
+const valheimServerName = "arda";
+
+// Steam A2S_INFO: the server may first answer with a challenge to repeat the query with.
+function a2sInfo(address, port, timeoutMs = 5_000) {
+  const query = Buffer.concat([Buffer.from([0xff, 0xff, 0xff, 0xff, 0x54]), Buffer.from("Source Engine Query\0", "latin1")]);
+  return new Promise((resolve, reject) => {
+    const socket = dgram.createSocket("udp4");
+    const finish = (error, value) => {
+      clearTimeout(timer);
+      socket.close();
+      if (error) {
+        reject(error);
+      } else {
+        resolve(value);
+      }
+    };
+    const timer = setTimeout(() => finish(new Error("no A2S answer from " + address + ":" + port)), timeoutMs);
+    socket.on("error", (error) => finish(error));
+    socket.on("message", (message) => {
+      const kind = message[4];
+      if (kind === 0x41) {
+        socket.send(Buffer.concat([query, message.subarray(5, 9)]), port, address);
+        return;
+      }
+      if (kind !== 0x49) {
+        finish(new Error("unexpected A2S reply type 0x" + kind.toString(16)));
+        return;
+      }
+      const fields = message.subarray(6).toString("utf8").split("\0");
+      finish(null, { name: fields[0], map: fields[1] });
+    });
+    socket.send(query, port, address);
+  });
 }
 
 async function expectNotHomeAssistantOnboarding(page) {
@@ -99,5 +139,10 @@ test.describe("homelab routed services", () => {
   test("foundry reaches the unauthenticated application shell", async ({ page }) => {
     await gotoOk(page, urlFor("foundry"));
     await expect(page.locator("body")).toContainText(/Foundry|Game Worlds|Administration|Join Game Session|Setup/i);
+  });
+
+  test("valheim answers a Steam server query", async () => {
+    const info = await a2sInfo(valheimAddress, valheimQueryPort);
+    expect(info.name).toBe(valheimServerName);
   });
 });
