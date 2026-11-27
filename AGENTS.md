@@ -77,6 +77,10 @@ Synology NFS, Grafana/Loki/Mimir/Alloy.
   datasource checks.
 - Use CLI commands as a fallback when the API or MCP cannot provide the computed
   debug output.
+- `~/.kube/config` has no default context. For `kubectl`, `flux` or `talosctl`,
+  pass the cluster's file explicitly: `~/.kube/homelab-<cluster>.config` or
+  `~/.talos/homelab-<cluster>.config`. The `kd`/`kp` helpers exist only in
+  interactive shells. Details are in the README, "Working in the repo".
 
 ## Homelab Patterns
 
