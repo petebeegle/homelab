@@ -20,6 +20,28 @@ The checks are intentionally deeper than pod readiness and lighter than full aut
 - `pihole.${cluster_domain}` verifies the root redirect reaches the Pi-hole admin/login shell.
 - `foundry.${cluster_domain}` verifies the Foundry application shell.
 
+## From Outside
+
+The in-cluster job cannot see the internet path, and its alert goes silent when
+production is down. The `public-heartbeat` workflow covers both. It runs on a
+GitHub-hosted runner about twice an hour (GitHub fires schedules sparsely) and
+requests each host in `tools/synthetics/public-targets.json` through public DNS,
+Cloudflare, the tunnel and `gateway/public`. A failure fails the run, and GitHub
+emails the repo owner.
+
+- Each target names a path the app itself answers, an expected status, and a
+  body regex. Cloudflare reports a dead tunnel or origin as 5xx (502, 530), so a
+  target never expects 5xx, and the body proves the answer came from the app.
+  `onboard` routes only a few paths; `/oauth/callback` without a code answers
+  the app's own 400.
+- A test fails when a hostname in the cloudflared config has no target, so a new
+  public host is watched from outside as soon as it is added.
+- Each target gets three tries 20 seconds apart before it counts as down.
+- Run it locally with `python3 tools/synthetics/public_heartbeat.py`, or start
+  it from the Actions tab (`workflow_dispatch`).
+
+LAN and VPN hosts are out of its reach and stay with the in-cluster job.
+
 ## Manual Run
 
 Source the opt-in cluster aliases before running manual smoke commands. These

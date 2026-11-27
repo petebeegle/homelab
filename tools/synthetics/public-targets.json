@@ -1,0 +1,14 @@
+[
+  {
+    "host": "foundry.petebeegle.com",
+    "path": "/",
+    "status": 200,
+    "bodyRegex": "Foundry Virtual Tabletop"
+  },
+  {
+    "host": "onboard.petebeegle.com",
+    "path": "/oauth/callback",
+    "status": 400,
+    "bodyRegex": "missing discord oauth code"
+  }
+]

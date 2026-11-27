@@ -1,0 +1,24 @@
+name: public-heartbeat
+
+# Production's alerting lives in production, so it is silent when production is down. This
+# runs on a GitHub-hosted runner, requests every internet-public host through public DNS,
+# Cloudflare, the tunnel and gateway/public, and fails (GitHub emails the repo owner) when
+# one does not answer as its app would. Targets: tools/synthetics/public-targets.json.
+on:
+  schedule:
+    - cron: '23,53 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  heartbeat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Request the public hosts
+        run: python3 tools/synthetics/public_heartbeat.py
