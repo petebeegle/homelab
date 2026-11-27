@@ -1,7 +1,12 @@
-# The S3 endpoint for Terraform state: Versity S3 Gateway as a Container Manager project on
-# the docker share. Objects and their old versions are plain files under /volume2/docker/s3.
+# The S3 endpoint for Terraform state: Versity S3 Gateway, a Container Manager project on the
+# docker share. Objects and their old versions are plain files under /volume2/docker/s3.
 # https://s3.petebeegle.com reaches it through a reverse proxy entry set by hand
 # (scripts/SYNOLOGY.md). Decision: docs/decisions.md ("Terraform state lives in S3 on the NAS").
+#
+# Terraform owns the folders, the keys and the .env file the project reads them from. The
+# project itself (scripts/synology/s3/docker-compose.yaml) is applied by hand in Container
+# Manager, like Nexus: provider 0.6.11's synology_container_project starts a project and then
+# fails to decode the build log, dropping it from state, and cannot record an update.
 
 resource "synology_filestation_folder" "s3" {
   for_each = toset(["data", "versions"])
@@ -22,6 +27,8 @@ resource "random_password" "s3_secret_key" {
   special = false
 }
 
+# Compose reads ${ROOT_ACCESS_KEY} and ${ROOT_SECRET_KEY} from .env in the project folder, so
+# the keys never appear in the project's YAML, which Container Manager shows in its UI.
 resource "synology_filestation_file" "s3_env" {
   path      = "/docker/s3/.env"
   overwrite = true
@@ -30,45 +37,13 @@ resource "synology_filestation_file" "s3_env" {
   depends_on = [synology_filestation_folder.s3]
 }
 
-# The compose file stays the source (Renovate tracks its image), but the project is described
-# through `services`: provider 0.6.11 replaces a literal `content` with one built from `services`
-# and fails the plan.
-locals {
-  s3_service = yamldecode(file("${path.module}/../../../scripts/synology/s3/docker-compose.yaml")).services.versitygw
-}
+# Created by #556's apply and imported afterwards; let go of it without stopping the container.
+removed {
+  from = synology_container_project.s3
 
-resource "synology_container_project" "s3" {
-  name       = "s3"
-  share_path = "/docker/s3"
-  run        = true
-
-  services = {
-    versitygw = {
-      image          = local.s3_service.image
-      container_name = local.s3_service.container_name
-      restart        = local.s3_service.restart
-      command        = local.s3_service.command
-      # Compose fills these from .env in the project folder (synology_filestation_file.s3_env).
-      # The keys must not appear here: the provider computes the project's `content` from
-      # `services` without a sensitive mark, so every plan would print them.
-      environment = {
-        ROOT_ACCESS_KEY = "$${ROOT_ACCESS_KEY}"
-        ROOT_SECRET_KEY = "$${ROOT_SECRET_KEY}"
-      }
-      ports = [for port in local.s3_service.ports : {
-        host_ip   = split(":", port)[0]
-        published = split(":", port)[1]
-        target    = tonumber(split(":", port)[2])
-      }]
-      volumes = [for volume in local.s3_service.volumes : {
-        type   = "bind"
-        source = split(":", volume)[0]
-        target = split(":", volume)[1]
-      }]
-    }
+  lifecycle {
+    destroy = false
   }
-
-  depends_on = [synology_filestation_folder.s3, synology_filestation_file.s3_env]
 }
 
 output "s3_access_key" {

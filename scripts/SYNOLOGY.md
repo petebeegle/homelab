@@ -86,10 +86,13 @@ Navigate to `Control Panel > Task Scheduler` and `Create` a new `Scheduled Task 
 ## 6. S3 gateway for Terraform state
 Versity S3 Gateway serves the `terraform-state` bucket that every Terraform root
 keeps its state in (decision: [docs/decisions.md](../docs/decisions.md#terraform-state-lives-in-s3-on-the-nas)).
-`terraform/external/synology/s3.tf` runs it as the Container Manager project
-`s3` on the `docker` share, from [`s3/docker-compose.yaml`](synology/s3/docker-compose.yaml).
-It listens on the NAS loopback only (`127.0.0.1:7070`), and its objects, with
-their old versions, are plain files under `/volume2/docker/s3`.
+It runs as the Container Manager project `s3` in `/volume2/docker/s3`, from
+[`s3/docker-compose.yaml`](synology/s3/docker-compose.yaml), applied by hand.
+`terraform/external/synology/s3.tf` creates the folders and the keys, and writes
+them to `/volume2/docker/s3/.env`, which Compose reads from the project folder.
+The project's YAML only says `${ROOT_ACCESS_KEY}`, so the keys never show in
+Container Manager. It listens on the NAS loopback only (`127.0.0.1:7070`), and
+its objects, with their old versions, are plain files under `/volume2/docker/s3`.
 
 One-time setup:
 
@@ -97,16 +100,20 @@ One-time setup:
 2. Create its certificate ([3](#3-creating-certificates)), add the reverse proxy
    entry ([2](#2-adding-reverse-proxies)), and assign the certificate to it
    ([4](#4-configure-certificates)).
-3. Deploy the gateway:
+3. Create the folders, the keys and `.env`:
    ```sh
    terraform -chdir=terraform/external/synology apply
    ```
-   The keys reach the container through `/volume2/docker/s3/.env`, which Compose
-   reads from the project folder. The project itself only says `${ROOT_ACCESS_KEY}`:
-   the provider prints the project's content in every plan without masking it, so
-   the keys must never be in `services`. To rotate them, add
+   Then deploy the gateway: in `Container Manager > Project`, create the project
+   `s3` with path `/docker/s3`, paste
+   [`s3/docker-compose.yaml`](synology/s3/docker-compose.yaml) as its YAML, and
+   build it. If the project already exists, `Action > Edit` and paste the file
+   instead.
+
+   To rotate the keys, add
    `-replace=random_password.s3_access_key -replace=random_password.s3_secret_key`
-   to the apply, then update the 1Password item (step 4).
+   to the apply, rebuild the project so the container reads the new `.env`, then
+   update the 1Password item (step 4).
 4. Store its keys in 1Password as the item `Terraform state S3` in the `cluster bootstrap` vault, without printing them:
    ```sh
    cd terraform/external/synology
@@ -123,3 +130,7 @@ One-time setup:
    ```
    `curl -s -o /dev/null -w '%{http_code}\n' https://s3.petebeegle.com/` answers
    `403` (unsigned) once the proxy, certificate and gateway are all in place.
+
+Updating the gateway (a Renovate image bump to `s3/docker-compose.yaml`): after
+the PR merges, `Container Manager > Project > s3 > Action > Edit`, paste the file,
+and build. Terraform does not deploy it.

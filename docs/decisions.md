@@ -139,8 +139,12 @@ used for the migration was removed in November 2026.
   `use_lockfile` for locking (#486). The NAS outlives both clusters, so state is
   there when a cluster has to be rebuilt. Loki and Mimir's MinIO and
   CloudNativePG run inside production and are ruled out for the same reason.
-- The server is Versity S3 Gateway (`versitygw`), a Container Manager project
-  managed by `terraform/external/synology/s3.tf`. Its POSIX backend stores
+- The server is Versity S3 Gateway (`versitygw`), the Container Manager project
+  `s3`, applied by hand from `scripts/synology/s3/docker-compose.yaml` like
+  Nexus. `terraform/external/synology/s3.tf` owns its folders, keys and `.env`.
+  The Synology provider's `synology_container_project` (0.6.11) is not used: it
+  starts a project and then fails to decode the build log, dropping it from
+  state, and it cannot record an update. Its POSIX backend stores
   objects, and old versions, as plain files under `/volume2/docker/s3`. MinIO
   was the first choice, but its open-source project is archived and its images
   were withdrawn in 2025. Garage has no object versioning.
