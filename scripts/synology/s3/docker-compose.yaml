@@ -1,6 +1,7 @@
 # Versity S3 Gateway on the NAS: the S3 endpoint for Terraform state (#486).
-# terraform/external/synology/s3.tf reads this file with yamldecode() and deploys it,
-# replacing the two credential placeholders. Plain HTTP on the NAS loopback only; the
+# The Container Manager project "s3" in /volume2/docker/s3, applied by hand from this file
+# (scripts/SYNOLOGY.md section 6). Compose fills the keys from .env in that folder, which
+# terraform/external/synology/s3.tf writes. Plain HTTP on the NAS loopback only; the
 # Synology reverse proxy serves it as https://s3.petebeegle.com.
 # See docs/decisions.md ("Terraform state lives in S3 on the NAS").
 services:
@@ -14,8 +15,8 @@ services:
       - /versions
       - /data
     environment:
-      ROOT_ACCESS_KEY: set-by-terraform
-      ROOT_SECRET_KEY: set-by-terraform
+      ROOT_ACCESS_KEY: ${ROOT_ACCESS_KEY}
+      ROOT_SECRET_KEY: ${ROOT_SECRET_KEY}
     ports:
       - "127.0.0.1:7070:7070"
     volumes:
