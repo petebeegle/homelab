@@ -21,6 +21,10 @@ jobs:
     name: classify
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
+    # contents: write only to build and delete the temporary base-smoke/pr-<N> merge branch.
+    permissions:
+      contents: write
+      pull-requests: read
     outputs:
       tested: ${{ steps.classify.outputs.tested }}
       app: ${{ steps.classify.outputs.app }}
@@ -52,27 +56,21 @@ jobs:
             echo "reason=$(jq -r '.reason | gsub("[\\r\\n]"; " ")' classification.json)"
             echo "automerge=$(jq -r '.automerge' classification.json)"
           } >> "$GITHUB_OUTPUT"
-      # Judge the PR as it would land, GitHub's test merge onto main (a stale head would show
-      # main's newer changes as the PR's, and run main's probes against the old app). Asking for
-      # the PR makes GitHub recompute that merge; the smoke and base jobs both deploy it.
-      - name: Ask GitHub for a fresh merge of the PR onto main
+      # Not an app-only PR: does it change anything the development cluster runs? Judge the PR
+      # as it would land, merged onto current main (a stale head would show main's newer changes
+      # as the PR's). The base job builds its own merge again when it gets the runner.
+      - name: Merge the PR onto current main
         id: merge
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          set -euo pipefail
-          for _ in $(seq 1 12); do
-            mergeable=$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}" --jq '.mergeable')
-            [ "$mergeable" != null ] && break
-            sleep 5
-          done
-          echo "mergeable=${mergeable}" >> "$GITHUB_OUTPUT"
+        if: steps.classify.outputs.tested != 'true'
+        uses: ./.github/actions/pr-merge
+        with:
+          branch: base-smoke/pr-${{ github.event.pull_request.number }}
+          token: ${{ github.token }}
       - name: Check out the PR merged onto main, as data
         if: steps.classify.outputs.tested != 'true' && steps.merge.outputs.mergeable == 'true'
         uses: actions/checkout@v6
         with:
-          ref: refs/pull/${{ github.event.pull_request.number }}/merge
+          ref: ${{ steps.merge.outputs.sha }}
           path: pr
           # Depth 2 so the merge's first parent (main) is present to compare against.
           fetch-depth: 2
@@ -84,14 +82,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           MERGEABLE: ${{ steps.merge.outputs.mergeable }}
+          MERGE_REASON: ${{ steps.merge.outputs.reason }}
         run: |
           set -euo pipefail
           if [ "$MERGEABLE" != true ]; then
-            { echo "base=false"; echo "reason=GitHub has no merge of this PR onto main (mergeable=${MERGEABLE}); rebase it"; } >> "$GITHUB_OUTPUT"
+            { echo "base=false"; echo "reason=${MERGE_REASON}"; } >> "$GITHUB_OUTPUT"
             exit 0
           fi
           if [ "$(git -C pr rev-parse HEAD^1)" != "$(git rev-parse HEAD)" ]; then
-            { echo "base=false"; echo "reason=refs/pull/${PR_NUMBER}/merge is not a merge onto current main (main moved); re-run all jobs, not only the failed one, so classify refreshes it"; } >> "$GITHUB_OUTPUT"
+            { echo "base=false"; echo "reason=the merge is not a merge onto current main (main moved while classify ran); re-run it"; } >> "$GITHUB_OUTPUT"
             exit 0
           fi
           gh api --paginate "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" --jq '.[].filename' \
@@ -109,6 +108,15 @@ jobs:
               echo "base=false"; echo "reason=changes nothing the development cluster runs (production-only paths are covered by Flux render)"
             fi
           } >> "$GITHUB_OUTPUT"
+      - name: Delete the temporary branch
+        if: always() && steps.classify.outputs.tested != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: >-
+          curl -sS -o /dev/null -w 'delete base-smoke/pr-%{http_code}\n' -X DELETE
+          -H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json"
+          "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/git/refs/heads/base-smoke/pr-${PR_NUMBER}" || true
 
   smoke:
     name: smoke
@@ -116,7 +124,7 @@ jobs:
     if: github.event.pull_request.head.repo.full_name == github.repository && needs.classify.outputs.tested == 'true'
     runs-on: homelab-dev
     timeout-minutes: 20
-    # contents: write only to publish and delete the temporary pr-smoke/pr-<N> branch.
+    # contents: write only to build and delete the temporary pr-smoke/pr-<N> merge branch.
     permissions:
       contents: write
     steps:
@@ -124,47 +132,24 @@ jobs:
         with:
           ref: main
           persist-credentials: false
-      - name: Check out the PR merged onto main, as data
-        uses: actions/checkout@v6
-        with:
-          ref: refs/pull/${{ github.event.pull_request.number }}/merge
-          path: pr
-          # Depth 2 so the merge's first parent (main) is present to compare against.
-          fetch-depth: 2
-          persist-credentials: false
-      - name: The merge must be onto current main
-        id: merge
-        env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          set -euo pipefail
-          git fetch --quiet --depth=1 origin main
-          if [ "$(git -C pr rev-parse HEAD^1)" != "$(git rev-parse FETCH_HEAD)" ]; then
-            echo "::error::refs/pull/${PR_NUMBER}/merge is not a merge onto current main (main moved); re-run all jobs, not only the failed one, so classify refreshes it"
-            exit 1
-          fi
-          echo "sha=$(git -C pr rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - name: Development cluster kubeconfig
         uses: ./.github/actions/dev-kubeconfig
-      # The probes come from main, so deploy what merging would land, not the PR head: a head
-      # behind main would be judged by main's probes against the old app. Flux cannot fetch
-      # refs/pull/<N>/merge, so point a temporary branch at that commit.
-      - name: Publish the merge as a temporary branch for Flux
+      # The probes come from main, so deploy what merging would land now, not the PR head: a head
+      # behind main would be judged by main's probes against the old app (#433). Built here, when
+      # the job has the runner, so a main that moved while it queued is included.
+      - name: Merge the PR onto current main
+        id: merge
+        uses: ./.github/actions/pr-merge
+        with:
+          branch: pr-smoke/pr-${{ github.event.pull_request.number }}
+          token: ${{ github.token }}
+      - name: Stop on a conflict
+        if: steps.merge.outputs.mergeable != 'true'
         env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          MERGE_SHA: ${{ steps.merge.outputs.sha }}
+          REASON: ${{ steps.merge.outputs.reason }}
         run: |
-          set -euo pipefail
-          api="${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/git"
-          auth=(-H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json")
-          ref="refs/heads/pr-smoke/pr-${PR_NUMBER}"
-          if curl -fsS "${auth[@]}" "${api}/ref/heads/pr-smoke/pr-${PR_NUMBER}" >/dev/null 2>&1; then
-            curl -fsS -X PATCH "${auth[@]}" "${api}/${ref}" -d "{\"sha\":\"${MERGE_SHA}\",\"force\":true}" >/dev/null
-          else
-            curl -fsS -X POST "${auth[@]}" "${api}/refs" -d "{\"ref\":\"${ref}\",\"sha\":\"${MERGE_SHA}\"}" >/dev/null
-          fi
-          echo "published ${ref} at ${MERGE_SHA}"
+          echo "::error::${REASON}"
+          exit 1
       - name: Install browser test dependencies
         if: needs.classify.outputs.browser == 'true'
         working-directory: tests/browser
@@ -229,7 +214,7 @@ jobs:
     if: github.event.pull_request.head.repo.full_name == github.repository && needs.classify.outputs.base == 'true'
     runs-on: homelab-dev
     timeout-minutes: 60
-    # contents: write only to publish and delete the temporary base-smoke/pr-<N> branch.
+    # contents: write only to build and delete the temporary base-smoke/pr-<N> merge branch.
     permissions:
       contents: write
     steps:
@@ -237,47 +222,32 @@ jobs:
         with:
           ref: main
           persist-credentials: false
+      - name: Development cluster kubeconfig
+        id: kubeconfig
+        uses: ./.github/actions/dev-kubeconfig
+      # Built again here, not reused from classify, so a main that moved while the job queued
+      # is included.
+      - name: Merge the PR onto current main
+        id: merge
+        uses: ./.github/actions/pr-merge
+        with:
+          branch: base-smoke/pr-${{ github.event.pull_request.number }}
+          token: ${{ github.token }}
+      - name: Stop on a conflict
+        if: steps.merge.outputs.mergeable != 'true'
+        env:
+          REASON: ${{ steps.merge.outputs.reason }}
+        run: |
+          echo "::error::${REASON}"
+          exit 1
       - name: Check out the PR merged onto main, as data
         uses: actions/checkout@v6
         with:
-          ref: refs/pull/${{ github.event.pull_request.number }}/merge
+          ref: ${{ steps.merge.outputs.sha }}
           path: pr
           # Depth 2 so the merge's first parent (main) is present to compare against.
           fetch-depth: 2
           persist-credentials: false
-      - name: The merge must be onto current main
-        id: merge
-        env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          set -euo pipefail
-          git fetch --quiet --depth=1 origin main
-          if [ "$(git -C pr rev-parse HEAD^1)" != "$(git rev-parse FETCH_HEAD)" ]; then
-            echo "::error::refs/pull/${PR_NUMBER}/merge is not a merge onto current main (main moved); re-run all jobs, not only the failed one, so classify refreshes it"
-            exit 1
-          fi
-          echo "sha=$(git -C pr rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-      - name: Development cluster kubeconfig
-        id: kubeconfig
-        uses: ./.github/actions/dev-kubeconfig
-      # Flux cannot fetch refs/pull/<N>/merge, so point a temporary branch at that commit.
-      # curl, not gh: the runner image has no gh CLI. api.github.com is inside its egress fence.
-      - name: Publish the merge as a temporary branch for Flux
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          MERGE_SHA: ${{ steps.merge.outputs.sha }}
-        run: |
-          set -euo pipefail
-          api="${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/git"
-          auth=(-H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json")
-          ref="refs/heads/base-smoke/pr-${PR_NUMBER}"
-          if curl -fsS "${auth[@]}" "${api}/ref/heads/base-smoke/pr-${PR_NUMBER}" >/dev/null 2>&1; then
-            curl -fsS -X PATCH "${auth[@]}" "${api}/${ref}" -d "{\"sha\":\"${MERGE_SHA}\",\"force\":true}" >/dev/null
-          else
-            curl -fsS -X POST "${auth[@]}" "${api}/refs" -d "{\"ref\":\"${ref}\",\"sha\":\"${MERGE_SHA}\"}" >/dev/null
-          fi
-          echo "published ${ref} at ${MERGE_SHA}"
       - name: Install browser test dependencies
         working-directory: tests/browser
         run: npm install --no-audit --no-fund

@@ -9,10 +9,10 @@ PR that breaks development's networking cannot take the restore down with it.
 2. Stamp and suspend the root `flux-system` Kustomization. The root re-applies every
    child's spec, so it would undo step 4 while it runs.
 3. Create GitRepository `base-pr-<N>`: flux-system's repository and deploy key at
-   branch `base-smoke/pr-<N>`, which the workflow publishes at GitHub's test merge of
-   the PR onto main (Flux cannot fetch refs/pull/*/merge itself) and always deletes.
+   branch `base-smoke/pr-<N>`, on which the workflow merges the PR onto current main
+   (.github/actions/pr-merge) and which it always deletes.
    Never the PR head: a branch behind main would roll development back. `--sha` is
-   that merge commit, which the workflow has checked is a merge onto current main.
+   that merge commit.
 4. Render the PR's kubernetes/clusters/development/{infra,apps} (data only) and apply
    every child Kustomization with its sourceRef pointed at `base-pr-<N>`.
 5. Wait until every Kustomization from the PR has applied that commit and is Ready,
@@ -317,7 +317,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     p.add_argument("--max-age-seconds", type=int, default=3600,
                    help="with --recover-stale: how old the stamp must be (0 = restore now, for the job's own cleanup)")
     p.add_argument("--pr", type=int)
-    p.add_argument("--sha", help="the commit refs/pull/<N>/merge points at")
+    p.add_argument("--sha", help="the merge commit of the PR onto main that base-smoke/pr-<N> points at")
     p.add_argument("--head-dir", type=Path, help="checkout of the PR head (rendered as data only)")
     p.add_argument("--base-dir", type=Path, default=Path("."), help="checkout of main (the tools that run)")
     a = p.parse_args(argv)

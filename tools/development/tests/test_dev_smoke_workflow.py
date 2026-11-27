@@ -36,6 +36,21 @@ def indented_blocks(text: str, header: str, indent: int) -> list[str]:
     return re.findall(pattern, text + "\n")
 
 
+def assert_merges_onto_main(test: unittest.TestCase, steps: list[str], branch: str) -> str:
+    """The one step that builds the PR merged onto current main on `branch`, with id merge."""
+    merge = [s for s in steps if "./.github/actions/pr-merge" in s]
+    test.assertEqual(len(merge), 1)
+    test.assertRegex(merge[0], r"(?m)^\s+id: merge$")
+    test.assertIn(f"branch: {branch}", merge[0])
+    return merge[0]
+
+
+def assert_deletes_always(test: unittest.TestCase, steps: list[str], branch: str) -> None:
+    delete = [s for s in steps if "-X DELETE" in s and f"git/refs/heads/{branch}" in s]
+    test.assertEqual(len(delete), 1, branch)
+    test.assertIn("if: always()", delete[0])
+
+
 class DevSmokeWorkflowTest(unittest.TestCase):
     def test_trigger_is_pull_request_target_without_path_filters(self) -> None:
         text = read()
@@ -65,9 +80,9 @@ class DevSmokeWorkflowTest(unittest.TestCase):
         self.assertGreaterEqual(len(checkout_withs), 2, "classify and smoke both check out")
         for block in checkout_withs:
             self.assertRegex(block, r"(?m)^\s+persist-credentials: false$")
-            if "refs/pull/" in block:
-                # The PR merged onto main (GitHub's test merge), checked out only as data into pr/.
-                self.assertRegex(block, r"(?m)^\s+ref: refs/pull/\$\{\{ github\.event\.pull_request\.number \}\}/merge$")
+            if "steps.merge" in block:
+                # The PR merged onto current main by the pr-merge action, checked out only as data into pr/.
+                self.assertRegex(block, r"(?m)^\s+ref: \$\{\{ steps\.merge\.outputs\.sha \}\}$")
                 self.assertRegex(block, r"(?m)^\s+path: pr$")
                 self.assertRegex(block, r"(?m)^\s+fetch-depth: 2$", "HEAD^1 must exist to check the merge")
             else:
@@ -103,29 +118,32 @@ class DevSmokeWorkflowTest(unittest.TestCase):
         self.assertIn("--max-age-seconds 0", restore[0])
         self.assertTrue(any("upload-artifact" in s and "if: always()" in s for s in steps))
 
-    def test_a_stale_merge_says_to_rerun_every_job(self) -> None:
-        # Re-running only the failed job reuses classify's stale merge ref; a full re-run refreshes it.
-        self.assertIn("re-run all jobs", jobs(read())["base"])
+    def test_no_job_trusts_githubs_test_merge_ref(self) -> None:
+        # GitHub does not reliably recompute refs/pull/<N>/merge when main moves (#547 stayed on a
+        # main three merges old), so every job builds its own merge onto current main.
+        self.assertNotIn("refs/pull/", read())
 
-    def test_the_merge_must_be_onto_current_main(self) -> None:
-        text = read()
-        for job in ("classify", "smoke", "base"):
-            block = jobs(text)[job]
-            self.assertIn('git -C pr rev-parse HEAD^1', block, f"{job} must check the merge's first parent")
-            self.assertIn("is not a merge onto current main", block, job)
+    def test_classify_renders_a_merge_onto_the_main_it_checked_out(self) -> None:
+        classify = jobs(read())["classify"]
+        self.assertIn('git -C pr rev-parse HEAD^1', classify)
+        self.assertIn("is not a merge onto current main", classify)
 
-    def test_base_job_publishes_the_merge_as_a_temporary_branch_and_always_deletes_it(self) -> None:
+    def test_classify_merges_only_for_untested_prs_and_always_deletes_its_branch(self) -> None:
+        classify = jobs(read())["classify"]
+        self.assertRegex(classify, r"(?m)^    permissions:\n      contents: write\n      pull-requests: read$")
+        steps = re.split(r"\n      - ", classify)
+        merge = assert_merges_onto_main(self, steps, "base-smoke/pr-${{ github.event.pull_request.number }}")
+        self.assertIn("if: steps.classify.outputs.tested != 'true'", merge)
+        assert_deletes_always(self, steps, "base-smoke/pr-${PR_NUMBER}")
+
+    def test_base_job_deploys_its_own_merge_onto_current_main_and_always_deletes_it(self) -> None:
         base = jobs(read())["base"]
         self.assertRegex(base, r"(?m)^    permissions:\n      contents: write$")
         steps = re.split(r"\n      - ", base)
-        publish = [s for s in steps if "Publish the merge" in s]
-        self.assertEqual(len(publish), 1)
-        self.assertIn('ref="refs/heads/base-smoke/pr-${PR_NUMBER}"', publish[0])
-        self.assertIn("-X POST", publish[0])
-        self.assertIn("${MERGE_SHA}", publish[0])
-        delete = [s for s in steps if "-X DELETE" in s and "git/refs/heads/base-smoke/pr-${PR_NUMBER}" in s]
-        self.assertEqual(len(delete), 1)
-        self.assertIn("if: always()", delete[0])
+        merge = assert_merges_onto_main(self, steps, "base-smoke/pr-${{ github.event.pull_request.number }}")
+        self.assertLess(steps.index(merge), next(i for i, s in enumerate(steps) if "base_smoke.py --kubeconfig" in s and "--pr" in s))
+        self.assertTrue(any("mergeable != 'true'" in s or 'MERGEABLE" != true' in s for s in steps), "stop on a conflict")
+        assert_deletes_always(self, steps, "base-smoke/pr-${PR_NUMBER}")
 
     def test_runner_jobs_use_only_tools_the_runner_image_has(self) -> None:
         # The runner image has kubectl, flux, curl, node and python, but no gh CLI.
@@ -136,8 +154,8 @@ class DevSmokeWorkflowTest(unittest.TestCase):
         base = jobs(read())["base"]
         steps = re.split(r"\n      - ", base)
         kubeconfig = next(i for i, s in enumerate(steps) if "dev-kubeconfig" in s)
-        publish = next(i for i, s in enumerate(steps) if "Publish the merge" in s)
-        self.assertLess(kubeconfig, publish, "a failed publish must still leave the restore step a kubeconfig")
+        merge = next(i for i, s in enumerate(steps) if "./.github/actions/pr-merge" in s)
+        self.assertLess(kubeconfig, merge, "a failed merge must still leave the restore step a kubeconfig")
 
     def test_base_smoke_receives_cancellation_signals_directly(self) -> None:
         # bash does not forward SIGINT/SIGTERM to a foreground child; a cancelled run would leave
@@ -153,12 +171,6 @@ class DevSmokeWorkflowTest(unittest.TestCase):
         for script in indented_blocks(text, "run: |", 8):
             self.assertNotIn("${{ github.event.", script, "untrusted event data must reach scripts through env")
 
-    def test_every_pr_gets_a_fresh_merge_onto_main(self) -> None:
-        # The smoke job deploys the merge too, so classify asks for it whatever the PR is.
-        classify = jobs(read())["classify"]
-        step = next(s for s in re.split(r"\n      - ", classify) if "Ask GitHub for a fresh merge" in s)
-        self.assertNotRegex(step, r"(?m)^        if: ")
-
     def test_smoke_job_deploys_the_merge_onto_main_not_the_pr_head(self) -> None:
         # The probes come from main. A head that is behind main would run them against the old
         # app, and a pass would not describe what merging lands (#433).
@@ -166,20 +178,14 @@ class DevSmokeWorkflowTest(unittest.TestCase):
         self.assertNotIn("head.ref", smoke)
         self.assertRegex(smoke, r"(?m)^    permissions:\n      contents: write$")
         steps = re.split(r"\n      - ", smoke)
-        publish = [s for s in steps if "Publish the merge" in s]
-        self.assertEqual(len(publish), 1)
-        self.assertIn('ref="refs/heads/pr-smoke/pr-${PR_NUMBER}"', publish[0])
-        self.assertIn("${MERGE_SHA}", publish[0])
+        merge = assert_merges_onto_main(self, steps, "pr-smoke/pr-${{ github.event.pull_request.number }}")
         run = [s for s in steps if "verify_branch_deploy.py" in s]
         self.assertEqual(len(run), 1)
         self.assertIn('--branch "pr-smoke/pr-${PR_NUMBER}"', run[0])
-        delete = [s for s in steps if "-X DELETE" in s and "git/refs/heads/pr-smoke/pr-${PR_NUMBER}" in s]
-        self.assertEqual(len(delete), 1)
-        self.assertIn("if: always()", delete[0])
-        self.assertLess(
-            next(i for i, s in enumerate(steps) if "dev-kubeconfig" in s),
-            steps.index(publish[0]),
-        )
+        self.assertLess(steps.index(merge), steps.index(run[0]))
+        self.assertTrue(any("mergeable != 'true'" in s or 'MERGEABLE" != true' in s for s in steps), "stop on a conflict")
+        assert_deletes_always(self, steps, "pr-smoke/pr-${PR_NUMBER}")
+        self.assertLess(next(i for i, s in enumerate(steps) if "dev-kubeconfig" in s), steps.index(merge))
 
     def test_smoke_job_runs_on_the_dev_runner_with_a_timeout(self) -> None:
         smoke = jobs(read())["smoke"]

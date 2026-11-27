@@ -52,7 +52,7 @@ picked up automatically.
   `kubernetes/apps/<app>/` directory and that app's profile in
   `tools/development/smoke-profiles/` has `"prSmoke": true` (today: `whoami`,
   `homepage`, `home-assistant`, `jellyfin`, `immich` and
-  `nexus`). It publishes GitHub's merge of the PR onto current `main` as the
+  `nexus`). When it gets the runner, it merges the PR onto current `main` on the
   temporary branch `pr-smoke/pr-<N>`, creates a branch environment from it in
   the development cluster, checks it with the profile from `main`, runs the
   browser test where the profile has one, and removes the environment and the
@@ -60,19 +60,25 @@ picked up automatically.
   `main` from being judged by `main`'s probes against the old app.
 - **Base smoke** (`base` job): the PR changes something the development cluster
   itself runs. `tools/development/affected_dev.py` decides by rendering each
-  development Flux Kustomization at `main` and at GitHub's merge of the PR onto
-  `main` (so a change through a shared base or patch counts, and a
+  development Flux Kustomization at `main` and at the PR merged onto `main` (so a change through a shared base or patch counts, and a
   production-only path does not). `tools/development/base_smoke.py` then:
-  1. publishes that merge as the temporary branch `base-smoke/pr-<N>`;
+  1. merges the PR onto `main` again, as it is when the job gets the runner, on
+     the temporary branch `base-smoke/pr-<N>`;
   2. suspends development's root Kustomization and points every child at that
      branch;
   3. waits for every Kustomization and HelmRelease to be Ready;
   4. runs the whoami and homepage smoke tests (from `main`) on top as canaries;
   5. always restores `main` and deletes the branch.
 
+  Each job builds its merge itself, through the `.github/actions/pr-merge`
+  action: it points the temporary branch at current `main`, then has GitHub
+  merge the PR head into it (`POST /merges`). GitHub's own
+  `refs/pull/<N>/merge` is not used, because it is not reliably recomputed when
+  `main` moves, and a stale one made queued runs fail or skip their test.
+
   A PR that changes development's Flux bootstrap (`flux-system/`),
-  `cluster-vars.yaml` or entrypoint is refused, and so is one GitHub cannot merge
-  onto current `main` (rebase it). If a killed job leaves the root suspended,
+  `cluster-vars.yaml` or entrypoint is refused, and so is one that conflicts with
+  `main` (rebase it). If a killed job leaves the root suspended,
   `dev-cleanup` and every smoke run restore it after an hour
   (`base_smoke.py --recover-stale`).
 
