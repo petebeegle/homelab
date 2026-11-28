@@ -120,5 +120,50 @@ class TerraformLockFileTest(unittest.TestCase):
                     self.assertEqual(locked.get(source), version)
 
 
+def tracked_files() -> list[str]:
+    import subprocess
+    out = subprocess.run(["git", "ls-files"], cwd=REPO_ROOT, check=True, capture_output=True, text=True)
+    return out.stdout.splitlines()
+
+
+def python_regex(renovate: str) -> re.Pattern[str]:
+    """Renovate writes JavaScript regexes: /.../ for file patterns, (?<name>) for groups."""
+    if renovate.startswith("/") and renovate.endswith("/"):
+        renovate = renovate[1:-1]
+    return re.compile(renovate.replace("(?<", "(?P<").replace("(?P<=", "(?<=").replace("(?P<!", "(?<!"))
+
+
+class CustomManagerTest(unittest.TestCase):
+    def test_every_regex_manager_finds_its_version_in_a_tracked_file(self) -> None:
+        # A pattern that names an ignored file (terraform.tfvars) never runs, and
+        # Renovate does not say so.
+        files = tracked_files()
+        for manager in config().get("customManagers", []):
+            patterns = [python_regex(p) for p in manager["managerFilePatterns"]]
+            matched = [f for f in files if any(p.search(f) for p in patterns)]
+            with self.subTest(patterns=manager["managerFilePatterns"]):
+                self.assertTrue(matched, "no tracked file matches")
+                for string in manager["matchStrings"]:
+                    regex = python_regex(string)
+                    self.assertTrue(
+                        any(regex.search((REPO_ROOT / f).read_text(encoding="utf-8")) for f in matched),
+                        f"no matched file contains {string}",
+                    )
+
+
+class TalosVersionTest(unittest.TestCase):
+    def default(self, root: str) -> str | None:
+        text = (REPO_ROOT / "terraform" / root / "variables.tf").read_text(encoding="utf-8")
+        block = text.split('variable "talos_version" {', 1)[1].split("\n}", 1)[0]
+        match = re.search(r'default\s*=\s*"([^"]+)"', block)
+        return match.group(1) if match else None
+
+    def test_both_clusters_pin_the_same_talos_version_in_git(self) -> None:
+        # It was only ever set in the ignored terraform.tfvars, so a restore could not plan.
+        production, development = self.default("production"), self.default("development")
+        self.assertRegex(production or "", r"^v\d+\.\d+\.\d+$")
+        self.assertEqual(production, development)
+
+
 if __name__ == "__main__":
     unittest.main()

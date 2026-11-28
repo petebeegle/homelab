@@ -80,6 +80,8 @@ variable "nodes" {
 variable "talos_version" {
   description = "The version of Talos to use for the cluster"
   type        = string
+  # Matches the nodes; Renovate bumps it. Upgrading the nodes is docs/runbooks/upgrade-talos.md.
+  default = "v1.12.1"
 }
 
 variable "kubernetes_version" {
