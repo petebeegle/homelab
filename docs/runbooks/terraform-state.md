@@ -32,6 +32,29 @@ Every `init`, `plan` and `apply` needs them, including a hand run of
 development root. Without them, `init` fails with "No valid credential sources
 found". The `ci.yml` checks run `init -backend=false` and need no keys.
 
+## Inputs: `terraform.tfvars`
+
+Each root's `terraform.tfvars` is ignored by git and kept in 1Password as the
+document "Terraform tfvars <root>" (for example "Terraform tfvars
+external/grafana") in the "cluster bootstrap" vault. In a fresh clone, put them
+in place without printing them:
+
+```sh
+tools/terraform/fetch_tfvars.sh            # every root
+tools/terraform/fetch_tfvars.sh production # or just some
+```
+
+It keeps any `terraform.tfvars` already there and exits non-zero if a document
+is missing. After changing a root's file, update its document:
+
+```sh
+op document edit "Terraform tfvars <root>" terraform/<root>/terraform.tfvars --vault "cluster bootstrap"
+```
+
+To store a root for the first time, use `op document create
+terraform/<root>/terraform.tfvars --vault "cluster bootstrap" --title "Terraform
+tfvars <root>" --file-name terraform.tfvars`.
+
 ## A checkout that used local state
 
 A checkout made before the backends existed has a `.terraform/` set up for local
