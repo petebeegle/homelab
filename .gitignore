@@ -1,6 +1,7 @@
 .out
 *.tfstate
 *.tfstate.backup
+*.tfstate.pre-s3
 *.tfvars
 .terraform/
 
