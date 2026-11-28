@@ -35,17 +35,23 @@ found". The `ci.yml` checks run `init -backend=false` and need no keys.
 ## A checkout that used local state
 
 A checkout made before the backends existed has a `.terraform/` set up for local
-state and a `terraform.tfstate` that is no longer current. In each root:
+state and a `terraform.tfstate` that is no longer current. In each root, move
+the file aside first, then initialize:
 
 ```sh
-terraform -chdir=terraform/<root> init -reconfigure
 mv terraform/<root>/terraform.tfstate terraform/<root>/terraform.tfstate.pre-s3
+terraform -chdir=terraform/<root> init -reconfigure
 ```
 
-Use `-reconfigure`, never `-migrate-state`: migrating would offer to copy the
-stale local file over the bucket's copy. After the move, `plan` reads the
-bucket. Keep the `.pre-s3` file until the restore proof in #486 is done, then
-delete it.
+The order matters. While `terraform.tfstate` is there, even `init -reconfigure`
+offers to copy it into the bucket, and with `-input=false` it fails with "Can't
+ask approval for state migration". Never answer yes to that, and never use
+`-migrate-state`: either would put the stale local file over the bucket's copy.
+Keep the `.pre-s3` file until the restore proof in #486 is done, then delete it.
+
+The synology root's `terraform output` now needs the keys too. If 1Password is
+not to hand, the old file still holds them:
+`jq -r '.outputs.s3_access_key.value' terraform/external/synology/terraform.tfstate.pre-s3`.
 
 ## Locks
 
