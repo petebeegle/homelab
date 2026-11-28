@@ -240,8 +240,8 @@ Development uses `192.168.30.224/28` and `192.168.40.224/28` for its pools.
 
 Each has an issue with the plan:
 
-- `terraform.tfvars` is only on one machine, `external/nexus` has no state, and
-  there is no rebuild or restore runbook (#486).
+- `terraform.tfvars` is only on one machine, and there is no rebuild or restore
+  runbook (#486).
 - Production runs SOPS and 1Password side by side; workloads still read SOPS
   (#490).
 - The production smoke job has no outside watcher and skips some apps and the

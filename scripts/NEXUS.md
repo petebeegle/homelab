@@ -14,9 +14,11 @@ to the Kubernetes internal Gateway and cert-manager wildcard certificate. The
 existing group endpoint retains its Synology reverse proxy/certificate renewal.
 Group pushes require Nexus PRO; Community publishers must use the hosted endpoint.
 
-The rollout history and verification results are in PR #420.
-Always recover existing state and verify the saved plan before applying changes.
-Do not run a fresh apply against an already configured Nexus instance.
+The rollout history and verification results are in PR #420. State is in the
+NAS S3 bucket under `external/nexus/terraform.tfstate`
+([Terraform state](../docs/runbooks/terraform-state.md)). Review a plan before
+every apply, and never apply this root without its state: a fresh apply against
+the configured Nexus would collide with every existing resource.
 
 ## Credentials and publishing
 
@@ -40,29 +42,23 @@ unset DOCKER_CONFIG
 ```
 
 Consumers continue using their existing credentials with
-`docker-registry.petebeegle.com/homelab/my-app:latest`. Hosted is the first group
-member, followed by the Docker Hub proxy. Use a private namespace such as `homelab/`
-to avoid unintentionally shadowing upstream names.
+`docker-registry.petebeegle.com/homelab/my-app:latest`. Hosted is the first ## Plan before production changes
 
-## Recover state before production changes
+1. Export the state keys ([Terraform state](../docs/runbooks/terraform-state.md))
+   and plan. Keep plans private: they contain passwords even when outputs are
+   sensitive. Do not publish unredacted plan JSON.
+2. Any change to `random_password.docker_password` or the `docker` user's
+   password, any replacement, any deletion or unexplained drift blocks the apply.
+   Every Talos node pulls through the `docker` user; rotating it needs a
+   coordinated Talos machine-config change.
+3. If the state is ever lost, import before applying anything: the blob stores,
+   repositories, roles, users and security realms (`active` for realms), using
+   the pinned provider's documented IDs. Import `random_password.docker_password`
+   with the value the Talos nodes use, and check that the plan then proposes no
+   password change. The lifecycle `ignore_changes` on the user's password and the
+   generator's alphabet keep an imported password in place.
 
-1. Recover the authoritative state backup and a verified working `docker` password
-   from the approved secret store. Stage ignored inputs using the repository's
-   implementation-secret scripts before worktree commands. Keep state, plans and
-   credentials private; they contain passwords even when outputs are sensitive.
-2. If recovery requires import, back up live configuration first. Import the
-   existing blob store, proxy, group, role, user and security realms using the
-   pinned provider's documented IDs (`active` for realms). Import the random
-   password only after verifying the existing credential. Import defaults can
-   propose password replacement when length/special settings differ: inspect them.
-3. The consumer password lifecycle ignore prevents writes after import; the
-   random-password alphabet ignore preserves imported generation metadata.
-   Coordinated consumer rotation requires deliberately revisiting that safeguard.
-   Produce a baseline plan that preserves every existing resource and password.
-   Do not hand-edit state, accept replacements or reset the consumer to get past
-   recovery. A reset needs an explicit amendment and coordinated consumer updates.
-4. Review a saved feature plan. Expected changes are the hosted blob/repository,
-   publisher password/role/user, outputs and hosted-first group membership only.
+hip only.
    Any existing-password change, replacement, deletion or unexplained drift blocks
    rollout. Do not publish unredacted plan JSON.
 
