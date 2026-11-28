@@ -12,13 +12,13 @@ from zero. Each step links to the runbook that has the detail.
 | `terraform.tfvars`, every root | 1Password, "Terraform tfvars <root>" in `cluster bootstrap` | 1Password is lost |
 | S3 gateway keys | 1Password, "Terraform state S3" in `cluster bootstrap` | 1Password is lost |
 | 1Password operator tokens | 1Password, `onepassword-<cluster>-operator` in `cluster bootstrap` ([1Password operator](./onepassword-operator.md)) | 1Password is lost |
-| SOPS Age key (production secrets) | `~/.config/sops/age/keys.agekey` on the operator machine | that machine is lost, unless copied elsewhere |
+| SOPS Age key (production secrets) | 1Password, "SOPS age key" in `cluster bootstrap`; used from `~/.config/sops/age/keys.agekey` | 1Password is lost |
 | App data (PVCs) | NFS on the NAS, `/volume2/Homelab/nfs-csi-<namespace>-<pvc>`, `Retain` | the NAS is lost (#555) |
 | Talos secrets, kubeconfig, talosconfig | Terraform state (`talos_machine_secrets`), written to `~/.kube` and `~/.talos` on apply | the state is lost |
 
 The NAS is not backed up yet (#555). Losing it loses state, app data and the
-image mirror together. Losing the operator machine only costs the SOPS key, if
-that has no other copy.
+image mirror together. Losing the operator machine costs nothing: everything on
+it is in GitHub, the bucket or 1Password.
 
 ## Rebuild from zero
 
@@ -35,8 +35,8 @@ before touching production.
    need imports. Check: `terraform -chdir=terraform/external/synology plan`.
 3. **Operator machine.** Clone the repo, `eval "$(op signin)"`, export the S3
    keys, and run `tools/terraform/fetch_tfvars.sh`
-   ([Terraform state](./terraform-state.md)). Put the SOPS Age key at
-   `~/.config/sops/age/keys.agekey`. Every root should `init` and `plan`.
+   ([Terraform state](./terraform-state.md)). Put the SOPS Age key in place:
+   `op document get "SOPS age key" --vault "cluster bootstrap" --out-file ~/.config/sops/age/keys.agekey --file-mode 0600`. Every root should `init` and `plan`.
 4. **Proxmox.** Hosts, the no-subscription repository and NFS:
    [Proxmox no-subscription repository](./proxmox-no-subscription-repository.md),
    [Configure NFS with Proxmox](./configure-nfs-with-proxmox.md).
