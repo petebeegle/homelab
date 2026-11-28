@@ -45,10 +45,10 @@
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "/(?:^|/)terraform/production/terraform.tfvars$/"
+        "/(?:^|/)terraform/(?:production|development)/variables\\.tf$/"
       ],
       "matchStrings": [
-        "talos_version\\s*=\\s*\"(?<currentValue>[^\"]+)\""
+        "variable \"talos_version\" \\{[^}]*?default\\s*=\\s*\"(?<currentValue>[^\"]+)\""
       ],
       "depNameTemplate": "siderolabs/talos",
       "datasourceTemplate": "github-releases",
