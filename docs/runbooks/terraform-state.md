@@ -1,0 +1,64 @@
+# Terraform state
+
+Every Terraform root keeps its state in the bucket `terraform-state` on the
+NAS S3 gateway, `https://s3.petebeegle.com`. Why it lives there is in
+[decisions.md](../decisions.md#terraform-state-lives-in-s3-on-the-nas); how the
+gateway is deployed is in [SYNOLOGY.md](../../scripts/SYNOLOGY.md) section 6.
+
+| Root | Key |
+|------|-----|
+| `terraform/development` | `development/terraform.tfstate` |
+| `terraform/production` | `production/terraform.tfstate` |
+| `terraform/external/grafana` | `external/grafana/terraform.tfstate` |
+| `terraform/external/synology` | `external/synology/terraform.tfstate` |
+| `terraform/external/nexus` | `external/nexus/terraform.tfstate` |
+
+`tools/terraform/tests/test_state_backends.py` holds every root to this: same
+bucket, its own key, a lock, and no credentials in code.
+
+## Credentials
+
+The backend reads the gateway's keys from the environment. They are in the
+1Password item "Terraform state S3" in the "cluster bootstrap" vault:
+
+```sh
+eval "$(op signin)"
+export AWS_ACCESS_KEY_ID="$(op read 'op://cluster bootstrap/Terraform state S3/username')"
+export AWS_SECRET_ACCESS_KEY="$(op read 'op://cluster bootstrap/Terraform state S3/credential')"
+```
+
+Every `init`, `plan` and `apply` needs them, including a hand run of
+`tools/development/verify_branch_deploy.py` without `--ci`, which plans the
+development root. Without them, `init` fails with "No valid credential sources
+found". The `ci.yml` checks run `init -backend=false` and need no keys.
+
+## A checkout that used local state
+
+A checkout made before the backends existed has a `.terraform/` set up for local
+state and a `terraform.tfstate` that is no longer current. In each root:
+
+```sh
+terraform -chdir=terraform/<root> init -reconfigure
+mv terraform/<root>/terraform.tfstate terraform/<root>/terraform.tfstate.pre-s3
+```
+
+Use `-reconfigure`, never `-migrate-state`: migrating would offer to copy the
+stale local file over the bucket's copy. After the move, `plan` reads the
+bucket. Keep the `.pre-s3` file until the restore proof in #486 is done, then
+delete it.
+
+## Locks
+
+`use_lockfile` writes `<key>.tflock` next to the state while a command runs. A
+second run waits for `-lock-timeout`, then fails with `PreconditionFailed` and
+names the holder. If the holder is gone (a killed run), release it:
+
+```sh
+terraform -chdir=terraform/<root> force-unlock <lock ID from the error>
+```
+
+## Old versions
+
+The bucket is versioned. The gateway keeps earlier copies of each key, and
+delete markers, as plain files under `/volume2/docker/s3/versions` on the NAS.
+`terraform state pull` reads only the current one.
